@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import List, Optional
 from .models import Announcement, OHLCVBar, TradeResult, BacktestConfig, BacktestSummary
 
@@ -24,6 +25,15 @@ def run_single_backtest(
         TradeResult with entry/exit details
     """
     result = TradeResult(announcement=announcement)
+
+    if not bars:
+        result.trigger_type = "no_data"
+        return result
+
+    # Filter bars to only include those within the window
+    first_bar_time = bars[0].timestamp
+    window_end = first_bar_time + timedelta(minutes=config.window_minutes)
+    bars = [b for b in bars if b.timestamp <= window_end]
 
     if not bars:
         result.trigger_type = "no_data"
