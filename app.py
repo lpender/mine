@@ -277,16 +277,24 @@ if st.session_state.announcements:
     # Announcements table
     st.header("Announcements")
 
-    # Sort controls
+    # Sort controls - use session state directly for persistence
+    sort_options = ["Time (EST)", "Ticker", "Return", "Status"]
     sort_col1, sort_col2 = st.columns([3, 1])
     with sort_col1:
-        sort_column = st.selectbox(
+        current_sort_idx = sort_options.index(st.session_state.sort_select) if st.session_state.sort_select in sort_options else 0
+        new_sort = st.selectbox(
             "Sort by",
-            ["Time (EST)", "Ticker", "Return", "Status"],
-            key="sort_select",
+            sort_options,
+            index=current_sort_idx,
         )
+        if new_sort != st.session_state.sort_select:
+            st.session_state.sort_select = new_sort
+        sort_column = st.session_state.sort_select
     with sort_col2:
-        sort_ascending = st.checkbox("Ascending", key="sort_asc")
+        new_asc = st.checkbox("Ascending", value=st.session_state.sort_asc)
+        if new_asc != st.session_state.sort_asc:
+            st.session_state.sort_asc = new_asc
+        sort_ascending = st.session_state.sort_asc
 
     # Build table data with original index preserved
     table_data = []
