@@ -58,15 +58,37 @@ def parse_timestamp(time_str: str, reference_date: Optional[datetime] = None) ->
     Parse Discord timestamp formats:
     - 'Yesterday at 9:15 AM'
     - 'Today at 4:10 PM'
-    - '8:00 AM' (assumes today)
-    - '4:00 AM'
+    - '8:00 AM' (assumes reference date)
+    - '12/5/25, 8:13 AM' (explicit date)
+    - '12/05/2025, 8:13 AM' (explicit date, full year)
     """
     if reference_date is None:
         reference_date = datetime.now()
 
     time_str = time_str.strip()
 
-    # Extract date context (Yesterday, Today, or assume today)
+    # Try explicit date formats first: '12/5/25, 8:13 AM' or '12/05/2025, 8:13 AM'
+    date_time_match = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4}),?\s*(.+)', time_str)
+    if date_time_match:
+        month = int(date_time_match.group(1))
+        day = int(date_time_match.group(2))
+        year = int(date_time_match.group(3))
+        if year < 100:
+            year += 2000  # Convert 25 -> 2025
+        time_part = date_time_match.group(4).strip()
+
+        try:
+            time_obj = datetime.strptime(time_part, '%I:%M %p').time()
+        except ValueError:
+            try:
+                time_obj = datetime.strptime(time_part, '%H:%M').time()
+            except ValueError:
+                time_obj = datetime.min.time()
+
+        from datetime import date
+        return datetime.combine(date(year, month, day), time_obj)
+
+    # Extract date context (Yesterday, Today, or assume reference date)
     if 'yesterday' in time_str.lower():
         base_date = reference_date.date() - timedelta(days=1)
         time_str = re.sub(r'yesterday\s+at\s+', '', time_str, flags=re.IGNORECASE)
