@@ -79,7 +79,8 @@ def run_single_backtest(
     exit_time = None
     trigger_type = "timeout"
 
-    for bar in bars[entry_bar_idx:]:
+    # Start looking for exit on the NEXT bar after entry (can't know intra-bar order)
+    for bar in bars[entry_bar_idx + 1:]:
         # Check for take profit (hit the high)
         if bar.high >= take_profit_price:
             exit_price = take_profit_price

@@ -3,5 +3,5 @@
   "take_profit": 22.5,
   "stop_loss": 1.0,
   "volume_threshold": 400000,
-  "window_minutes": 20
+  "window_minutes": 5
 }
