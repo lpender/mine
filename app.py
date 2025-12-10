@@ -133,19 +133,34 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
         if added_count > 0:
             # Fetch OHLCV data for new announcements
             client = MassiveClient()
-            with st.spinner(f"Fetching data for {added_count} new announcements..."):
-                for ann in new_announcements:
-                    key = (ann.ticker, ann.timestamp)
-                    if key not in st.session_state.bars_by_announcement:
-                        bars = client.fetch_after_announcement(
-                            ann.ticker,
-                            ann.timestamp,
-                            window_minutes,
-                        )
-                        st.session_state.bars_by_announcement[key] = bars
 
-                # Save all announcements to cache
-                client.save_announcements(st.session_state.announcements)
+            # Filter to only announcements that need fetching
+            to_fetch = [
+                ann for ann in new_announcements
+                if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
+            ]
+
+            if to_fetch:
+                progress_bar = st.progress(0, text="Preparing to fetch data...")
+                status_text = st.empty()
+
+                for i, ann in enumerate(to_fetch):
+                    status_text.text(f"Fetching {ann.ticker} ({i + 1}/{len(to_fetch)})")
+                    progress_bar.progress((i + 1) / len(to_fetch), text=f"Fetching {ann.ticker}...")
+
+                    key = (ann.ticker, ann.timestamp)
+                    bars = client.fetch_after_announcement(
+                        ann.ticker,
+                        ann.timestamp,
+                        window_minutes,
+                    )
+                    st.session_state.bars_by_announcement[key] = bars
+
+                progress_bar.progress(1.0, text="Complete!")
+                status_text.text(f"Fetched data for {len(to_fetch)} tickers")
+
+            # Save all announcements to cache
+            client.save_announcements(st.session_state.announcements)
 
             st.session_state.results = []
             st.rerun()
