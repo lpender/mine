@@ -31,6 +31,20 @@ if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = None
+if "initialized" not in st.session_state:
+    st.session_state.initialized = False
+if "last_messages_input" not in st.session_state:
+    st.session_state.last_messages_input = ""
+
+# Auto-load cached data on first run
+if not st.session_state.initialized:
+    client = MassiveClient()
+    cached_announcements, cached_bars = client.load_all_cached_data()
+    if cached_announcements:
+        st.session_state.announcements = cached_announcements
+        st.session_state.bars_by_announcement = cached_bars
+        st.session_state.results = []
+    st.session_state.initialized = True
 
 
 # Sidebar
@@ -50,17 +64,6 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "Reference date (for relative timestamps):",
         value=datetime.now().date(),
     )
-
-    if st.button("Parse Messages", type="primary"):
-        if messages_input.strip():
-            ref_datetime = datetime.combine(reference_date, datetime.min.time())
-            announcements = parse_discord_messages(messages_input, ref_datetime)
-            st.session_state.announcements = announcements
-            st.session_state.bars_by_announcement = {}  # Clear old data
-            st.session_state.results = []
-            st.success(f"Parsed {len(announcements)} announcements")
-        else:
-            st.warning("Please paste some messages first")
 
     st.divider()
     st.header("Trigger Configuration")
@@ -110,46 +113,46 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
     )
 
 
-# Load cached data button (always visible)
-col_load1, col_load2 = st.columns([1, 4])
-with col_load1:
-    if st.button("Load All Cached Data"):
-        client = MassiveClient()
-        cached_announcements, cached_bars = client.load_all_cached_data()
-        if cached_announcements:
-            st.session_state.announcements = cached_announcements
-            st.session_state.bars_by_announcement = cached_bars
+# Auto-parse when text input changes
+if messages_input.strip() and messages_input != st.session_state.last_messages_input:
+    st.session_state.last_messages_input = messages_input
+    ref_datetime = datetime.combine(reference_date, datetime.min.time())
+    new_announcements = parse_discord_messages(messages_input, ref_datetime)
+
+    if new_announcements:
+        # Add new announcements to existing ones (dedup by ticker+timestamp)
+        existing_keys = {(a.ticker, a.timestamp) for a in st.session_state.announcements}
+        added_count = 0
+        for ann in new_announcements:
+            key = (ann.ticker, ann.timestamp)
+            if key not in existing_keys:
+                st.session_state.announcements.append(ann)
+                existing_keys.add(key)
+                added_count += 1
+
+        if added_count > 0:
+            # Fetch OHLCV data for new announcements
+            client = MassiveClient()
+            with st.spinner(f"Fetching data for {added_count} new announcements..."):
+                for ann in new_announcements:
+                    key = (ann.ticker, ann.timestamp)
+                    if key not in st.session_state.bars_by_announcement:
+                        bars = client.fetch_after_announcement(
+                            ann.ticker,
+                            ann.timestamp,
+                            window_minutes,
+                        )
+                        st.session_state.bars_by_announcement[key] = bars
+
+                # Save all announcements to cache
+                client.save_announcements(st.session_state.announcements)
+
             st.session_state.results = []
-            st.success(f"Loaded {len(cached_announcements)} announcements from cache")
             st.rerun()
-        else:
-            st.warning("No cached data found")
 
 # Main area
 if st.session_state.announcements:
     announcements = st.session_state.announcements
-
-    # Fetch OHLCV data button
-    col1, col2 = st.columns([1, 4])
-    with col1:
-        if st.button("Fetch OHLCV Data"):
-            client = MassiveClient()
-            progress_bar = st.progress(0)
-
-            for i, ann in enumerate(announcements):
-                key = (ann.ticker, ann.timestamp)
-                if key not in st.session_state.bars_by_announcement:
-                    bars = client.fetch_after_announcement(
-                        ann.ticker,
-                        ann.timestamp,
-                        window_minutes,
-                    )
-                    st.session_state.bars_by_announcement[key] = bars
-                progress_bar.progress((i + 1) / len(announcements))
-
-            # Save announcements to cache for future use
-            client.save_announcements(announcements)
-            st.success("OHLCV data fetched and saved!")
 
     # Run backtest
     config = BacktestConfig(
@@ -367,7 +370,7 @@ if st.session_state.announcements:
             )
 
 else:
-    st.info("Paste Discord messages in the sidebar and click 'Parse Messages' to get started.")
+    st.info("Paste Discord messages in the sidebar to automatically parse and fetch data.")
     st.markdown("""
     ### Expected Message Format
 
@@ -383,10 +386,8 @@ else:
 
     ### How to Use
 
-    1. **Paste messages** from Discord into the sidebar
+    1. **Paste messages** from Discord into the sidebar - data will auto-fetch
     2. **Set reference date** (for "Yesterday" and "Today" timestamps)
-    3. **Click Parse Messages** to extract announcements
-    4. **Fetch OHLCV Data** from Massive.com (requires API key in .env)
-    5. **Adjust triggers** using the sliders to see different strategy results
-    6. **Click on a row** to see the detailed price chart
+    3. **Adjust triggers** using the sliders to see different strategy results
+    4. **Click on a row** to see the detailed price chart
     """)
