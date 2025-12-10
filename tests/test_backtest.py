@@ -288,6 +288,39 @@ class TestIntraCandleVolumeEntry:
         assert result.entered
         assert result.entry_price == pytest.approx(1.05, rel=0.01)
 
+    def test_entry_uses_later_of_price_or_volume(self):
+        """
+        Entry price is the LATER of price trigger or volume interpolation.
+
+        Scenario:
+        - Price trigger: 5% above open (1.0 -> 1.05)
+        - Bar: low=1.0, high=1.10, volume=100k
+        - Threshold: 10k (10% through bar) -> interpolated price = 1.01
+        - Since trigger price (1.05) > volume price (1.01), entry at 1.05
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=1.0, high=1.10, low=1.0, close=1.08, volume=100_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=5.0,  # Trigger at 1.05
+            volume_threshold=10_000,  # 10% through bar = 1.01
+            take_profit_pct=10.0,
+            stop_loss_pct=3.0,
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        # Volume interpolation: 10k/100k = 10% -> 1.0 + (1.10 - 1.0) * 0.1 = 1.01
+        # Price trigger: 1.05
+        # Entry at max(1.01, 1.05) = 1.05
+        assert result.entry_price == pytest.approx(1.05, rel=0.01)
+
     def test_no_entry_when_price_never_triggers(self):
         """No entry when price never reaches trigger level, even with high volume."""
         base_time = datetime(2025, 1, 15, 9, 30)

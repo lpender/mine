@@ -52,7 +52,7 @@ def run_single_backtest(
     # Calculate trigger price (price must reach this level)
     trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
 
-    # Phase 1: Look for entry trigger (both price AND intra-candle volume must be met)
+    # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
     for i, bar in enumerate(bars):
         # Check if price moved up enough to trigger entry
         price_change_pct = ((bar.high - reference_price) / reference_price) * 100
@@ -61,19 +61,29 @@ def run_single_backtest(
         # Check if this bar's volume meets the threshold (intra-candle, not cumulative)
         volume_met = bar.volume >= config.volume_threshold
 
-        # Check if we can enter: price must trigger AND this bar's volume must meet threshold
+        # Enter when BOTH conditions are satisfied on this bar
         if price_triggered and volume_met:
             entry_time = bar.timestamp
             entry_bar_idx = i
 
-            # Calculate entry price based on volume interpolation
+            # Calculate entry price: the LATER of the two trigger points
+            # (whichever condition is satisfied last determines entry price)
+
+            # Volume-based entry price (interpolated)
             if config.volume_threshold > 0 and bar.volume > 0:
-                # Interpolate based on when volume threshold is met within this bar
                 volume_fraction = config.volume_threshold / bar.volume
-                entry_price = bar.low + (bar.high - bar.low) * volume_fraction
+                volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
             else:
-                # No volume threshold, use the trigger price
-                entry_price = trigger_price
+                volume_entry_price = bar.low  # No volume requirement = immediate
+
+            # Price trigger entry price
+            if config.entry_trigger_pct > 0:
+                price_entry_price = trigger_price
+            else:
+                price_entry_price = bar.low  # No price requirement = immediate
+
+            # Entry happens at whichever trigger point comes LATER (higher price)
+            entry_price = max(volume_entry_price, price_entry_price)
 
             break
 
