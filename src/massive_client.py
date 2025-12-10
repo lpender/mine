@@ -14,7 +14,7 @@ class MassiveClient:
 
     BASE_URL = "https://api.massive.com"
 
-    def __init__(self, api_key: Optional[str] = None, cache_dir: str = "data/ohlcv", rate_limit_delay: float = 0.25):
+    def __init__(self, api_key: Optional[str] = None, cache_dir: str = "data/ohlcv", rate_limit_delay: float = 12.0):
         self.api_key = api_key or os.getenv("MASSIVE_API_KEY")
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
