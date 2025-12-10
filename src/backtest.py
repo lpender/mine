@@ -100,7 +100,7 @@ def run_single_backtest(
 
 def run_backtest(
     announcements: List[Announcement],
-    bars_by_ticker: dict,  # ticker -> List[OHLCVBar]
+    bars_by_announcement: dict,  # (ticker, timestamp) -> List[OHLCVBar]
     config: BacktestConfig,
 ) -> BacktestSummary:
     """
@@ -108,7 +108,7 @@ def run_backtest(
 
     Args:
         announcements: List of announcements to backtest
-        bars_by_ticker: Dictionary mapping ticker to OHLCV bars
+        bars_by_announcement: Dictionary mapping (ticker, timestamp) to OHLCV bars
         config: Backtest configuration
 
     Returns:
@@ -121,7 +121,8 @@ def run_backtest(
     returns = []
 
     for announcement in announcements:
-        bars = bars_by_ticker.get(announcement.ticker, [])
+        key = (announcement.ticker, announcement.timestamp)
+        bars = bars_by_announcement.get(key, [])
         result = run_single_backtest(announcement, bars, config)
         summary.results.append(result)
 

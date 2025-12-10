@@ -4,7 +4,10 @@
       "WebSearch",
       "WebFetch(domain:x.com)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Press release backtesting app\n\n- Streamlit dashboard for analyzing press release stock movements\n- Discord message parser for extracting announcements\n- Massive.com (Polygon) client for OHLCV data with parquet caching\n- Backtesting engine with configurable entry/exit triggers\n- Interactive candlestick charts with entry/exit markers\n- Summary statistics (win rate, avg return, best/worst trades)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: Press release backtesting app\n\n- Streamlit dashboard for analyzing press release stock movements\n- Discord message parser for extracting announcements\n- Massive.com (Polygon) client for OHLCV data with parquet caching\n- Backtesting engine with configurable entry/exit triggers\n- Interactive candlestick charts with entry/exit markers\n- Summary statistics (win rate, avg return, best/worst trades)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(source:*)",
+      "Bash(python3:*)"
     ]
   }
 }

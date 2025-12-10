@@ -25,8 +25,8 @@ st.title("Press Release Backtester")
 # Initialize session state
 if "announcements" not in st.session_state:
     st.session_state.announcements = []
-if "bars_by_ticker" not in st.session_state:
-    st.session_state.bars_by_ticker = {}
+if "bars_by_announcement" not in st.session_state:
+    st.session_state.bars_by_announcement = {}  # keyed by (ticker, timestamp)
 if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_ticker" not in st.session_state:
@@ -56,7 +56,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
             ref_datetime = datetime.combine(reference_date, datetime.min.time())
             announcements = parse_discord_messages(messages_input, ref_datetime)
             st.session_state.announcements = announcements
-            st.session_state.bars_by_ticker = {}  # Clear old data
+            st.session_state.bars_by_announcement = {}  # Clear old data
             st.session_state.results = []
             st.success(f"Parsed {len(announcements)} announcements")
         else:
@@ -122,13 +122,14 @@ if st.session_state.announcements:
             progress_bar = st.progress(0)
 
             for i, ann in enumerate(announcements):
-                if ann.ticker not in st.session_state.bars_by_ticker:
+                key = (ann.ticker, ann.timestamp)
+                if key not in st.session_state.bars_by_announcement:
                     bars = client.fetch_after_announcement(
                         ann.ticker,
                         ann.timestamp,
                         window_minutes,
                     )
-                    st.session_state.bars_by_ticker[ann.ticker] = bars
+                    st.session_state.bars_by_announcement[key] = bars
                 progress_bar.progress((i + 1) / len(announcements))
 
             st.success("OHLCV data fetched!")
@@ -142,10 +143,11 @@ if st.session_state.announcements:
         window_minutes=window_minutes,
     )
 
-    if st.session_state.bars_by_ticker:
+    if st.session_state.bars_by_announcement:
+        # Convert to format expected by backtest (dict keyed by ticker+timestamp tuple)
         summary = run_backtest(
             announcements,
-            st.session_state.bars_by_ticker,
+            st.session_state.bars_by_announcement,
             config,
         )
         st.session_state.results = summary.results
@@ -206,7 +208,8 @@ if st.session_state.announcements:
     if selected_idx and selected_idx.selection.rows:
         idx = selected_idx.selection.rows[0]
         selected_ann = announcements[idx]
-        bars = st.session_state.bars_by_ticker.get(selected_ann.ticker, [])
+        key = (selected_ann.ticker, selected_ann.timestamp)
+        bars = st.session_state.bars_by_announcement.get(key, [])
 
         if bars:
             st.header(f"Price Action: {selected_ann.ticker}")
