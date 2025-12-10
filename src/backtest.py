@@ -54,7 +54,7 @@ def run_single_backtest(
 
     # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
     for i, bar in enumerate(bars):
-        # Check if price moved up enough to trigger entry
+        # Check if price moved up enough to trigger entry (bar.high reaches trigger level)
         price_change_pct = ((bar.high - reference_price) / reference_price) * 100
         price_triggered = price_change_pct >= config.entry_trigger_pct
 
@@ -67,24 +67,20 @@ def run_single_backtest(
             entry_bar_idx = i
 
             # Calculate entry price: the LATER of the two trigger points
-            # (whichever condition is satisfied last determines entry price)
-
-            # Volume-based entry price (interpolated)
             if config.volume_threshold > 0 and bar.volume > 0:
+                # Interpolate: entry when volume threshold is reached within the bar
                 volume_fraction = config.volume_threshold / bar.volume
                 volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
             else:
-                volume_entry_price = bar.low  # No volume requirement = immediate
+                volume_entry_price = bar.low
 
-            # Price trigger entry price
             if config.entry_trigger_pct > 0:
                 price_entry_price = trigger_price
             else:
-                price_entry_price = bar.low  # No price requirement = immediate
+                price_entry_price = bar.low
 
-            # Entry happens at whichever trigger point comes LATER (higher price)
+            # Entry price is the LATER of the two trigger points (higher price)
             entry_price = max(volume_entry_price, price_entry_price)
-
             break
 
     # No entry triggered
