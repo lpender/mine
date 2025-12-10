@@ -53,6 +53,10 @@ if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_row_idx" not in st.session_state:
     st.session_state.selected_row_idx = None
+if "sort_column" not in st.session_state:
+    st.session_state.sort_column = "Time (EST)"
+if "sort_ascending" not in st.session_state:
+    st.session_state.sort_ascending = False
 if "initialized" not in st.session_state:
     st.session_state.initialized = False
 if "last_messages_input" not in st.session_state:
@@ -261,12 +265,34 @@ if st.session_state.announcements:
     # Announcements table
     st.header("Announcements")
 
-    # Build table data
+    # Sort controls
+    sort_col1, sort_col2 = st.columns([3, 1])
+    with sort_col1:
+        sort_column = st.selectbox(
+            "Sort by",
+            ["Time (EST)", "Ticker", "Return", "Status"],
+            index=["Time (EST)", "Ticker", "Return", "Status"].index(st.session_state.sort_column),
+            key="sort_select",
+        )
+    with sort_col2:
+        sort_ascending = st.checkbox("Ascending", value=st.session_state.sort_ascending, key="sort_asc")
+
+    # Update session state if changed
+    if sort_column != st.session_state.sort_column:
+        st.session_state.sort_column = sort_column
+    if sort_ascending != st.session_state.sort_ascending:
+        st.session_state.sort_ascending = sort_ascending
+
+    # Build table data with original index preserved
     table_data = []
     for i, ann in enumerate(announcements):
         result = st.session_state.results[i] if i < len(st.session_state.results) else None
 
+        # Store numeric return for sorting
+        return_val = result.return_pct if result and result.return_pct is not None else float('-inf')
+
         row = {
+            "_original_idx": i,  # Hidden column to track original index
             "Ticker": ann.ticker,
             "Time (EST)": ann.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "Price": f"${ann.price_threshold:.2f}" if ann.price_threshold else "N/A",
@@ -274,25 +300,39 @@ if st.session_state.announcements:
             "IO%": f"{ann.io_percent:.1f}%" if ann.io_percent else "N/A",
             "MC": f"${ann.market_cap/1e6:.1f}M" if ann.market_cap else "N/A",
             "Country": ann.country,
-            "Return": f"{result.return_pct:.2f}%" if result and result.return_pct else "N/A",
+            "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else "N/A",
+            "_return_numeric": return_val,  # Hidden column for sorting
             "Status": result.trigger_type if result else "pending",
         }
         table_data.append(row)
 
     df = pd.DataFrame(table_data)
 
+    # Sort the dataframe
+    if st.session_state.sort_column == "Return":
+        df = df.sort_values("_return_numeric", ascending=st.session_state.sort_ascending)
+    else:
+        df = df.sort_values(st.session_state.sort_column, ascending=st.session_state.sort_ascending)
+
+    # Store mapping from display row to original index
+    display_to_original = df["_original_idx"].tolist()
+
+    # Remove hidden columns for display
+    display_df = df.drop(columns=["_original_idx", "_return_numeric"])
+
     # Display as interactive table
     selected_idx = st.dataframe(
-        df,
+        display_df,
         use_container_width=True,
         hide_index=True,
         on_select="rerun",
         selection_mode="single-row",
     )
 
-    # Update stored selection when user clicks a row
+    # Update stored selection when user clicks a row (map back to original index)
     if selected_idx and selected_idx.selection.rows:
-        st.session_state.selected_row_idx = selected_idx.selection.rows[0]
+        display_row = selected_idx.selection.rows[0]
+        st.session_state.selected_row_idx = display_to_original[display_row]
 
     # Chart for selected announcement (use stored index so it persists across slider changes)
     if st.session_state.selected_row_idx is not None and st.session_state.selected_row_idx < len(announcements):
