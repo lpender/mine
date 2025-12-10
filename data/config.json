@@ -2,6 +2,6 @@
   "entry_trigger": 0.0,
   "take_profit": 22.5,
   "stop_loss": 1.0,
-  "volume_threshold": 50000,
+  "volume_threshold": 210000,
   "window_minutes": 30
 }

@@ -354,18 +354,16 @@ if st.session_state.announcements:
                         row=1, col=1,
                     )
 
-                # Add trigger lines
-                ref_price = bars[0].open
-                entry_line = ref_price * (1 + entry_trigger / 100)
-                fig.add_hline(
-                    y=entry_line,
-                    line_dash="dash",
-                    line_color="blue",
-                    annotation_text=f"Entry Trigger ({entry_trigger}%)",
-                    row=1, col=1,
-                )
-
                 if result.entry_price:
+                    # Show actual entry price line
+                    fig.add_hline(
+                        y=result.entry_price,
+                        line_dash="dash",
+                        line_color="blue",
+                        annotation_text=f"Entry (${result.entry_price:.2f})",
+                        row=1, col=1,
+                    )
+
                     tp_line = result.entry_price * (1 + take_profit / 100)
                     sl_line = result.entry_price * (1 - stop_loss / 100)
                     fig.add_hline(
