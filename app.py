@@ -179,8 +179,15 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
             if to_fetch:
                 progress_bar = st.progress(0, text="Preparing to fetch data...")
                 status_text = st.empty()
+                cancel_button = st.button("Cancel Import", type="secondary")
+                cancelled = False
 
                 for i, ann in enumerate(to_fetch):
+                    if cancel_button or cancelled:
+                        status_text.text(f"Import cancelled after {i} tickers")
+                        cancelled = True
+                        break
+
                     status_text.text(f"Fetching {ann.ticker} ({i + 1}/{len(to_fetch)})")
                     progress_bar.progress((i + 1) / len(to_fetch), text=f"Fetching {ann.ticker}...")
 
@@ -192,10 +199,11 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
                     )
                     st.session_state.bars_by_announcement[key] = bars
 
-                progress_bar.progress(1.0, text="Complete!")
-                status_text.text(f"Fetched data for {len(to_fetch)} tickers")
+                if not cancelled:
+                    progress_bar.progress(1.0, text="Complete!")
+                    status_text.text(f"Fetched data for {len(to_fetch)} tickers")
 
-            # Save all announcements to cache
+            # Save all announcements to cache (even partial)
             client.save_announcements(st.session_state.announcements)
 
             st.session_state.results = []
