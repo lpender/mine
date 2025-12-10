@@ -53,10 +53,10 @@ if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_row_idx" not in st.session_state:
     st.session_state.selected_row_idx = None
-if "sort_column" not in st.session_state:
-    st.session_state.sort_column = "Time (EST)"
-if "sort_ascending" not in st.session_state:
-    st.session_state.sort_ascending = False
+if "sort_select" not in st.session_state:
+    st.session_state.sort_select = "Time (EST)"
+if "sort_asc" not in st.session_state:
+    st.session_state.sort_asc = False
 if "initialized" not in st.session_state:
     st.session_state.initialized = False
 if "last_messages_input" not in st.session_state:
@@ -283,17 +283,10 @@ if st.session_state.announcements:
         sort_column = st.selectbox(
             "Sort by",
             ["Time (EST)", "Ticker", "Return", "Status"],
-            index=["Time (EST)", "Ticker", "Return", "Status"].index(st.session_state.sort_column),
             key="sort_select",
         )
     with sort_col2:
-        sort_ascending = st.checkbox("Ascending", value=st.session_state.sort_ascending, key="sort_asc")
-
-    # Update session state if changed
-    if sort_column != st.session_state.sort_column:
-        st.session_state.sort_column = sort_column
-    if sort_ascending != st.session_state.sort_ascending:
-        st.session_state.sort_ascending = sort_ascending
+        sort_ascending = st.checkbox("Ascending", key="sort_asc")
 
     # Build table data with original index preserved
     table_data = []
@@ -321,10 +314,10 @@ if st.session_state.announcements:
     df = pd.DataFrame(table_data)
 
     # Sort the dataframe
-    if st.session_state.sort_column == "Return":
-        df = df.sort_values("_return_numeric", ascending=st.session_state.sort_ascending)
+    if sort_column == "Return":
+        df = df.sort_values("_return_numeric", ascending=sort_ascending)
     else:
-        df = df.sort_values(st.session_state.sort_column, ascending=st.session_state.sort_ascending)
+        df = df.sort_values(sort_column, ascending=sort_ascending)
 
     # Store mapping from display row to original index
     display_to_original = df["_original_idx"].tolist()
