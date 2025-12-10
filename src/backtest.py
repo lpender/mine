@@ -158,6 +158,25 @@ def calculate_summary_stats(results: List[TradeResult]) -> dict:
     losers = [r for r in entered if not r.is_winner]
 
     returns = [r.return_pct for r in entered if r.return_pct is not None]
+    winning_returns = [r.return_pct for r in winners if r.return_pct is not None]
+    losing_returns = [r.return_pct for r in losers if r.return_pct is not None]
+
+    # Calculate win rate
+    win_rate = (len(winners) / len(entered) * 100) if entered else 0
+
+    # Calculate average win and average loss
+    avg_win = sum(winning_returns) / len(winning_returns) if winning_returns else 0
+    avg_loss = abs(sum(losing_returns) / len(losing_returns)) if losing_returns else 0
+
+    # Expectancy = (Win Rate × Avg Win) - (Loss Rate × Avg Loss)
+    # Expressed as expected return per trade
+    loss_rate = 100 - win_rate
+    expectancy = ((win_rate / 100) * avg_win) - ((loss_rate / 100) * avg_loss)
+
+    # Profit Factor = Total Gains / Total Losses
+    total_gains = sum(winning_returns) if winning_returns else 0
+    total_losses = abs(sum(losing_returns)) if losing_returns else 0
+    profit_factor = total_gains / total_losses if total_losses > 0 else float('inf') if total_gains > 0 else 0
 
     return {
         "total_announcements": total,
@@ -165,9 +184,13 @@ def calculate_summary_stats(results: List[TradeResult]) -> dict:
         "no_entry": total - len(entered),
         "winners": len(winners),
         "losers": len(losers),
-        "win_rate": (len(winners) / len(entered) * 100) if entered else 0,
+        "win_rate": win_rate,
         "avg_return": sum(returns) / len(returns) if returns else 0,
         "total_return": sum(returns) if returns else 0,
         "best_trade": max(returns) if returns else 0,
         "worst_trade": min(returns) if returns else 0,
+        "avg_win": avg_win,
+        "avg_loss": avg_loss,
+        "expectancy": expectancy,
+        "profit_factor": profit_factor,
     }

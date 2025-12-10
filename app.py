@@ -235,19 +235,25 @@ if st.session_state.announcements:
         st.header("Summary Statistics")
         stats = calculate_summary_stats(summary.results)
 
-        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        col1, col2, col3, col4, col5, col6, col7, col8 = st.columns(8)
         with col1:
-            st.metric("Total Announcements", stats["total_announcements"])
+            st.metric("Trades", stats["total_trades"])
         with col2:
-            st.metric("Trades Entered", stats["total_trades"])
-        with col3:
             st.metric("Win Rate", f"{stats['win_rate']:.1f}%")
-        with col4:
+        with col3:
             st.metric("Avg Return", f"{stats['avg_return']:.2f}%")
+        with col4:
+            st.metric("Expectancy", f"{stats['expectancy']:.2f}%")
         with col5:
-            st.metric("Best Trade", f"{stats['best_trade']:.2f}%")
+            pf = stats['profit_factor']
+            pf_str = f"{pf:.2f}" if pf != float('inf') else "∞"
+            st.metric("Profit Factor", pf_str)
         with col6:
+            st.metric("Best Trade", f"{stats['best_trade']:.2f}%")
+        with col7:
             st.metric("Worst Trade", f"{stats['worst_trade']:.2f}%")
+        with col8:
+            st.metric("No Entry", stats["no_entry"])
 
         st.divider()
 
