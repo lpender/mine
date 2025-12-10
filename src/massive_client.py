@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
@@ -12,10 +13,12 @@ class MassiveClient:
 
     BASE_URL = "https://api.polygon.io"  # Massive uses same API structure
 
-    def __init__(self, api_key: Optional[str] = None, cache_dir: str = "data/ohlcv"):
+    def __init__(self, api_key: Optional[str] = None, cache_dir: str = "data/ohlcv", rate_limit_delay: float = 0.25):
         self.api_key = api_key or os.getenv("MASSIVE_API_KEY")
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.rate_limit_delay = rate_limit_delay  # seconds between API calls
+        self._last_request_time = 0.0
 
     def _get_cache_path(self, ticker: str, start: datetime, end: datetime) -> Path:
         """Generate cache file path for a specific ticker and time range."""
@@ -97,6 +100,11 @@ class MassiveClient:
         if not self.api_key:
             raise ValueError("MASSIVE_API_KEY not set. Please set it in .env or pass to constructor.")
 
+        # Rate limiting
+        elapsed = time.time() - self._last_request_time
+        if elapsed < self.rate_limit_delay:
+            time.sleep(self.rate_limit_delay - elapsed)
+
         # Convert to millisecond timestamps
         start_ms = int(start.timestamp() * 1000)
         end_ms = int(end.timestamp() * 1000)
@@ -109,35 +117,59 @@ class MassiveClient:
             "limit": 50000,
         }
 
-        try:
-            response = requests.get(url, params=params, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+        max_retries = 3
+        retry_delay = 1.0
 
-            if data.get("status") != "OK" or "results" not in data:
+        for attempt in range(max_retries):
+            try:
+                self._last_request_time = time.time()
+                response = requests.get(url, params=params, timeout=30)
+
+                # Handle rate limiting with retry
+                if response.status_code == 429:
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)  # exponential backoff
+                        print(f"Rate limited for {ticker}, waiting {wait_time}s...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        print(f"Rate limit exceeded for {ticker} after {max_retries} retries")
+                        return []
+
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("status") != "OK" or "results" not in data:
+                    return []
+
+                bars = []
+                for result in data["results"]:
+                    bars.append(OHLCVBar(
+                        timestamp=datetime.fromtimestamp(result["t"] / 1000),
+                        open=result["o"],
+                        high=result["h"],
+                        low=result["l"],
+                        close=result["c"],
+                        volume=result["v"],
+                        vwap=result.get("vw"),
+                    ))
+
+                # Cache the results
+                if use_cache and bars:
+                    self._save_to_cache(ticker, start, end, bars)
+
+                return bars
+
+            except requests.RequestException as e:
+                if attempt < max_retries - 1 and "429" in str(e):
+                    wait_time = retry_delay * (2 ** attempt)
+                    print(f"Rate limited for {ticker}, waiting {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                print(f"Error fetching OHLCV for {ticker}: {e}")
                 return []
 
-            bars = []
-            for result in data["results"]:
-                bars.append(OHLCVBar(
-                    timestamp=datetime.fromtimestamp(result["t"] / 1000),
-                    open=result["o"],
-                    high=result["h"],
-                    low=result["l"],
-                    close=result["c"],
-                    volume=result["v"],
-                    vwap=result.get("vw"),
-                ))
-
-            # Cache the results
-            if use_cache and bars:
-                self._save_to_cache(ticker, start, end, bars)
-
-            return bars
-
-        except requests.RequestException as e:
-            print(f"Error fetching OHLCV for {ticker}: {e}")
-            return []
+        return []
 
     def fetch_after_announcement(
         self,
