@@ -66,16 +66,13 @@ def run_single_backtest(
             entry_time = bar.timestamp
             entry_bar_idx = i
 
-            # Calculate entry price
-            if config.entry_trigger_pct > 0:
-                # If we have a price trigger, use the trigger price
-                entry_price = trigger_price
-            elif config.volume_threshold > 0 and bar.volume > 0:
-                # No price trigger, interpolate based on when volume threshold is met within this bar
+            # Calculate entry price based on volume interpolation
+            if config.volume_threshold > 0 and bar.volume > 0:
+                # Interpolate based on when volume threshold is met within this bar
                 volume_fraction = config.volume_threshold / bar.volume
                 entry_price = bar.low + (bar.high - bar.low) * volume_fraction
             else:
-                # No triggers, use trigger price (which equals reference price when trigger_pct is 0)
+                # No volume threshold, use the trigger price
                 entry_price = trigger_price
 
             break

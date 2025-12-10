@@ -61,8 +61,9 @@ class TestIntraCandleVolumeEntry:
 
         assert result.entered, "Should have entered"
         assert result.entry_time == base_time, "Should enter on first bar"
-        # Entry at 5% above open = 1.05
-        assert result.entry_price == pytest.approx(1.05, rel=0.01)
+        # Entry interpolated: 75k/100k = 75% through bar
+        # low=0.99, high=1.10: 0.99 + (1.10 - 0.99) * 0.75 = 1.0725
+        assert result.entry_price == pytest.approx(1.0725, rel=0.01)
 
     def test_no_entry_when_bar_volume_insufficient(self):
         """No entry when individual bar volume doesn't meet threshold (not cumulative)."""
@@ -232,15 +233,16 @@ class TestIntraCandleVolumeEntry:
         assert result.entered, "Should have entered when both conditions met"
         assert result.entry_time == base_time + timedelta(minutes=1), "Entry on second bar"
 
-    def test_price_trigger_overrides_interpolation(self):
+    def test_volume_interpolation_with_price_trigger(self):
         """
-        When price trigger is set, entry price is the trigger price, not interpolated.
+        Volume interpolation is always used when volume threshold is set,
+        even when there's also a price trigger.
 
         Scenario:
-        - Price trigger: 5% above open (1.0 -> 1.05)
+        - Price trigger: 5% above open (1.0 -> 1.05) - determines IF we enter
         - Bar: low=1.0, high=2.0, volume=100k
-        - Threshold: 50k (50% through bar)
-        - Entry should be at 1.05 (trigger price), not 1.5 (interpolated)
+        - Threshold: 50k (50% through bar) - determines WHERE we enter
+        - Entry should be at 1.5 (interpolated), not 1.05 (trigger price)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
         announcement = make_announcement(timestamp=base_time)
@@ -250,8 +252,8 @@ class TestIntraCandleVolumeEntry:
         ]
 
         config = BacktestConfig(
-            entry_trigger_pct=5.0,  # Entry at 1.05
-            volume_threshold=50_000,  # Met at 50% through bar
+            entry_trigger_pct=5.0,  # Determines IF we can enter
+            volume_threshold=50_000,  # Determines WHERE we enter (50% through bar)
             take_profit_pct=50.0,
             stop_loss_pct=30.0,
             window_minutes=30,
@@ -260,8 +262,9 @@ class TestIntraCandleVolumeEntry:
         result = run_single_backtest(announcement, bars, config)
 
         assert result.entered
-        # Entry price should be the trigger price (5% above open), not interpolated
-        assert result.entry_price == pytest.approx(1.05, rel=0.01)
+        # Entry price should be interpolated based on volume, not the trigger price
+        # 50k / 100k = 50% through the bar: 1.0 + (2.0 - 1.0) * 0.5 = 1.5
+        assert result.entry_price == pytest.approx(1.5, rel=0.01)
 
     def test_zero_volume_threshold_enters_on_price_trigger_only(self):
         """With zero volume threshold, entry is based purely on price trigger."""
