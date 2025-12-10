@@ -97,49 +97,61 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
     st.divider()
     st.header("Trigger Configuration")
 
+    # Initialize slider values in session state from saved config (only once)
+    if "entry_trigger" not in st.session_state:
+        st.session_state.entry_trigger = saved_config.get("entry_trigger", 5.0)
+    if "take_profit" not in st.session_state:
+        st.session_state.take_profit = saved_config.get("take_profit", 10.0)
+    if "stop_loss" not in st.session_state:
+        st.session_state.stop_loss = saved_config.get("stop_loss", 3.0)
+    if "volume_threshold_k" not in st.session_state:
+        st.session_state.volume_threshold_k = saved_config.get("volume_threshold", 0) // 1000
+    if "window_minutes" not in st.session_state:
+        st.session_state.window_minutes = saved_config.get("window_minutes", 30)
+
     entry_trigger = st.slider(
         "Entry Trigger (%)",
         min_value=0.0,
         max_value=20.0,
-        value=saved_config.get("entry_trigger", 5.0),
         step=0.5,
         help="Buy when price moves up by this percentage from open",
+        key="entry_trigger",
     )
 
     take_profit = st.slider(
         "Take Profit (%)",
         min_value=1.0,
         max_value=50.0,
-        value=saved_config.get("take_profit", 10.0),
         step=0.5,
         help="Sell when price moves up by this percentage from entry",
+        key="take_profit",
     )
 
     stop_loss = st.slider(
         "Stop Loss (%)",
         min_value=1.0,
         max_value=20.0,
-        value=saved_config.get("stop_loss", 3.0),
         step=0.5,
         help="Sell when price moves down by this percentage from entry",
+        key="stop_loss",
     )
 
     volume_threshold = st.slider(
         "Min Volume Threshold (k)",
         min_value=0,
         max_value=500,
-        value=saved_config.get("volume_threshold", 0) // 1000,
         step=10,
         help="Minimum volume (in thousands) required to trigger entry",
+        key="volume_threshold_k",
     ) * 1000  # Convert back to actual volume
 
     window_minutes = st.slider(
         "Window (minutes)",
         min_value=5,
         max_value=120,
-        value=saved_config.get("window_minutes", 30),
         step=5,
         help="How long to track after announcement",
+        key="window_minutes",
     )
 
     # Save config when values change
