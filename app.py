@@ -122,21 +122,21 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
     if new_announcements:
         # Add new announcements to existing ones (dedup by ticker+timestamp)
         existing_keys = {(a.ticker, a.timestamp) for a in st.session_state.announcements}
-        added_count = 0
+        actually_added = []
         for ann in new_announcements:
             key = (ann.ticker, ann.timestamp)
             if key not in existing_keys:
                 st.session_state.announcements.append(ann)
                 existing_keys.add(key)
-                added_count += 1
+                actually_added.append(ann)
 
-        if added_count > 0:
-            # Fetch OHLCV data for new announcements
+        if actually_added:
+            # Fetch OHLCV data for newly added announcements only
             client = MassiveClient()
 
-            # Filter to only announcements that need fetching
+            # Filter to only announcements that need fetching (not already cached)
             to_fetch = [
-                ann for ann in new_announcements
+                ann for ann in actually_added
                 if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
             ]
 
