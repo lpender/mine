@@ -112,10 +112,12 @@ class MassiveClient:
 
         url = f"{self.BASE_URL}/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{start_ms}/{end_ms}"
         params = {
-            "apiKey": self.api_key,
             "adjusted": "true",
             "sort": "asc",
             "limit": 50000,
+        }
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
         }
 
         max_retries = 3
@@ -124,7 +126,7 @@ class MassiveClient:
         for attempt in range(max_retries):
             try:
                 self._last_request_time = time.time()
-                response = requests.get(url, params=params, timeout=30)
+                response = requests.get(url, params=params, headers=headers, timeout=30)
 
                 # Handle rate limiting with retry
                 if response.status_code == 429:
