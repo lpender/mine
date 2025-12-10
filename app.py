@@ -53,10 +53,10 @@ if "results" not in st.session_state:
     st.session_state.results = []
 if "selected_row_idx" not in st.session_state:
     st.session_state.selected_row_idx = None
-if "sort_select" not in st.session_state:
-    st.session_state.sort_select = "Time (EST)"
-if "sort_asc" not in st.session_state:
-    st.session_state.sort_asc = False
+if "sort_selectbox" not in st.session_state:
+    st.session_state.sort_selectbox = "Time (EST)"
+if "sort_checkbox" not in st.session_state:
+    st.session_state.sort_checkbox = False
 if "initialized" not in st.session_state:
     st.session_state.initialized = False
 if "last_messages_input" not in st.session_state:
@@ -277,24 +277,20 @@ if st.session_state.announcements:
     # Announcements table
     st.header("Announcements")
 
-    # Sort controls - use session state directly for persistence
+    # Sort controls - widget keys match session state keys for automatic persistence
     sort_options = ["Time (EST)", "Ticker", "Return", "Status"]
     sort_col1, sort_col2 = st.columns([3, 1])
     with sort_col1:
-        current_sort_idx = sort_options.index(st.session_state.sort_select) if st.session_state.sort_select in sort_options else 0
-        new_sort = st.selectbox(
+        sort_column = st.selectbox(
             "Sort by",
             sort_options,
-            index=current_sort_idx,
+            key="sort_selectbox",
         )
-        if new_sort != st.session_state.sort_select:
-            st.session_state.sort_select = new_sort
-        sort_column = st.session_state.sort_select
     with sort_col2:
-        new_asc = st.checkbox("Ascending", value=st.session_state.sort_asc)
-        if new_asc != st.session_state.sort_asc:
-            st.session_state.sort_asc = new_asc
-        sort_ascending = st.session_state.sort_asc
+        sort_ascending = st.checkbox(
+            "Ascending",
+            key="sort_checkbox",
+        )
 
     # Build table data with original index preserved
     table_data = []
