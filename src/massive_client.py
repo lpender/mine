@@ -115,9 +115,7 @@ class MassiveClient:
             "adjusted": "true",
             "sort": "asc",
             "limit": 50000,
-        }
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "apiKey": self.api_key,
         }
 
         max_retries = 3
@@ -126,23 +124,36 @@ class MassiveClient:
         for attempt in range(max_retries):
             try:
                 self._last_request_time = time.time()
-                response = requests.get(url, params=params, headers=headers, timeout=30)
+                response = requests.get(url, params=params, timeout=30)
+
+                # Build full URL for debugging
+                full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
 
                 # Handle rate limiting with retry
                 if response.status_code == 429:
                     if attempt < max_retries - 1:
                         wait_time = retry_delay * (2 ** attempt)  # exponential backoff
                         print(f"Rate limited for {ticker}, waiting {wait_time}s...")
+                        print(f"  URL: {full_url}")
                         time.sleep(wait_time)
                         continue
                     else:
                         print(f"Rate limit exceeded for {ticker} after {max_retries} retries")
+                        print(f"  URL: {full_url}")
                         return []
+
+                if response.status_code != 200:
+                    print(f"Error fetching OHLCV for {ticker}: {response.status_code} {response.reason}")
+                    print(f"  URL: {full_url}")
+                    print(f"  Response: {response.text[:500]}")
+                    return []
 
                 response.raise_for_status()
                 data = response.json()
 
                 if data.get("status") != "OK" or "results" not in data:
+                    print(f"No data for {ticker}: status={data.get('status')}, results_count={data.get('resultsCount', 0)}")
+                    print(f"  URL: {full_url}")
                     return []
 
                 bars = []
@@ -164,12 +175,15 @@ class MassiveClient:
                 return bars
 
             except requests.RequestException as e:
+                full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
                 if attempt < max_retries - 1 and "429" in str(e):
                     wait_time = retry_delay * (2 ** attempt)
                     print(f"Rate limited for {ticker}, waiting {wait_time}s...")
+                    print(f"  URL: {full_url}")
                     time.sleep(wait_time)
                     continue
                 print(f"Error fetching OHLCV for {ticker}: {e}")
+                print(f"  URL: {full_url}")
                 return []
 
         return []
