@@ -1,11 +1,12 @@
+import json
 import os
 import time
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Optional
-from .models import OHLCVBar
+from typing import List, Optional, Tuple
+from .models import OHLCVBar, Announcement
 
 
 class MassiveClient:
@@ -190,6 +191,91 @@ class MassiveClient:
         """
         end_time = announcement_time + timedelta(minutes=window_minutes)
         return self.fetch_ohlcv(ticker, announcement_time, end_time)
+
+    def _get_announcements_path(self) -> Path:
+        """Get path to the announcements JSON file."""
+        return self.cache_dir / "announcements.json"
+
+    def save_announcements(self, announcements: List[Announcement]):
+        """Save announcements to a JSON file, merging with existing data."""
+        existing = self.load_announcements()
+
+        # Create a set of existing keys for deduplication
+        existing_keys = {(a.ticker, a.timestamp.isoformat()) for a in existing}
+
+        # Add new announcements
+        for ann in announcements:
+            key = (ann.ticker, ann.timestamp.isoformat())
+            if key not in existing_keys:
+                existing.append(ann)
+                existing_keys.add(key)
+
+        # Save to file
+        data = []
+        for ann in existing:
+            data.append({
+                'ticker': ann.ticker,
+                'timestamp': ann.timestamp.isoformat(),
+                'price_threshold': ann.price_threshold,
+                'headline': ann.headline,
+                'country': ann.country,
+                'float_shares': ann.float_shares,
+                'io_percent': ann.io_percent,
+                'market_cap': ann.market_cap,
+                'reg_sho': ann.reg_sho,
+                'high_ctb': ann.high_ctb,
+                'short_interest': ann.short_interest,
+            })
+
+        with open(self._get_announcements_path(), 'w') as f:
+            json.dump(data, f, indent=2)
+
+    def load_announcements(self) -> List[Announcement]:
+        """Load all saved announcements from the JSON file."""
+        path = self._get_announcements_path()
+        if not path.exists():
+            return []
+
+        try:
+            with open(path, 'r') as f:
+                data = json.load(f)
+
+            announcements = []
+            for item in data:
+                announcements.append(Announcement(
+                    ticker=item['ticker'],
+                    timestamp=datetime.fromisoformat(item['timestamp']),
+                    price_threshold=item['price_threshold'],
+                    headline=item.get('headline', ''),
+                    country=item.get('country', 'UNKNOWN'),
+                    float_shares=item.get('float_shares'),
+                    io_percent=item.get('io_percent'),
+                    market_cap=item.get('market_cap'),
+                    reg_sho=item.get('reg_sho', False),
+                    high_ctb=item.get('high_ctb', False),
+                    short_interest=item.get('short_interest'),
+                ))
+            return announcements
+        except Exception:
+            return []
+
+    def load_all_cached_data(self) -> Tuple[List[Announcement], dict]:
+        """
+        Load all cached announcements and their OHLCV data.
+
+        Returns:
+            Tuple of (announcements, bars_by_announcement)
+        """
+        announcements = self.load_announcements()
+        bars_by_announcement = {}
+
+        for ann in announcements:
+            key = (ann.ticker, ann.timestamp)
+            bars = self._load_from_cache(ann.ticker, ann.timestamp, ann.timestamp + timedelta(minutes=60))
+            if bars:
+                bars_by_announcement[key] = bars
+
+        return announcements, bars_by_announcement
 
 
 def create_client(api_key: Optional[str] = None, cache_dir: str = "data/ohlcv") -> MassiveClient:

@@ -110,6 +110,21 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
     )
 
 
+# Load cached data button (always visible)
+col_load1, col_load2 = st.columns([1, 4])
+with col_load1:
+    if st.button("Load All Cached Data"):
+        client = MassiveClient()
+        cached_announcements, cached_bars = client.load_all_cached_data()
+        if cached_announcements:
+            st.session_state.announcements = cached_announcements
+            st.session_state.bars_by_announcement = cached_bars
+            st.session_state.results = []
+            st.success(f"Loaded {len(cached_announcements)} announcements from cache")
+            st.rerun()
+        else:
+            st.warning("No cached data found")
+
 # Main area
 if st.session_state.announcements:
     announcements = st.session_state.announcements
@@ -132,7 +147,9 @@ if st.session_state.announcements:
                     st.session_state.bars_by_announcement[key] = bars
                 progress_bar.progress((i + 1) / len(announcements))
 
-            st.success("OHLCV data fetched!")
+            # Save announcements to cache for future use
+            client.save_announcements(announcements)
+            st.success("OHLCV data fetched and saved!")
 
     # Run backtest
     config = BacktestConfig(

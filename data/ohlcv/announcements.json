@@ -1,0 +1,28 @@
+[
+  {
+    "ticker": "BNKK",
+    "timestamp": "2025-12-09T07:00:00",
+    "price_threshold": 0.5,
+    "headline": "Bonk, Inc. Provides 2026 Guidance...",
+    "country": "US",
+    "float_shares": 139000000.0,
+    "io_percent": 6.04,
+    "market_cap": 26800000.0,
+    "reg_sho": false,
+    "high_ctb": false,
+    "short_interest": null
+  },
+  {
+    "ticker": "CRML",
+    "timestamp": "2025-12-09T07:00:00",
+    "price_threshold": 10.0,
+    "headline": "Test headline",
+    "country": "US",
+    "float_shares": 35100000.0,
+    "io_percent": 29.49,
+    "market_cap": 116000000.0,
+    "reg_sho": false,
+    "high_ctb": false,
+    "short_interest": null
+  }
+]
