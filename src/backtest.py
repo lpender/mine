@@ -49,19 +49,53 @@ def run_single_backtest(
     entry_time = None
     entry_bar_idx = None
 
-    # Phase 1: Look for entry trigger
+    # Calculate trigger price (price must reach this level)
+    trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
+
+    # Track cumulative volume and when price trigger was first hit
+    cumulative_volume = 0
+    price_triggered = False
+    price_trigger_bar_idx = None
+
+    # Phase 1: Look for entry trigger (both price AND cumulative volume must be met)
     for i, bar in enumerate(bars):
         # Check if price moved up enough to trigger entry
         price_change_pct = ((bar.high - reference_price) / reference_price) * 100
 
         if price_change_pct >= config.entry_trigger_pct:
-            # Check volume threshold
-            if bar.volume >= config.volume_threshold:
-                # Entry triggered - use the trigger price (reference + entry%)
-                entry_price = reference_price * (1 + config.entry_trigger_pct / 100)
-                entry_time = bar.timestamp
-                entry_bar_idx = i
-                break
+            if not price_triggered:
+                price_triggered = True
+                price_trigger_bar_idx = i
+
+        # Add this bar's volume to cumulative total
+        prev_cumulative = cumulative_volume
+        cumulative_volume += bar.volume
+
+        # Check if we can enter: price must have triggered AND cumulative volume met
+        if price_triggered and cumulative_volume >= config.volume_threshold:
+            entry_time = bar.timestamp
+            entry_bar_idx = i
+
+            # Calculate entry price based on when volume threshold was met within this bar
+            if config.volume_threshold == 0 or prev_cumulative >= config.volume_threshold:
+                # Volume was already met before this bar, or no volume requirement
+                # Use the trigger price
+                entry_price = trigger_price
+            else:
+                # Volume threshold is met partway through this bar
+                # Calculate what fraction of this bar's volume we needed
+                volume_needed = config.volume_threshold - prev_cumulative
+                volume_fraction = volume_needed / bar.volume if bar.volume > 0 else 0
+
+                # If we have a price trigger, use the trigger price
+                # Otherwise, interpolate price based on volume fraction
+                if config.entry_trigger_pct > 0:
+                    entry_price = trigger_price
+                else:
+                    # Interpolate: entry price is volume_fraction between low and high
+                    entry_price = bar.low + (bar.high - bar.low) * volume_fraction
+
+            break
 
     # No entry triggered
     if entry_price is None:
