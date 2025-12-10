@@ -120,13 +120,14 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         help="Sell when price moves down by this percentage from entry",
     )
 
-    volume_threshold = st.number_input(
-        "Min Volume Threshold",
+    volume_threshold = st.slider(
+        "Min Volume Threshold (k)",
         min_value=0,
-        value=saved_config.get("volume_threshold", 0),
-        step=1000,
-        help="Minimum volume required to trigger entry",
-    )
+        max_value=500,
+        value=saved_config.get("volume_threshold", 0) // 1000,
+        step=10,
+        help="Minimum volume (in thousands) required to trigger entry",
+    ) * 1000  # Convert back to actual volume
 
     window_minutes = st.slider(
         "Window (minutes)",
