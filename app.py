@@ -51,8 +51,8 @@ if "bars_by_announcement" not in st.session_state:
     st.session_state.bars_by_announcement = {}  # keyed by (ticker, timestamp)
 if "results" not in st.session_state:
     st.session_state.results = []
-if "selected_ticker" not in st.session_state:
-    st.session_state.selected_ticker = None
+if "selected_row_idx" not in st.session_state:
+    st.session_state.selected_row_idx = None
 if "initialized" not in st.session_state:
     st.session_state.initialized = False
 if "last_messages_input" not in st.session_state:
@@ -289,9 +289,13 @@ if st.session_state.announcements:
         selection_mode="single-row",
     )
 
-    # Chart for selected announcement
+    # Update stored selection when user clicks a row
     if selected_idx and selected_idx.selection.rows:
-        idx = selected_idx.selection.rows[0]
+        st.session_state.selected_row_idx = selected_idx.selection.rows[0]
+
+    # Chart for selected announcement (use stored index so it persists across slider changes)
+    if st.session_state.selected_row_idx is not None and st.session_state.selected_row_idx < len(announcements):
+        idx = st.session_state.selected_row_idx
         selected_ann = announcements[idx]
         key = (selected_ann.ticker, selected_ann.timestamp)
         bars = st.session_state.bars_by_announcement.get(key, [])
