@@ -5,10 +5,32 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 from dotenv import load_dotenv
 
+import json
+from pathlib import Path
+
 from src.parser import parse_discord_messages
 from src.massive_client import MassiveClient
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig, Announcement, OHLCVBar
+
+# Config file for persisting settings
+CONFIG_PATH = Path("data/config.json")
+
+def load_config():
+    """Load saved configuration from disk."""
+    if CONFIG_PATH.exists():
+        try:
+            with open(CONFIG_PATH) as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+def save_config(config: dict):
+    """Save configuration to disk."""
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(CONFIG_PATH, 'w') as f:
+        json.dump(config, f, indent=2)
 
 # Load environment variables
 load_dotenv()
@@ -35,6 +57,9 @@ if "initialized" not in st.session_state:
     st.session_state.initialized = False
 if "last_messages_input" not in st.session_state:
     st.session_state.last_messages_input = ""
+
+# Load saved config defaults
+saved_config = load_config()
 
 # Auto-load cached data on first run
 if not st.session_state.initialized:
@@ -72,7 +97,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "Entry Trigger (%)",
         min_value=0.0,
         max_value=20.0,
-        value=5.0,
+        value=saved_config.get("entry_trigger", 5.0),
         step=0.5,
         help="Buy when price moves up by this percentage from open",
     )
@@ -81,7 +106,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "Take Profit (%)",
         min_value=1.0,
         max_value=50.0,
-        value=10.0,
+        value=saved_config.get("take_profit", 10.0),
         step=0.5,
         help="Sell when price moves up by this percentage from entry",
     )
@@ -90,7 +115,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "Stop Loss (%)",
         min_value=1.0,
         max_value=20.0,
-        value=3.0,
+        value=saved_config.get("stop_loss", 3.0),
         step=0.5,
         help="Sell when price moves down by this percentage from entry",
     )
@@ -98,7 +123,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
     volume_threshold = st.number_input(
         "Min Volume Threshold",
         min_value=0,
-        value=0,
+        value=saved_config.get("volume_threshold", 0),
         step=1000,
         help="Minimum volume required to trigger entry",
     )
@@ -107,10 +132,21 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "Window (minutes)",
         min_value=5,
         max_value=120,
-        value=30,
+        value=saved_config.get("window_minutes", 30),
         step=5,
         help="How long to track after announcement",
     )
+
+    # Save config when values change
+    current_config = {
+        "entry_trigger": entry_trigger,
+        "take_profit": take_profit,
+        "stop_loss": stop_loss,
+        "volume_threshold": volume_threshold,
+        "window_minutes": window_minutes,
+    }
+    if current_config != saved_config:
+        save_config(current_config)
 
 
 # Auto-parse when text input changes

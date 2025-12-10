@@ -26,45 +26,6 @@
     "short_interest": null
   },
   {
-    "ticker": "MSGM",
-    "timestamp": "2025-12-10T00:00:00",
-    "price_threshold": 3.0,
-    "headline": "Le Mans Ultimate Releases Version 1.2 Update, Introducing Paul Ricard Racing Circuit, Ginetta LMP3 Race Car, Alongside Physics Overhaul, Online Competition Refinement and Team Online Championships",
-    "country": "US",
-    "float_shares": 2200000.0,
-    "io_percent": 4.47,
-    "market_cap": 15400000.0,
-    "reg_sho": false,
-    "high_ctb": true,
-    "short_interest": null
-  },
-  {
-    "ticker": "AHT",
-    "timestamp": "2025-12-10T00:00:00",
-    "price_threshold": 4.0,
-    "headline": "ASHFORD HOSPITALITY TRUST ANNOUNCES REVIEW OF STRATEGIC ALTERNATIVES",
-    "country": "US",
-    "float_shares": 6300000.0,
-    "io_percent": 20.16,
-    "market_cap": 20400000.0,
-    "reg_sho": false,
-    "high_ctb": false,
-    "short_interest": null
-  },
-  {
-    "ticker": "ALEX",
-    "timestamp": "2025-12-10T00:00:00",
-    "price_threshold": 21.0,
-    "headline": "Alexander & Baldwin to be Taken Private in $2.3 Billion Transaction",
-    "country": "US",
-    "float_shares": 72000000.0,
-    "io_percent": 86.43,
-    "market_cap": 1100000000.0,
-    "reg_sho": false,
-    "high_ctb": false,
-    "short_interest": null
-  },
-  {
     "ticker": "SNTI",
     "timestamp": "2025-12-09T07:00:00",
     "price_threshold": 3.0,
