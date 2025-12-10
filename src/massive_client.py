@@ -110,6 +110,9 @@ class MassiveClient:
         start_ms = int(start.timestamp() * 1000)
         end_ms = int(end.timestamp() * 1000)
 
+        # Log the request with human-readable times
+        print(f"Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
+
         url = f"{self.BASE_URL}/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{start_ms}/{end_ms}"
         params = {
             "adjusted": "true",
