@@ -253,7 +253,7 @@ if st.session_state.announcements:
 
         row = {
             "Ticker": ann.ticker,
-            "Time": ann.timestamp.strftime("%Y-%m-%d %H:%M"),
+            "Time (EST)": ann.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "Price": f"${ann.price_threshold:.2f}" if ann.price_threshold else "N/A",
             "Float": f"{ann.float_shares/1e6:.1f}M" if ann.float_shares else "N/A",
             "IO%": f"{ann.io_percent:.1f}%" if ann.io_percent else "N/A",
