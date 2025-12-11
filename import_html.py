@@ -5,10 +5,16 @@ Import Discord HTML file and fetch OHLCV data.
 Usage:
     python import_html.py <html_file> --channel <name> [--include-today] [--window MINUTES]
 
+Session filtering (for OHLCV fetch only - all announcements are always saved):
+    --extended        Only fetch OHLCV for premarket + postmarket (default)
+    --premarket       Only fetch OHLCV for premarket
+    --postmarket      Only fetch OHLCV for postmarket
+    --all-sessions    Fetch OHLCV for all sessions (including closed hours)
+
 Examples:
     python import_html.py discord_messages.html --channel select-news
     python import_html.py discord_messages.html -c pr-spike --include-today
-    python import_html.py discord_messages.html -c select-news --window 60
+    python import_html.py discord_messages.html -c select-news --all-sessions
 """
 
 import argparse
@@ -32,6 +38,14 @@ def main():
                         help="OHLCV window in minutes (default: 120)")
     parser.add_argument("--channel", "-c", type=str, required=True,
                         help="Channel name to tag announcements with (e.g., select-news)")
+    parser.add_argument("--extended", action="store_true",
+                        help="Only fetch OHLCV for extended hours (premarket + postmarket) - this is the default")
+    parser.add_argument("--premarket", action="store_true",
+                        help="Only fetch OHLCV for premarket announcements")
+    parser.add_argument("--postmarket", action="store_true",
+                        help="Only fetch OHLCV for postmarket announcements")
+    parser.add_argument("--all-sessions", action="store_true",
+                        help="Fetch OHLCV for all sessions (including market hours and closed)")
     args = parser.parse_args()
 
     html_path = Path(args.html_file)
@@ -107,9 +121,29 @@ def main():
     client.save_announcements(all_announcements)
     print(f"Saved {len(all_announcements)} total announcements to cache")
 
-    # Check which announcements need OHLCV data (no cached parquet file)
+    # Determine which sessions to fetch OHLCV for
+    # Default: extended hours only (premarket + postmarket)
+    if args.all_sessions:
+        ohlcv_sessions = None  # None means all sessions
+    elif args.premarket and args.postmarket:
+        ohlcv_sessions = ["premarket", "postmarket"]
+    elif args.premarket:
+        ohlcv_sessions = ["premarket"]
+    elif args.postmarket:
+        ohlcv_sessions = ["postmarket"]
+    else:
+        # Default: extended hours (premarket + postmarket)
+        ohlcv_sessions = ["premarket", "postmarket"]
+
+    # Check which announcements need OHLCV data (no cached parquet file + matching session)
     announcements_needing_ohlcv = []
+    skipped_by_session = 0
     for ann in announcements:
+        # Filter by session if specified
+        if ohlcv_sessions and ann.market_session not in ohlcv_sessions:
+            skipped_by_session += 1
+            continue
+
         cache_path = client._get_cache_path(
             ann.ticker,
             ann.timestamp,
@@ -117,6 +151,10 @@ def main():
         )
         if not cache_path.exists():
             announcements_needing_ohlcv.append(ann)
+
+    if skipped_by_session > 0:
+        session_desc = ", ".join(ohlcv_sessions) if ohlcv_sessions else "all"
+        print(f"Skipped {skipped_by_session} announcements outside {session_desc} sessions")
 
     if not announcements_needing_ohlcv:
         print(f"\nAll OHLCV data already cached.")
