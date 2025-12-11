@@ -278,6 +278,170 @@ class TestParseDiscordHtml:
         assert announcements[0].timestamp.minute == 28
 
 
+class TestRealHtmlParsing:
+    """Test parsing real messages from the pr-spike HTML file."""
+
+    @pytest.fixture
+    def html_content(self):
+        """Load the real HTML file."""
+        from pathlib import Path
+        html_path = Path(__file__).parent.parent / "pr-spike-2025-11-13T13-00-05.921Z--2025-11-25T21-00-36.858Z.html"
+        if not html_path.exists():
+            pytest.skip("HTML test file not found")
+        return html_path.read_text()
+
+    def test_vcig_with_reg_sho_and_high_ctb(self, html_content):
+        """Test VCIG message with Reg SHO and High CTB flags."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, stats = parse_discord_html_with_stats(html_content, cutoff)
+
+        vcig = next((a for a in announcements if a.ticker == "VCIG"), None)
+        assert vcig is not None
+        assert vcig.price_threshold == 2.0
+        assert vcig.country == "MY"
+        assert vcig.float_shares == 6_400_000.0
+        assert vcig.io_percent == 0.03
+        assert vcig.market_cap == 9_800_000.0
+        assert vcig.reg_sho is True
+        assert vcig.high_ctb is True
+        # Timestamp should be 2025-11-13T13:00:05.921Z (UTC)
+        assert vcig.timestamp.year == 2025
+        assert vcig.timestamp.month == 11
+        assert vcig.timestamp.day == 13
+
+    def test_gfai_singapore(self, html_content):
+        """Test GFAI message from Singapore."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        gfai = next((a for a in announcements if a.ticker == "GFAI"), None)
+        assert gfai is not None
+        assert gfai.price_threshold == 1.0
+        assert gfai.country == "SG"
+        assert gfai.float_shares == 18_700_000.0
+        assert gfai.io_percent == 2.16
+        assert gfai.market_cap == 18_700_000.0
+
+    def test_rvyl_50_cent_price(self, html_content):
+        """Test RVYL with $.50c price format."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        rvyl = next((a for a in announcements if a.ticker == "RVYL"), None)
+        assert rvyl is not None
+        assert rvyl.price_threshold == 0.50
+        assert rvyl.country == "US"
+        assert rvyl.float_shares == 22_200_000.0
+        assert rvyl.io_percent == 5.85
+        assert rvyl.market_cap == 9_900_000.0
+
+    def test_thar_headline_extraction(self, html_content):
+        """Test THAR message headline extraction."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        thar = next((a for a in announcements if a.ticker == "THAR"), None)
+        assert thar is not None
+        assert thar.price_threshold == 4.0
+        assert "FDA" in thar.headline or "Feedback" in thar.headline
+        assert thar.float_shares == 6_400_000.0
+        assert thar.io_percent == 10.83
+        assert thar.market_cap == 112_000_000.0
+
+    def test_rime_small_float(self, html_content):
+        """Test RIME with small float."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        rime = next((a for a in announcements if a.ticker == "RIME"), None)
+        assert rime is not None
+        assert rime.price_threshold == 3.0
+        assert rime.country == "US"
+        assert rime.float_shares == 2_300_000.0
+        assert rime.io_percent == 4.19
+        assert rime.market_cap == 6_400_000.0
+
+    def test_chai_canada(self, html_content):
+        """Test CHAI message from Canada."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        chai = next((a for a in announcements if a.ticker == "CHAI"), None)
+        assert chai is not None
+        assert chai.price_threshold == 4.0
+        assert chai.country == "CA"
+        assert chai.float_shares == 19_900_000.0
+        assert chai.io_percent == 0.14
+        assert chai.market_cap == 71_200_000.0
+
+    def test_otlk_fda_announcement(self, html_content):
+        """Test OTLK FDA announcement."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        otlk = next((a for a in announcements if a.ticker == "OTLK"), None)
+        assert otlk is not None
+        assert otlk.price_threshold == 2.0
+        assert otlk.country == "US"
+        assert otlk.float_shares == 29_100_000.0
+        assert otlk.io_percent == 13.80
+        assert otlk.market_cap == 54_600_000.0
+
+    def test_upxi_with_short_interest(self, html_content):
+        """Test UPXI message with short interest."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        upxi = next((a for a in announcements if a.ticker == "UPXI"), None)
+        assert upxi is not None
+        assert upxi.price_threshold == 4.0
+        assert upxi.country == "US"
+        assert upxi.float_shares == 52_300_000.0
+        assert upxi.io_percent == 11.80
+        assert upxi.market_cap == 199_000_000.0
+        assert upxi.short_interest == 20.8
+
+    def test_soar_earnings(self, html_content):
+        """Test SOAR earnings announcement."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        soar = next((a for a in announcements if a.ticker == "SOAR"), None)
+        assert soar is not None
+        assert soar.price_threshold == 2.0
+        assert soar.country == "US"
+        assert soar.float_shares == 6_800_000.0
+        assert soar.io_percent == 0.41
+        assert soar.market_cap == 10_600_000.0
+
+    def test_tivc_small_market_cap(self, html_content):
+        """Test TIVC with small market cap."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        tivc = next((a for a in announcements if a.ticker == "TIVC"), None)
+        assert tivc is not None
+        assert tivc.price_threshold == 3.0
+        assert tivc.country == "US"
+        assert tivc.float_shares == 1_600_000.0
+        assert tivc.io_percent == 5.69
+        assert tivc.market_cap == 3_800_000.0
+
+    def test_ento_with_high_ctb(self, html_content):
+        """Test ENTO message with High CTB flag."""
+        cutoff = datetime(2025, 12, 31, 0, 0, 0)
+        announcements, _ = parse_discord_html_with_stats(html_content, cutoff)
+
+        ento = next((a for a in announcements if a.ticker == "ENTO"), None)
+        assert ento is not None
+        assert ento.price_threshold == 5.0
+        assert ento.country == "US"
+        assert ento.float_shares == 1_500_000.0
+        assert ento.io_percent == 3.82
+        assert ento.market_cap == 6_100_000.0
+        assert ento.high_ctb is True
+
+
 class TestMarketSession:
     """Test market session detection from timestamps."""
 

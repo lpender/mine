@@ -128,6 +128,9 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     if not line:
         return None
 
+    # Normalize whitespace (HTML parsing can leave newlines in text)
+    line = ' '.join(line.split())
+
     # Extract ticker - look for uppercase letters followed by < $
     # This handles both old format (ticker at start) and new format (timestamp ↗ TICKER < $)
     ticker_match = re.search(r'\b([A-Z]{2,5})\s*<\s*\$', line)
