@@ -216,22 +216,20 @@ class MassiveClient:
         return self.cache_dir / "announcements.json"
 
     def save_announcements(self, announcements: List[Announcement]):
-        """Save announcements to a JSON file, merging with existing data."""
+        """Save announcements to a JSON file, merging with existing data (clobbers duplicates)."""
         existing = self.load_announcements()
 
-        # Create a set of existing keys for deduplication
-        existing_keys = {(a.ticker, a.timestamp.isoformat()) for a in existing}
+        # Use dict keyed by (ticker, timestamp) to allow updates/clobber
+        by_key = {(a.ticker, a.timestamp.isoformat()): a for a in existing}
 
-        # Add new announcements
+        # Merge: new announcements clobber existing ones with same key
         for ann in announcements:
             key = (ann.ticker, ann.timestamp.isoformat())
-            if key not in existing_keys:
-                existing.append(ann)
-                existing_keys.add(key)
+            by_key[key] = ann
 
         # Save to file
         data = []
-        for ann in existing:
+        for ann in by_key.values():
             data.append({
                 'ticker': ann.ticker,
                 'timestamp': ann.timestamp.isoformat(),
