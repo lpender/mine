@@ -270,6 +270,17 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
         else:
             st.sidebar.success(f"Parsed {parse_stats['parsed']} announcements ({parse_stats['filtered_by_cutoff']} from today excluded)")
 
+            # Debug: show first few parsed messages raw text
+            with st.sidebar.expander("Debug: Parsed Text"):
+                from bs4 import BeautifulSoup
+                soup = BeautifulSoup(messages_input, 'html.parser')
+                msgs = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
+                for msg in msgs[:3]:  # Show first 3 messages
+                    content_div = msg.find('div', id=lambda x: x and x.startswith('message-content-'))
+                    if content_div:
+                        text = content_div.get_text(separator=' ', strip=True)
+                        st.code(text[:300], language=None)
+
     if new_announcements:
         # Add new announcements to existing ones (dedup by ticker+timestamp)
         existing_keys = {(a.ticker, a.timestamp) for a in st.session_state.announcements}
@@ -450,8 +461,10 @@ if st.session_state.announcements:
             "Session": ann.market_session.capitalize(),
             "Price": f"${ann.price_threshold:.2f}" if ann.price_threshold else "N/A",
             "Float": f"{ann.float_shares/1e6:.1f}M" if ann.float_shares else "N/A",
-            "IO%": f"{ann.io_percent:.1f}%" if ann.io_percent else "N/A",
+            "IO%": f"{ann.io_percent:.1f}%" if ann.io_percent is not None else "N/A",
             "MC": f"${ann.market_cap/1e6:.1f}M" if ann.market_cap else "N/A",
+            "SI%": f"{ann.short_interest:.1f}%" if ann.short_interest is not None else "N/A",
+            "CTB": "High" if ann.high_ctb else "-",
             "Country": ann.country,
             "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else "N/A",
             "_return_numeric": return_val,  # Hidden column for sorting
