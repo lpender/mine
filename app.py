@@ -246,6 +246,7 @@ if st.session_state.announcements:
         stop_loss_pct=stop_loss,
         volume_threshold=volume_threshold,
         window_minutes=window_minutes,
+        entry_at_candle_close=entry_at_candle_close,
     )
 
     if st.session_state.bars_by_announcement:
