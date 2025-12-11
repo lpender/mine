@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import json
 from pathlib import Path
 
-from src.parser import parse_discord_messages
+from src.parser import parse_auto
 from src.massive_client import MassiveClient
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig, Announcement, OHLCVBar
@@ -80,13 +80,20 @@ if not st.session_state.initialized:
 with st.sidebar:
     st.header("Message Input")
 
+    with st.expander("📋 How to copy Discord messages", expanded=False):
+        st.markdown("""
+**For millisecond-precision timestamps (recommended):**
+1. Open Discord in browser (F12 → Console)
+2. Run: `copy(document.querySelector('[class*="messagesWrapper"]').outerHTML)`
+3. Paste the HTML below
+
+**Or simply copy/paste text** from Discord (less precise timestamps)
+        """)
+
     messages_input = st.text_area(
-        "Paste Discord messages here:",
+        "Paste Discord messages or HTML:",
         height=200,
-        placeholder="""PR - Spike
-APP
- — 8:00 AM
-BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  Float: 139 M  |  IO: 6.04%  |  MC: 26.8 M""",
+        placeholder="""Paste HTML from Discord (recommended) or plain text messages...""",
     )
 
     reference_date = st.date_input(
@@ -244,7 +251,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
 if messages_input.strip() and messages_input != st.session_state.last_messages_input:
     st.session_state.last_messages_input = messages_input
     ref_datetime = datetime.combine(reference_date, datetime.min.time())
-    new_announcements = parse_discord_messages(messages_input, ref_datetime)
+    new_announcements = parse_auto(messages_input, ref_datetime)
 
     if new_announcements:
         # Add new announcements to existing ones (dedup by ticker+timestamp)
