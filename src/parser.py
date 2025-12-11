@@ -1,8 +1,11 @@
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
+from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from .models import Announcement
+
+ET_TZ = ZoneInfo("America/New_York")
 
 
 def parse_value_with_suffix(value_str: str) -> Optional[float]:
@@ -274,15 +277,28 @@ def parse_iso_timestamp(iso_str: str) -> datetime:
         return datetime.now()
 
 
-def parse_discord_html(html: str) -> List[Announcement]:
+def parse_discord_html(html: str, cutoff_date: Optional[datetime] = None) -> List[Announcement]:
     """
     Parse Discord HTML export with millisecond-precision timestamps.
 
     Extracts timestamps from <time datetime="2025-12-10T12:00:08.445Z">
     and message content from <div id="message-content-...">
+
+    Args:
+        html: Discord HTML content
+        cutoff_date: Only include messages before this datetime (UTC).
+                    Defaults to start of today in Eastern time (excludes today's messages).
     """
     soup = BeautifulSoup(html, 'html.parser')
     announcements = []
+
+    # Default cutoff: start of today in Eastern time - exclude today's messages
+    if cutoff_date is None:
+        # Get current time in ET, then get midnight ET, then convert to UTC (naive)
+        now_et = datetime.now(ET_TZ)
+        midnight_et = now_et.replace(hour=0, minute=0, second=0, microsecond=0)
+        # Convert to UTC and make naive (Discord timestamps are UTC)
+        cutoff_date = midnight_et.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
     # Find all message list items
     messages = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
@@ -294,6 +310,10 @@ def parse_discord_html(html: str) -> List[Announcement]:
             continue
 
         timestamp = parse_iso_timestamp(time_elem['datetime'])
+
+        # Skip messages from today or after cutoff
+        if timestamp >= cutoff_date:
+            continue
 
         # Extract message content
         content_div = msg.find('div', id=lambda x: x and x.startswith('message-content-'))
