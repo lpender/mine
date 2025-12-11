@@ -108,6 +108,8 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         st.session_state.volume_threshold_k = saved_config.get("volume_threshold", 0) // 1000
     if "window_minutes" not in st.session_state:
         st.session_state.window_minutes = saved_config.get("window_minutes", 120)
+    if "entry_at_candle_close" not in st.session_state:
+        st.session_state.entry_at_candle_close = saved_config.get("entry_at_candle_close", False)
 
     entry_trigger = st.slider(
         "Entry Trigger (%)",
@@ -154,6 +156,12 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         key="window_minutes",
     )
 
+    entry_at_candle_close = st.checkbox(
+        "Entry at candle close",
+        help="Enter at end of first candle instead of open (more realistic)",
+        key="entry_at_candle_close",
+    )
+
     # Save config when values change
     current_config = {
         "entry_trigger": entry_trigger,
@@ -161,6 +169,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "stop_loss": stop_loss,
         "volume_threshold": volume_threshold,
         "window_minutes": window_minutes,
+        "entry_at_candle_close": entry_at_candle_close,
     }
     if current_config != saved_config:
         save_config(current_config)

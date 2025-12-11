@@ -61,6 +61,7 @@ class BacktestConfig:
     stop_loss_pct: float = 3.0  # Sell when -X% from entry
     volume_threshold: int = 0  # Minimum volume to trigger entry
     window_minutes: int = 120  # How long to track after announcement
+    entry_at_candle_close: bool = False  # If True, enter at end of first candle (more realistic)
 
 
 @dataclass

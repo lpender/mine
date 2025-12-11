@@ -39,54 +39,65 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
-    # Reference price is the first bar's open
-    reference_price = bars[0].open
-    if reference_price <= 0:
-        result.trigger_type = "invalid_price"
-        return result
+    # Handle "entry at candle close" mode - assume we get in at end of first candle
+    if config.entry_at_candle_close:
+        # Enter at first candle's close (more realistic - takes time to see alert and execute)
+        entry_price = bars[0].close
+        entry_time = bars[0].timestamp
+        entry_bar_idx = 0
 
-    entry_price = None
-    entry_time = None
-    entry_bar_idx = None
+        if entry_price <= 0:
+            result.trigger_type = "invalid_price"
+            return result
+    else:
+        # Original logic: reference price is the first bar's open
+        reference_price = bars[0].open
+        if reference_price <= 0:
+            result.trigger_type = "invalid_price"
+            return result
 
-    # Calculate trigger price (price must reach this level)
-    trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
+        entry_price = None
+        entry_time = None
+        entry_bar_idx = None
 
-    # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
-    for i, bar in enumerate(bars):
-        # Check if price moved up enough to trigger entry (bar.high reaches trigger level)
-        price_change_pct = ((bar.high - reference_price) / reference_price) * 100
-        price_triggered = price_change_pct >= config.entry_trigger_pct
+        # Calculate trigger price (price must reach this level)
+        trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
 
-        # Check if this bar's volume meets the threshold (intra-candle, not cumulative)
-        volume_met = bar.volume >= config.volume_threshold
+        # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
+        for i, bar in enumerate(bars):
+            # Check if price moved up enough to trigger entry (bar.high reaches trigger level)
+            price_change_pct = ((bar.high - reference_price) / reference_price) * 100
+            price_triggered = price_change_pct >= config.entry_trigger_pct
 
-        # Enter when BOTH conditions are satisfied on this bar
-        if price_triggered and volume_met:
-            entry_time = bar.timestamp
-            entry_bar_idx = i
+            # Check if this bar's volume meets the threshold (intra-candle, not cumulative)
+            volume_met = bar.volume >= config.volume_threshold
 
-            # Calculate entry price: the LATER of the two trigger points
-            if config.volume_threshold > 0 and bar.volume > 0:
-                # Interpolate: entry when volume threshold is reached within the bar
-                volume_fraction = config.volume_threshold / bar.volume
-                volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
-            else:
-                volume_entry_price = bar.low
+            # Enter when BOTH conditions are satisfied on this bar
+            if price_triggered and volume_met:
+                entry_time = bar.timestamp
+                entry_bar_idx = i
 
-            if config.entry_trigger_pct > 0:
-                price_entry_price = trigger_price
-            else:
-                price_entry_price = bar.low
+                # Calculate entry price: the LATER of the two trigger points
+                if config.volume_threshold > 0 and bar.volume > 0:
+                    # Interpolate: entry when volume threshold is reached within the bar
+                    volume_fraction = config.volume_threshold / bar.volume
+                    volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
+                else:
+                    volume_entry_price = bar.low
 
-            # Entry price is the LATER of the two trigger points (higher price)
-            entry_price = max(volume_entry_price, price_entry_price)
-            break
+                if config.entry_trigger_pct > 0:
+                    price_entry_price = trigger_price
+                else:
+                    price_entry_price = bar.low
 
-    # No entry triggered
-    if entry_price is None:
-        result.trigger_type = "no_entry"
-        return result
+                # Entry price is the LATER of the two trigger points (higher price)
+                entry_price = max(volume_entry_price, price_entry_price)
+                break
+
+        # No entry triggered
+        if entry_price is None:
+            result.trigger_type = "no_entry"
+            return result
 
     result.entry_price = entry_price
     result.entry_time = entry_time

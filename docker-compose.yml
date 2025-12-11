@@ -27,12 +27,16 @@ services:
       - AUTO_RESTART_TIME=Saturday 06:00
       # Read-only API (set to 'no' to allow trading)
       - READ_ONLY_API=no
+      # VNC for viewing GUI dialogs
+      - VNC_SERVER_PASSWORD=demo
     ports:
       # API ports - connect your scripts here
       # Note: IB Gateway binds to localhost inside container, socat forwards 4004->4002
       - "4001:4001"  # Live trading API
       - "4002:4002"  # Paper trading API (direct - may not work)
       - "4004:4004"  # Paper trading via socat proxy (use this!)
+      - "5900:5900"  # VNC
+      - "6080:6080"  # noVNC (web browser)
     volumes:
       # Persist IB Gateway settings
       - ib-gateway-data:/home/ibgateway/Jts

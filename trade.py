@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Quick trade execution CLI for Interactive Brokers via Docker.
+Quick trade execution CLI for Interactive Brokers.
 
-Requires IB Gateway Docker container running (docker compose up -d).
+By default, connects to Docker IB Gateway. Use --gui for local TWS/Gateway.
 
 Usage:
     # Buy $100 of AAPL with 10% take-profit, 7% stop-loss (premarket supported!)
@@ -32,6 +32,9 @@ Usage:
     # Cancel all orders
     python trade.py cancel-all
 
+    # Use local TWS/Gateway (GUI) instead of Docker
+    python trade.py --gui buy AAPL
+
     # LIVE TRADING (use with caution!)
     python trade.py --live buy AAPL
 """
@@ -48,6 +51,7 @@ from src.ib_trader import IBTrader
 def main():
     parser = argparse.ArgumentParser(description="Quick trade execution via Interactive Brokers")
     parser.add_argument("--live", action="store_true", help="Use live trading (default: paper)")
+    parser.add_argument("--gui", action="store_true", help="Use local TWS/Gateway GUI instead of Docker")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -89,10 +93,12 @@ def main():
         return
 
     try:
-        # Always use Docker IB Gateway
-        trader = IBTrader(paper=not args.live, docker=True)
+        # Use Docker by default, --gui for local TWS/Gateway
+        use_docker = not args.gui
+        trader = IBTrader(paper=not args.live, docker=use_docker)
         mode = "LIVE" if args.live else "PAPER"
-        print(f"[{mode} TRADING - IB Gateway on port {trader.port}]\n")
+        source = "Local TWS/Gateway" if args.gui else "Docker IB Gateway"
+        print(f"[{mode} TRADING - {source} on port {trader.port}]\n")
 
         with trader:
             if args.command == "buy":
@@ -166,8 +172,11 @@ def main():
 
     except ConnectionError as e:
         print(f"Connection Error: {e}", file=sys.stderr)
-        print("\nMake sure IB Gateway Docker container is running:", file=sys.stderr)
-        print("  docker compose up -d", file=sys.stderr)
+        if args.gui:
+            print("\nMake sure TWS or IB Gateway is running locally.", file=sys.stderr)
+        else:
+            print("\nMake sure IB Gateway Docker container is running:", file=sys.stderr)
+            print("  docker compose up -d", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)

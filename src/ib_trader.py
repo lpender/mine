@@ -105,19 +105,41 @@ class IBTrader:
         contract = Stock(ticker, "SMART", "USD")
         self.ib.qualifyContracts(contract)
 
-        # Request market data
+        # Request market data (try real-time first)
         ticker_data = self.ib.reqMktData(contract, "", False, False)
         self.ib.sleep(1)  # Wait for data
 
-        bid = ticker_data.bid if ticker_data.bid > 0 else ticker_data.last
-        ask = ticker_data.ask if ticker_data.ask > 0 else ticker_data.last
-        last = ticker_data.last if ticker_data.last > 0 else 0
+        bid = ticker_data.bid if ticker_data.bid and ticker_data.bid > 0 else 0
+        ask = ticker_data.ask if ticker_data.ask and ticker_data.ask > 0 else 0
+        last = ticker_data.last if ticker_data.last and ticker_data.last > 0 else 0
+
+        # If no data, try delayed market data (type 3)
+        if bid <= 0 and ask <= 0 and last <= 0:
+            self.ib.cancelMktData(contract)
+            self.ib.reqMarketDataType(3)  # Request delayed data
+            ticker_data = self.ib.reqMktData(contract, "", False, False)
+            self.ib.sleep(2)  # Wait longer for delayed data
+
+            bid = ticker_data.bid if ticker_data.bid and ticker_data.bid > 0 else 0
+            ask = ticker_data.ask if ticker_data.ask and ticker_data.ask > 0 else 0
+            last = ticker_data.last if ticker_data.last and ticker_data.last > 0 else 0
+
+            # Check delayed fields
+            if bid <= 0:
+                bid = ticker_data.delayedBid if hasattr(ticker_data, 'delayedBid') and ticker_data.delayedBid and ticker_data.delayedBid > 0 else 0
+            if ask <= 0:
+                ask = ticker_data.delayedAsk if hasattr(ticker_data, 'delayedAsk') and ticker_data.delayedAsk and ticker_data.delayedAsk > 0 else 0
+            if last <= 0:
+                last = ticker_data.delayedLast if hasattr(ticker_data, 'delayedLast') and ticker_data.delayedLast and ticker_data.delayedLast > 0 else 0
+
+            # Reset to live data for future requests
+            self.ib.reqMarketDataType(1)
 
         # Cancel market data subscription
         self.ib.cancelMktData(contract)
 
+        # Use last price if bid/ask unavailable
         if bid <= 0 and ask <= 0 and last > 0:
-            # Use last trade if no bid/ask
             return {
                 "bid": last,
                 "ask": last,
@@ -127,13 +149,18 @@ class IBTrader:
                 "source": "last_trade",
             }
 
+        if bid <= 0:
+            bid = last
+        if ask <= 0:
+            ask = last
+
         return {
-            "bid": bid if bid > 0 else last,
-            "ask": ask if ask > 0 else last,
+            "bid": bid,
+            "ask": ask,
             "bid_size": ticker_data.bidSize if ticker_data.bidSize else 0,
             "ask_size": ticker_data.askSize if ticker_data.askSize else 0,
             "mid": (bid + ask) / 2 if bid > 0 and ask > 0 else last,
-            "source": "quote",
+            "source": "delayed" if bid == last or ask == last else "quote",
         }
 
     def buy_with_bracket(
@@ -192,36 +219,38 @@ class IBTrader:
         contract = Stock(ticker, "SMART", "USD")
         self.ib.qualifyContracts(contract)
 
-        # Create bracket order
-        # Parent order: Market buy with outsideRth=True for extended hours
+        # Create bracket order manually for better control
+        # Parent order: Market buy
         parent = MarketOrder("BUY", shares)
         parent.outsideRth = True  # Allow premarket/afterhours
+        parent.tif = "GTC"
         parent.transmit = False  # Don't transmit until all orders ready
 
         # Take profit: Limit sell
-        take_profit = LimitOrder("SELL", shares, take_profit_price)
-        take_profit.outsideRth = True
-        take_profit.parentId = 0  # Will be set after parent is placed
-        take_profit.transmit = False
+        take_profit_order = LimitOrder("SELL", shares, take_profit_price)
+        take_profit_order.outsideRth = True
+        take_profit_order.tif = "GTC"
+        take_profit_order.transmit = False
 
         # Stop loss: Stop sell
-        stop_loss = StopOrder("SELL", shares, stop_loss_price)
-        stop_loss.outsideRth = True
-        stop_loss.parentId = 0  # Will be set after parent is placed
-        stop_loss.transmit = True  # Transmit all orders
+        stop_loss_order = StopOrder("SELL", shares, stop_loss_price)
+        stop_loss_order.outsideRth = True
+        stop_loss_order.tif = "GTC"
+        stop_loss_order.transmit = True  # Transmit all orders when this is placed
 
-        # Place the bracket order
-        bracket = self.ib.bracketOrder("BUY", shares, take_profit_price, stop_loss_price)
+        # Place parent order first
+        parent_trade = self.ib.placeOrder(contract, parent)
+        self.ib.sleep(0.5)
 
-        # Configure for extended hours
-        for order in bracket:
-            order.outsideRth = True
+        # Set parent ID for child orders
+        take_profit_order.parentId = parent_trade.order.orderId
+        stop_loss_order.parentId = parent_trade.order.orderId
 
-        # Place orders
-        trades = []
-        for order in bracket:
-            trade = self.ib.placeOrder(contract, order)
-            trades.append(trade)
+        # Place child orders
+        tp_trade = self.ib.placeOrder(contract, take_profit_order)
+        sl_trade = self.ib.placeOrder(contract, stop_loss_order)
+
+        trades = [parent_trade, tp_trade, sl_trade]
 
         self.ib.sleep(1)  # Wait for order acknowledgment
 
