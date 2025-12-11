@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Quick trade execution CLI for Interactive Brokers.
+Quick trade execution CLI for Tradier (default) or Interactive Brokers.
 
-By default, connects to Docker IB Gateway. Use --gui for local TWS/Gateway.
+By default uses Tradier API. Use --ib for Interactive Brokers (Docker) or --ib --gui for local TWS.
 
 Usage:
     # Buy $100 of AAPL with 10% take-profit, 7% stop-loss (premarket supported!)
@@ -32,8 +32,11 @@ Usage:
     # Cancel all orders
     python trade.py cancel-all
 
-    # Use local TWS/Gateway (GUI) instead of Docker
-    python trade.py --gui buy AAPL
+    # Use Interactive Brokers (Docker Gateway) instead of Tradier
+    python trade.py --ib buy AAPL
+
+    # Use local TWS/Gateway (GUI) with IB
+    python trade.py --ib --gui buy AAPL
 
     # LIVE TRADING (use with caution!)
     python trade.py --live buy AAPL
@@ -45,13 +48,25 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from src.ib_trader import IBTrader
+# Try to import traders - Tradier is primary
+try:
+    from src.tradier_trader import TradierTrader
+    TRADIER_AVAILABLE = True
+except ImportError:
+    TRADIER_AVAILABLE = False
+
+try:
+    from src.ib_trader import IBTrader
+    IB_AVAILABLE = True
+except ImportError:
+    IB_AVAILABLE = False
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Quick trade execution via Interactive Brokers")
+    parser = argparse.ArgumentParser(description="Quick trade execution via Tradier (default) or IB")
     parser.add_argument("--live", action="store_true", help="Use live trading (default: paper)")
-    parser.add_argument("--gui", action="store_true", help="Use local TWS/Gateway GUI instead of Docker")
+    parser.add_argument("--ib", action="store_true", help="Use Interactive Brokers instead of Tradier")
+    parser.add_argument("--gui", action="store_true", help="Use local TWS/Gateway GUI (IB only)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -93,12 +108,26 @@ def main():
         return
 
     try:
-        # Use Docker by default, --gui for local TWS/Gateway
-        use_docker = not args.gui
-        trader = IBTrader(paper=not args.live, docker=use_docker)
         mode = "LIVE" if args.live else "PAPER"
-        source = "Local TWS/Gateway" if args.gui else "Docker IB Gateway"
-        print(f"[{mode} TRADING - {source} on port {trader.port}]\n")
+
+        # Select broker: Tradier by default, IB with --ib flag
+        use_ib = args.ib or (not TRADIER_AVAILABLE and IB_AVAILABLE)
+
+        if use_ib:
+            if not IB_AVAILABLE:
+                print("Error: Interactive Brokers module not available", file=sys.stderr)
+                sys.exit(1)
+            use_docker = not args.gui
+            trader = IBTrader(paper=not args.live, docker=use_docker)
+            source = "Local TWS/Gateway" if args.gui else "Docker IB Gateway"
+            print(f"[{mode} TRADING - IB: {source} on port {trader.port}]\n")
+        else:
+            if not TRADIER_AVAILABLE:
+                print("Error: Tradier module not available. Use --ib for Interactive Brokers.", file=sys.stderr)
+                sys.exit(1)
+            trader = TradierTrader(paper=not args.live)
+            source = "Tradier Sandbox" if not args.live else "Tradier Live"
+            print(f"[{mode} TRADING - {source}]\n")
 
         with trader:
             if args.command == "buy":
@@ -172,11 +201,14 @@ def main():
 
     except ConnectionError as e:
         print(f"Connection Error: {e}", file=sys.stderr)
-        if args.gui:
-            print("\nMake sure TWS or IB Gateway is running locally.", file=sys.stderr)
+        if args.ib:
+            if args.gui:
+                print("\nMake sure TWS or IB Gateway is running locally.", file=sys.stderr)
+            else:
+                print("\nMake sure IB Gateway Docker container is running:", file=sys.stderr)
+                print("  docker compose up -d", file=sys.stderr)
         else:
-            print("\nMake sure IB Gateway Docker container is running:", file=sys.stderr)
-            print("  docker compose up -d", file=sys.stderr)
+            print("\nCheck your TRADIER_API_KEY environment variable.", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)

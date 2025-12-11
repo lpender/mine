@@ -38,13 +38,19 @@ ALERTS_LOG_PATH = Path("data/alerts.parquet")
 AUTO_TRADE = False  # Set to True to auto-execute trades
 USE_GUI = False  # Set via --gui flag to use local IB Gateway instead of Docker
 
-# Try to import trading module
+# Try to import trading module (Tradier primary, IB fallback)
 TRADING_AVAILABLE = False
+USE_TRADIER = False
 try:
-    from src.ib_trader import IBTrader
+    from src.tradier_trader import TradierTrader
     TRADING_AVAILABLE = True
+    USE_TRADIER = True
 except ImportError:
-    print("Warning: IB trading module not available")
+    try:
+        from src.ib_trader import IBTrader
+        TRADING_AVAILABLE = True
+    except ImportError:
+        print("Warning: No trading module available (Tradier or IB)")
 
 # Try to import InsightSentry for real-time quotes
 QUOTES_AVAILABLE = False
@@ -122,7 +128,10 @@ def handle_new_message(message: str, timestamp: str) -> dict:
 
         if AUTO_TRADE and TRADING_AVAILABLE:
             try:
-                trader = IBTrader(paper=True, docker=not USE_GUI)
+                if USE_TRADIER:
+                    trader = TradierTrader(paper=True)
+                else:
+                    trader = IBTrader(paper=True, docker=not USE_GUI)
                 with trader:
                     trade = trader.buy_with_bracket(
                         ticker=ticker,
@@ -140,8 +149,8 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         else:
             result["action"] = "alert_only"
             print("Auto-trade disabled. Run manually:")
-            gui_flag = " --gui" if USE_GUI else ""
-            print(f"  python trade.py{gui_flag} buy {ticker}")
+            broker_flag = "" if USE_TRADIER else (" --gui" if USE_GUI else "")
+            print(f"  python trade.py{broker_flag} buy {ticker}")
 
         print(f"{'='*50}\n")
 
@@ -246,7 +255,7 @@ Endpoints:
 Auto-trade: {'ENABLED' if AUTO_TRADE else 'DISABLED'}
 Trading:    {'AVAILABLE' if TRADING_AVAILABLE else 'NOT AVAILABLE'}
 Quotes:     {'AVAILABLE' if QUOTES_AVAILABLE else 'NOT AVAILABLE'}
-Broker:     {'Local IB Gateway (GUI)' if USE_GUI else 'Docker IB Gateway'}
+Broker:     {'Tradier' if USE_TRADIER else ('Local IB Gateway (GUI)' if USE_GUI else 'Docker IB Gateway')}
 Alert log:  {ALERTS_LOG_PATH.absolute()}
 
 Paste the following into Discord's browser console (F12 > Console):
