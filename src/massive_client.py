@@ -244,6 +244,7 @@ class MassiveClient:
                 'reg_sho': ann.reg_sho,
                 'high_ctb': ann.high_ctb,
                 'short_interest': ann.short_interest,
+                'channel': ann.channel,
             })
 
         with open(self._get_announcements_path(), 'w') as f:
@@ -273,6 +274,7 @@ class MassiveClient:
                     reg_sho=item.get('reg_sho', False),
                     high_ctb=item.get('high_ctb', False),
                     short_interest=item.get('short_interest'),
+                    channel=item.get('channel'),
                 ))
             return announcements
         except Exception:

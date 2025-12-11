@@ -492,6 +492,7 @@ if st.session_state.announcements:
         row = {
             "_original_idx": i,  # Hidden column to track original index
             "Ticker": ann.ticker,
+            "Channel": ann.channel or "-",
             "Time (EST)": ann.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "Session": ann.market_session.capitalize(),
             "Price": f"${ann.price_threshold:.2f}" if ann.price_threshold else "N/A",

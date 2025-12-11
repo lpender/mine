@@ -3,12 +3,12 @@
 Import Discord HTML file and fetch OHLCV data.
 
 Usage:
-    python import_html.py <html_file> [--include-today] [--window MINUTES]
+    python import_html.py <html_file> --channel <name> [--include-today] [--window MINUTES]
 
 Examples:
-    python import_html.py discord_messages.html
-    python import_html.py discord_messages.html --include-today
-    python import_html.py discord_messages.html --window 60
+    python import_html.py discord_messages.html --channel select-news
+    python import_html.py discord_messages.html -c pr-spike --include-today
+    python import_html.py discord_messages.html -c select-news --window 60
 """
 
 import argparse
@@ -30,6 +30,8 @@ def main():
                         help="Include today's messages (normally excluded)")
     parser.add_argument("--window", type=int, default=120,
                         help="OHLCV window in minutes (default: 120)")
+    parser.add_argument("--channel", "-c", type=str, required=True,
+                        help="Channel name to tag announcements with (e.g., select-news)")
     args = parser.parse_args()
 
     html_path = Path(args.html_file)
@@ -59,6 +61,10 @@ def main():
         if stats['filtered_by_cutoff'] > 0:
             print("Tip: Use --include-today to include today's messages")
         sys.exit(0)
+
+    # Set channel on all announcements
+    for ann in announcements:
+        ann.channel = args.channel
 
     print(f"\nAnnouncements to import ({len(announcements)}):")
     for ann in announcements[:10]:

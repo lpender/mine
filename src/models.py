@@ -55,6 +55,7 @@ class Announcement:
     reg_sho: bool = False  # Regulation SHO flag
     high_ctb: bool = False  # High Cost to Borrow flag
     short_interest: Optional[float] = None  # e.g., 23.9 (percent)
+    channel: Optional[str] = None  # Discord channel name
 
     @property
     def market_session(self) -> str:
