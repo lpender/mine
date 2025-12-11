@@ -12,10 +12,24 @@ Requires TWS or IB Gateway running locally.
 
 import os
 import random
+import requests
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 from ib_insync import IB, Stock, MarketOrder, LimitOrder, StopOrder, Contract
+
+
+def get_yahoo_price(ticker: str) -> Optional[float]:
+    """Fetch current price from Yahoo Finance as fallback."""
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        resp = requests.get(url, headers=headers, timeout=5)
+        data = resp.json()
+        price = data["chart"]["result"][0]["meta"]["regularMarketPrice"]
+        return float(price) if price else None
+    except Exception:
+        return None
 
 
 class IBTrader:
@@ -141,6 +155,19 @@ class IBTrader:
 
         # Cancel market data subscription
         self.ib.cancelMktData(contract)
+
+        # If still no data, try Yahoo Finance as fallback
+        if bid <= 0 and ask <= 0 and last <= 0:
+            yahoo_price = get_yahoo_price(ticker)
+            if yahoo_price and yahoo_price > 0:
+                return {
+                    "bid": yahoo_price,
+                    "ask": yahoo_price,
+                    "bid_size": 0,
+                    "ask_size": 0,
+                    "mid": yahoo_price,
+                    "source": "yahoo",
+                }
 
         # Use last price if bid/ask unavailable
         if bid <= 0 and ask <= 0 and last > 0:
