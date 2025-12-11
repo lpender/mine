@@ -197,6 +197,30 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         key="filter_ctb",
     )
 
+    # IO% range filter
+    if "filter_io_min" not in st.session_state:
+        st.session_state.filter_io_min = saved_config.get("filter_io_min", 0.0)
+    if "filter_io_max" not in st.session_state:
+        st.session_state.filter_io_max = saved_config.get("filter_io_max", 100.0)
+
+    io_col1, io_col2 = st.columns(2)
+    with io_col1:
+        filter_io_min = st.number_input(
+            "IO% Min",
+            min_value=0.0,
+            max_value=100.0,
+            step=1.0,
+            key="filter_io_min",
+        )
+    with io_col2:
+        filter_io_max = st.number_input(
+            "IO% Max",
+            min_value=0.0,
+            max_value=100.0,
+            step=1.0,
+            key="filter_io_max",
+        )
+
     # Save config when values change
     current_config = {
         "entry_trigger": entry_trigger,
@@ -209,6 +233,8 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "filter_market": filter_market,
         "filter_postmarket": filter_postmarket,
         "filter_ctb": filter_ctb,
+        "filter_io_min": filter_io_min,
+        "filter_io_max": filter_io_max,
     }
     if current_config != saved_config:
         save_config(current_config)
@@ -298,6 +324,13 @@ if st.session_state.announcements:
         announcements = [a for a in announcements if a.high_ctb]
     elif filter_ctb == "Not High CTB":
         announcements = [a for a in announcements if not a.high_ctb]
+
+    # Apply IO% range filter
+    if filter_io_min > 0 or filter_io_max < 100:
+        announcements = [
+            a for a in announcements
+            if a.io_percent is not None and filter_io_min <= a.io_percent <= filter_io_max
+        ]
 
     if not announcements:
         st.warning("No announcements match the current filters.")
