@@ -157,11 +157,12 @@ class DiscordHandler(BaseHTTPRequestHandler):
 
 
 def run_server(port: int = 8765):
-    server = HTTPServer(("localhost", port), DiscordHandler)
+    # Bind to 127.0.0.1 (not localhost) - Discord CSP allows 127.0.0.1 but blocks localhost
+    server = HTTPServer(("127.0.0.1", port), DiscordHandler)
     print(f"""
 Discord Message Monitor
 =======================
-Server running at http://localhost:{port}
+Server running at http://127.0.0.1:{port}
 
 Endpoints:
   POST /message          - Receive Discord message

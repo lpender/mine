@@ -3,7 +3,8 @@
 // Make sure discord_server.py is running first!
 
 (function() {
-    const SERVER_URL = 'http://localhost:8765';
+    // Use 127.0.0.1 instead of localhost to bypass Discord's CSP
+    const SERVER_URL = 'http://127.0.0.1:8765';
     const CHECK_INTERVAL_MS = 500; // Check every 500ms
 
     let lastMessageId = null;
