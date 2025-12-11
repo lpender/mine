@@ -11,6 +11,7 @@ Requires TWS or IB Gateway running locally.
 """
 
 import os
+import random
 from typing import Optional
 from zoneinfo import ZoneInfo
 
@@ -24,7 +25,7 @@ class IBTrader:
         self,
         host: str = "127.0.0.1",
         port: Optional[int] = None,
-        client_id: int = 1,
+        client_id: Optional[int] = None,
         paper: bool = True,
         docker: bool = False,
     ):
@@ -51,7 +52,8 @@ class IBTrader:
 
         self.host = host
         self.port = port
-        self.client_id = client_id
+        # Generate random client_id if not provided to avoid collisions
+        self.client_id = client_id if client_id is not None else random.randint(1, 9999)
         self.et_tz = ZoneInfo("America/New_York")
 
         self.ib = IB()

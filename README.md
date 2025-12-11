@@ -105,6 +105,10 @@ For faster execution, run the Discord message monitor:
 # Terminal 1: Start the server
 python discord_server.py
 
+# or
+
+python discord_server.py --gui --auto-trade
+
 # Then in Discord (browser):
 # 1. Open Discord in your browser
 # 2. Navigate to the alerts channel
