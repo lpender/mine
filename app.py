@@ -270,16 +270,18 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
         else:
             st.sidebar.success(f"Parsed {parse_stats['parsed']} announcements ({parse_stats['filtered_by_cutoff']} from today excluded)")
 
-            # Debug: show first few parsed messages raw text
-            with st.sidebar.expander("Debug: Parsed Text"):
-                from bs4 import BeautifulSoup
-                soup = BeautifulSoup(messages_input, 'html.parser')
-                msgs = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
-                for msg in msgs[:3]:  # Show first 3 messages
-                    content_div = msg.find('div', id=lambda x: x and x.startswith('message-content-'))
-                    if content_div:
-                        text = content_div.get_text(separator=' ', strip=True)
-                        st.code(text[:300], language=None)
+            # Debug: show first few parsed announcements with all fields
+            with st.sidebar.expander("Debug: Parsed Data"):
+                for ann in new_announcements[:3]:
+                    st.write(f"**{ann.ticker}** @ {ann.timestamp}")
+                    st.write(f"- Price: ${ann.price_threshold}")
+                    st.write(f"- Float: {ann.float_shares}")
+                    st.write(f"- IO%: {ann.io_percent}")
+                    st.write(f"- MC: {ann.market_cap}")
+                    st.write(f"- SI%: {ann.short_interest}")
+                    st.write(f"- High CTB: {ann.high_ctb}")
+                    st.write(f"- Country: {ann.country}")
+                    st.write("---")
 
     if new_announcements:
         # Add new announcements to existing ones (dedup by ticker+timestamp)

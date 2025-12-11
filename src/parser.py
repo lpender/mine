@@ -342,7 +342,14 @@ def parse_discord_html_with_stats(
         if not content_div:
             continue
 
-        # Get text content, replacing elements appropriately
+        # Replace emoji img elements with their alt text (contains flag codes like :flag_cn:)
+        # BeautifulSoup's get_text() doesn't include img alt text by default
+        for img in content_div.find_all('img', class_='emoji'):
+            alt = img.get('alt', '') or img.get('data-name', '')
+            if alt:
+                img.replace_with(alt)
+
+        # Get text content
         message_text = content_div.get_text(separator=' ', strip=True)
 
         # Try to parse as announcement
