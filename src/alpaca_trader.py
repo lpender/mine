@@ -9,14 +9,16 @@ Usage:
 """
 
 import os
+from datetime import datetime
 from typing import Optional
 from decimal import Decimal, ROUND_DOWN
+from zoneinfo import ZoneInfo
 
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest, GetOrdersRequest
 from alpaca.trading.enums import OrderSide, TimeInForce, OrderClass, OrderStatus
 from alpaca.data.historical import StockHistoricalDataClient
-from alpaca.data.requests import StockLatestQuoteRequest
+from alpaca.data.requests import StockLatestQuoteRequest, StockLatestTradeRequest
 
 
 class AlpacaTrader:
@@ -55,6 +57,7 @@ class AlpacaTrader:
             api_key=self.api_key,
             secret_key=self.secret_key,
         )
+        self.et_tz = ZoneInfo("America/New_York")
 
     def get_account(self) -> dict:
         """Get account information."""
@@ -67,17 +70,63 @@ class AlpacaTrader:
             "status": account.status,
         }
 
+    def is_market_open(self) -> tuple[bool, str]:
+        """Check if the market is currently open.
+
+        Returns:
+            Tuple of (is_open, status_message)
+        """
+        clock = self.trading_client.get_clock()
+        if clock.is_open:
+            return True, "Market is open"
+        else:
+            next_open = clock.next_open.astimezone(self.et_tz)
+            next_close = clock.next_close.astimezone(self.et_tz)
+            return False, f"Market closed. Next open: {next_open.strftime('%Y-%m-%d %H:%M ET')}"
+
+    def get_last_trade(self, ticker: str) -> dict:
+        """Get the last trade for a ticker (useful when market is closed)."""
+        request = StockLatestTradeRequest(symbol_or_symbols=ticker)
+        trades = self.data_client.get_stock_latest_trade(request)
+        trade = trades[ticker]
+        return {
+            "price": float(trade.price),
+            "size": int(trade.size),
+            "timestamp": trade.timestamp.isoformat(),
+        }
+
     def get_quote(self, ticker: str) -> dict:
-        """Get the latest quote for a ticker."""
+        """Get the latest quote for a ticker.
+
+        If bid/ask are zero (after hours), falls back to last trade price.
+        """
         request = StockLatestQuoteRequest(symbol_or_symbols=ticker)
         quotes = self.data_client.get_stock_latest_quote(request)
         quote = quotes[ticker]
+
+        bid = float(quote.bid_price)
+        ask = float(quote.ask_price)
+
+        # If bid/ask are zero, use last trade price
+        if bid == 0 or ask == 0:
+            last_trade = self.get_last_trade(ticker)
+            return {
+                "bid": last_trade["price"],
+                "ask": last_trade["price"],
+                "bid_size": 0,
+                "ask_size": 0,
+                "mid": last_trade["price"],
+                "source": "last_trade",
+                "last_trade_time": last_trade["timestamp"],
+            }
+
         return {
-            "bid": float(quote.bid_price),
-            "ask": float(quote.ask_price),
+            "bid": bid,
+            "ask": ask,
             "bid_size": quote.bid_size,
             "ask_size": quote.ask_size,
-            "mid": (float(quote.bid_price) + float(quote.ask_price)) / 2,
+            "mid": (bid + ask) / 2,
+            "source": "quote",
         }
 
     def buy_with_bracket(
@@ -101,6 +150,12 @@ class AlpacaTrader:
         Returns:
             Order details including order ID and status
         """
+        # Check if market is open
+        is_open, market_status = self.is_market_open()
+        if not is_open:
+            print(f"WARNING: {market_status}")
+            print("Order will be queued and execute at market open.\n")
+
         # Get current price to calculate shares and bracket prices
         quote = self.get_quote(ticker)
         current_price = quote["ask"]  # Use ask for buying
@@ -108,14 +163,20 @@ class AlpacaTrader:
         if current_price <= 0:
             raise ValueError(f"Invalid price for {ticker}: {current_price}")
 
+        # Warn if using stale price data
+        if quote.get("source") == "last_trade":
+            print(f"NOTE: Using last trade price (no live quote available)")
+            print(f"      Last trade: {quote.get('last_trade_time', 'unknown')}\n")
+
         # Calculate number of shares
         if shares is None:
             shares = int(dollars / current_price)
 
         if shares <= 0:
+            min_cost = current_price
             raise ValueError(
                 f"Cannot buy {shares} shares. Price ${current_price:.2f} "
-                f"is too high for ${dollars:.2f}"
+                f"is too high for ${dollars:.2f}. Minimum order: ${min_cost:.2f}"
             )
 
         # Calculate bracket prices
@@ -124,7 +185,7 @@ class AlpacaTrader:
 
         print(f"Placing bracket order for {ticker}:")
         print(f"  Shares: {shares}")
-        print(f"  Est. entry: ${current_price:.2f}")
+        print(f"  Est. entry: ${current_price:.2f} (from {quote.get('source', 'quote')})")
         print(f"  Take profit: ${take_profit_price:.2f} (+{take_profit_pct}%)")
         print(f"  Stop loss: ${stop_loss_price:.2f} (-{stop_loss_pct}%)")
         print(f"  Total cost: ~${shares * current_price:.2f}")

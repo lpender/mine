@@ -131,11 +131,16 @@ def main():
                     print(f"  {o['ticker']}: {o['side']} {o['qty']} ({o['type']}) - {o['status']}{price_info}")
 
         elif args.command == "quote":
+            is_open, market_status = trader.is_market_open()
             quote = trader.get_quote(args.ticker.upper())
             print(f"{args.ticker.upper()} Quote:")
             print(f"  Bid: ${quote['bid']:.2f} x {quote['bid_size']}")
             print(f"  Ask: ${quote['ask']:.2f} x {quote['ask_size']}")
             print(f"  Mid: ${quote['mid']:.2f}")
+            print(f"  Source: {quote.get('source', 'quote')}")
+            if quote.get('last_trade_time'):
+                print(f"  Last trade: {quote['last_trade_time']}")
+            print(f"  {market_status}")
 
         elif args.command == "close":
             result = trader.close_position(args.ticker.upper())
