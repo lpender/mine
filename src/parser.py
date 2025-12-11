@@ -141,8 +141,8 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     if price_threshold is None:
         return None  # Price is required
 
-    # Extract headline (between first '-' and '- Link')
-    headline_match = re.search(r'-\s*(.+?)\s*-\s*Link', line)
+    # Extract headline (between first '-' and 'Link' - hyphen before Link is optional)
+    headline_match = re.search(r'-\s*(.+?)\s*-?\s*Link', line)
     headline = headline_match.group(1).strip() if headline_match else ""
 
     # Extract country from flag
