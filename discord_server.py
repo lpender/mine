@@ -199,7 +199,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Discord message monitor with IB trading")
     parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
     parser.add_argument("--gui", action="store_true", help="Use local IB Gateway instead of Docker")
+    parser.add_argument("--auto-trade", action="store_true", help="Enable auto-trading on alerts (use with caution!)")
     args = parser.parse_args()
 
     USE_GUI = args.gui
+    AUTO_TRADE = args.auto_trade
     run_server(args.port)
