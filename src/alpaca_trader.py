@@ -129,23 +129,19 @@ class AlpacaTrader:
             "source": "quote",
         }
 
-    def buy_with_bracket(
+    def buy(
         self,
         ticker: str,
         dollars: float = 100.0,
         shares: Optional[int] = None,
-        take_profit_pct: float = 10.0,
-        stop_loss_pct: float = 7.0,
     ) -> dict:
         """
-        Buy a stock with automatic take-profit and stop-loss orders.
+        Buy a stock with a simple market order (supports extended hours).
 
         Args:
             ticker: Stock ticker symbol
             dollars: Amount to invest in dollars (ignored if shares specified)
             shares: Number of shares to buy (overrides dollars)
-            take_profit_pct: Take profit percentage (e.g., 10 = sell at +10%)
-            stop_loss_pct: Stop loss percentage (e.g., 7 = sell at -7%)
 
         Returns:
             Order details including order ID and status
@@ -153,10 +149,10 @@ class AlpacaTrader:
         # Check if market is open
         is_open, market_status = self.is_market_open()
         if not is_open:
-            print(f"WARNING: {market_status}")
-            print("Order will be queued and execute at market open.\n")
+            print(f"NOTE: {market_status}")
+            print("Extended hours order - will execute immediately if market is open for extended trading.\n")
 
-        # Get current price to calculate shares and bracket prices
+        # Get current price to calculate shares
         quote = self.get_quote(ticker)
         current_price = quote["ask"]  # Use ask for buying
 
@@ -179,27 +175,19 @@ class AlpacaTrader:
                 f"is too high for ${dollars:.2f}. Minimum order: ${min_cost:.2f}"
             )
 
-        # Calculate bracket prices
-        take_profit_price = round(current_price * (1 + take_profit_pct / 100), 2)
-        stop_loss_price = round(current_price * (1 - stop_loss_pct / 100), 2)
-
-        print(f"Placing bracket order for {ticker}:")
+        print(f"Placing market order for {ticker}:")
         print(f"  Shares: {shares}")
         print(f"  Est. entry: ${current_price:.2f} (from {quote.get('source', 'quote')})")
-        print(f"  Take profit: ${take_profit_price:.2f} (+{take_profit_pct}%)")
-        print(f"  Stop loss: ${stop_loss_price:.2f} (-{stop_loss_pct}%)")
         print(f"  Total cost: ~${shares * current_price:.2f}")
+        print(f"  NOTE: No TP/SL - you must monitor and close manually")
 
-        # Create bracket order
+        # Create simple market order with extended hours
         order_request = MarketOrderRequest(
             symbol=ticker,
             qty=shares,
             side=OrderSide.BUY,
-            time_in_force=TimeInForce.GTC,  # Good til cancelled
-            order_class=OrderClass.BRACKET,
-            take_profit={"limit_price": take_profit_price},
-            stop_loss={"stop_price": stop_loss_price},
-            extended_hours=True,  # Allow premarket/afterhours execution
+            time_in_force=TimeInForce.DAY,
+            extended_hours=True,
         )
 
         order = self.trading_client.submit_order(order_request)
@@ -211,9 +199,6 @@ class AlpacaTrader:
             "shares": shares,
             "side": "buy",
             "estimated_entry": current_price,
-            "take_profit": take_profit_price,
-            "stop_loss": stop_loss_price,
-            "order_class": "bracket",
         }
 
     def get_positions(self) -> list:

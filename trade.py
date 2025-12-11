@@ -44,12 +44,10 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # Buy command
-    buy_parser = subparsers.add_parser("buy", help="Buy a stock with bracket order")
+    buy_parser = subparsers.add_parser("buy", help="Buy a stock with market order (extended hours supported)")
     buy_parser.add_argument("ticker", help="Stock ticker symbol")
     buy_parser.add_argument("--dollars", "-d", type=float, default=100.0, help="Amount to invest (default: $100)")
     buy_parser.add_argument("--shares", "-s", type=int, help="Number of shares (overrides dollars)")
-    buy_parser.add_argument("--tp", type=float, default=10.0, help="Take profit %% (default: 10)")
-    buy_parser.add_argument("--sl", type=float, default=7.0, help="Stop loss %% (default: 7)")
 
     # Status command
     subparsers.add_parser("status", help="Show account status")
@@ -86,12 +84,10 @@ def main():
         print(f"[{mode} TRADING]\n")
 
         if args.command == "buy":
-            result = trader.buy_with_bracket(
+            result = trader.buy(
                 ticker=args.ticker.upper(),
                 dollars=args.dollars,
                 shares=args.shares,
-                take_profit_pct=args.tp,
-                stop_loss_pct=args.sl,
             )
             print(f"\nOrder submitted!")
             print(f"  Order ID: {result['order_id']}")
