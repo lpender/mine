@@ -1,0 +1,49 @@
+# IB Gateway Docker Setup for Headless Trading
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in IB credentials
+#   2. docker-compose up -d
+#   3. Access VNC at http://localhost:6080 (for debugging)
+#   4. Connect trading scripts to localhost:4002 (paper) or localhost:4001 (live)
+#
+# First-time setup:
+#   - The gateway will auto-login using your credentials
+#   - Paper trading uses port 4002, live uses port 4001
+
+services:
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:latest
+    container_name: ib-gateway
+    restart: unless-stopped
+    environment:
+      # IB Credentials (set in .env file)
+      - TWS_USERID=${IB_USERNAME}
+      - TWS_PASSWORD=${IB_PASSWORD}
+      # Trading mode: paper or live
+      - TRADING_MODE=${IB_TRADING_MODE:-paper}
+      # Timezone
+      - TZ=America/New_York
+      # Auto-restart on weekends
+      - AUTO_RESTART_TIME=Saturday 06:00
+      # Read-only API (set to 'no' to allow trading)
+      - READ_ONLY_API=no
+    ports:
+      # API ports - connect your scripts here
+      - "4001:4001"  # Live trading API
+      - "4002:4002"  # Paper trading API
+      # VNC for debugging/monitoring (optional)
+      - "5900:5900"  # VNC direct
+      - "6080:6080"  # noVNC web interface
+    volumes:
+      # Persist IB Gateway settings
+      - ib-gateway-data:/home/ibgateway/Jts
+    # Healthcheck to ensure gateway is responsive
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4002"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  ib-gateway-data:

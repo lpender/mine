@@ -45,7 +45,8 @@ from src.ib_trader import IBTrader
 def main():
     parser = argparse.ArgumentParser(description="Quick trade execution via Interactive Brokers")
     parser.add_argument("--live", action="store_true", help="Use live trading (default: paper)")
-    parser.add_argument("--port", type=int, help="TWS/Gateway port (default: 7497 paper, 7496 live)")
+    parser.add_argument("--port", type=int, help="TWS/Gateway port (auto-selected if not specified)")
+    parser.add_argument("--docker", action="store_true", help="Use Docker IB Gateway ports (4001/4002)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -87,13 +88,10 @@ def main():
         return
 
     try:
-        port = args.port
-        if port is None:
-            port = 7496 if args.live else 7497
-
-        trader = IBTrader(port=port, paper=not args.live)
+        trader = IBTrader(port=args.port, paper=not args.live, docker=args.docker)
         mode = "LIVE" if args.live else "PAPER"
-        print(f"[{mode} TRADING - IB Gateway/TWS on port {port}]\n")
+        source = "Docker" if args.docker else "TWS/Gateway"
+        print(f"[{mode} TRADING - {source} on port {trader.port}]\n")
 
         with trader:
             if args.command == "buy":

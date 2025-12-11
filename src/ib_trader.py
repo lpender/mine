@@ -26,19 +26,25 @@ class IBTrader:
         port: Optional[int] = None,
         client_id: int = 1,
         paper: bool = True,
+        docker: bool = False,
     ):
         """
         Initialize the IB trading client.
 
         Args:
             host: TWS/Gateway host (default: localhost)
-            port: TWS/Gateway port. If None, uses 7497 for paper, 7496 for live
+            port: TWS/Gateway port. If None, auto-selects based on paper/docker
             client_id: Unique client ID for this connection
             paper: If True, use paper trading port (default)
+            docker: If True, use Docker IB Gateway ports (4001/4002)
         """
         self.paper = paper
+        self.docker = docker
         if port is None:
-            port = 7497 if paper else 7496
+            if docker:
+                port = 4002 if paper else 4001
+            else:
+                port = 7497 if paper else 7496
 
         self.host = host
         self.port = port
@@ -338,6 +344,6 @@ class IBTrader:
         self.disconnect()
 
 
-def create_trader(paper: bool = True) -> IBTrader:
+def create_trader(paper: bool = True, docker: bool = False) -> IBTrader:
     """Factory function to create an IBTrader instance."""
-    return IBTrader(paper=paper)
+    return IBTrader(paper=paper, docker=docker)
