@@ -319,19 +319,22 @@ class IBTrader:
         """Get all open orders."""
         self._ensure_connected()
 
-        orders = self.ib.openOrders()
+        # Request all open orders including those from other clients
+        self.ib.reqAllOpenOrders()
+        self.ib.sleep(0.5)
+        trades = self.ib.openTrades()
         return [
             {
-                "order_id": o.orderId,
-                "ticker": o.contract.symbol if hasattr(o, "contract") else "N/A",
-                "side": o.action.lower(),
-                "qty": int(o.totalQuantity),
-                "type": o.orderType.lower(),
-                "status": "open",
-                "limit_price": float(o.lmtPrice) if o.lmtPrice else None,
-                "stop_price": float(o.auxPrice) if o.auxPrice else None,
+                "order_id": t.order.orderId,
+                "ticker": t.contract.symbol,
+                "side": t.order.action.lower(),
+                "qty": int(t.order.totalQuantity),
+                "type": t.order.orderType.lower(),
+                "status": t.orderStatus.status.lower(),
+                "limit_price": float(t.order.lmtPrice) if t.order.lmtPrice else None,
+                "stop_price": float(t.order.auxPrice) if t.order.auxPrice else None,
             }
-            for o in orders
+            for t in trades
         ]
 
     def cancel_all_orders(self) -> int:
