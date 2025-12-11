@@ -81,37 +81,56 @@ def main():
         flags_str = f" [{', '.join(flags)}]" if flags else ""
         print(f"  {ann.ticker:5} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')} | ${ann.price_threshold:.2f} | {ann.country} | Float: {float_str} | IO: {io_str} | MC: {mc_str}{flags_str}")
 
-    # Load existing data
+    # Load existing data and merge (clobber metadata for existing announcements)
     client = MassiveClient()
     existing_announcements = client.load_announcements()
-    existing_keys = {(a.ticker, a.timestamp) for a in existing_announcements}
+    existing_by_key = {(a.ticker, a.timestamp): a for a in existing_announcements}
 
-    # Find new announcements
-    new_announcements = [
-        ann for ann in announcements
-        if (ann.ticker, ann.timestamp) not in existing_keys
-    ]
+    # Merge: update existing announcements with new metadata, add new ones
+    new_count = 0
+    updated_count = 0
+    for ann in announcements:
+        key = (ann.ticker, ann.timestamp)
+        if key in existing_by_key:
+            # Clobber: update all metadata fields
+            existing_by_key[key] = ann
+            updated_count += 1
+        else:
+            existing_by_key[key] = ann
+            new_count += 1
 
-    if not new_announcements:
-        print(f"\nAll {len(announcements)} announcements already imported.")
-        sys.exit(0)
+    all_announcements = list(existing_by_key.values())
 
-    print(f"\nNew announcements to fetch: {len(new_announcements)}")
+    print(f"\nAnnouncements: {new_count} new, {updated_count} updated")
 
     # Save announcements FIRST (before OHLCV fetch which can be slow/interrupted)
-    all_announcements = existing_announcements + new_announcements
     client.save_announcements(all_announcements)
-    print(f"Saved {len(all_announcements)} announcements to cache")
+    print(f"Saved {len(all_announcements)} total announcements to cache")
+
+    # Check which announcements need OHLCV data (no cached parquet file)
+    announcements_needing_ohlcv = []
+    for ann in announcements:
+        cache_path = client._get_cache_path(
+            ann.ticker,
+            ann.timestamp,
+            ann.timestamp + timedelta(minutes=args.window)
+        )
+        if not cache_path.exists():
+            announcements_needing_ohlcv.append(ann)
+
+    if not announcements_needing_ohlcv:
+        print(f"\nAll OHLCV data already cached.")
+        sys.exit(0)
 
     # Fetch OHLCV data
-    print(f"\nFetching OHLCV data (window: {args.window} min)...")
+    print(f"\nFetching OHLCV data for {len(announcements_needing_ohlcv)} announcements (window: {args.window} min)...")
 
     successful = 0
     failed = 0
     results = []
 
-    for i, ann in enumerate(new_announcements):
-        progress = f"[{i+1}/{len(new_announcements)}]"
+    for i, ann in enumerate(announcements_needing_ohlcv):
+        progress = f"[{i+1}/{len(announcements_needing_ohlcv)}]"
         print(f"{progress} Fetching {ann.ticker} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')}...", end=" ", flush=True)
 
         try:
