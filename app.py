@@ -162,6 +162,29 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         key="entry_at_candle_close",
     )
 
+    st.subheader("Filters")
+
+    # Session filter checkboxes
+    if "filter_premarket" not in st.session_state:
+        st.session_state.filter_premarket = saved_config.get("filter_premarket", True)
+    if "filter_market" not in st.session_state:
+        st.session_state.filter_market = saved_config.get("filter_market", True)
+    if "filter_postmarket" not in st.session_state:
+        st.session_state.filter_postmarket = saved_config.get("filter_postmarket", True)
+
+    filter_premarket = st.checkbox(
+        "Premarket (4:00-9:30)",
+        key="filter_premarket",
+    )
+    filter_market = st.checkbox(
+        "Market (9:30-16:00)",
+        key="filter_market",
+    )
+    filter_postmarket = st.checkbox(
+        "Postmarket (16:00-20:00)",
+        key="filter_postmarket",
+    )
+
     # Save config when values change
     current_config = {
         "entry_trigger": entry_trigger,
@@ -170,6 +193,9 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
         "volume_threshold": volume_threshold,
         "window_minutes": window_minutes,
         "entry_at_candle_close": entry_at_candle_close,
+        "filter_premarket": filter_premarket,
+        "filter_market": filter_market,
+        "filter_postmarket": filter_postmarket,
     }
     if current_config != saved_config:
         save_config(current_config)
@@ -237,7 +263,25 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
 
 # Main area
 if st.session_state.announcements:
-    announcements = st.session_state.announcements
+    # Build list of allowed sessions based on filter checkboxes
+    allowed_sessions = []
+    if filter_premarket:
+        allowed_sessions.append("premarket")
+    if filter_market:
+        allowed_sessions.append("market")
+    if filter_postmarket:
+        allowed_sessions.append("postmarket")
+
+    # Filter announcements by session
+    all_announcements = st.session_state.announcements
+    if allowed_sessions:
+        announcements = [a for a in all_announcements if a.market_session in allowed_sessions]
+    else:
+        # If no filters selected, show nothing (or could show all)
+        announcements = []
+
+    if not announcements:
+        st.warning("No announcements match the current session filters. Check at least one session filter.")
 
     # Run backtest
     config = BacktestConfig(
@@ -337,36 +381,37 @@ if st.session_state.announcements:
         }
         table_data.append(row)
 
-    df = pd.DataFrame(table_data)
+    if table_data:
+        df = pd.DataFrame(table_data)
 
-    # Sort the dataframe
-    if sort_column == "Return":
-        df = df.sort_values("_return_numeric", ascending=sort_ascending)
-    else:
-        df = df.sort_values(sort_column, ascending=sort_ascending)
+        # Sort the dataframe
+        if sort_column == "Return":
+            df = df.sort_values("_return_numeric", ascending=sort_ascending)
+        else:
+            df = df.sort_values(sort_column, ascending=sort_ascending)
 
-    # Store mapping from display row to original index
-    display_to_original = df["_original_idx"].tolist()
+        # Store mapping from display row to original index
+        display_to_original = df["_original_idx"].tolist()
 
-    # Remove hidden columns for display
-    display_df = df.drop(columns=["_original_idx", "_return_numeric"])
+        # Remove hidden columns for display
+        display_df = df.drop(columns=["_original_idx", "_return_numeric"])
 
-    # Display as interactive table
-    selected_idx = st.dataframe(
-        display_df,
-        use_container_width=True,
-        hide_index=True,
-        on_select="rerun",
-        selection_mode="single-row",
-    )
+        # Display as interactive table
+        selected_idx = st.dataframe(
+            display_df,
+            use_container_width=True,
+            hide_index=True,
+            on_select="rerun",
+            selection_mode="single-row",
+        )
 
-    # Update stored selection when user clicks a row (map back to original index)
-    if selected_idx and selected_idx.selection.rows:
-        display_row = selected_idx.selection.rows[0]
-        st.session_state.selected_row_idx = display_to_original[display_row]
+        # Update stored selection when user clicks a row (map back to original index)
+        if selected_idx and selected_idx.selection.rows:
+            display_row = selected_idx.selection.rows[0]
+            st.session_state.selected_row_idx = display_to_original[display_row]
 
     # Chart for selected announcement (use stored index so it persists across slider changes)
-    if st.session_state.selected_row_idx is not None and st.session_state.selected_row_idx < len(announcements):
+    if announcements and st.session_state.selected_row_idx is not None and st.session_state.selected_row_idx < len(announcements):
         idx = st.session_state.selected_row_idx
         selected_ann = announcements[idx]
         key = (selected_ann.ticker, selected_ann.timestamp)

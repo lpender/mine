@@ -1,8 +1,11 @@
 {
-  "entry_trigger": 0.0,
+  "entry_trigger": 14.0,
   "take_profit": 12.5,
-  "stop_loss": 3.0,
-  "volume_threshold": 140000,
+  "stop_loss": 20.0,
+  "volume_threshold": 0,
   "window_minutes": 120,
-  "entry_at_candle_close": true
+  "entry_at_candle_close": true,
+  "filter_premarket": false,
+  "filter_market": false,
+  "filter_postmarket": true
 }
