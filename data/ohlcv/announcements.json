@@ -1,0 +1,28 @@
+[
+  {
+    "ticker": "PAVM",
+    "timestamp": "2025-12-09T13:02:47.493000",
+    "price_threshold": 0.5,
+    "headline": "Lucid Diagnostics Announces Positive Data from the Largest Reported Real-World Experience of Esophageal Precancer Detection",
+    "country": "US",
+    "float_shares": 24500000.0,
+    "io_percent": 8.78,
+    "market_cap": 9700000.0,
+    "reg_sho": false,
+    "high_ctb": false,
+    "short_interest": null
+  },
+  {
+    "ticker": "APVO",
+    "timestamp": "2025-12-09T13:05:28.339000",
+    "price_threshold": 2.0,
+    "headline": "Aptevo Therapeutics Highlights Compelling Safety and Strong Remission Rates for Mipletamig in Frontline AML at ASH 2025",
+    "country": "US",
+    "float_shares": 16800000.0,
+    "io_percent": 7.19,
+    "market_cap": 22200000.0,
+    "reg_sho": false,
+    "high_ctb": false,
+    "short_interest": null
+  }
+]

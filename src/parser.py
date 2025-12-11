@@ -120,13 +120,17 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     """
     Parse a single announcement line like:
     'BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  Float: 139 M  |  IO: 6.04%  |  MC: 26.8 M'
+
+    Also handles newer format with timestamp/arrow prefix:
+    '12:15 ↗ TE < $6 ~ :flag_us: | Float: 158 M | IO: 40.99% | MC: 1.2 B'
     """
     line = line.strip()
     if not line:
         return None
 
-    # Extract ticker (first word, uppercase letters/numbers)
-    ticker_match = re.match(r'^([A-Z]+)', line)
+    # Extract ticker - look for uppercase letters followed by < $
+    # This handles both old format (ticker at start) and new format (timestamp ↗ TICKER < $)
+    ticker_match = re.search(r'\b([A-Z]{2,5})\s*<\s*\$', line)
     if not ticker_match:
         return None
     ticker = ticker_match.group(1)

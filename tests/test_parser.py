@@ -155,6 +155,21 @@ class TestParseMessageLine:
         assert ann.io_percent == 0.54
         assert ann.market_cap == 70_700_000.0
 
+    def test_new_format_with_timestamp_arrow(self):
+        """Test newer format with timestamp and arrow prefix."""
+        line = "12:15 ↗ TE < $6 ~ :flag_us: | Float: 158 M | IO: 40.99% | MC: 1.2 B"
+        timestamp = datetime(2025, 12, 11, 12, 15, 0)
+
+        ann = parse_message_line(line, timestamp)
+
+        assert ann is not None
+        assert ann.ticker == "TE"
+        assert ann.price_threshold == 6.0
+        assert ann.country == "US"
+        assert ann.float_shares == 158_000_000.0
+        assert ann.io_percent == 40.99
+        assert ann.market_cap == 1_200_000_000.0
+
 
 class TestParseDiscordHtml:
     """Test full HTML parsing with realistic Discord HTML."""
