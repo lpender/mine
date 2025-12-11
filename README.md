@@ -58,54 +58,52 @@ streamlit run app.py
 
 ### Live Trading (Interactive Brokers)
 
-IB Gateway must be running. Use Docker (recommended) or TWS desktop app.
+IB Gateway must be running via Docker (`docker compose up -d`).
 
 #### Quick Commands
 
 ```bash
 # Check account status
-python trade_ib.py --docker status
+python trade.py status
 
 # Get a quote
-python trade_ib.py --docker quote AAPL
+python trade.py quote AAPL
 
 # Buy $100 of a stock with default 10% TP, 7% SL
-python trade_ib.py --docker buy AAPL
+python trade.py buy AAPL
 
 # Buy with custom amount
-python trade_ib.py --docker buy AAPL --dollars 200
+python trade.py buy AAPL --dollars 200
 
 # Buy specific number of shares
-python trade_ib.py --docker buy AAPL --shares 10
+python trade.py buy AAPL --shares 10
 
 # Custom take-profit and stop-loss
-python trade_ib.py --docker buy AAPL --tp 15 --sl 5
+python trade.py buy AAPL --tp 15 --sl 5
 
 # View open positions
-python trade_ib.py --docker positions
+python trade.py positions
 
 # View pending orders (including TP/SL)
-python trade_ib.py --docker orders
+python trade.py orders
 
 # Close a position
-python trade_ib.py --docker close AAPL
+python trade.py close AAPL
 
 # Cancel all pending orders
-python trade_ib.py --docker cancel-all
+python trade.py cancel-all
 
 # LIVE TRADING (use with caution!)
-python trade_ib.py --docker --live buy AAPL
+python trade.py --live buy AAPL
 ```
-
-Note: Remove `--docker` if using local TWS instead of Docker IB Gateway.
 
 ### Real-time Discord Monitor
 
 For faster execution, run the Discord message monitor:
 
 ```bash
-# Terminal 1: Start the server (with Docker IB Gateway)
-python discord_server.py --docker
+# Terminal 1: Start the server
+python discord_server.py
 
 # Then in Discord (browser):
 # 1. Open Discord in your browser
@@ -116,7 +114,7 @@ python discord_server.py --docker
 
 When a new alert appears, you'll see it in your terminal instantly. Execute with:
 ```bash
-python trade_ib.py --docker buy TICKER
+python trade.py buy TICKER
 ```
 
 If you want to enable auto-trading (risky!):
@@ -132,7 +130,7 @@ This will automatically execute bracket orders when alerts come in. Start with p
 ```
 .
 ├── app.py                 # Streamlit dashboard
-├── trade_ib.py            # CLI for executing trades via IB
+├── trade.py               # CLI for executing trades via IB
 ├── discord_server.py      # Real-time Discord message receiver
 ├── discord_monitor.js     # Browser script for Discord
 ├── docker-compose.yml     # IB Gateway Docker setup

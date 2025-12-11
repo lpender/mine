@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
 """
-Quick trade execution CLI for Interactive Brokers.
+Quick trade execution CLI for Interactive Brokers via Docker.
 
-Requires TWS or IB Gateway running locally.
+Requires IB Gateway Docker container running (docker compose up -d).
 
 Usage:
     # Buy $100 of AAPL with 10% take-profit, 7% stop-loss (premarket supported!)
-    python trade_ib.py buy AAPL
+    python trade.py buy AAPL
 
     # Buy $200 of AAPL
-    python trade_ib.py buy AAPL --dollars 200
+    python trade.py buy AAPL --dollars 200
 
     # Buy with custom take-profit and stop-loss
-    python trade_ib.py buy AAPL --tp 15 --sl 5
+    python trade.py buy AAPL --tp 15 --sl 5
 
     # Check account status
-    python trade_ib.py status
+    python trade.py status
 
     # List open positions
-    python trade_ib.py positions
+    python trade.py positions
 
     # List open orders
-    python trade_ib.py orders
+    python trade.py orders
 
     # Get quote for a ticker
-    python trade_ib.py quote AAPL
+    python trade.py quote AAPL
 
     # Close a position
-    python trade_ib.py close AAPL
+    python trade.py close AAPL
 
     # Cancel all orders
-    python trade_ib.py cancel-all
+    python trade.py cancel-all
+
+    # LIVE TRADING (use with caution!)
+    python trade.py --live buy AAPL
 """
 
 import argparse
@@ -45,8 +48,6 @@ from src.ib_trader import IBTrader
 def main():
     parser = argparse.ArgumentParser(description="Quick trade execution via Interactive Brokers")
     parser.add_argument("--live", action="store_true", help="Use live trading (default: paper)")
-    parser.add_argument("--port", type=int, help="TWS/Gateway port (auto-selected if not specified)")
-    parser.add_argument("--docker", action="store_true", help="Use Docker IB Gateway ports (4001/4002)")
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
@@ -88,10 +89,10 @@ def main():
         return
 
     try:
-        trader = IBTrader(port=args.port, paper=not args.live, docker=args.docker)
+        # Always use Docker IB Gateway
+        trader = IBTrader(paper=not args.live, docker=True)
         mode = "LIVE" if args.live else "PAPER"
-        source = "Docker" if args.docker else "TWS/Gateway"
-        print(f"[{mode} TRADING - {source} on port {trader.port}]\n")
+        print(f"[{mode} TRADING - IB Gateway on port {trader.port}]\n")
 
         with trader:
             if args.command == "buy":
@@ -165,8 +166,8 @@ def main():
 
     except ConnectionError as e:
         print(f"Connection Error: {e}", file=sys.stderr)
-        print("\nMake sure TWS or IB Gateway is running and API is enabled.", file=sys.stderr)
-        print("TWS: Edit > Global Configuration > API > Settings > Enable ActiveX and Socket Clients", file=sys.stderr)
+        print("\nMake sure IB Gateway Docker container is running:", file=sys.stderr)
+        print("  docker compose up -d", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
