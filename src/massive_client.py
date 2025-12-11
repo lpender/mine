@@ -195,7 +195,7 @@ class MassiveClient:
         self,
         ticker: str,
         announcement_time: datetime,
-        window_minutes: int = 30,
+        window_minutes: int = 120,
     ) -> List[OHLCVBar]:
         """
         Fetch OHLCV data for a window after an announcement.

@@ -60,7 +60,7 @@ class BacktestConfig:
     take_profit_pct: float = 10.0  # Sell when +X% from entry
     stop_loss_pct: float = 3.0  # Sell when -X% from entry
     volume_threshold: int = 0  # Minimum volume to trigger entry
-    window_minutes: int = 30  # How long to track after announcement
+    window_minutes: int = 120  # How long to track after announcement
 
 
 @dataclass

@@ -107,7 +107,7 @@ BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  F
     if "volume_threshold_k" not in st.session_state:
         st.session_state.volume_threshold_k = saved_config.get("volume_threshold", 0) // 1000
     if "window_minutes" not in st.session_state:
-        st.session_state.window_minutes = saved_config.get("window_minutes", 30)
+        st.session_state.window_minutes = saved_config.get("window_minutes", 120)
 
     entry_trigger = st.slider(
         "Entry Trigger (%)",
