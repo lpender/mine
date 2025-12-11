@@ -17,7 +17,8 @@
       "Bash(python trade.py:*)",
       "Bash(curl:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(python refetch_data.py:*)"
     ]
   }
 }
