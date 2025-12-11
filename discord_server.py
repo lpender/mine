@@ -41,6 +41,14 @@ try:
 except ImportError:
     print("Warning: IB trading module not available")
 
+# Try to import InsightSentry for real-time quotes
+QUOTES_AVAILABLE = False
+try:
+    from src.insightsentry import get_quote_details
+    QUOTES_AVAILABLE = True
+except ImportError:
+    print("Warning: InsightSentry quotes module not available")
+
 
 def extract_ticker(message: str) -> str | None:
     """Extract ticker from a Discord message."""
@@ -73,6 +81,15 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         print(f"Received: {received_at}")
         print(f"Msg time: {timestamp}")
         print(f"Message: {message[:100]}...")
+
+        # Fetch real-time quote
+        if QUOTES_AVAILABLE:
+            quote = get_quote_details(ticker)
+            if quote:
+                result["quote"] = quote
+                print(f"Price: ${quote.get('last_price'):.2f}  Bid: ${quote.get('bid'):.2f}  Ask: ${quote.get('ask'):.2f}")
+            else:
+                print(f"Quote: unavailable")
 
         if AUTO_TRADE and TRADING_AVAILABLE:
             try:
@@ -129,6 +146,7 @@ class DiscordHandler(BaseHTTPRequestHandler):
                 "status": "running",
                 "auto_trade": AUTO_TRADE,
                 "trading_available": TRADING_AVAILABLE,
+                "quotes_available": QUOTES_AVAILABLE,
                 "messages_received": len(message_history),
             })
         elif self.path == "/history":
@@ -181,6 +199,7 @@ Endpoints:
 
 Auto-trade: {'ENABLED' if AUTO_TRADE else 'DISABLED'}
 Trading:    {'AVAILABLE' if TRADING_AVAILABLE else 'NOT AVAILABLE'}
+Quotes:     {'AVAILABLE' if QUOTES_AVAILABLE else 'NOT AVAILABLE'}
 Broker:     {'Local IB Gateway (GUI)' if USE_GUI else 'Docker IB Gateway'}
 
 Paste the following into Discord's browser console (F12 > Console):
