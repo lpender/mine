@@ -101,6 +101,31 @@
         console.log('%c[Discord Monitor] Stopped', 'color: #ff0000; font-weight: bold');
     };
 
+    // Copy messages HTML to clipboard (Cmd+Shift+E)
+    function copyMessagesHtml() {
+        const wrapper = document.querySelector('[class*="messagesWrapper"]');
+        if (wrapper) {
+            navigator.clipboard.writeText(wrapper.outerHTML).then(() => {
+                console.log('%c[Discord Monitor] Messages HTML copied to clipboard!', 'color: #00ff00; font-weight: bold');
+            }).catch(err => {
+                console.error('[Discord Monitor] Failed to copy:', err);
+            });
+        } else {
+            console.error('[Discord Monitor] Messages wrapper not found');
+        }
+    }
+
+    // Keyboard shortcut: Cmd+Shift+E (Mac) or Ctrl+Shift+E (Windows)
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'E') {
+            e.preventDefault();
+            copyMessagesHtml();
+        }
+    });
+
+    window.copyDiscordHtml = copyMessagesHtml;
+
     console.log('%c[Discord Monitor] Running! Use stopDiscordMonitor() to stop.', 'color: #00ff00; font-weight: bold');
+    console.log('%c[Discord Monitor] Cmd+Shift+E to copy messages HTML', 'color: #888888');
     console.log('%c[Discord Monitor] Watching for ticker alerts...', 'color: #888888');
 })();
