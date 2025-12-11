@@ -62,12 +62,16 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         "trade_result": None,
     }
 
+    received_at = datetime.now().isoformat(timespec='milliseconds')
+    result["received_at"] = received_at
+
     ticker = extract_ticker(message)
     if ticker:
         result["ticker"] = ticker
         print(f"\n{'='*50}")
         print(f"NEW ALERT: {ticker}")
-        print(f"Time: {timestamp}")
+        print(f"Received: {received_at}")
+        print(f"Msg time: {timestamp}")
         print(f"Message: {message[:100]}...")
 
         if AUTO_TRADE and TRADING_AVAILABLE:
@@ -96,7 +100,7 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         print(f"{'='*50}\n")
     else:
         result["action"] = "ignored"
-        print(f"[IGNORED] No ticker pattern found in: {message[:60]}...")
+        print(f"[{received_at}] IGNORED - no ticker pattern: {message[:50]}...")
 
     message_history.append(result)
     # Keep only last 100 messages
