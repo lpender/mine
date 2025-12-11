@@ -144,16 +144,16 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     # Extract country from flag
     country = parse_country_from_flag(line)
 
-    # Extract Float
-    float_match = re.search(r'Float:\s*([\d.]+\s*[kKmMbB]?)', line)
+    # Extract Float (handle optional space before colon from HTML parsing)
+    float_match = re.search(r'Float\s*:\s*([\d.]+\s*[kKmMbB]?)', line)
     float_shares = parse_value_with_suffix(float_match.group(1)) if float_match else None
 
     # Extract IO%
-    io_match = re.search(r'IO:\s*([\d.]+)%', line)
+    io_match = re.search(r'IO\s*:\s*([\d.]+)%', line)
     io_percent = float(io_match.group(1)) if io_match else None
 
     # Extract MC (Market Cap)
-    mc_match = re.search(r'MC:\s*([\d.]+\s*[kKmMbB]?)', line)
+    mc_match = re.search(r'MC\s*:\s*([\d.]+\s*[kKmMbB]?)', line)
     market_cap = parse_value_with_suffix(mc_match.group(1)) if mc_match else None
 
     # Check for optional flags
@@ -161,7 +161,7 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     high_ctb = 'High CTB' in line
 
     # Extract Short Interest
-    si_match = re.search(r'SI:\s*([\d.]+)%', line)
+    si_match = re.search(r'SI\s*:\s*([\d.]+)%', line)
     short_interest = float(si_match.group(1)) if si_match else None
 
     return Announcement(
