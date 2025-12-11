@@ -23,13 +23,18 @@ import re
 import argparse
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from pathlib import Path
 import sys
 from dotenv import load_dotenv
+import pandas as pd
 
 load_dotenv()
 
 # Store received messages
 message_history = []
+
+# Persistent alert log
+ALERTS_LOG_PATH = Path("data/alerts.parquet")
 AUTO_TRADE = False  # Set to True to auto-execute trades
 USE_GUI = False  # Set via --gui flag to use local IB Gateway instead of Docker
 
@@ -48,6 +53,23 @@ try:
     QUOTES_AVAILABLE = True
 except ImportError:
     print("Warning: InsightSentry quotes module not available")
+
+
+def log_alert_to_parquet(alert_data: dict):
+    """Append alert to parquet log file."""
+    ALERTS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create DataFrame from new record
+    new_df = pd.DataFrame([alert_data])
+
+    # Append to existing or create new
+    if ALERTS_LOG_PATH.exists():
+        existing_df = pd.read_parquet(ALERTS_LOG_PATH)
+        combined_df = pd.concat([existing_df, new_df], ignore_index=True)
+    else:
+        combined_df = new_df
+
+    combined_df.to_parquet(ALERTS_LOG_PATH, index=False)
 
 
 def extract_ticker(message: str) -> str | None:
@@ -122,6 +144,23 @@ def handle_new_message(message: str, timestamp: str) -> dict:
             print(f"  python trade.py{gui_flag} buy {ticker}")
 
         print(f"{'='*50}\n")
+
+        # Log alert to parquet
+        quote = result.get("quote", {})
+        lp_time = quote.get('lp_time')
+        alert_record = {
+            "ticker": ticker,
+            "received_at": received_at,
+            "msg_timestamp": timestamp,
+            "price_fetched_at": result.get("price_fetched_at"),
+            "last_price": quote.get("last_price"),
+            "bid": quote.get("bid"),
+            "ask": quote.get("ask"),
+            "price_time": datetime.fromtimestamp(lp_time).isoformat(timespec='milliseconds') if lp_time else None,
+            "action": result.get("action"),
+            "message": message[:200],
+        }
+        log_alert_to_parquet(alert_record)
     else:
         result["action"] = "ignored"
         print(f"[{received_at}] IGNORED - no ticker pattern: {message[:50]}...")
@@ -208,6 +247,7 @@ Auto-trade: {'ENABLED' if AUTO_TRADE else 'DISABLED'}
 Trading:    {'AVAILABLE' if TRADING_AVAILABLE else 'NOT AVAILABLE'}
 Quotes:     {'AVAILABLE' if QUOTES_AVAILABLE else 'NOT AVAILABLE'}
 Broker:     {'Local IB Gateway (GUI)' if USE_GUI else 'Docker IB Gateway'}
+Alert log:  {ALERTS_LOG_PATH.absolute()}
 
 Paste the following into Discord's browser console (F12 > Console):
 --------------------------------------------------------------
