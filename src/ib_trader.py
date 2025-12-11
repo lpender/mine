@@ -45,7 +45,9 @@ class IBTrader:
                 # Docker IB Gateway uses socat proxy: 4004->4002 (paper), 4003->4001 (live)
                 port = 4004 if paper else 4003
             else:
-                port = 7497 if paper else 7496
+                # Local IB Gateway typically uses 4002 (paper) / 4001 (live)
+                # TWS uses 7497 (paper) / 7496 (live)
+                port = 4002 if paper else 4001
 
         self.host = host
         self.port = port
