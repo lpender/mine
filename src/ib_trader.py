@@ -42,7 +42,8 @@ class IBTrader:
         self.docker = docker
         if port is None:
             if docker:
-                port = 4002 if paper else 4001
+                # Docker IB Gateway uses socat proxy: 4004->4002 (paper), 4003->4001 (live)
+                port = 4004 if paper else 4003
             else:
                 port = 7497 if paper else 7496
 
@@ -60,7 +61,7 @@ class IBTrader:
             return True
 
         try:
-            self.ib.connect(self.host, self.port, clientId=self.client_id)
+            self.ib.connect(self.host, self.port, clientId=self.client_id, timeout=10)
             self._connected = True
             return True
         except Exception as e:

@@ -18,7 +18,16 @@
       "Bash(curl:*)",
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
-      "Bash(python refetch_data.py:*)"
+      "Bash(python refetch_data.py:*)",
+      "Bash(python trade_ib.py:*)",
+      "Bash(docker compose logs:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker port:*)",
+      "Bash(nc:*)",
+      "Bash(orb list:*)",
+      "Bash(docker inspect:*)",
+      "Bash(python:*)",
+      "Bash(docker exec:*)"
     ]
   }
 }

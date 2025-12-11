@@ -29,11 +29,10 @@ services:
       - READ_ONLY_API=no
     ports:
       # API ports - connect your scripts here
+      # Note: IB Gateway binds to localhost inside container, socat forwards 4004->4002
       - "4001:4001"  # Live trading API
-      - "4002:4002"  # Paper trading API
-      # VNC for debugging/monitoring (optional)
-      - "5900:5900"  # VNC direct
-      - "6080:6080"  # noVNC web interface
+      - "4002:4002"  # Paper trading API (direct - may not work)
+      - "4004:4004"  # Paper trading via socat proxy (use this!)
     volumes:
       # Persist IB Gateway settings
       - ib-gateway-data:/home/ibgateway/Jts

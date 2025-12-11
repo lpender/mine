@@ -22,7 +22,7 @@ A Streamlit dashboard for analyzing stock price movements following press releas
 1. Create and activate a virtual environment:
    ```bash
    python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   source venv/bin/activate
    ```
 
 2. Install dependencies:
