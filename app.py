@@ -295,78 +295,62 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
                 actually_added.append(ann)
 
         if actually_added:
-            # Queue announcements for OHLCV fetch
-            if "pending_fetch" not in st.session_state:
-                st.session_state.pending_fetch = []
-
-            for ann in actually_added:
-                key = (ann.ticker, ann.timestamp)
-                if key not in st.session_state.bars_by_announcement:
-                    st.session_state.pending_fetch.append(ann)
-
-            # Save announcements to cache immediately
+            # Fetch OHLCV data synchronously with progress bar
             client = MassiveClient()
-            client.save_announcements(st.session_state.announcements)
 
+            # Find announcements needing OHLCV fetch
+            to_fetch = [
+                ann for ann in actually_added
+                if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
+            ]
+
+            if to_fetch:
+                progress_bar = st.sidebar.progress(0, text="Fetching OHLCV data...")
+                for i, ann in enumerate(to_fetch):
+                    progress_bar.progress(
+                        (i + 1) / len(to_fetch),
+                        text=f"Fetching {ann.ticker} ({i + 1}/{len(to_fetch)})"
+                    )
+                    key = (ann.ticker, ann.timestamp)
+                    bars = client.fetch_after_announcement(
+                        ann.ticker,
+                        ann.timestamp,
+                        window_minutes,
+                    )
+                    st.session_state.bars_by_announcement[key] = bars
+                progress_bar.empty()
+
+            # Save announcements to cache
+            client.save_announcements(st.session_state.announcements)
             st.session_state.results = []
             st.rerun()
 
-# Process pending OHLCV fetches one at a time (incremental loading)
-if "pending_fetch" not in st.session_state:
-    st.session_state.pending_fetch = []
-
-if st.session_state.pending_fetch:
-    # Show progress in sidebar
-    pending_count = len(st.session_state.pending_fetch)
-    next_ticker = st.session_state.pending_fetch[0].ticker
-
-    # Progress container
+# Check if there are any announcements missing OHLCV data
+missing_data = [
+    ann for ann in st.session_state.announcements
+    if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
+]
+if missing_data:
     with st.sidebar:
-        st.info(f"📥 Fetching **{next_ticker}** ({pending_count} remaining)")
-        progress_bar = st.progress(0)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("⏸️ Pause", use_container_width=True):
-                st.session_state.pending_fetch = []
-                st.rerun()
-        with col2:
-            if st.button("⏭️ Skip", use_container_width=True):
-                st.session_state.pending_fetch.pop(0)
-                st.rerun()
-
-    # Fetch the next one
-    ann = st.session_state.pending_fetch[0]
-    client = MassiveClient()
-
-    key = (ann.ticker, ann.timestamp)
-    bars = client.fetch_after_announcement(
-        ann.ticker,
-        ann.timestamp,
-        window_minutes,
-    )
-    st.session_state.bars_by_announcement[key] = bars
-
-    # Remove from queue
-    st.session_state.pending_fetch.pop(0)
-
-    # Clear results to trigger re-backtest
-    st.session_state.results = []
-
-    # Continue fetching (rerun to process next item)
-    st.rerun()
-else:
-    # Check if there are any announcements missing OHLCV data
-    missing_data = [
-        ann for ann in st.session_state.announcements
-        if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
-    ]
-    if missing_data:
-        with st.sidebar:
-            st.warning(f"⚠️ {len(missing_data)} tickers missing OHLCV data")
-            if st.button("📥 Fetch Missing Data", use_container_width=True):
-                st.session_state.pending_fetch = missing_data
-                st.rerun()
+        st.warning(f"⚠️ {len(missing_data)} tickers missing OHLCV data")
+        if st.button("📥 Fetch Missing Data", use_container_width=True):
+            client = MassiveClient()
+            progress_bar = st.progress(0, text="Fetching OHLCV data...")
+            for i, ann in enumerate(missing_data):
+                progress_bar.progress(
+                    (i + 1) / len(missing_data),
+                    text=f"Fetching {ann.ticker} ({i + 1}/{len(missing_data)})"
+                )
+                key = (ann.ticker, ann.timestamp)
+                bars = client.fetch_after_announcement(
+                    ann.ticker,
+                    ann.timestamp,
+                    window_minutes,
+                )
+                st.session_state.bars_by_announcement[key] = bars
+            progress_bar.empty()
+            st.session_state.results = []
+            st.rerun()
 
 # Main area
 if st.session_state.announcements:
@@ -491,7 +475,7 @@ if st.session_state.announcements:
 
         # Determine status
         if not has_bars:
-            status = "⏳ loading..."
+            status = "no data"
         elif result:
             status = result.trigger_type
         else:
@@ -509,7 +493,7 @@ if st.session_state.announcements:
             "SI%": f"{ann.short_interest:.1f}%" if ann.short_interest is not None else "N/A",
             "CTB": "High" if ann.high_ctb else "-",
             "Country": ann.country,
-            "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else ("..." if not has_bars else "N/A"),
+            "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else "N/A",
             "_return_numeric": return_val,  # Hidden column for sorting
             "Status": status,
         }
