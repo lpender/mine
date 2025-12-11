@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Simple HTTP server that receives Discord messages and can trigger trades.
+Simple HTTP server that receives Discord messages and can trigger trades via IB.
 
 Usage:
-    python discord_server.py
+    python discord_server.py [--docker]
+
+    --docker  Use Docker IB Gateway ports (default: local TWS/Gateway)
 
 Then inject the browser script into Discord (see discord_monitor.js).
 When a new message is detected, it will:
 1. Parse the ticker from the message
-2. Optionally auto-execute a trade via Alpaca
+2. Optionally auto-execute a bracket order via Interactive Brokers
 
 Endpoints:
     POST /message - Receive a Discord message
@@ -18,10 +20,9 @@ Endpoints:
 
 import json
 import re
+import argparse
 from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import parse_qs
-import threading
 import sys
 from dotenv import load_dotenv
 
@@ -30,15 +31,15 @@ load_dotenv()
 # Store received messages
 message_history = []
 AUTO_TRADE = False  # Set to True to auto-execute trades
+USE_DOCKER = False  # Set via --docker flag
 
 # Try to import trading module
+TRADING_AVAILABLE = False
 try:
-    from src.alpaca_trader import AlpacaTrader
-    from src.parser import parse_message_line
+    from src.ib_trader import IBTrader
     TRADING_AVAILABLE = True
 except ImportError:
-    TRADING_AVAILABLE = False
-    print("Warning: Trading module not available")
+    print("Warning: IB trading module not available")
 
 
 def extract_ticker(message: str) -> str | None:
@@ -70,13 +71,14 @@ def handle_new_message(message: str, timestamp: str) -> dict:
 
         if AUTO_TRADE and TRADING_AVAILABLE:
             try:
-                trader = AlpacaTrader(paper=True)
-                trade = trader.buy_with_bracket(
-                    ticker=ticker,
-                    dollars=100,
-                    take_profit_pct=10,
-                    stop_loss_pct=7,
-                )
+                trader = IBTrader(paper=True, docker=USE_DOCKER)
+                with trader:
+                    trade = trader.buy_with_bracket(
+                        ticker=ticker,
+                        dollars=100,
+                        take_profit_pct=10,
+                        stop_loss_pct=7,
+                    )
                 result["action"] = "trade_executed"
                 result["trade_result"] = trade
                 print(f"TRADE EXECUTED: {trade}")
@@ -87,7 +89,8 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         else:
             result["action"] = "alert_only"
             print("Auto-trade disabled. Run manually:")
-            print(f"  python trade.py buy {ticker}")
+            docker_flag = " --docker" if USE_DOCKER else ""
+            print(f"  python trade_ib.py{docker_flag} buy {ticker}")
 
         print(f"{'='*50}\n")
     else:
@@ -120,6 +123,7 @@ class DiscordHandler(BaseHTTPRequestHandler):
                 "status": "running",
                 "auto_trade": AUTO_TRADE,
                 "trading_available": TRADING_AVAILABLE,
+                "use_docker": USE_DOCKER,
                 "messages_received": len(message_history),
             })
         elif self.path == "/history":
@@ -159,9 +163,10 @@ class DiscordHandler(BaseHTTPRequestHandler):
 def run_server(port: int = 8765):
     # Bind to 127.0.0.1 (not localhost) - Discord CSP allows 127.0.0.1 but blocks localhost
     server = HTTPServer(("127.0.0.1", port), DiscordHandler)
+    docker_status = "Docker IB Gateway" if USE_DOCKER else "Local TWS/Gateway"
     print(f"""
-Discord Message Monitor
-=======================
+Discord Message Monitor (Interactive Brokers)
+==============================================
 Server running at http://127.0.0.1:{port}
 
 Endpoints:
@@ -172,6 +177,7 @@ Endpoints:
 
 Auto-trade: {'ENABLED' if AUTO_TRADE else 'DISABLED'}
 Trading:    {'AVAILABLE' if TRADING_AVAILABLE else 'NOT AVAILABLE'}
+Broker:     {docker_status}
 
 Paste the following into Discord's browser console (F12 > Console):
 --------------------------------------------------------------
@@ -192,5 +198,10 @@ Paste the following into Discord's browser console (F12 > Console):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8765
-    run_server(port)
+    parser = argparse.ArgumentParser(description="Discord message monitor with IB trading")
+    parser.add_argument("--docker", action="store_true", help="Use Docker IB Gateway ports")
+    parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
+    args = parser.parse_args()
+
+    USE_DOCKER = args.docker
+    run_server(args.port)

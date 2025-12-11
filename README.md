@@ -11,10 +11,11 @@ A Streamlit dashboard for analyzing stock price movements following press releas
   - Take profit target
   - Stop loss
   - Volume threshold
-  - Time window
+  - Time window (default 120 minutes)
 - **Interactive Charts**: Candlestick charts with volume, entry/exit markers, and trigger level overlays
 - **Summary Statistics**: Win rate, average return, expectancy, profit factor
-- **Live Trading**: Execute trades via Alpaca API with bracket orders (take-profit + stop-loss)
+- **Live Trading**: Execute trades via Interactive Brokers with bracket orders (take-profit + stop-loss)
+- **Premarket Support**: IB bracket orders work in premarket/afterhours
 - **Real-time Alerts**: Discord message monitor for instant trade signals
 
 ## Setup
@@ -36,6 +37,11 @@ A Streamlit dashboard for analyzing stock price movements following press releas
    # Edit .env and add your API keys
    ```
 
+4. Start IB Gateway (Docker):
+   ```bash
+   docker compose up -d
+   ```
+
 ## Usage
 
 ### Backtesting Dashboard
@@ -50,58 +56,56 @@ streamlit run app.py
 4. Click on a row to view the detailed price chart
 5. Export results to CSV
 
-### Live Trading (Alpaca)
+### Live Trading (Interactive Brokers)
 
-First, add your Alpaca API keys to `.env`:
-```
-ALPACA_API_KEY=your_key
-ALPACA_SECRET_KEY=your_secret
-```
+IB Gateway must be running. Use Docker (recommended) or TWS desktop app.
 
 #### Quick Commands
 
 ```bash
 # Check account status
-python trade.py status
+python trade_ib.py --docker status
 
 # Get a quote
-python trade.py quote AAPL
+python trade_ib.py --docker quote AAPL
 
 # Buy $100 of a stock with default 10% TP, 7% SL
-python trade.py buy AAPL
+python trade_ib.py --docker buy AAPL
 
 # Buy with custom amount
-python trade.py buy AAPL --dollars 200
+python trade_ib.py --docker buy AAPL --dollars 200
 
 # Buy specific number of shares
-python trade.py buy AAPL --shares 10
+python trade_ib.py --docker buy AAPL --shares 10
 
 # Custom take-profit and stop-loss
-python trade.py buy AAPL --tp 15 --sl 5
+python trade_ib.py --docker buy AAPL --tp 15 --sl 5
 
 # View open positions
-python trade.py positions
+python trade_ib.py --docker positions
 
 # View pending orders (including TP/SL)
-python trade.py orders
+python trade_ib.py --docker orders
 
 # Close a position
-python trade.py close AAPL
+python trade_ib.py --docker close AAPL
 
 # Cancel all pending orders
-python trade.py cancel-all
+python trade_ib.py --docker cancel-all
 
 # LIVE TRADING (use with caution!)
-python trade.py --live buy AAPL
+python trade_ib.py --docker --live buy AAPL
 ```
+
+Note: Remove `--docker` if using local TWS instead of Docker IB Gateway.
 
 ### Real-time Discord Monitor
 
 For faster execution, run the Discord message monitor:
 
 ```bash
-# Terminal 1: Start the server
-python discord_server.py
+# Terminal 1: Start the server (with Docker IB Gateway)
+python discord_server.py --docker
 
 # Then in Discord (browser):
 # 1. Open Discord in your browser
@@ -112,13 +116,13 @@ python discord_server.py
 
 When a new alert appears, you'll see it in your terminal instantly. Execute with:
 ```bash
-python trade.py buy TICKER
+python trade_ib.py --docker buy TICKER
 ```
 
 If you want to enable auto-trading (risky!):
 
 ```bash
-curl -X POST http://localhost:8765/toggle-auto-trade
+curl -X POST http://127.0.0.1:8765/toggle-auto-trade
 ```
 
 This will automatically execute bracket orders when alerts come in. Start with paper trading!
@@ -128,15 +132,17 @@ This will automatically execute bracket orders when alerts come in. Start with p
 ```
 .
 ├── app.py                 # Streamlit dashboard
-├── trade.py               # CLI for executing trades
+├── trade_ib.py            # CLI for executing trades via IB
 ├── discord_server.py      # Real-time Discord message receiver
 ├── discord_monitor.js     # Browser script for Discord
+├── docker-compose.yml     # IB Gateway Docker setup
+├── refetch_data.py        # Re-fetch OHLCV data for cached announcements
 ├── src/
 │   ├── models.py          # Data classes
 │   ├── parser.py          # Discord message parser
 │   ├── massive_client.py  # OHLCV API client with caching
 │   ├── backtest.py        # Backtesting engine
-│   └── alpaca_trader.py   # Alpaca trading client
+│   └── ib_trader.py       # Interactive Brokers trading client
 ├── data/
 │   └── ohlcv/             # Cached OHLCV parquet files
 └── tests/
@@ -150,8 +156,9 @@ Environment variables (in `.env`):
 | Variable | Description |
 |----------|-------------|
 | `MASSIVE_API_KEY` | API key for OHLCV data |
-| `ALPACA_API_KEY` | Alpaca API key (for trading) |
-| `ALPACA_SECRET_KEY` | Alpaca secret key (for trading) |
+| `IB_USERNAME` | Interactive Brokers username (for Docker) |
+| `IB_PASSWORD` | Interactive Brokers password (for Docker) |
+| `IB_TRADING_MODE` | `paper` or `live` (for Docker) |
 
 ## Strategy Notes
 
