@@ -44,8 +44,9 @@ except ImportError:
 
 def extract_ticker(message: str) -> str | None:
     """Extract ticker from a Discord message."""
-    # Pattern: TICKER < $X or TICKER  < $X (with extra spaces)
-    match = re.match(r'^([A-Z]{2,5})\s+<\s*\$', message.strip())
+    # Pattern: TICKER < $X anywhere in the message (handles timestamp/arrow prefix)
+    # e.g., "13:03  ↑  PETS  < $4  86%  ..."
+    match = re.search(r'\b([A-Z]{2,5})\s+<\s*\$', message.strip())
     if match:
         return match.group(1)
     return None
@@ -95,6 +96,7 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         print(f"{'='*50}\n")
     else:
         result["action"] = "ignored"
+        print(f"[IGNORED] No ticker pattern found in: {message[:60]}...")
 
     message_history.append(result)
     # Keep only last 100 messages
