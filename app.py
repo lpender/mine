@@ -93,6 +93,10 @@ with st.sidebar:
         placeholder="""Paste HTML from Discord console...""",
     )
 
+    # Placeholder for progress bar (will be used during data fetch)
+    progress_placeholder = st.empty()
+    status_placeholder = st.empty()
+
     st.divider()
     st.header("Trigger Configuration")
 
@@ -308,7 +312,7 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
             ]
 
             if to_fetch:
-                progress_bar = st.sidebar.progress(0, text="Fetching OHLCV data...")
+                progress_bar = progress_placeholder.progress(0, text="Fetching OHLCV data...")
                 for i, ann in enumerate(to_fetch):
                     progress_bar.progress(
                         (i + 1) / len(to_fetch),
@@ -321,7 +325,7 @@ if messages_input.strip() and messages_input != st.session_state.last_messages_i
                         window_minutes,
                     )
                     st.session_state.bars_by_announcement[key] = bars
-                progress_bar.empty()
+                progress_placeholder.empty()
 
             # Save announcements to cache
             client.save_announcements(st.session_state.announcements)
@@ -334,11 +338,11 @@ missing_data = [
     if (ann.ticker, ann.timestamp) not in st.session_state.bars_by_announcement
 ]
 if missing_data:
+    status_placeholder.warning(f"⚠️ {len(missing_data)} tickers missing OHLCV data")
     with st.sidebar:
-        st.warning(f"⚠️ {len(missing_data)} tickers missing OHLCV data")
         if st.button("📥 Fetch Missing Data", use_container_width=True):
             client = MassiveClient()
-            progress_bar = st.progress(0, text="Fetching OHLCV data...")
+            progress_bar = progress_placeholder.progress(0, text="Fetching OHLCV data...")
             for i, ann in enumerate(missing_data):
                 progress_bar.progress(
                     (i + 1) / len(missing_data),
@@ -351,7 +355,8 @@ if missing_data:
                     window_minutes,
                 )
                 st.session_state.bars_by_announcement[key] = bars
-            progress_bar.empty()
+            progress_placeholder.empty()
+            status_placeholder.empty()
             st.session_state.results = []
             st.rerun()
 
