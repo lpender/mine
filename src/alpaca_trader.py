@@ -175,18 +175,22 @@ class AlpacaTrader:
                 f"is too high for ${dollars:.2f}. Minimum order: ${min_cost:.2f}"
             )
 
-        print(f"Placing market order for {ticker}:")
+        # Add a small buffer to limit price to ensure fill (0.5% above ask)
+        limit_price = round(current_price * 1.005, 2)
+
+        print(f"Placing limit order for {ticker}:")
         print(f"  Shares: {shares}")
-        print(f"  Est. entry: ${current_price:.2f} (from {quote.get('source', 'quote')})")
-        print(f"  Total cost: ~${shares * current_price:.2f}")
+        print(f"  Limit price: ${limit_price:.2f} (ask ${current_price:.2f} + 0.5% buffer)")
+        print(f"  Total cost: ~${shares * limit_price:.2f}")
         print(f"  NOTE: No TP/SL - you must monitor and close manually")
 
-        # Create simple market order with extended hours
-        order_request = MarketOrderRequest(
+        # Extended hours requires limit orders
+        order_request = LimitOrderRequest(
             symbol=ticker,
             qty=shares,
             side=OrderSide.BUY,
             time_in_force=TimeInForce.DAY,
+            limit_price=limit_price,
             extended_hours=True,
         )
 
