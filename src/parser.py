@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
+from bs4 import BeautifulSoup
 from .models import Announcement
 
 
@@ -241,3 +242,89 @@ def parse_simple_format(text: str) -> List[Announcement]:
             announcements.append(announcement)
 
     return announcements
+
+
+def parse_iso_timestamp(iso_str: str) -> datetime:
+    """
+    Parse ISO 8601 timestamp with millisecond precision.
+    E.g., '2025-12-10T12:00:08.445Z' -> datetime with ms
+    """
+    # Handle Z suffix (UTC)
+    iso_str = iso_str.replace('Z', '+00:00')
+
+    # Try parsing with microseconds first
+    try:
+        # Python's fromisoformat handles milliseconds as microseconds
+        dt = datetime.fromisoformat(iso_str)
+        # Convert to naive datetime (remove timezone for consistency)
+        if dt.tzinfo is not None:
+            dt = dt.replace(tzinfo=None)
+        return dt
+    except ValueError:
+        pass
+
+    # Fallback: try without timezone
+    try:
+        if '.' in iso_str:
+            dt = datetime.strptime(iso_str.split('+')[0], '%Y-%m-%dT%H:%M:%S.%f')
+        else:
+            dt = datetime.strptime(iso_str.split('+')[0], '%Y-%m-%dT%H:%M:%S')
+        return dt
+    except ValueError:
+        return datetime.now()
+
+
+def parse_discord_html(html: str) -> List[Announcement]:
+    """
+    Parse Discord HTML export with millisecond-precision timestamps.
+
+    Extracts timestamps from <time datetime="2025-12-10T12:00:08.445Z">
+    and message content from <div id="message-content-...">
+    """
+    soup = BeautifulSoup(html, 'html.parser')
+    announcements = []
+
+    # Find all message list items
+    messages = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
+
+    for msg in messages:
+        # Extract timestamp from <time datetime="...">
+        time_elem = msg.find('time')
+        if not time_elem or not time_elem.get('datetime'):
+            continue
+
+        timestamp = parse_iso_timestamp(time_elem['datetime'])
+
+        # Extract message content
+        content_div = msg.find('div', id=lambda x: x and x.startswith('message-content-'))
+        if not content_div:
+            continue
+
+        # Get text content, replacing elements appropriately
+        message_text = content_div.get_text(separator=' ', strip=True)
+
+        # Try to parse as announcement
+        announcement = parse_message_line(message_text, timestamp)
+        if announcement:
+            announcements.append(announcement)
+
+    return announcements
+
+
+def parse_auto(text: str, reference_date: Optional[datetime] = None) -> List[Announcement]:
+    """
+    Auto-detect format and parse accordingly.
+    Supports: HTML (Discord export), plain text Discord paste, simple format.
+    """
+    text = text.strip()
+
+    # Check if it's HTML
+    if '<' in text and ('messageListItem' in text or '<time datetime=' in text):
+        return parse_discord_html(text)
+
+    # Check if it's simple format with timestamps
+    if text.startswith('[') and re.match(r'\[\d{4}-\d{2}-\d{2}', text):
+        return parse_simple_format(text)
+
+    # Default to Discord text paste format
+    return parse_discord_messages(text, reference_date)
