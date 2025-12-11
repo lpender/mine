@@ -3573,5 +3573,18 @@
     "reg_sho": false,
     "high_ctb": false,
     "short_interest": null
+  },
+  {
+    "ticker": "BNKK",
+    "timestamp": "2025-12-09T13:01:10.119000",
+    "price_threshold": 0.5,
+    "headline": "Bonk, Inc. Completes Strategic Capital Structure Optimization to Support Institutional Growth and Digital Asset Strategy",
+    "country": "US",
+    "float_shares": 139000000.0,
+    "io_percent": 6.04,
+    "market_cap": 41300000.0,
+    "reg_sho": false,
+    "high_ctb": false,
+    "short_interest": null
   }
 ]
