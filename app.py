@@ -170,6 +170,8 @@ with st.sidebar:
         st.session_state.filter_market = saved_config.get("filter_market", True)
     if "filter_postmarket" not in st.session_state:
         st.session_state.filter_postmarket = saved_config.get("filter_postmarket", True)
+    if "filter_closed" not in st.session_state:
+        st.session_state.filter_closed = saved_config.get("filter_closed", True)
 
     filter_premarket = st.checkbox(
         "Premarket (4:00-9:30)",
@@ -182,6 +184,10 @@ with st.sidebar:
     filter_postmarket = st.checkbox(
         "Postmarket (16:00-20:00)",
         key="filter_postmarket",
+    )
+    filter_closed = st.checkbox(
+        "Closed (20:00-4:00)",
+        key="filter_closed",
     )
 
     # High CTB filter
@@ -231,6 +237,7 @@ with st.sidebar:
         "filter_premarket": filter_premarket,
         "filter_market": filter_market,
         "filter_postmarket": filter_postmarket,
+        "filter_closed": filter_closed,
         "filter_ctb": filter_ctb,
         "filter_io_min": filter_io_min,
         "filter_io_max": filter_io_max,
@@ -327,6 +334,8 @@ if st.session_state.announcements:
         allowed_sessions.append("market")
     if filter_postmarket:
         allowed_sessions.append("postmarket")
+    if filter_closed:
+        allowed_sessions.append("closed")
 
     # Filter announcements by session
     all_announcements = st.session_state.announcements
