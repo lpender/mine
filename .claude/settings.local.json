@@ -12,7 +12,9 @@
       "Bash(ls:*)",
       "Bash(python -m pytest:*)",
       "Bash(pip install:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(chmod:*)",
+      "Bash(python trade.py:*)"
     ]
   }
 }
