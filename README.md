@@ -109,6 +109,14 @@ When a new alert appears, you'll see it in your terminal instantly. Execute with
 python trade.py buy TICKER
 ```
 
+If you want to enable auto-trading (risky!):
+
+```bash
+curl -X POST http://localhost:8765/toggle-auto-trade
+```
+
+This will automatically execute bracket orders when alerts come in. Start with paper trading!
+
 ## Project Structure
 
 ```

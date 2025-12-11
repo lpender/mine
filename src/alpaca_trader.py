@@ -199,6 +199,7 @@ class AlpacaTrader:
             order_class=OrderClass.BRACKET,
             take_profit={"limit_price": take_profit_price},
             stop_loss={"stop_price": stop_loss_price},
+            extended_hours=True,  # Allow premarket/afterhours execution
         )
 
         order = self.trading_client.submit_order(order_request)

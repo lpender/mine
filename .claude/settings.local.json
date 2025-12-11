@@ -14,7 +14,10 @@
       "Bash(pip install:*)",
       "Bash(git checkout:*)",
       "Bash(chmod:*)",
-      "Bash(python trade.py:*)"
+      "Bash(python trade.py:*)",
+      "Bash(curl:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)"
     ]
   }
 }
