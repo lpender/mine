@@ -19,12 +19,18 @@ A Streamlit dashboard for analyzing stock price movements following press releas
 
 ## Setup
 
-1. Install dependencies:
+1. Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+2. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Configure your API keys:
+3. Configure your API keys:
    ```bash
    cp .env.example .env
    # Edit .env and add your API keys
