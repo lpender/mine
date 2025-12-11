@@ -1,6 +1,44 @@
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, time
 from typing import Optional, List
+from zoneinfo import ZoneInfo
+
+
+# Market session time boundaries (Eastern Time)
+PREMARKET_START = time(4, 0)    # 04:00 ET
+MARKET_OPEN = time(9, 30)       # 09:30 ET
+MARKET_CLOSE = time(16, 0)      # 16:00 ET
+POSTMARKET_END = time(20, 0)    # 20:00 ET (some use 21:00)
+
+ET_TZ = ZoneInfo("America/New_York")
+
+
+def get_market_session(timestamp: datetime) -> str:
+    """
+    Determine the market session for a given timestamp.
+
+    Args:
+        timestamp: datetime (should be in ET or will be converted)
+
+    Returns:
+        "premarket", "market", "postmarket", or "closed"
+    """
+    # Convert to Eastern Time if needed
+    if timestamp.tzinfo is None:
+        # Assume naive datetimes are already in ET
+        t = timestamp.time()
+    else:
+        et_time = timestamp.astimezone(ET_TZ)
+        t = et_time.time()
+
+    if PREMARKET_START <= t < MARKET_OPEN:
+        return "premarket"
+    elif MARKET_OPEN <= t < MARKET_CLOSE:
+        return "market"
+    elif MARKET_CLOSE <= t < POSTMARKET_END:
+        return "postmarket"
+    else:
+        return "closed"
 
 
 @dataclass
@@ -17,6 +55,11 @@ class Announcement:
     reg_sho: bool = False  # Regulation SHO flag
     high_ctb: bool = False  # High Cost to Borrow flag
     short_interest: Optional[float] = None  # e.g., 23.9 (percent)
+
+    @property
+    def market_session(self) -> str:
+        """Returns the market session: premarket, market, postmarket, or closed."""
+        return get_market_session(self.timestamp)
 
 
 @dataclass

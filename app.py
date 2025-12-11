@@ -288,7 +288,7 @@ if st.session_state.announcements:
     st.header("Announcements")
 
     # Sort controls - use callbacks to persist values
-    sort_options = ["Time (EST)", "Ticker", "Return", "Status"]
+    sort_options = ["Time (EST)", "Ticker", "Session", "Return", "Status"]
 
     def on_sort_change():
         st.session_state.sort_column_value = st.session_state.sort_selectbox
@@ -325,6 +325,7 @@ if st.session_state.announcements:
             "_original_idx": i,  # Hidden column to track original index
             "Ticker": ann.ticker,
             "Time (EST)": ann.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "Session": ann.market_session.capitalize(),
             "Price": f"${ann.price_threshold:.2f}" if ann.price_threshold else "N/A",
             "Float": f"{ann.float_shares/1e6:.1f}M" if ann.float_shares else "N/A",
             "IO%": f"{ann.io_percent:.1f}%" if ann.io_percent else "N/A",
@@ -485,6 +486,7 @@ if st.session_state.announcements:
                 export_data.append({
                     "ticker": ann.ticker,
                     "timestamp": ann.timestamp,
+                    "market_session": ann.market_session,
                     "price_threshold": ann.price_threshold,
                     "headline": ann.headline,
                     "country": ann.country,
