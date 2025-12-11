@@ -85,11 +85,18 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         # Fetch real-time quote
         if QUOTES_AVAILABLE:
             quote = get_quote_details(ticker)
+            price_fetched_at = datetime.now().isoformat(timespec='milliseconds')
+            result["price_fetched_at"] = price_fetched_at
             if quote:
                 result["quote"] = quote
-                print(f"Price: ${quote.get('last_price'):.2f}  Bid: ${quote.get('bid'):.2f}  Ask: ${quote.get('ask'):.2f}")
+                # lp_time is Unix timestamp of last price update
+                lp_time = quote.get('lp_time')
+                price_time_str = datetime.fromtimestamp(lp_time).isoformat(timespec='milliseconds') if lp_time else "N/A"
+                print(f"Price:    ${quote.get('last_price'):.2f}  Bid: ${quote.get('bid'):.2f}  Ask: ${quote.get('ask'):.2f}")
+                print(f"Pr time:  {price_time_str}")
+                print(f"Fetched:  {price_fetched_at}")
             else:
-                print(f"Quote: unavailable")
+                print(f"Quote: unavailable (fetched {price_fetched_at})")
 
         if AUTO_TRADE and TRADING_AVAILABLE:
             try:
