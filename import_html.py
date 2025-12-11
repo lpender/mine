@@ -98,6 +98,11 @@ def main():
 
     print(f"\nNew announcements to fetch: {len(new_announcements)}")
 
+    # Save announcements FIRST (before OHLCV fetch which can be slow/interrupted)
+    all_announcements = existing_announcements + new_announcements
+    client.save_announcements(all_announcements)
+    print(f"Saved {len(all_announcements)} announcements to cache")
+
     # Fetch OHLCV data
     print(f"\nFetching OHLCV data (window: {args.window} min)...")
 
@@ -127,7 +132,8 @@ def main():
                 price_change_pct = ((high - ann.price_threshold) / ann.price_threshold) * 100
 
                 print(f"OK ({len(bars)} bars)")
-                print(f"       Open: ${first_bar.open:.2f} | High: ${high:.2f} (+{price_change_pct:.1f}%) | Low: ${low:.2f} | Close: ${last_bar.close:.2f} | Vol: {total_volume:,}")
+                change_sign = "+" if price_change_pct >= 0 else ""
+                print(f"       Open: ${first_bar.open:.2f} | High: ${high:.2f} ({change_sign}{price_change_pct:.1f}%) | Low: ${low:.2f} | Close: ${last_bar.close:.2f} | Vol: {total_volume:,}")
 
                 results.append({
                     "ticker": ann.ticker,
@@ -148,10 +154,6 @@ def main():
             print(f"Error: {e}")
             results.append({"ticker": ann.ticker, "bars": 0, "error": str(e)})
             failed += 1
-
-    # Save announcements
-    all_announcements = existing_announcements + new_announcements
-    client.save_announcements(all_announcements)
 
     print(f"\n{'='*60}")
     print(f"Summary:")
