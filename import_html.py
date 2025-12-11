@@ -6,9 +6,9 @@ Usage:
     python import_html.py <html_file> --channel <name> [--include-today] [--window MINUTES]
 
 Session filtering (for OHLCV fetch only - all announcements are always saved):
-    --extended        Only fetch OHLCV for premarket + postmarket (default)
-    --premarket       Only fetch OHLCV for premarket
-    --postmarket      Only fetch OHLCV for postmarket
+    --extended        Only fetch OHLCV for trading hours: premarket + market + postmarket (default)
+    --premarket       Only fetch OHLCV for premarket only
+    --postmarket      Only fetch OHLCV for postmarket only
     --all-sessions    Fetch OHLCV for all sessions (including closed hours)
 
 Examples:
@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--channel", "-c", type=str, required=True,
                         help="Channel name to tag announcements with (e.g., select-news)")
     parser.add_argument("--extended", action="store_true",
-                        help="Only fetch OHLCV for extended hours (premarket + postmarket) - this is the default")
+                        help="Exclude closed market hours - fetch for premarket, market, postmarket (default)")
     parser.add_argument("--premarket", action="store_true",
                         help="Only fetch OHLCV for premarket announcements")
     parser.add_argument("--postmarket", action="store_true",
@@ -122,9 +122,9 @@ def main():
     print(f"Saved {len(all_announcements)} total announcements to cache")
 
     # Determine which sessions to fetch OHLCV for
-    # Default: extended hours only (premarket + postmarket)
+    # Default: all trading hours (excludes closed)
     if args.all_sessions:
-        ohlcv_sessions = None  # None means all sessions
+        ohlcv_sessions = None  # None means all sessions including closed
     elif args.premarket and args.postmarket:
         ohlcv_sessions = ["premarket", "postmarket"]
     elif args.premarket:
@@ -132,8 +132,8 @@ def main():
     elif args.postmarket:
         ohlcv_sessions = ["postmarket"]
     else:
-        # Default: extended hours (premarket + postmarket)
-        ohlcv_sessions = ["premarket", "postmarket"]
+        # Default: all trading hours (excludes closed market hours)
+        ohlcv_sessions = ["premarket", "market", "postmarket"]
 
     # Check which announcements need OHLCV data (no cached parquet file + matching session)
     announcements_needing_ohlcv = []
