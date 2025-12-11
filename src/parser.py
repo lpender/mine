@@ -299,9 +299,13 @@ def parse_discord_html_with_stats(
     """
     Parse Discord HTML with stats about what was parsed/filtered.
 
+    Finds messages by looking for:
+    1. <li id="chat-messages-*"> elements (anywhere in the document)
+    2. <li class="*messageListItem*"> elements (fallback)
+
     Returns:
         Tuple of (announcements, stats dict with keys:
-            total_messages, filtered_by_cutoff, not_ticker_pattern, parsed)
+            total_messages, filtered_by_cutoff, not_ticker_pattern, parsed, error)
     """
     soup = BeautifulSoup(html, 'html.parser')
     announcements = []
@@ -310,6 +314,7 @@ def parse_discord_html_with_stats(
         "filtered_by_cutoff": 0,
         "not_ticker_pattern": 0,
         "parsed": 0,
+        "error": None,
     }
 
     # Default cutoff: start of today in Eastern time - exclude today's messages
@@ -320,9 +325,37 @@ def parse_discord_html_with_stats(
         # Convert to UTC and make naive (Discord timestamps are UTC)
         cutoff_date = midnight_et.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
-    # Find all message list items
-    messages = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
+    # Find all message elements - try multiple selectors
+    # Method 1: Find by id pattern (chat-messages-*)
+    messages = soup.find_all('li', id=lambda x: x and x.startswith('chat-messages-'))
+
+    # Method 2: Fallback to class pattern if no id matches found
+    if not messages:
+        messages = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
+
+    # Method 3: Look for any element with message-content-* div inside
+    if not messages:
+        content_divs = soup.find_all('div', id=lambda x: x and x.startswith('message-content-'))
+        # Find parent li elements
+        seen_parents = set()
+        messages = []
+        for div in content_divs:
+            parent = div.find_parent('li')
+            if parent and id(parent) not in seen_parents:
+                messages.append(parent)
+                seen_parents.add(id(parent))
+
     stats["total_messages"] = len(messages)
+
+    if not messages:
+        # Try to provide helpful error message
+        if '<li' not in html:
+            stats["error"] = "No <li> elements found in HTML"
+        elif '<time' not in html:
+            stats["error"] = "No timestamp elements found in HTML"
+        else:
+            stats["error"] = "Could not find Discord message elements (expected id='chat-messages-*' or class='*messageListItem*')"
+        return announcements, stats
 
     for msg in messages:
         # Extract timestamp from <time datetime="...">

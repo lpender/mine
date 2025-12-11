@@ -250,17 +250,20 @@ with st.sidebar:
 if messages_input.strip() and messages_input != st.session_state.last_messages_input:
     st.session_state.last_messages_input = messages_input
 
-    # Check if it looks like Discord HTML
-    if 'messageListItem' not in messages_input and '<time' not in messages_input:
-        st.sidebar.error("Invalid input. Paste Discord HTML (use Cmd+Shift+E in Discord).")
+    # Check if it looks like HTML at all
+    if '<' not in messages_input:
+        st.sidebar.error("Invalid input. Paste Discord HTML (use Cmd+Shift+E in Discord or copy element from DevTools).")
         new_announcements = []
     else:
         new_announcements, parse_stats = parse_discord_html_with_stats(messages_input)
 
-        if not new_announcements:
+        if parse_stats.get("error"):
+            st.sidebar.error(f"Parse error: {parse_stats['error']}")
+            new_announcements = []
+        elif not new_announcements:
             # Show detailed feedback about why no announcements were found
             if parse_stats["total_messages"] == 0:
-                st.sidebar.error("No messages found in HTML. Check the format.")
+                st.sidebar.error("No messages found in HTML. Make sure to copy the messages wrapper element.")
             elif parse_stats["filtered_by_cutoff"] == parse_stats["total_messages"]:
                 st.sidebar.warning(f"All {parse_stats['total_messages']} messages are from today (ET) and were excluded.")
             elif parse_stats["not_ticker_pattern"] > 0:
