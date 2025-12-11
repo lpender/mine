@@ -289,8 +289,28 @@ def parse_discord_html(html: str, cutoff_date: Optional[datetime] = None) -> Lis
         cutoff_date: Only include messages before this datetime (UTC).
                     Defaults to start of today in Eastern time (excludes today's messages).
     """
+    announcements, _ = parse_discord_html_with_stats(html, cutoff_date)
+    return announcements
+
+
+def parse_discord_html_with_stats(
+    html: str, cutoff_date: Optional[datetime] = None
+) -> Tuple[List[Announcement], dict]:
+    """
+    Parse Discord HTML with stats about what was parsed/filtered.
+
+    Returns:
+        Tuple of (announcements, stats dict with keys:
+            total_messages, filtered_by_cutoff, not_ticker_pattern, parsed)
+    """
     soup = BeautifulSoup(html, 'html.parser')
     announcements = []
+    stats = {
+        "total_messages": 0,
+        "filtered_by_cutoff": 0,
+        "not_ticker_pattern": 0,
+        "parsed": 0,
+    }
 
     # Default cutoff: start of today in Eastern time - exclude today's messages
     if cutoff_date is None:
@@ -302,6 +322,7 @@ def parse_discord_html(html: str, cutoff_date: Optional[datetime] = None) -> Lis
 
     # Find all message list items
     messages = soup.find_all('li', class_=lambda x: x and 'messageListItem' in x)
+    stats["total_messages"] = len(messages)
 
     for msg in messages:
         # Extract timestamp from <time datetime="...">
@@ -313,6 +334,7 @@ def parse_discord_html(html: str, cutoff_date: Optional[datetime] = None) -> Lis
 
         # Skip messages from today or after cutoff
         if timestamp >= cutoff_date:
+            stats["filtered_by_cutoff"] += 1
             continue
 
         # Extract message content
@@ -327,8 +349,11 @@ def parse_discord_html(html: str, cutoff_date: Optional[datetime] = None) -> Lis
         announcement = parse_message_line(message_text, timestamp)
         if announcement:
             announcements.append(announcement)
+            stats["parsed"] += 1
+        else:
+            stats["not_ticker_pattern"] += 1
 
-    return announcements
+    return announcements, stats
 
 
 def parse_auto(text: str, reference_date: Optional[datetime] = None) -> List[Announcement]:

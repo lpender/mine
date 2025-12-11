@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import json
 from pathlib import Path
 
-from src.parser import parse_discord_html
+from src.parser import parse_discord_html_with_stats
 from src.massive_client import MassiveClient
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig, Announcement, OHLCVBar
@@ -242,7 +242,26 @@ with st.sidebar:
 # Auto-parse when HTML input changes
 if messages_input.strip() and messages_input != st.session_state.last_messages_input:
     st.session_state.last_messages_input = messages_input
-    new_announcements = parse_discord_html(messages_input)
+
+    # Check if it looks like Discord HTML
+    if 'messageListItem' not in messages_input and '<time' not in messages_input:
+        st.sidebar.error("Invalid input. Paste Discord HTML (use Cmd+Shift+E in Discord).")
+        new_announcements = []
+    else:
+        new_announcements, parse_stats = parse_discord_html_with_stats(messages_input)
+
+        if not new_announcements:
+            # Show detailed feedback about why no announcements were found
+            if parse_stats["total_messages"] == 0:
+                st.sidebar.error("No messages found in HTML. Check the format.")
+            elif parse_stats["filtered_by_cutoff"] == parse_stats["total_messages"]:
+                st.sidebar.warning(f"All {parse_stats['total_messages']} messages are from today (ET) and were excluded.")
+            elif parse_stats["not_ticker_pattern"] > 0:
+                st.sidebar.warning(f"Found {parse_stats['total_messages']} messages, but none matched ticker pattern (TICKER < $X).")
+            else:
+                st.sidebar.warning("No announcements found. Messages from today (ET) are excluded.")
+        else:
+            st.sidebar.success(f"Parsed {parse_stats['parsed']} announcements ({parse_stats['filtered_by_cutoff']} from today excluded)")
 
     if new_announcements:
         # Add new announcements to existing ones (dedup by ticker+timestamp)
