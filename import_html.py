@@ -67,10 +67,19 @@ def main():
         ann.channel = args.channel
 
     print(f"\nAnnouncements to import ({len(announcements)}):")
-    for ann in announcements[:10]:
-        print(f"  {ann.ticker:5} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')} - ${ann.price_threshold:.2f}")
-    if len(announcements) > 10:
-        print(f"  ... and {len(announcements) - 10} more")
+    for ann in announcements:
+        float_str = f"{ann.float_shares/1e6:.1f}M" if ann.float_shares else "N/A"
+        io_str = f"{ann.io_percent:.1f}%" if ann.io_percent is not None else "N/A"
+        mc_str = f"${ann.market_cap/1e6:.1f}M" if ann.market_cap else "N/A"
+        flags = []
+        if ann.high_ctb:
+            flags.append("CTB")
+        if ann.reg_sho:
+            flags.append("RegSHO")
+        if ann.short_interest:
+            flags.append(f"SI:{ann.short_interest:.1f}%")
+        flags_str = f" [{', '.join(flags)}]" if flags else ""
+        print(f"  {ann.ticker:5} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')} | ${ann.price_threshold:.2f} | {ann.country} | Float: {float_str} | IO: {io_str} | MC: {mc_str}{flags_str}")
 
     # Load existing data
     client = MassiveClient()
@@ -94,6 +103,7 @@ def main():
 
     successful = 0
     failed = 0
+    results = []
 
     for i, ann in enumerate(new_announcements):
         progress = f"[{i+1}/{len(new_announcements)}]"
@@ -106,23 +116,55 @@ def main():
                 window_minutes=args.window,
             )
             if bars:
+                # Validate OHLCV data
+                first_bar = bars[0]
+                last_bar = bars[-1]
+                high = max(b.high for b in bars)
+                low = min(b.low for b in bars)
+                total_volume = sum(b.volume for b in bars)
+
+                # Calculate price range from announcement price
+                price_change_pct = ((high - ann.price_threshold) / ann.price_threshold) * 100
+
                 print(f"OK ({len(bars)} bars)")
+                print(f"       Open: ${first_bar.open:.2f} | High: ${high:.2f} (+{price_change_pct:.1f}%) | Low: ${low:.2f} | Close: ${last_bar.close:.2f} | Vol: {total_volume:,}")
+
+                results.append({
+                    "ticker": ann.ticker,
+                    "bars": len(bars),
+                    "open": first_bar.open,
+                    "high": high,
+                    "low": low,
+                    "close": last_bar.close,
+                    "volume": total_volume,
+                    "change_pct": price_change_pct,
+                })
                 successful += 1
             else:
                 print("No data")
+                results.append({"ticker": ann.ticker, "bars": 0, "error": "No data returned"})
                 failed += 1
         except Exception as e:
             print(f"Error: {e}")
+            results.append({"ticker": ann.ticker, "bars": 0, "error": str(e)})
             failed += 1
 
     # Save announcements
     all_announcements = existing_announcements + new_announcements
     client.save_announcements(all_announcements)
 
-    print(f"\nDone!")
+    print(f"\n{'='*60}")
+    print(f"Summary:")
     print(f"  Successful: {successful}")
     print(f"  Failed/No data: {failed}")
     print(f"  Total announcements saved: {len(all_announcements)}")
+
+    if successful > 0:
+        valid_results = [r for r in results if r.get("bars", 0) > 0]
+        avg_bars = sum(r["bars"] for r in valid_results) / len(valid_results)
+        avg_change = sum(r["change_pct"] for r in valid_results) / len(valid_results)
+        print(f"  Avg bars per ticker: {avg_bars:.0f}")
+        print(f"  Avg max gain from threshold: {avg_change:.1f}%")
 
 
 if __name__ == "__main__":
