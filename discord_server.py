@@ -31,6 +31,7 @@ load_dotenv()
 # Store received messages
 message_history = []
 AUTO_TRADE = False  # Set to True to auto-execute trades
+USE_GUI = False  # Set via --gui flag to use local IB Gateway instead of Docker
 
 # Try to import trading module
 TRADING_AVAILABLE = False
@@ -70,7 +71,7 @@ def handle_new_message(message: str, timestamp: str) -> dict:
 
         if AUTO_TRADE and TRADING_AVAILABLE:
             try:
-                trader = IBTrader(paper=True, docker=True)
+                trader = IBTrader(paper=True, docker=not USE_GUI)
                 with trader:
                     trade = trader.buy_with_bracket(
                         ticker=ticker,
@@ -88,7 +89,8 @@ def handle_new_message(message: str, timestamp: str) -> dict:
         else:
             result["action"] = "alert_only"
             print("Auto-trade disabled. Run manually:")
-            print(f"  python trade.py buy {ticker}")
+            gui_flag = " --gui" if USE_GUI else ""
+            print(f"  python trade.py{gui_flag} buy {ticker}")
 
         print(f"{'='*50}\n")
     else:
@@ -173,7 +175,7 @@ Endpoints:
 
 Auto-trade: {'ENABLED' if AUTO_TRADE else 'DISABLED'}
 Trading:    {'AVAILABLE' if TRADING_AVAILABLE else 'NOT AVAILABLE'}
-Broker:     Docker IB Gateway
+Broker:     {'Local IB Gateway (GUI)' if USE_GUI else 'Docker IB Gateway'}
 
 Paste the following into Discord's browser console (F12 > Console):
 --------------------------------------------------------------
@@ -196,6 +198,8 @@ Paste the following into Discord's browser console (F12 > Console):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Discord message monitor with IB trading")
     parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
+    parser.add_argument("--gui", action="store_true", help="Use local IB Gateway instead of Docker")
     args = parser.parse_args()
 
+    USE_GUI = args.gui
     run_server(args.port)
