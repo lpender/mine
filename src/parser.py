@@ -236,7 +236,7 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
     bar_minutes = int(green_bars_match.group(2)) if green_bars_match else None
 
     # Scanner type detection
-    scanner_test = 'test' in line.lower() and ('scanner' in line.lower() or re.search(r'\btest\b', line, re.IGNORECASE))
+    scanner_test = bool('test' in line.lower() and ('scanner' in line.lower() or re.search(r'\btest\b', line, re.IGNORECASE)))
     scanner_after_lull = 'after-lull' in line.lower() or 'after_lull' in line.lower()
 
     # Detect if this has news (PR/AR/SEC) or is scanner-only

@@ -443,15 +443,17 @@ class MassiveClient:
                 'premarket_dollar_volume': ann.premarket_dollar_volume,
                 # Scanner fields
                 'scanner_gain_pct': ann.scanner_gain_pct,
-                'is_nhod': ann.is_nhod,
-                'is_nsh': ann.is_nsh,
+                'is_nhod': bool(ann.is_nhod),
+                'is_nsh': bool(ann.is_nsh),
                 'rvol': ann.rvol,
                 'mention_count': ann.mention_count,
-                'has_news': ann.has_news,
+                'has_news': bool(ann.has_news),
                 'green_bars': ann.green_bars,
                 'bar_minutes': ann.bar_minutes,
-                'scanner_test': ann.scanner_test,
-                'scanner_after_lull': ann.scanner_after_lull,
+                'scanner_test': bool(ann.scanner_test),
+                'scanner_after_lull': bool(ann.scanner_after_lull),
+                # Source data
+                'source_message': ann.source_message,
             })
 
         with open(self._get_announcements_path(), 'w') as f:
@@ -507,6 +509,7 @@ class MassiveClient:
                     bar_minutes=item.get('bar_minutes'),
                     scanner_test=item.get('scanner_test', False),
                     scanner_after_lull=item.get('scanner_after_lull', False),
+                    source_message=item.get('source_message'),
                 ))
             return announcements
         except Exception:
