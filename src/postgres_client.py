@@ -252,8 +252,8 @@ class PostgresClient:
                 if bars:
                     self.save_ohlcv_bars(ticker, bars)
 
-                # Small delay to avoid hitting rate limits
-                time.sleep(0.15)
+                # Polygon free tier: 5 requests/minute = 12s between requests
+                time.sleep(12)
 
                 return bars
 
