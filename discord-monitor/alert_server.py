@@ -18,7 +18,7 @@ import json
 import re
 import sys
 import subprocess
-from datetime import datetime
+from datetime import date, datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
 
@@ -42,6 +42,7 @@ class AlertHandler(BaseHTTPRequestHandler):
     auto_trade = False
     live_mode = False
     fetch_ohlcv = False
+    include_today = False
     seen_alerts = set()
     seen_backfill = set()
 
@@ -216,11 +217,20 @@ class AlertHandler(BaseHTTPRequestHandler):
             existing_keys = {(a.ticker, a.timestamp) for a in existing}
 
             new_announcements = []
+            today = date.today()
+            filtered_today = 0
             for ann in parsed_announcements:
+                # Exclude today's data by default (market data incomplete)
+                if not AlertHandler.include_today and ann.timestamp.date() == today:
+                    filtered_today += 1
+                    continue
                 key = (ann.ticker, ann.timestamp)
                 if key not in existing_keys:
                     new_announcements.append(ann)
                     existing_keys.add(key)
+
+            if filtered_today > 0:
+                print(f"  Filtered out: {filtered_today} today's announcements")
 
             if new_announcements:
                 all_announcements = existing + new_announcements
@@ -292,12 +302,14 @@ def main():
     parser.add_argument("--trade", action="store_true", help="Auto-trade on alerts")
     parser.add_argument("--live", action="store_true", help="Use live trading (DANGEROUS!)")
     parser.add_argument("--fetch-ohlcv", action="store_true", help="Auto-fetch OHLCV on backfill")
+    parser.add_argument("--include-today", action="store_true", help="Include today's announcements (normally excluded)")
     parser.add_argument("--port", type=int, default=8765, help="Server port (default: 8765)")
     args = parser.parse_args()
 
     AlertHandler.auto_trade = args.trade
     AlertHandler.live_mode = args.live
     AlertHandler.fetch_ohlcv = args.fetch_ohlcv
+    AlertHandler.include_today = args.include_today
 
     if args.live and args.trade:
         print("\n" + "!"*60)
@@ -320,6 +332,7 @@ def main():
     if args.trade:
         print(f"  Mode:        {'LIVE' if args.live else 'PAPER'}")
     print(f"  Fetch OHLCV: {'ENABLED' if args.fetch_ohlcv else 'disabled'}")
+    print(f"  Include today: {'yes' if args.include_today else 'no (excluded)'}")
     print("\nWaiting for messages from Discord plugin...")
     print("-" * 60)
 
