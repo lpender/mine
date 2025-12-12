@@ -156,6 +156,12 @@ class AlertHandler(BaseHTTPRequestHandler):
         print(f"  Received: {len(messages)} messages @ {sent_at[:19]}")
         print(f"{'='*60}")
 
+        # Debug: save raw messages to file for analysis
+        debug_path = Path(__file__).parent / "debug_backfill.json"
+        with open(debug_path, "w") as f:
+            json.dump({"channel": channel, "messages": messages, "sent_at": sent_at}, f, indent=2)
+        print(f"  Debug: saved raw messages to {debug_path}")
+
         if not parse_message_line:
             print("  ERROR: Parser not available")
             return {"error": "Parser not available"}

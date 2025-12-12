@@ -357,6 +357,17 @@ class MassiveClient:
                 'premarket_gap_pct': ann.premarket_gap_pct,
                 'premarket_volume': ann.premarket_volume,
                 'premarket_dollar_volume': ann.premarket_dollar_volume,
+                # Scanner fields
+                'scanner_gain_pct': ann.scanner_gain_pct,
+                'is_nhod': ann.is_nhod,
+                'is_nsh': ann.is_nsh,
+                'rvol': ann.rvol,
+                'mention_count': ann.mention_count,
+                'has_news': ann.has_news,
+                'green_bars': ann.green_bars,
+                'bar_minutes': ann.bar_minutes,
+                'scanner_test': ann.scanner_test,
+                'scanner_after_lull': ann.scanner_after_lull,
             })
 
         with open(self._get_announcements_path(), 'w') as f:
@@ -400,6 +411,17 @@ class MassiveClient:
                     premarket_gap_pct=item.get('premarket_gap_pct'),
                     premarket_volume=item.get('premarket_volume'),
                     premarket_dollar_volume=item.get('premarket_dollar_volume'),
+                    # Scanner fields
+                    scanner_gain_pct=item.get('scanner_gain_pct'),
+                    is_nhod=item.get('is_nhod', False),
+                    is_nsh=item.get('is_nsh', False),
+                    rvol=item.get('rvol'),
+                    mention_count=item.get('mention_count'),
+                    has_news=item.get('has_news', True),
+                    green_bars=item.get('green_bars'),
+                    bar_minutes=item.get('bar_minutes'),
+                    scanner_test=item.get('scanner_test', False),
+                    scanner_after_lull=item.get('scanner_after_lull', False),
                 ))
             return announcements
         except Exception:

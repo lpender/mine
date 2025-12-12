@@ -116,6 +116,36 @@ def parse_timestamp(time_str: str, reference_date: Optional[datetime] = None) ->
     return datetime.combine(base_date, time_obj)
 
 
+def extract_scanner_gain_pct(line: str) -> Optional[float]:
+    """
+    Extract standalone percentage gain from scanner messages.
+
+    These indicate how much the stock has already moved (e.g., "| 42%" or "16% ~").
+    Returns None if no standalone percentage is found.
+    """
+    # Find all percentages in the line
+    all_pcts = re.findall(r'(\d+(?:\.\d+)?)\s*%', line)
+
+    if not all_pcts:
+        return None
+
+    # Check each percentage - if any is NOT labeled, it's a gain percentage
+    for pct in all_pcts:
+        pct_pattern = rf'{re.escape(pct)}\s*%'
+        # Check if this percentage is labeled (IO:, SI:, etc.)
+        labeled_patterns = [
+            rf'IO\s*:\s*{pct_pattern}',
+            rf'SI\s*:\s*{pct_pattern}',
+        ]
+        is_labeled = any(re.search(p, line) for p in labeled_patterns)
+
+        if not is_labeled:
+            # Found an unlabeled percentage - this is a gain indicator
+            return float(pct)
+
+    return None
+
+
 def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]:
     """
     Parse a single announcement line like:
@@ -123,6 +153,9 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
 
     Also handles newer format with timestamp/arrow prefix:
     '12:15 ↗ TE < $6 ~ :flag_us: | Float: 158 M | IO: 40.99% | MC: 1.2 B'
+
+    Scanner format with gain percentage:
+    '08:26 ↗ CAUD < $30 | 16% ~ | Float: 2.6 M | IO: 18.96%'
     """
     line = line.strip()
     if not line:
@@ -171,6 +204,32 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     si_match = re.search(r'SI\s*:\s*([\d.]+)%', line)
     short_interest = float(si_match.group(1)) if si_match else None
 
+    # Scanner-specific fields
+    scanner_gain_pct = extract_scanner_gain_pct(line)
+    is_nhod = 'NHOD' in line
+    is_nsh = 'NSH' in line
+
+    # Extract RVol (relative volume)
+    rvol_match = re.search(r'RVol\s*:\s*([\d.]+)', line)
+    rvol = float(rvol_match.group(1)) if rvol_match else None
+
+    # Extract mention count (• 3 pattern)
+    mention_match = re.search(r'•\s*(\d+)', line)
+    mention_count = int(mention_match.group(1)) if mention_match else None
+
+    # Extract green bars pattern (e.g., "3 green bars 2m")
+    green_bars_match = re.search(r'(\d+)\s+green\s+bars?\s+(\d+)m', line, re.IGNORECASE)
+    green_bars = int(green_bars_match.group(1)) if green_bars_match else None
+    bar_minutes = int(green_bars_match.group(2)) if green_bars_match else None
+
+    # Scanner type detection
+    scanner_test = 'test' in line.lower() and ('scanner' in line.lower() or re.search(r'\btest\b', line, re.IGNORECASE))
+    scanner_after_lull = 'after-lull' in line.lower() or 'after_lull' in line.lower()
+
+    # Detect if this has news (PR/AR/SEC) or is scanner-only
+    # News messages have "- Link" with headline, scanner-only don't
+    has_news = bool(headline) or 'PR' in line or 'SEC' in line or 'AR' in line
+
     return Announcement(
         ticker=ticker,
         timestamp=timestamp,
@@ -183,6 +242,16 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
         reg_sho=reg_sho,
         high_ctb=high_ctb,
         short_interest=short_interest,
+        scanner_gain_pct=scanner_gain_pct,
+        is_nhod=is_nhod,
+        is_nsh=is_nsh,
+        rvol=rvol,
+        mention_count=mention_count,
+        has_news=has_news,
+        green_bars=green_bars,
+        bar_minutes=bar_minutes,
+        scanner_test=scanner_test,
+        scanner_after_lull=scanner_after_lull,
     )
 
 

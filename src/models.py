@@ -73,6 +73,18 @@ class Announcement:
     premarket_volume: Optional[int] = None  # sum volume 04:00-09:30
     premarket_dollar_volume: Optional[float] = None  # sum(volume * vwap/close) 04:00-09:30
 
+    # Scanner-specific fields (from select-news channel)
+    scanner_gain_pct: Optional[float] = None  # e.g., 42% = stock already moved this much
+    is_nhod: bool = False  # New High of Day
+    is_nsh: bool = False  # New Session High
+    rvol: Optional[float] = None  # Relative volume ratio
+    mention_count: Optional[int] = None  # Number of times mentioned by scanner (• 3)
+    has_news: bool = True  # False if scanner-only detection with no PR/AR/SEC
+    green_bars: Optional[int] = None  # Number of green bars (e.g., 3 from "3 green bars 2m")
+    bar_minutes: Optional[int] = None  # Candle timeframe (e.g., 2 from "3 green bars 2m")
+    scanner_test: bool = False  # Detected by "test" scanner
+    scanner_after_lull: bool = False  # Detected by "after-lull" scanner
+
     @property
     def market_session(self) -> str:
         """Returns the market session: premarket, market, postmarket, or closed."""
