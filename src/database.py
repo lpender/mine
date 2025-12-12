@@ -42,12 +42,8 @@ class AnnouncementDB(Base):
     reg_sho = Column(Boolean, default=False)
     high_ctb = Column(Boolean, default=False)
 
-    # FinBERT sentiment
-    finbert_label = Column(String(20))
-    finbert_score = Column(Float)
-    finbert_pos = Column(Float)
-    finbert_neg = Column(Float)
-    finbert_neu = Column(Float)
+    # Direction arrow (↑ = "up", ↗ = "up_right")
+    direction = Column(String(20))
 
     # Headline classification
     headline_is_financing = Column(Boolean)

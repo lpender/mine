@@ -50,10 +50,31 @@ def parse_price(price_str: str) -> Optional[float]:
 
 
 def parse_country_from_flag(flag_str: str) -> str:
-    """Parse country code from Discord flag emoji like ':flag_us:' -> 'US'."""
+    """
+    Parse country code from flag emoji.
+
+    Handles:
+    - Discord text format: ':flag_us:' -> 'US'
+    - Unicode flag emoji: '🇺🇸' -> 'US'
+    """
+    # Try Discord text format first
     match = re.search(r':flag_(\w+):', flag_str)
     if match:
         return match.group(1).upper()
+
+    # Try Unicode flag emoji (regional indicator symbols)
+    # Flags are pairs of regional indicator symbols (U+1F1E6 to U+1F1FF)
+    for i, char in enumerate(flag_str):
+        if '\U0001F1E6' <= char <= '\U0001F1FF':
+            # Found first regional indicator, look for second
+            if i + 1 < len(flag_str):
+                char2 = flag_str[i + 1]
+                if '\U0001F1E6' <= char2 <= '\U0001F1FF':
+                    # Convert regional indicators to letters (A=0, B=1, etc.)
+                    letter1 = chr(ord('A') + ord(char) - ord('\U0001F1E6'))
+                    letter2 = chr(ord('A') + ord(char2) - ord('\U0001F1E6'))
+                    return letter1 + letter2
+
     return "UNKNOWN"
 
 
@@ -176,6 +197,13 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
         return None
     ticker = ticker_match.group(1)
 
+    # Extract direction arrow (↑ = up, ↗ = up_right)
+    direction = None
+    if '↑' in line:
+        direction = 'up'
+    elif '↗' in line:
+        direction = 'up_right'
+
     # Extract price threshold (< $X)
     price_match = re.search(r'<\s*(\$[\d.]+c?)', line)
     price_threshold = parse_price(price_match.group(1)) if price_match else None
@@ -255,6 +283,7 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
         reg_sho=reg_sho,
         high_ctb=high_ctb,
         short_interest=short_interest,
+        direction=direction,
         scanner_gain_pct=scanner_gain_pct,
         is_nhod=is_nhod,
         is_nsh=is_nsh,

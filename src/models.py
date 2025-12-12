@@ -57,11 +57,8 @@ class Announcement:
     short_interest: Optional[float] = None  # e.g., 23.9 (percent)
     channel: Optional[str] = None  # Discord channel name
     author: Optional[str] = None  # Discord display name (e.g. "PR - Spike", "Nuntiobot")
-    finbert_label: Optional[str] = None  # "positive" | "negative" | "neutral"
-    finbert_score: Optional[float] = None  # continuous score (pos - neg) in [-1, 1]
-    finbert_pos: Optional[float] = None  # P(positive)
-    finbert_neg: Optional[float] = None  # P(negative)
-    finbert_neu: Optional[float] = None  # P(neutral)
+    direction: Optional[str] = None  # Arrow direction: "up" (↑) or "up_right" (↗)
+
     # Headline keyword flags (cheap PR-type classifier)
     headline_is_financing: Optional[bool] = None
     headline_financing_type: Optional[str] = None  # e.g. offering/atm/warrants/convertible/shelf/reverse_split/compliance
