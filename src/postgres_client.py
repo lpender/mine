@@ -60,7 +60,7 @@ class PostgresClient:
             db.close()
 
     def save_announcements(self, announcements: List[Announcement]) -> int:
-        """Save multiple announcements. Returns count of new records."""
+        """Save multiple announcements with upsert. Returns count of new records."""
         db = self._get_db()
         new_count = 0
         try:
@@ -72,7 +72,12 @@ class PostgresClient:
                     )
                 ).first()
 
-                if not existing:
+                if existing:
+                    # Update existing record's fields
+                    for key, value in self._announcement_to_dict(ann).items():
+                        if key not in ('id', 'created_at'):
+                            setattr(existing, key, value)
+                else:
                     db_ann = AnnouncementDB(**self._announcement_to_dict(ann))
                     db.add(db_ann)
                     new_count += 1
