@@ -332,6 +332,7 @@ sort_column = col1.selectbox(
     options=sortable_columns,
     index=sortable_columns.index(default_sort_col) if default_sort_col in sortable_columns else 0,
 )
+col2.write("")  # Vertical spacer to align checkbox with selectbox
 sort_ascending = col2.checkbox("Ascending", value=default_sort_asc)
 
 # Update URL with sort settings
