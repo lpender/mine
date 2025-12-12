@@ -212,11 +212,24 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
 
     # Extract headline (between price and 'Link' before the '~' separator)
     # Traditional format: "TICKER < $X - HEADLINE - Link ~ ..."
-    # Scanner format: "TIME ↑ TICKER < $X ~ ..." (no headline)
+    # Scanner format: "TIME ↑ TICKER < $X ~ ... X ago PR HEADLINE - Link,..."
     # Only look for headline before the first '~' to avoid matching news refs
     pre_tilde = line.split('~')[0] if '~' in line else line
     headline_match = re.search(r'<\s*\$[\d.]+c?\s+-\s*(.+?)\s*-?\s*Link', pre_tilde)
     headline = headline_match.group(1).strip() if headline_match else ""
+
+    # Scanner format: look for "X ago PR HEADLINE - Link" pattern after the ~ section
+    # Example: "2 days ago PR Aurora Expands Leading Portfolio... - Link"
+    # Also handles: "a day ago", "an hour ago", "yesterday", "today"
+    if not headline:
+        # Match patterns like "X ago PR HEADLINE - Link" or "X ago AR HEADLINE - Link"
+        scanner_headline_match = re.search(
+            r'(?:(?:\d+|a|an)\s+(?:days?|hours?|minutes?)\s+ago|yesterday|today)\s+(?:PR|AR)\s+(.+?)\s*-\s*Link',
+            line,
+            re.IGNORECASE
+        )
+        if scanner_headline_match:
+            headline = scanner_headline_match.group(1).strip()
 
     # Validate headline - reject if it looks like SEC form number or garbage
     if headline and (len(headline) <= 2 or headline.startswith('Link') or re.match(r'^[\d\-]+$', headline)):

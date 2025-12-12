@@ -211,6 +211,9 @@ Full message: ${fullContent.substring(0, 200)}
         // Find all message list items
         const messageElements = document.querySelectorAll('li[id^="chat-messages-"]');
 
+        // Track author across messages - Discord only shows author when it changes
+        let lastAuthor = "";
+
         messageElements.forEach((msgEl) => {
             const id = msgEl.id.replace("chat-messages-", "");
 
@@ -218,14 +221,32 @@ Full message: ${fullContent.substring(0, 200)}
             const timeEl = msgEl.querySelector("time[datetime]");
             const timestamp = timeEl?.getAttribute("datetime") || "";
 
-            // Get message content - look for the message content div
+            // Get message content - clone to avoid modifying the DOM
             const contentEl = msgEl.querySelector('div[id^="message-content-"]');
-            const content = contentEl?.textContent?.trim() || "";
+            let content = "";
+            if (contentEl) {
+                // Clone the element so we can modify it
+                const clone = contentEl.cloneNode(true);
+                // Replace emoji <img> elements with their alt text (e.g., :flag_ca:)
+                clone.querySelectorAll('img.emoji').forEach(img => {
+                    const alt = img.alt || img.dataset?.name || '';
+                    img.replaceWith(alt);
+                });
+                content = clone.textContent?.trim() || "";
+            }
 
             if (content && timestamp) {
                 // Best-effort author extraction from DOM
-                const authorEl = msgEl.querySelector('[class*="username"], [class*="userName"]');
-                const author = authorEl?.textContent?.trim() || "";
+                // Try multiple selectors - Discord's class names can vary
+                const authorEl = msgEl.querySelector('[class*="username_"], [class*="headerText_"] [class*="username"], h3[class*="header_"] span');
+                const authorFromDom = authorEl?.textContent?.trim() || "";
+
+                // Use author from DOM if present, otherwise use last seen author
+                if (authorFromDom) {
+                    lastAuthor = authorFromDom;
+                }
+                const author = lastAuthor;
+
                 messages.push({ id, content, timestamp, author });
             }
         });
