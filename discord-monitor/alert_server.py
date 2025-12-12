@@ -31,11 +31,11 @@ load_dotenv()
 
 try:
     from src.parser import parse_message_line
-    from src.massive_client import MassiveClient
+    from src.postgres_client import PostgresClient
 except ImportError as e:
     print(f"Warning: Could not import modules: {e}")
     parse_message_line = None
-    MassiveClient = None
+    PostgresClient = None
 
 
 class AlertHandler(BaseHTTPRequestHandler):
@@ -245,18 +245,22 @@ class AlertHandler(BaseHTTPRequestHandler):
         if not parsed_announcements:
             return {"parsed": 0, "new": 0, "skipped": skipped}
 
-        # Save to cache
-        if MassiveClient:
-            client = MassiveClient()
+        # Save to PostgreSQL
+        if PostgresClient:
+            client = PostgresClient()
 
-            # Clobber mode: clear all existing announcements on reimport
-            clobber = data.get("clobber", True)
-            if clobber:
-                print("  Clobber mode: clearing existing announcements")
-                existing = []
-            else:
-                existing = client.load_announcements()
+            # Save raw messages for potential re-parsing
+            for msg in messages:
+                msg_id = msg.get("id", "")
+                content = msg.get("content", "")
+                timestamp_str = msg.get("timestamp", "")
+                try:
+                    msg_ts = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                except (ValueError, AttributeError):
+                    msg_ts = datetime.now()
+                client.save_raw_message(msg_id, channel, content, msg_ts)
 
+            # Filter out today's announcements if needed
             new_announcements = []
             today = date.today()
             filtered_today = 0
@@ -271,18 +275,9 @@ class AlertHandler(BaseHTTPRequestHandler):
                 print(f"  Filtered out: {filtered_today} today's announcements")
 
             if new_announcements:
-                if clobber:
-                    # Replace all data
-                    client.save_announcements(new_announcements)
-                    print(f"  Saved: {len(new_announcements)} announcements (clobbered old data)")
-                else:
-                    before_keys = {(a.ticker, a.timestamp) for a in existing}
-                    all_announcements = existing + new_announcements
-                    client.save_announcements(all_announcements)
-                    after_keys = before_keys | {(a.ticker, a.timestamp) for a in new_announcements}
-                    new_only = len(after_keys) - len(before_keys)
-                    updated = len(new_announcements) - new_only
-                    print(f"  Saved: {new_only} new, {updated} updated announcements")
+                # Upsert announcements (PostgresClient checks for existing by ticker+timestamp)
+                new_count = client.save_announcements(new_announcements)
+                print(f"  Saved: {new_count} new announcements ({len(new_announcements) - new_count} already existed)")
 
                 # Optionally fetch OHLCV data
                 if AlertHandler.fetch_ohlcv:
@@ -299,7 +294,7 @@ class AlertHandler(BaseHTTPRequestHandler):
                         except Exception as e:
                             print(f"    {ann.ticker}: ERROR - {e}")
             else:
-                print(f"  No new announcements (all duplicates)")
+                print(f"  No new announcements (all filtered/duplicates)")
 
             return {
                 "parsed": len(parsed_announcements),
@@ -307,12 +302,12 @@ class AlertHandler(BaseHTTPRequestHandler):
                 "skipped": skipped
             }
         else:
-            print("  WARNING: MassiveClient not available, announcements not saved")
+            print("  WARNING: PostgresClient not available, announcements not saved")
             return {
                 "parsed": len(parsed_announcements),
                 "new": 0,
                 "skipped": skipped,
-                "warning": "MassiveClient not available"
+                "warning": "PostgresClient not available"
             }
 
     def execute_trade(self, ticker, price):
