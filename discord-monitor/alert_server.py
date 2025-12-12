@@ -248,8 +248,14 @@ class AlertHandler(BaseHTTPRequestHandler):
         # Save to cache
         if MassiveClient:
             client = MassiveClient()
-            existing = client.load_announcements()
-            existing_keys = {(a.ticker, a.timestamp) for a in existing}
+
+            # Clobber mode: clear all existing announcements on reimport
+            clobber = data.get("clobber", True)
+            if clobber:
+                print("  Clobber mode: clearing existing announcements")
+                existing = []
+            else:
+                existing = client.load_announcements()
 
             new_announcements = []
             today = date.today()
@@ -259,20 +265,24 @@ class AlertHandler(BaseHTTPRequestHandler):
                 if not AlertHandler.include_today and ann.timestamp.date() == today:
                     filtered_today += 1
                     continue
-                # Always pass through; MassiveClient.save_announcements will clobber by (ticker,timestamp)
                 new_announcements.append(ann)
 
             if filtered_today > 0:
                 print(f"  Filtered out: {filtered_today} today's announcements")
 
             if new_announcements:
-                before_keys = {(a.ticker, a.timestamp) for a in existing}
-                all_announcements = existing + new_announcements
-                client.save_announcements(all_announcements)
-                after_keys = before_keys | {(a.ticker, a.timestamp) for a in new_announcements}
-                new_only = len(after_keys) - len(before_keys)
-                updated = len(new_announcements) - new_only
-                print(f"  Saved: {new_only} new, {updated} updated announcements")
+                if clobber:
+                    # Replace all data
+                    client.save_announcements(new_announcements)
+                    print(f"  Saved: {len(new_announcements)} announcements (clobbered old data)")
+                else:
+                    before_keys = {(a.ticker, a.timestamp) for a in existing}
+                    all_announcements = existing + new_announcements
+                    client.save_announcements(all_announcements)
+                    after_keys = before_keys | {(a.ticker, a.timestamp) for a in new_announcements}
+                    new_only = len(after_keys) - len(before_keys)
+                    updated = len(new_announcements) - new_only
+                    print(f"  Saved: {new_only} new, {updated} updated announcements")
 
                 # Optionally fetch OHLCV data
                 if AlertHandler.fetch_ohlcv:
