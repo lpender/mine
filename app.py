@@ -2,6 +2,7 @@
 
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from datetime import timedelta
 
 from src.postgres_client import PostgresClient
@@ -85,6 +86,7 @@ if not all_announcements:
 # Extract unique values for filters
 all_countries = sorted(set(a.country for a in all_announcements if a.country))
 all_authors = sorted(set(a.author for a in all_announcements if a.author))
+all_channels = sorted(set(a.channel for a in all_announcements if a.channel))
 all_sessions = ["premarket", "market", "postmarket", "closed"]
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +151,15 @@ with st.sidebar:
         help="Leave empty for all authors"
     )
 
+    # Channel filter
+    default_channels = get_param("channel", "", list)
+    channels = st.multiselect(
+        "Channel",
+        options=all_channels,
+        default=[c for c in default_channels if c in all_channels],
+        help="Leave empty for all channels"
+    )
+
     # Financing filter
     default_no_fin = get_param("no_fin", False, bool)
     exclude_financing = st.checkbox(
@@ -180,6 +191,7 @@ with st.sidebar:
     set_param("sess", sessions)
     set_param("country", countries)
     set_param("author", authors)
+    set_param("channel", channels)
     set_param("no_fin", exclude_financing)
     set_param("float_min", float_min)
     set_param("float_max", float_max)
@@ -204,6 +216,10 @@ if countries:
 # Author filter
 if authors:
     filtered = [a for a in filtered if a.author in authors]
+
+# Channel filter
+if channels:
+    filtered = [a for a in filtered if a.channel in channels]
 
 # Financing filter
 if exclude_financing:
@@ -291,6 +307,7 @@ for r in summary.results:
         "Ticker": a.ticker,
         "Session": a.market_session,
         "Country": a.country,
+        "Channel": a.channel or "",
         "Author": a.author or "",
         "Float (M)": a.float_shares / 1e6 if a.float_shares else None,
         "MC (M)": a.market_cap / 1e6 if a.market_cap else None,
@@ -304,7 +321,7 @@ for r in summary.results:
 df = pd.DataFrame(rows)
 
 # Sort controls (persisted to URL)
-sortable_columns = ["Time", "Ticker", "Session", "Country", "Author", "Float (M)", "MC (M)", "Return %", "Exit Type"]
+sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Float (M)", "MC (M)", "Return %", "Exit Type"]
 default_sort_col = get_param("sort", "Time")
 default_sort_asc = get_param("asc", "0") == "1"
 
@@ -346,4 +363,126 @@ st.dataframe(
 )
 
 # Show filter summary at bottom
-st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing}")
+st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing}")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Row Selection & OHLCV Chart
+# ─────────────────────────────────────────────────────────────────────────────
+
+st.header("Trade Detail")
+
+# Create selection options from results
+if summary.results:
+    # Build selection options
+    selection_options = ["Select a trade..."]
+    result_map = {}
+    for i, r in enumerate(summary.results):
+        if r.entered:
+            label = f"{r.announcement.timestamp.strftime('%Y-%m-%d %H:%M')} | {r.announcement.ticker} | {r.return_pct:+.2f}%"
+            selection_options.append(label)
+            result_map[label] = i
+
+    # Get selected trade from URL
+    default_selected = get_param("selected", "")
+    default_idx = 0
+    if default_selected and default_selected in selection_options:
+        default_idx = selection_options.index(default_selected)
+
+    selected_trade = st.selectbox(
+        "Select trade to view chart",
+        options=selection_options,
+        index=default_idx,
+    )
+
+    # Update URL with selection
+    if selected_trade != "Select a trade...":
+        set_param("selected", selected_trade)
+    else:
+        st.query_params.pop("selected", None)
+
+    # Show chart if trade is selected
+    if selected_trade != "Select a trade..." and selected_trade in result_map:
+        result_idx = result_map[selected_trade]
+        selected_result = summary.results[result_idx]
+        ann = selected_result.announcement
+
+        # Get the bars for this announcement
+        key = (ann.ticker, ann.timestamp)
+        bars = bars_dict.get(key, [])
+
+        if bars:
+            # Build candlestick data
+            bar_times = [b.timestamp for b in bars]
+            bar_open = [b.open for b in bars]
+            bar_high = [b.high for b in bars]
+            bar_low = [b.low for b in bars]
+            bar_close = [b.close for b in bars]
+
+            # Create candlestick chart
+            fig = go.Figure()
+
+            # Add candlestick
+            fig.add_trace(go.Candlestick(
+                x=bar_times,
+                open=bar_open,
+                high=bar_high,
+                low=bar_low,
+                close=bar_close,
+                name="Price",
+                increasing_line_color="green",
+                decreasing_line_color="red",
+            ))
+
+            # Add entry marker (entry at close of first candle)
+            if selected_result.entry_price and selected_result.entry_time:
+                fig.add_trace(go.Scatter(
+                    x=[selected_result.entry_time],
+                    y=[selected_result.entry_price],
+                    mode="markers",
+                    marker=dict(symbol="triangle-up", size=15, color="blue"),
+                    name=f"Entry @ ${selected_result.entry_price:.2f}",
+                ))
+
+            # Add exit marker
+            if selected_result.exit_price and selected_result.exit_time:
+                exit_color = "green" if selected_result.return_pct > 0 else "red"
+                fig.add_trace(go.Scatter(
+                    x=[selected_result.exit_time],
+                    y=[selected_result.exit_price],
+                    mode="markers",
+                    marker=dict(symbol="triangle-down", size=15, color=exit_color),
+                    name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
+                ))
+
+            # Add horizontal lines for entry, TP, SL
+            if selected_result.entry_price:
+                entry = selected_result.entry_price
+                tp_price = entry * (1 + take_profit / 100)
+                sl_price = entry * (1 - stop_loss / 100)
+
+                fig.add_hline(y=entry, line_dash="solid", line_color="blue", opacity=0.5,
+                              annotation_text=f"Entry ${entry:.2f}")
+                fig.add_hline(y=tp_price, line_dash="dash", line_color="green", opacity=0.5,
+                              annotation_text=f"TP ${tp_price:.2f}")
+                fig.add_hline(y=sl_price, line_dash="dash", line_color="red", opacity=0.5,
+                              annotation_text=f"SL ${sl_price:.2f}")
+
+            # Layout
+            fig.update_layout(
+                title=f"{ann.ticker} - {ann.headline[:80]}{'...' if len(ann.headline) > 80 else ''}",
+                xaxis_title="Time",
+                yaxis_title="Price",
+                xaxis_rangeslider_visible=False,
+                height=500,
+            )
+
+            st.plotly_chart(fig, use_container_width=True)
+
+            # Show trade details
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Entry Price", f"${selected_result.entry_price:.2f}" if selected_result.entry_price else "N/A")
+            col2.metric("Exit Price", f"${selected_result.exit_price:.2f}" if selected_result.exit_price else "N/A")
+            col3.metric("Return", f"{selected_result.return_pct:+.2f}%" if selected_result.return_pct else "N/A")
+            col4.metric("Exit Type", selected_result.trigger_type)
+        else:
+            st.warning(f"No OHLCV data available for {ann.ticker}")
