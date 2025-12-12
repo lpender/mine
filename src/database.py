@@ -73,6 +73,9 @@ class AnnouncementDB(Base):
     scanner_test = Column(Boolean, default=False)
     scanner_after_lull = Column(Boolean, default=False)
 
+    # Source data
+    source_message = Column(Text)  # Raw Discord message that generated this announcement
+
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
 

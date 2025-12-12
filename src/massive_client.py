@@ -4,11 +4,71 @@ import time
 import random
 import requests
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_type, time as time_type
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Any
-from .models import OHLCVBar, Announcement, get_market_session, MARKET_OPEN, ET_TZ
+from .models import (
+    OHLCVBar,
+    Announcement,
+    get_market_session,
+    MARKET_OPEN,
+    ET_TZ,
+)
+
+try:
+    import pandas_market_calendars as _mcal  # type: ignore
+except Exception:  # pragma: no cover
+    _mcal = None
+
+_NYSE_CAL = None
+
+
+def _is_weekend(d: date_type) -> bool:
+    return d.weekday() >= 5  # 5=Sat, 6=Sun
+
+
+def _get_nyse_calendar():
+    global _NYSE_CAL
+    if _NYSE_CAL is not None:
+        return _NYSE_CAL
+    if _mcal is None:
+        return None
+    try:
+        _NYSE_CAL = _mcal.get_calendar("NYSE")
+        return _NYSE_CAL
+    except Exception:
+        return None
+
+
+def _first_trading_day_on_or_after(d: date_type) -> date_type:
+    """
+    First NYSE trading day on/after `d`.
+    Falls back to weekday-only logic if market calendar library isn't installed.
+    """
+    cal = _get_nyse_calendar()
+    if cal is not None:
+        # Look ahead up to 2 weeks to handle holiday clusters.
+        days = cal.valid_days(start_date=d, end_date=d + timedelta(days=14))
+        if len(days) > 0:
+            # valid_days returns tz-aware timestamps (UTC). We only need the session date.
+            return days[0].to_pydatetime().date()
+
+    # Fallback: skip weekends only
+    nd = d
+    while _is_weekend(nd):
+        nd = nd + timedelta(days=1)
+    return nd
+
+
+def _first_trading_day_after(d: date_type) -> date_type:
+    """First NYSE trading day strictly after `d`."""
+    return _first_trading_day_on_or_after(d + timedelta(days=1))
+
+
+def _combine_et(d: date_type, t: time_type, naive_input: bool) -> datetime:
+    dt = datetime.combine(d, t, tzinfo=ET_TZ)
+    return dt.replace(tzinfo=None) if naive_input else dt
 
 
 class MassiveClient:
@@ -272,7 +332,23 @@ class MassiveClient:
         """
 
         start_time = self.get_effective_start_time(announcement_time)
+
+        # If the effective start time is in the future (e.g. premarket before 9:30,
+        # postmarket pointing to next session, weekend), skip the API call.
+        now = datetime.now(tz=ET_TZ)
+        now_cmp = now.replace(tzinfo=None) if start_time.tzinfo is None else now
+        if start_time >= now_cmp:
+            print(
+                f"Skipping OHLCV fetch for {ticker}: effective start {start_time} is in the future "
+                f"(market likely closed)."
+            )
+            return []
+
         end_time = start_time + timedelta(minutes=window_minutes)
+        # Don't request beyond "now" (helps when market is open but window extends into the future)
+        if end_time > now_cmp:
+            end_time = now_cmp
+
         return self.fetch_ohlcv(ticker, start_time, end_time, use_cache=use_cache)
 
     def get_effective_start_time(self, announcement_time: datetime) -> datetime:
@@ -283,34 +359,41 @@ class MassiveClient:
         - Premarket: same-day market open
         - Market: announcement time
         """
-        # Convert to Eastern Time if needed
-        if announcement_time.tzinfo is None:
-            # Assume naive datetimes are already in ET
-            et_time = announcement_time
-        else:
-            et_time = announcement_time.astimezone(ET_TZ)
+        # Convert to Eastern Time if needed (and remember whether input was naive)
+        naive_input = announcement_time.tzinfo is None
+        et_time = announcement_time if naive_input else announcement_time.astimezone(ET_TZ)
+
+        # If the calendar day isn't a trading day (weekend/holiday), roll forward to next session open.
+        # If pandas_market_calendars is installed, this handles NYSE holidays; otherwise weekends only.
+        trading_day = _first_trading_day_on_or_after(et_time.date())
+        if trading_day != et_time.date():
+            return _combine_et(trading_day, MARKET_OPEN, naive_input)
 
         session = get_market_session(et_time)
-        start_time = announcement_time
 
-        if session == "postmarket":
-            # Start from next market open (next trading day 9:30 AM ET)
-            next_day = et_time.date() + timedelta(days=1)
-            # Handle weekends and holidays - for now, just add 1 day
-            # TODO: Add proper holiday/weekend handling
-            start_time = datetime.combine(next_day, MARKET_OPEN, tzinfo=ET_TZ)
-            if announcement_time.tzinfo is None:
-                start_time = start_time.replace(tzinfo=None)
+        if session == "market":
+            return announcement_time
 
-        elif session == "premarket":
-            # Start from market open of the same day
-            market_open = datetime.combine(et_time.date(), MARKET_OPEN, tzinfo=ET_TZ)
-            if announcement_time.tzinfo is None:
-                market_open = market_open.replace(tzinfo=None)
-            start_time = max(announcement_time, market_open)
+        if session == "premarket":
+            # Start from market open of the same day (may still be in the future; fetch will skip)
+            return _combine_et(et_time.date(), MARKET_OPEN, naive_input)
 
-        # For "market" session, start from announcement time as usual
-        return start_time
+        # For postmarket, and for "closed" (overnight) times, start from the next market open.
+        # - "closed" includes 20:00-04:00; before 09:30 we want same-day open, after 16:00 we want next day open.
+        if session in ("postmarket", "closed"):
+            t = et_time.time()
+            if t < MARKET_OPEN:
+                # Overnight before the bell: same-day open
+                day = _first_trading_day_on_or_after(et_time.date())
+                return _combine_et(day, MARKET_OPEN, naive_input)
+
+            # After-hours or late evening: next weekday open
+            next_day = _first_trading_day_after(et_time.date())
+            return _combine_et(next_day, MARKET_OPEN, naive_input)
+
+        # Fallback: treat unknown session as "next open"
+        next_day = _first_trading_day_after(et_time.date())
+        return _combine_et(next_day, MARKET_OPEN, naive_input)
 
     def _get_announcements_path(self) -> Path:
         """Get path to the announcements JSON file."""
@@ -344,6 +427,7 @@ class MassiveClient:
                 'high_ctb': ann.high_ctb,
                 'short_interest': ann.short_interest,
                 'channel': ann.channel,
+                'author': ann.author,
                 'finbert_label': ann.finbert_label,
                 'finbert_score': ann.finbert_score,
                 'finbert_pos': ann.finbert_pos,
@@ -398,6 +482,7 @@ class MassiveClient:
                     high_ctb=item.get('high_ctb', False),
                     short_interest=item.get('short_interest'),
                     channel=item.get('channel'),
+                    author=item.get('author'),
                     finbert_label=item.get('finbert_label'),
                     finbert_score=item.get('finbert_score'),
                     finbert_pos=item.get('finbert_pos'),

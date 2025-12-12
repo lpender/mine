@@ -1,6 +1,6 @@
 # Press Release Backtester
 
-A Streamlit dashboard for analyzing stock price movements following press release announcements. Parses Discord messages to extract announcement data and backtests trading strategies using historical OHLCV data.
+Tools for analyzing stock price movements following press release announcements. Parses Discord messages to extract announcement data and backtests trading strategies using historical OHLCV data.
 
 ## Features
 
@@ -44,17 +44,17 @@ A Streamlit dashboard for analyzing stock price movements following press releas
 
 ## Usage
 
-### Backtesting Dashboard
+### Backtesting
+
+Run the Streamlit dashboard (reads cached data; no HTML paste ingestion inside Streamlit):
 
 ```bash
 streamlit run app.py
 ```
 
-1. Paste Discord messages into the sidebar text area
-2. Set the reference date for relative timestamps
-3. Adjust trigger parameters using the sliders
-4. Click on a row to view the detailed price chart
-5. Export results to CSV
+Ingest announcements separately via:
+- `python import_html.py ...` (one-off imports)
+- `python discord-monitor/alert_server.py` (plugin backfill → `data/ohlcv/announcements.json`)
 
 ### Live Trading (Interactive Brokers)
 
@@ -99,44 +99,20 @@ python trade.py --live buy AAPL
 
 ### Real-time Discord Monitor
 
-For faster execution, run the Discord message monitor:
+Run the local webhook server, then use the Discord plugin to send alerts/backfills:
 
 ```bash
-# Terminal 1: Start the server
-python discord_server.py
-
-# or
-
-python discord_server.py --gui --auto-trade
-
-# Then in Discord (browser):
-# 1. Open Discord in your browser
-# 2. Navigate to the alerts channel
-# 3. Press F12 > Console
-# 4. Paste the JavaScript from discord_monitor.js
+python discord-monitor/alert_server.py
 ```
 
-When a new alert appears, you'll see it in your terminal instantly. Execute with:
-```bash
-python trade.py buy TICKER
-```
-
-If you want to enable auto-trading (risky!):
-
-```bash
-curl -X POST http://127.0.0.1:8765/toggle-auto-trade
-```
-
-This will automatically execute bracket orders when alerts come in. Start with paper trading!
+You can optionally enable auto-trading flags on the server (see `discord-monitor/alert_server.py --help`).
 
 ## Project Structure
 
 ```
 .
-├── app.py                 # Streamlit dashboard
 ├── trade.py               # CLI for executing trades via IB
-├── discord_server.py      # Real-time Discord message receiver
-├── discord_monitor.js     # Browser script for Discord
+├── discord-monitor/       # Discord alert/backfill webhook server + plugin(s)
 ├── docker-compose.yml     # IB Gateway Docker setup
 ├── refetch_data.py        # Re-fetch OHLCV data for cached announcements
 ├── src/

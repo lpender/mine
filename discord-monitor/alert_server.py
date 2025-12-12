@@ -8,7 +8,7 @@ Usage:
     python alert_server.py --trade --live     # Auto-trade live (DANGEROUS!)
     python alert_server.py --fetch-ohlcv      # Auto-fetch OHLCV on backfill
 
-The Vencord plugin sends POST requests to:
+The Discord plugin sends POST requests to:
     http://localhost:8765/alert     - Real-time alerts
     http://localhost:8765/backfill  - Historical message backfill
 """
@@ -45,6 +45,27 @@ class AlertHandler(BaseHTTPRequestHandler):
     include_today = False
     seen_alerts = set()
     seen_backfill = set()
+
+    @staticmethod
+    def infer_author(channel: str, author: str | None) -> str | None:
+        """
+        Infer an author label when upstream payloads don't include one.
+
+        This is a pragmatic fallback so downstream storage/UI can still show
+        something like "PR - Spike" vs "Nuntiobot" even if the plugin DOM
+        extraction fails.
+        """
+        if author:
+            author = str(author).strip()
+            if author:
+                return author
+
+        ch = (channel or "").lower()
+        if "pr-spike" in ch or "pr spike" in ch:
+            return "PR - Spike"
+        if "select-news" in ch or "select news" in ch:
+            return "Nuntiobot"
+        return None
 
     def log_message(self, format, *args):
         # Suppress default HTTP logging
@@ -100,6 +121,7 @@ class AlertHandler(BaseHTTPRequestHandler):
         price_info = data.get("price_info", "")
         channel = data.get("channel", "")
         content = data.get("content", "")
+        author = data.get("author")
         timestamp = data.get("timestamp", datetime.now().isoformat())
 
         # Dedupe by ticker + minute
@@ -134,6 +156,8 @@ class AlertHandler(BaseHTTPRequestHandler):
         if parse_message_line and content:
             ann = parse_message_line(content, datetime.now())
             if ann:
+                ann.channel = channel or ann.channel
+                ann.author = author
                 print(f"  Float:   {ann.float_shares/1e6:.1f}M" if ann.float_shares else "")
                 print(f"  IO%:     {ann.io_percent:.1f}%" if ann.io_percent else "")
                 print(f"  MC:      ${ann.market_cap/1e6:.1f}M" if ann.market_cap else "")
@@ -187,6 +211,8 @@ class AlertHandler(BaseHTTPRequestHandler):
             msg_id = msg.get("id", "")
             content = msg.get("content", "")
             timestamp_str = msg.get("timestamp", "")
+            author = msg.get("author")
+            inferred_author = AlertHandler.infer_author(channel, author)
 
             # Skip if we've seen this message
             if msg_id in AlertHandler.seen_backfill:
@@ -206,6 +232,7 @@ class AlertHandler(BaseHTTPRequestHandler):
             ann = parse_message_line(content, timestamp)
             if ann:
                 ann.channel = channel
+                ann.author = inferred_author or ann.author
                 parsed_announcements.append(ann)
                 print(f"  + {ann.ticker:5} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')} | ${ann.price_threshold:.2f}")
 
@@ -232,18 +259,20 @@ class AlertHandler(BaseHTTPRequestHandler):
                 if not AlertHandler.include_today and ann.timestamp.date() == today:
                     filtered_today += 1
                     continue
-                key = (ann.ticker, ann.timestamp)
-                if key not in existing_keys:
-                    new_announcements.append(ann)
-                    existing_keys.add(key)
+                # Always pass through; MassiveClient.save_announcements will clobber by (ticker,timestamp)
+                new_announcements.append(ann)
 
             if filtered_today > 0:
                 print(f"  Filtered out: {filtered_today} today's announcements")
 
             if new_announcements:
+                before_keys = {(a.ticker, a.timestamp) for a in existing}
                 all_announcements = existing + new_announcements
                 client.save_announcements(all_announcements)
-                print(f"  Saved: {len(new_announcements)} new announcements")
+                after_keys = before_keys | {(a.ticker, a.timestamp) for a in new_announcements}
+                new_only = len(after_keys) - len(before_keys)
+                updated = len(new_announcements) - new_only
+                print(f"  Saved: {new_only} new, {updated} updated announcements")
 
                 # Optionally fetch OHLCV data
                 if AlertHandler.fetch_ohlcv:

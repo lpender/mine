@@ -14,6 +14,7 @@ class Announcement < ApplicationRecord
 
   scope :us_only, -> { where(country: "US") }
   scope :recent, -> { order(timestamp: :desc) }
+  scope :with_source, -> { where.not(source_message: [nil, ""]) }
 
   def market_session
     hour = timestamp.hour

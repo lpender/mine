@@ -27,7 +27,14 @@
       "Bash(orb list:*)",
       "Bash(docker inspect:*)",
       "Bash(python:*)",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "Bash(git restore:*)",
+      "Bash(git reset:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(npm create:*)",
+      "Bash(psql:*)",
+      "Bash(rails new:*)",
+      "Bash(bin/rails runner:*)"
     ]
   }
 }

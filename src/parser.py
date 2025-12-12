@@ -146,7 +146,7 @@ def extract_scanner_gain_pct(line: str) -> Optional[float]:
     return None
 
 
-def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]:
+def parse_message_line(line: str, timestamp: datetime, source_message: Optional[str] = None) -> Optional[Announcement]:
     """
     Parse a single announcement line like:
     'BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  Float: 139 M  |  IO: 6.04%  |  MC: 26.8 M'
@@ -156,6 +156,11 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
 
     Scanner format with gain percentage:
     '08:26 ↗ CAUD < $30 | 16% ~ | Float: 2.6 M | IO: 18.96%'
+
+    Args:
+        line: The message line to parse
+        timestamp: Timestamp for the announcement
+        source_message: Optional raw source message/HTML that generated this
     """
     line = line.strip()
     if not line:
@@ -260,6 +265,7 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
         bar_minutes=bar_minutes,
         scanner_test=scanner_test,
         scanner_after_lull=scanner_after_lull,
+        source_message=source_message or line,  # Default to the parsed line if no source provided
     )
 
 
@@ -441,6 +447,44 @@ def parse_discord_html_with_stats(
             stats["error"] = "Could not find Discord message elements (expected id='chat-messages-*' or class='*messageListItem*')"
         return announcements, stats
 
+    def extract_author_from_msg(msg_elem) -> Optional[str]:
+        """
+        Best-effort author extraction from Discord message HTML.
+
+        Discord DOM/classes change frequently, so this uses a few heuristics:
+        - any element whose class contains 'username' (case-insensitive)
+        - fallback to aria-label patterns when present
+        """
+        # Heuristic 1: class contains 'username'
+        try:
+            for el in msg_elem.find_all(True):
+                classes = el.get("class") or []
+                if not classes:
+                    continue
+                cls_joined = " ".join(classes).lower()
+                if "username" in cls_joined:
+                    text = el.get_text(separator=" ", strip=True)
+                    if text:
+                        return text
+        except Exception:
+            pass
+
+        # Heuristic 2: aria-label (sometimes contains author in copied HTML)
+        try:
+            for el in msg_elem.find_all(True):
+                aria = el.get("aria-label")
+                if not aria:
+                    continue
+                # Common-ish patterns: "PR - Spike, Today at 9:28 AM" etc.
+                # Keep it conservative: split on comma and take first chunk if short-ish.
+                first = aria.split(",")[0].strip()
+                if first and 1 <= len(first) <= 80:
+                    return first
+        except Exception:
+            pass
+
+        return None
+
     for msg in messages:
         # Extract timestamp from <time datetime="...">
         time_elem = msg.find('time')
@@ -469,9 +513,13 @@ def parse_discord_html_with_stats(
         # Get text content
         message_text = content_div.get_text(separator=' ', strip=True)
 
+        # Capture the raw HTML for this message
+        source_html = str(msg)
+
         # Try to parse as announcement
-        announcement = parse_message_line(message_text, timestamp)
+        announcement = parse_message_line(message_text, timestamp, source_message=source_html)
         if announcement:
+            announcement.author = extract_author_from_msg(msg)
             announcements.append(announcement)
             stats["parsed"] += 1
         else:

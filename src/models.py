@@ -56,6 +56,7 @@ class Announcement:
     high_ctb: bool = False  # High Cost to Borrow flag
     short_interest: Optional[float] = None  # e.g., 23.9 (percent)
     channel: Optional[str] = None  # Discord channel name
+    author: Optional[str] = None  # Discord display name (e.g. "PR - Spike", "Nuntiobot")
     finbert_label: Optional[str] = None  # "positive" | "negative" | "neutral"
     finbert_score: Optional[float] = None  # continuous score (pos - neg) in [-1, 1]
     finbert_pos: Optional[float] = None  # P(positive)
@@ -84,6 +85,9 @@ class Announcement:
     bar_minutes: Optional[int] = None  # Candle timeframe (e.g., 2 from "3 green bars 2m")
     scanner_test: bool = False  # Detected by "test" scanner
     scanner_after_lull: bool = False  # Detected by "after-lull" scanner
+
+    # Source data
+    source_message: Optional[str] = None  # Raw Discord message that generated this
 
     @property
     def market_session(self) -> str:

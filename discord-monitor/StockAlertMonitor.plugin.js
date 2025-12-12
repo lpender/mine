@@ -94,14 +94,15 @@ module.exports = class StockAlertMonitor {
         if (tickerMatch) {
             const ticker = tickerMatch[1];
             const fullMatch = tickerMatch[0];
+            const author = message?.author?.globalName || message?.author?.global_name || message?.author?.username || null;
 
             console.log(`[StockAlertMonitor] ALERT: ${ticker} in #${channelName}`);
 
-            this.triggerAlert(ticker, fullMatch, channelName, message.content);
+            this.triggerAlert(ticker, fullMatch, channelName, message.content, author);
         }
     }
 
-    triggerAlert(ticker, priceInfo, channelName, fullContent) {
+    triggerAlert(ticker, priceInfo, channelName, fullContent, author) {
         const timestamp = new Date().toLocaleTimeString();
 
         // 1. Play sound
@@ -144,7 +145,8 @@ Full message: ${fullContent.substring(0, 200)}
             price_info: priceInfo,
             channel: channelName,
             content: fullContent,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            author: author
         });
     }
 
@@ -221,7 +223,10 @@ Full message: ${fullContent.substring(0, 200)}
             const content = contentEl?.textContent?.trim() || "";
 
             if (content && timestamp) {
-                messages.push({ id, content, timestamp });
+                // Best-effort author extraction from DOM
+                const authorEl = msgEl.querySelector('[class*="username"], [class*="userName"]');
+                const author = authorEl?.textContent?.trim() || "";
+                messages.push({ id, content, timestamp, author });
             }
         });
 
