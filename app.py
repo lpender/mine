@@ -325,6 +325,7 @@ sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author",
 default_sort_col = get_param("sort", "Time")
 default_sort_asc = get_param("asc", "0") == "1"
 
+st.caption("Use these controls to sort (persists to URL). Table header clicks don't persist.")
 col1, col2, col3 = st.columns([2, 2, 6])
 sort_column = col1.selectbox(
     "Sort by",
