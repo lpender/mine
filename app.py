@@ -356,11 +356,26 @@ column_config = {
     ),
 }
 
-st.dataframe(
+# Map dataframe row index to result index (since df may be sorted differently)
+df = df.reset_index(drop=True)
+df_to_result_idx = {}
+for df_idx, row in df.iterrows():
+    # Find matching result by time and ticker
+    for r_idx, r in enumerate(summary.results):
+        if r.announcement.timestamp == row["Time"] and r.announcement.ticker == row["Ticker"]:
+            df_to_result_idx[df_idx] = r_idx
+            break
+
+# Use data_editor with single-row selection
+selection = st.data_editor(
     df,
     column_config=column_config,
     use_container_width=True,
     hide_index=True,
+    disabled=True,  # Read-only, just for selection
+    selection_mode="single-row",
+    on_select="rerun",
+    key="trade_table",
 )
 
 # Show filter summary at bottom
@@ -372,38 +387,22 @@ st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions
 
 st.header("Trade Detail")
 
-# Create selection options from results
-if summary.results:
-    # Build selection options
-    selection_options = ["Select a trade..."]
-    result_map = {}
-    for i, r in enumerate(summary.results):
-        if r.entered:
-            label = f"{r.announcement.timestamp.strftime('%Y-%m-%d %H:%M')} | {r.announcement.ticker} | {r.return_pct:+.2f}%"
-            selection_options.append(label)
-            result_map[label] = i
+# Get selected row from the data_editor selection
+selected_rows = selection.selection.rows if hasattr(selection, 'selection') else []
 
-    # Get selected trade from URL
-    default_selected = get_param("selected", "")
-    default_idx = 0
-    if default_selected and default_selected in selection_options:
-        default_idx = selection_options.index(default_selected)
+if not selected_rows:
+    st.info("Click a row in the table above to view trade details and chart.")
+    # Clear row param from URL if no selection
+    if "row" in st.query_params:
+        del st.query_params["row"]
+else:
+    selected_df_idx = selected_rows[0]
+    # Persist selection to URL
+    set_param("row", selected_df_idx)
 
-    selected_trade = st.selectbox(
-        "Select trade to view chart",
-        options=selection_options,
-        index=default_idx,
-    )
-
-    # Update URL with selection
-    if selected_trade != "Select a trade...":
-        set_param("selected", selected_trade)
-    else:
-        st.query_params.pop("selected", None)
-
-    # Show chart if trade is selected
-    if selected_trade != "Select a trade..." and selected_trade in result_map:
-        result_idx = result_map[selected_trade]
+    # Map to result index
+    if selected_df_idx in df_to_result_idx:
+        result_idx = df_to_result_idx[selected_df_idx]
         selected_result = summary.results[result_idx]
         ann = selected_result.announcement
 
