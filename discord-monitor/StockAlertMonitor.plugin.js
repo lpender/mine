@@ -284,6 +284,32 @@ Full message: ${fullContent.substring(0, 200)}
         }
     }
 
+    findChatScroller() {
+        // Discord's chat scroller has specific class patterns
+        // Try multiple selectors to find it
+        const selectors = [
+            '[class*="messagesWrapper"] [class*="scroller"]',
+            '[class*="chatContent"] [class*="scroller"]',
+            '[data-list-id="chat-messages"]',
+            '[class*="scrollerInner"]'
+        ];
+
+        for (const selector of selectors) {
+            const el = document.querySelector(selector);
+            if (el) return el;
+        }
+
+        // Fallback: find by scrollable behavior
+        const scrollers = document.querySelectorAll('[class*="scroller"]');
+        for (const scroller of scrollers) {
+            if (scroller.scrollHeight > scroller.clientHeight) {
+                return scroller;
+            }
+        }
+
+        return null;
+    }
+
     createBackfillWidget() {
         // Remove existing widget if any
         this.removeBackfillWidget();
@@ -406,14 +432,41 @@ Full message: ${fullContent.substring(0, 200)}
             scrollTimeout = setTimeout(() => this.updateWidgetDisplay(), 100);
         };
 
-        // Listen for scroll events
+        // Find and attach to Discord's chat scroller
+        this._scrollHandler = debouncedScroll;
+        this._attachedScroller = null;
+
+        const attachScrollListener = () => {
+            const chatScroller = this.findChatScroller();
+            if (chatScroller && chatScroller !== this._attachedScroller) {
+                // Remove from old scroller if any
+                if (this._attachedScroller) {
+                    this._attachedScroller.removeEventListener("scroll", this._scrollHandler);
+                }
+                // Attach to new scroller
+                chatScroller.addEventListener("scroll", this._scrollHandler);
+                this._attachedScroller = chatScroller;
+                console.log("[StockAlertMonitor] Attached scroll listener to chat scroller");
+            }
+        };
+
+        // Also listen at document level as backup (capture phase)
         document.addEventListener("scroll", debouncedScroll, true);
+
+        // Listen for wheel events as backup (virtual scrollers often use this)
+        document.addEventListener("wheel", debouncedScroll, true);
+
+        // Initial attachment
+        attachScrollListener();
 
         // Initial update
         this.updateWidgetDisplay();
 
-        // Update periodically in case DOM changes
-        this.updateInterval = setInterval(() => this.updateWidgetDisplay(), 2000);
+        // Update periodically and re-attach scroll listener if needed (e.g., channel change)
+        this.updateInterval = setInterval(() => {
+            this.updateWidgetDisplay();
+            attachScrollListener();
+        }, 2000);
 
         console.log("[StockAlertMonitor] Backfill widget created");
     }
