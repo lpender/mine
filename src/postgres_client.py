@@ -258,11 +258,16 @@ class PostgresClient:
                 return bars
 
             except requests.exceptions.HTTPError as e:
-                if e.response and e.response.status_code == 429:
+                status = e.response.status_code if e.response else None
+                if status == 429:
                     wait_time = 2 ** attempt
                     print(f"  Rate limited on {ticker}, waiting {wait_time}s...")
                     time.sleep(wait_time)
                     continue
+                elif status == 403:
+                    # 403 = forbidden (not subscribed, ticker not available, etc.) - don't retry
+                    print(f"  {ticker}: 403 Forbidden (ticker may require paid Polygon plan)")
+                    return []
                 print(f"Error fetching OHLCV for {ticker}: {e}")
                 return []
             except Exception as e:
