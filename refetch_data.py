@@ -14,7 +14,7 @@ Usage:
 import argparse
 import sys
 import time
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -48,6 +48,7 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force re-download (ignore cache)")
     parser.add_argument("--resume", action="store_true", help="Skip symbols that already have a cached parquet file")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be refetched without fetching")
+    parser.add_argument("--include-today", action="store_true", help="Include today's announcements (normally excluded)")
     args = parser.parse_args()
 
     client = MassiveClient(cache_dir=args.cache_dir)
@@ -71,8 +72,13 @@ def main():
         sessions = ["premarket", "postmarket"]
 
     # Filter announcements
+    today = date.today()
     to_refetch = []
     for ann in announcements:
+        # Exclude today's data by default (market data incomplete)
+        if not args.include_today and ann.timestamp.date() == today:
+            continue
+
         # Filter by session if specified
         if sessions and ann.market_session not in sessions:
             continue

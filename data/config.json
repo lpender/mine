@@ -24,5 +24,18 @@
   "filter_float_min_m": 0.0,
   "filter_float_max_m": 1000.0,
   "filter_mc_min_m": 0.0,
-  "filter_mc_max_m": 100000.0
+  "filter_mc_max_m": 100000.0,
+  "filter_scanner_gain_min": 0.0,
+  "filter_scanner_gain_max": 1000.0,
+  "filter_nhod": "Any",
+  "filter_nsh": "Any",
+  "filter_has_news": "Any",
+  "filter_rvol_min": 0.0,
+  "filter_rvol_max": 100.0,
+  "filter_mentions_min": 0,
+  "filter_mentions_max": 100,
+  "filter_scanner_test": "Any",
+  "filter_after_lull": "Any",
+  "filter_green_bars_min": 0,
+  "filter_green_bars_max": 20
 }
