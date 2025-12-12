@@ -167,6 +167,14 @@ class AlertHandler(BaseHTTPRequestHandler):
             json.dump({"channel": channel, "messages": messages, "sent_at": sent_at}, f, indent=2)
         print(f"  Debug: saved raw messages to {debug_path}")
 
+        # Archive raw messages for re-parsing later
+        archive_dir = Path(__file__).parent.parent / "data" / "raw_messages"
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        archive_path = archive_dir / f"backfill_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(archive_path, "w") as f:
+            json.dump({"channel": channel, "messages": messages, "sent_at": sent_at}, f, indent=2)
+        print(f"  Archived: {archive_path.name}")
+
         if not parse_message_line:
             print("  ERROR: Parser not available")
             return {"error": "Parser not available"}
