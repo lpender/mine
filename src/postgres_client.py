@@ -276,6 +276,7 @@ class PostgresClient:
                                   window_minutes: int = 120,
                                   use_cache: bool = True) -> List[OHLCVBar]:
         """Fetch OHLCV data starting from announcement time."""
+        from datetime import date
 
         # Determine effective start time based on market session
         session = get_market_session(announcement_time)
@@ -296,6 +297,11 @@ class PostgresClient:
                 effective_start += timedelta(days=1)
         else:
             effective_start = announcement_time
+
+        # Skip fetching if effective trading window is today (data not yet available)
+        if effective_start.date() >= date.today():
+            print(f"Skipping {ticker}: trading window is today/future ({effective_start.date()})")
+            return []
 
         end_time = effective_start + timedelta(minutes=window_minutes)
 
