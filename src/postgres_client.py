@@ -1,6 +1,7 @@
 """PostgreSQL-based data client for announcements and OHLCV data."""
 
 import os
+import time
 from datetime import datetime, timedelta
 from typing import List, Optional
 from dotenv import load_dotenv
@@ -204,7 +205,7 @@ class PostgresClient:
         if use_cache and self.has_ohlcv_data(ticker, start, end):
             return self.get_ohlcv_bars(ticker, start, end)
 
-        # Fetch from API
+        # Fetch from API with retry logic for rate limits
         start_ms = int(start.timestamp() * 1000)
         end_ms = int(end.timestamp() * 1000)
 
@@ -216,36 +217,60 @@ class PostgresClient:
             "apiKey": self.api_key,
         }
 
-        try:
-            response = self._session.get(url, params=params, timeout=30)
-            response.raise_for_status()
-            data = response.json()
+        max_retries = 5
+        for attempt in range(max_retries):
+            try:
+                response = self._session.get(url, params=params, timeout=30)
 
-            if data.get("status") != "OK" or not data.get("results"):
+                # Handle rate limiting with exponential backoff
+                if response.status_code == 429:
+                    wait_time = 2 ** attempt  # 1, 2, 4, 8, 16 seconds
+                    print(f"  Rate limited on {ticker}, waiting {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("status") != "OK" or not data.get("results"):
+                    return []
+
+                bars = []
+                for r in data["results"]:
+                    bar = OHLCVBar(
+                        timestamp=datetime.fromtimestamp(r["t"] / 1000),
+                        open=r["o"],
+                        high=r["h"],
+                        low=r["l"],
+                        close=r["c"],
+                        volume=r["v"],
+                        vwap=r.get("vw"),
+                    )
+                    bars.append(bar)
+
+                # Cache in database
+                if bars:
+                    self.save_ohlcv_bars(ticker, bars)
+
+                # Small delay to avoid hitting rate limits
+                time.sleep(0.15)
+
+                return bars
+
+            except requests.exceptions.HTTPError as e:
+                if e.response and e.response.status_code == 429:
+                    wait_time = 2 ** attempt
+                    print(f"  Rate limited on {ticker}, waiting {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                print(f"Error fetching OHLCV for {ticker}: {e}")
+                return []
+            except Exception as e:
+                print(f"Error fetching OHLCV for {ticker}: {e}")
                 return []
 
-            bars = []
-            for r in data["results"]:
-                bar = OHLCVBar(
-                    timestamp=datetime.fromtimestamp(r["t"] / 1000),
-                    open=r["o"],
-                    high=r["h"],
-                    low=r["l"],
-                    close=r["c"],
-                    volume=r["v"],
-                    vwap=r.get("vw"),
-                )
-                bars.append(bar)
-
-            # Cache in database
-            if bars:
-                self.save_ohlcv_bars(ticker, bars)
-
-            return bars
-
-        except Exception as e:
-            print(f"Error fetching OHLCV for {ticker}: {e}")
-            return []
+        print(f"Failed to fetch OHLCV for {ticker} after {max_retries} retries")
+        return []
 
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
