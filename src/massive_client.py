@@ -142,7 +142,7 @@ class MassiveClient:
         # Try cache first
         if use_cache:
             cached = self._load_from_cache(ticker, start, end)
-            if cached:
+            if cached is not None:
                 return cached
 
         if not self.api_key:
@@ -224,8 +224,8 @@ class MassiveClient:
                         vwap=result.get("vw"),
                     ))
 
-                # Cache the results
-                if use_cache and bars:
+                # Cache the results (including empty results to distinguish from unfetched)
+                if use_cache:
                     self._save_to_cache(ticker, start, end, bars)
 
                 return bars
@@ -344,6 +344,19 @@ class MassiveClient:
                 'high_ctb': ann.high_ctb,
                 'short_interest': ann.short_interest,
                 'channel': ann.channel,
+                'finbert_label': ann.finbert_label,
+                'finbert_score': ann.finbert_score,
+                'finbert_pos': ann.finbert_pos,
+                'finbert_neg': ann.finbert_neg,
+                'finbert_neu': ann.finbert_neu,
+                'headline_is_financing': ann.headline_is_financing,
+                'headline_financing_type': ann.headline_financing_type,
+                'headline_financing_tags': ann.headline_financing_tags,
+                'prev_close': ann.prev_close,
+                'regular_open': ann.regular_open,
+                'premarket_gap_pct': ann.premarket_gap_pct,
+                'premarket_volume': ann.premarket_volume,
+                'premarket_dollar_volume': ann.premarket_dollar_volume,
             })
 
         with open(self._get_announcements_path(), 'w') as f:
@@ -374,6 +387,19 @@ class MassiveClient:
                     high_ctb=item.get('high_ctb', False),
                     short_interest=item.get('short_interest'),
                     channel=item.get('channel'),
+                    finbert_label=item.get('finbert_label'),
+                    finbert_score=item.get('finbert_score'),
+                    finbert_pos=item.get('finbert_pos'),
+                    finbert_neg=item.get('finbert_neg'),
+                    finbert_neu=item.get('finbert_neu'),
+                    headline_is_financing=item.get('headline_is_financing'),
+                    headline_financing_type=item.get('headline_financing_type'),
+                    headline_financing_tags=item.get('headline_financing_tags'),
+                    prev_close=item.get('prev_close'),
+                    regular_open=item.get('regular_open'),
+                    premarket_gap_pct=item.get('premarket_gap_pct'),
+                    premarket_volume=item.get('premarket_volume'),
+                    premarket_dollar_volume=item.get('premarket_dollar_volume'),
                 ))
             return announcements
         except Exception:

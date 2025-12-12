@@ -56,6 +56,22 @@ class Announcement:
     high_ctb: bool = False  # High Cost to Borrow flag
     short_interest: Optional[float] = None  # e.g., 23.9 (percent)
     channel: Optional[str] = None  # Discord channel name
+    finbert_label: Optional[str] = None  # "positive" | "negative" | "neutral"
+    finbert_score: Optional[float] = None  # continuous score (pos - neg) in [-1, 1]
+    finbert_pos: Optional[float] = None  # P(positive)
+    finbert_neg: Optional[float] = None  # P(negative)
+    finbert_neu: Optional[float] = None  # P(neutral)
+    # Headline keyword flags (cheap PR-type classifier)
+    headline_is_financing: Optional[bool] = None
+    headline_financing_type: Optional[str] = None  # e.g. offering/atm/warrants/convertible/shelf/reverse_split/compliance
+    headline_financing_tags: Optional[str] = None  # comma-separated tags for display/debug
+
+    # Premarket context features (computed from OHLCV, cached)
+    prev_close: Optional[float] = None  # prior regular-session close
+    regular_open: Optional[float] = None  # regular-session open (9:30 bar open)
+    premarket_gap_pct: Optional[float] = None  # (regular_open - prev_close) / prev_close * 100
+    premarket_volume: Optional[int] = None  # sum volume 04:00-09:30
+    premarket_dollar_volume: Optional[float] = None  # sum(volume * vwap/close) 04:00-09:30
 
     @property
     def market_session(self) -> str:

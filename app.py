@@ -111,8 +111,8 @@ with st.sidebar:
         st.session_state.volume_threshold_k = saved_config.get("volume_threshold", 0) // 1000
     if "window_minutes" not in st.session_state:
         st.session_state.window_minutes = saved_config.get("window_minutes", 120)
-    if "entry_at_candle_close" not in st.session_state:
-        st.session_state.entry_at_candle_close = saved_config.get("entry_at_candle_close", False)
+    if "entry_by_message_second" not in st.session_state:
+        st.session_state.entry_by_message_second = saved_config.get("entry_by_message_second", False)
 
     entry_trigger = st.slider(
         "Entry Trigger (%)",
@@ -159,10 +159,11 @@ with st.sidebar:
         key="window_minutes",
     )
 
-    entry_at_candle_close = st.checkbox(
-        "Entry at candle close",
-        help="Enter at end of first candle instead of open (more realistic)",
-        key="entry_at_candle_close",
+    entry_by_message_second = st.checkbox(
+        "Entry within first minute (by message second)",
+        help="Uses the announcement timestamp seconds to approximate a fill inside the first 1-min candle. "
+             "Only applies when Entry Trigger = 0% and Min Volume Threshold = 0.",
+        key="entry_by_message_second",
     )
 
     st.subheader("Filters")
@@ -230,6 +231,160 @@ with st.sidebar:
             key="filter_io_max",
         )
 
+    # FinBERT score range filter
+    if "filter_finbert_min" not in st.session_state:
+        st.session_state.filter_finbert_min = saved_config.get("filter_finbert_min", -1.0)
+    if "filter_finbert_max" not in st.session_state:
+        st.session_state.filter_finbert_max = saved_config.get("filter_finbert_max", 1.0)
+
+    fin_col1, fin_col2 = st.columns(2)
+    with fin_col1:
+        filter_finbert_min = st.number_input(
+            "FinBERT Min",
+            min_value=-1.0,
+            max_value=1.0,
+            step=0.05,
+            key="filter_finbert_min",
+        )
+    with fin_col2:
+        filter_finbert_max = st.number_input(
+            "FinBERT Max",
+            min_value=-1.0,
+            max_value=1.0,
+            step=0.05,
+            key="filter_finbert_max",
+        )
+
+    # Headline financing/dilution filter
+    fin_headline_options = ["Any", "Exclude financing", "Only financing"]
+    if "filter_financing" not in st.session_state:
+        st.session_state.filter_financing = saved_config.get("filter_financing", "Any")
+    filter_financing = st.selectbox(
+        "Headline financing filter",
+        fin_headline_options,
+        index=fin_headline_options.index(st.session_state.filter_financing)
+        if st.session_state.filter_financing in fin_headline_options
+        else 0,
+        key="filter_financing",
+    )
+
+    # Premarket gap + dollar volume filters
+    if "filter_gap_min" not in st.session_state:
+        st.session_state.filter_gap_min = saved_config.get("filter_gap_min", -100.0)
+    if "filter_gap_max" not in st.session_state:
+        st.session_state.filter_gap_max = saved_config.get("filter_gap_max", 100.0)
+    gap_col1, gap_col2 = st.columns(2)
+    with gap_col1:
+        filter_gap_min = st.number_input(
+            "Gap Min (%)",
+            min_value=-100.0,
+            max_value=100.0,
+            step=1.0,
+            key="filter_gap_min",
+        )
+    with gap_col2:
+        filter_gap_max = st.number_input(
+            "Gap Max (%)",
+            min_value=-100.0,
+            max_value=100.0,
+            step=1.0,
+            key="filter_gap_max",
+        )
+
+    if "filter_pre_dv_min_m" not in st.session_state:
+        st.session_state.filter_pre_dv_min_m = saved_config.get("filter_pre_dv_min_m", 0.0)
+    if "filter_pre_dv_max_m" not in st.session_state:
+        st.session_state.filter_pre_dv_max_m = saved_config.get("filter_pre_dv_max_m", 1_000_000.0)
+    dv_col1, dv_col2 = st.columns(2)
+    with dv_col1:
+        filter_pre_dv_min_m = st.number_input(
+            "Premkt $Vol Min (M)",
+            min_value=0.0,
+            max_value=1_000_000.0,
+            step=10.0,
+            key="filter_pre_dv_min_m",
+        )
+    with dv_col2:
+        filter_pre_dv_max_m = st.number_input(
+            "Premkt $Vol Max (M)",
+            min_value=0.0,
+            max_value=1_000_000.0,
+            step=10.0,
+            key="filter_pre_dv_max_m",
+        )
+
+    # Price range filter (announcement price threshold)
+    if "filter_price_min" not in st.session_state:
+        st.session_state.filter_price_min = saved_config.get("filter_price_min", 0.0)
+    if "filter_price_max" not in st.session_state:
+        st.session_state.filter_price_max = saved_config.get("filter_price_max", 1000.0)
+
+    price_col1, price_col2 = st.columns(2)
+    with price_col1:
+        filter_price_min = st.number_input(
+            "Price Min ($)",
+            min_value=0.0,
+            max_value=1000.0,
+            step=0.1,
+            key="filter_price_min",
+        )
+    with price_col2:
+        filter_price_max = st.number_input(
+            "Price Max ($)",
+            min_value=0.0,
+            max_value=1000.0,
+            step=0.1,
+            key="filter_price_max",
+        )
+
+    # Float range filter (in millions for usability)
+    if "filter_float_min_m" not in st.session_state:
+        st.session_state.filter_float_min_m = saved_config.get("filter_float_min_m", 0.0)
+    if "filter_float_max_m" not in st.session_state:
+        st.session_state.filter_float_max_m = saved_config.get("filter_float_max_m", 1000.0)
+
+    float_col1, float_col2 = st.columns(2)
+    with float_col1:
+        filter_float_min_m = st.number_input(
+            "Float Min (M)",
+            min_value=0.0,
+            max_value=1000.0,
+            step=1.0,
+            key="filter_float_min_m",
+        )
+    with float_col2:
+        filter_float_max_m = st.number_input(
+            "Float Max (M)",
+            min_value=0.0,
+            max_value=1000.0,
+            step=1.0,
+            key="filter_float_max_m",
+        )
+
+    # Market cap range filter (in millions for usability)
+    if "filter_mc_min_m" not in st.session_state:
+        st.session_state.filter_mc_min_m = saved_config.get("filter_mc_min_m", 0.0)
+    if "filter_mc_max_m" not in st.session_state:
+        st.session_state.filter_mc_max_m = saved_config.get("filter_mc_max_m", 100000.0)
+
+    mc_col1, mc_col2 = st.columns(2)
+    with mc_col1:
+        filter_mc_min_m = st.number_input(
+            "MC Min (M)",
+            min_value=0.0,
+            max_value=100000.0,
+            step=10.0,
+            key="filter_mc_min_m",
+        )
+    with mc_col2:
+        filter_mc_max_m = st.number_input(
+            "MC Max (M)",
+            min_value=0.0,
+            max_value=100000.0,
+            step=10.0,
+            key="filter_mc_max_m",
+        )
+
     # Save config when values change
     current_config = {
         "entry_trigger": entry_trigger,
@@ -237,7 +392,7 @@ with st.sidebar:
         "stop_loss": stop_loss,
         "volume_threshold": volume_threshold,
         "window_minutes": window_minutes,
-        "entry_at_candle_close": entry_at_candle_close,
+        "entry_by_message_second": entry_by_message_second,
         "filter_premarket": filter_premarket,
         "filter_market": filter_market,
         "filter_postmarket": filter_postmarket,
@@ -245,6 +400,19 @@ with st.sidebar:
         "filter_ctb": filter_ctb,
         "filter_io_min": filter_io_min,
         "filter_io_max": filter_io_max,
+        "filter_finbert_min": filter_finbert_min,
+        "filter_finbert_max": filter_finbert_max,
+        "filter_financing": filter_financing,
+        "filter_gap_min": filter_gap_min,
+        "filter_gap_max": filter_gap_max,
+        "filter_pre_dv_min_m": filter_pre_dv_min_m,
+        "filter_pre_dv_max_m": filter_pre_dv_max_m,
+        "filter_price_min": filter_price_min,
+        "filter_price_max": filter_price_max,
+        "filter_float_min_m": filter_float_min_m,
+        "filter_float_max_m": filter_float_max_m,
+        "filter_mc_min_m": filter_mc_min_m,
+        "filter_mc_max_m": filter_mc_max_m,
     }
     if current_config != saved_config:
         save_config(current_config)
@@ -394,6 +562,60 @@ if st.session_state.announcements:
             if a.io_percent is not None and filter_io_min <= a.io_percent <= filter_io_max
         ]
 
+    # Apply FinBERT score range filter
+    if filter_finbert_min > -1 or filter_finbert_max < 1:
+        announcements = [
+            a for a in announcements
+            if a.finbert_score is not None and filter_finbert_min <= a.finbert_score <= filter_finbert_max
+        ]
+
+    # Apply headline financing filter
+    if filter_financing == "Exclude financing":
+        announcements = [a for a in announcements if not bool(a.headline_is_financing)]
+    elif filter_financing == "Only financing":
+        announcements = [a for a in announcements if bool(a.headline_is_financing)]
+
+    # Apply premarket gap filter
+    if filter_gap_min > -100 or filter_gap_max < 100:
+        announcements = [
+            a for a in announcements
+            if a.premarket_gap_pct is not None and filter_gap_min <= a.premarket_gap_pct <= filter_gap_max
+        ]
+
+    # Apply premarket dollar volume filter (stored in M, compare in dollars)
+    pre_dv_min = filter_pre_dv_min_m * 1e6
+    pre_dv_max = filter_pre_dv_max_m * 1e6
+    if pre_dv_min > 0 or filter_pre_dv_max_m < 1_000_000:
+        announcements = [
+            a for a in announcements
+            if a.premarket_dollar_volume is not None and pre_dv_min <= a.premarket_dollar_volume <= pre_dv_max
+        ]
+
+    # Apply Price range filter
+    if filter_price_min > 0 or filter_price_max < 1000:
+        announcements = [
+            a for a in announcements
+            if a.price_threshold is not None and filter_price_min <= a.price_threshold <= filter_price_max
+        ]
+
+    # Apply Float range filter (stored in M, compare in shares)
+    float_min = filter_float_min_m * 1e6
+    float_max = filter_float_max_m * 1e6
+    if float_min > 0 or filter_float_max_m < 1000:
+        announcements = [
+            a for a in announcements
+            if a.float_shares is not None and float_min <= a.float_shares <= float_max
+        ]
+
+    # Apply Market cap range filter (stored in M, compare in dollars)
+    mc_min = filter_mc_min_m * 1e6
+    mc_max = filter_mc_max_m * 1e6
+    if mc_min > 0 or filter_mc_max_m < 100000:
+        announcements = [
+            a for a in announcements
+            if a.market_cap is not None and mc_min <= a.market_cap <= mc_max
+        ]
+
     if not announcements:
         st.warning("No announcements match the current filters.")
 
@@ -404,7 +626,8 @@ if st.session_state.announcements:
         stop_loss_pct=stop_loss,
         volume_threshold=volume_threshold,
         window_minutes=window_minutes,
-        entry_at_candle_close=entry_at_candle_close,
+        entry_at_candle_close=False,
+        entry_by_message_second=entry_by_message_second,
     )
 
     if st.session_state.bars_by_announcement:
@@ -442,11 +665,162 @@ if st.session_state.announcements:
 
         st.divider()
 
+        # Quick FinBERT alpha exploration
+        if any(a.finbert_score is not None for a in announcements):
+            with st.expander("FinBERT alpha scan", expanded=False):
+                n = min(len(announcements), len(st.session_state.results))
+                rows = []
+                for i in range(n):
+                    a = announcements[i]
+                    r = st.session_state.results[i]
+                    rows.append(
+                        {
+                            "ticker": a.ticker,
+                            "time": a.timestamp,
+                            "finbert_score": a.finbert_score,
+                            "finbert_label": a.finbert_label,
+                            "headline_is_financing": a.headline_is_financing,
+                            "headline_financing_type": a.headline_financing_type,
+                            "premarket_gap_pct": a.premarket_gap_pct,
+                            "premarket_dollar_volume": a.premarket_dollar_volume,
+                            "return_pct": r.return_pct,
+                            "trigger_type": r.trigger_type,
+                        }
+                    )
+                df_ab = pd.DataFrame(rows)
+
+                # Focus on rows with realized returns (entered trades)
+                df_entered = df_ab[df_ab["return_pct"].notna() & df_ab["finbert_score"].notna()].copy()
+                if df_entered.empty:
+                    st.info("No entered trades with FinBERT scores in the current filtered set.")
+                else:
+                    df_entered["win"] = df_entered["return_pct"] > 0
+
+                    # By sentiment label
+                    by_label = (
+                        df_entered.groupby("finbert_label", dropna=False)
+                        .agg(
+                            n=("return_pct", "size"),
+                            win_rate=("win", "mean"),
+                            avg_return=("return_pct", "mean"),
+                            median_return=("return_pct", "median"),
+                        )
+                        .reset_index()
+                        .sort_values(["avg_return", "n"], ascending=[False, False])
+                    )
+                    by_label["win_rate"] = (by_label["win_rate"] * 100).round(1)
+                    by_label["avg_return"] = by_label["avg_return"].round(2)
+                    by_label["median_return"] = by_label["median_return"].round(2)
+                    st.subheader("By FinBERT label (entered trades)")
+                    st.dataframe(by_label, use_container_width=True, hide_index=True)
+
+                    # By financing flag/type
+                    st.subheader("By financing flag/type (entered trades)")
+                    df_entered_fin = df_entered.copy()
+                    df_entered_fin["headline_is_financing"] = df_entered_fin["headline_is_financing"].fillna(False)
+                    by_fin = (
+                        df_entered_fin.groupby(["headline_is_financing", "headline_financing_type"], dropna=False)
+                        .agg(
+                            n=("return_pct", "size"),
+                            win_rate=("win", "mean"),
+                            avg_return=("return_pct", "mean"),
+                            median_return=("return_pct", "median"),
+                        )
+                        .reset_index()
+                        .sort_values(["avg_return", "n"], ascending=[False, False])
+                    )
+                    by_fin["win_rate"] = (by_fin["win_rate"] * 100).round(1)
+                    by_fin["avg_return"] = by_fin["avg_return"].round(2)
+                    by_fin["median_return"] = by_fin["median_return"].round(2)
+                    st.dataframe(by_fin, use_container_width=True, hide_index=True)
+
+                    # Gap buckets (if present)
+                    if df_entered["premarket_gap_pct"].notna().any():
+                        st.subheader("By premarket gap bucket (entered trades)")
+                        gap_bins = [-1000, -10, -5, -2, 0, 2, 5, 10, 1000]
+                        gap_labels = ["<-10", "-10..-5", "-5..-2", "-2..0", "0..2", "2..5", "5..10", ">10"]
+                        df_entered["gap_bucket"] = pd.cut(df_entered["premarket_gap_pct"], bins=gap_bins, labels=gap_labels)
+                        by_gap = (
+                            df_entered.groupby("gap_bucket", dropna=False)
+                            .agg(
+                                n=("return_pct", "size"),
+                                win_rate=("win", "mean"),
+                                avg_return=("return_pct", "mean"),
+                                median_return=("return_pct", "median"),
+                            )
+                            .reset_index()
+                        )
+                        by_gap["win_rate"] = (by_gap["win_rate"] * 100).round(1)
+                        by_gap["avg_return"] = by_gap["avg_return"].round(2)
+                        by_gap["median_return"] = by_gap["median_return"].round(2)
+                        st.dataframe(by_gap, use_container_width=True, hide_index=True)
+
+                    # Fixed score buckets
+                    bins = [-1.01, -0.6, -0.2, 0.2, 0.6, 1.01]
+                    labels = ["[-1,-0.6)", "[-0.6,-0.2)", "[-0.2,0.2)", "[0.2,0.6)", "[0.6,1]"]
+                    df_entered["score_bucket"] = pd.cut(df_entered["finbert_score"], bins=bins, labels=labels)
+                    by_bucket = (
+                        df_entered.groupby("score_bucket", dropna=False)
+                        .agg(
+                            n=("return_pct", "size"),
+                            win_rate=("win", "mean"),
+                            avg_return=("return_pct", "mean"),
+                            median_return=("return_pct", "median"),
+                        )
+                        .reset_index()
+                    )
+                    by_bucket["win_rate"] = (by_bucket["win_rate"] * 100).round(1)
+                    by_bucket["avg_return"] = by_bucket["avg_return"].round(2)
+                    by_bucket["median_return"] = by_bucket["median_return"].round(2)
+                    st.subheader("By FinBERT score bucket (entered trades)")
+                    st.dataframe(by_bucket, use_container_width=True, hide_index=True)
+
+                    # Threshold sweep (>= t and <= t)
+                    thresholds = [-0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4, 0.6, 0.8]
+
+                    def _sweep(mask_name: str, mask):
+                        d = df_entered[mask]
+                        if d.empty:
+                            return None
+                        return {
+                            "filter": mask_name,
+                            "n": int(d.shape[0]),
+                            "win_rate": float((d["return_pct"] > 0).mean() * 100),
+                            "avg_return": float(d["return_pct"].mean()),
+                            "median_return": float(d["return_pct"].median()),
+                        }
+
+                    ge_rows = []
+                    le_rows = []
+                    for t in thresholds:
+                        ge = _sweep(f"score >= {t:+.1f}", df_entered["finbert_score"] >= t)
+                        le = _sweep(f"score <= {t:+.1f}", df_entered["finbert_score"] <= t)
+                        if ge:
+                            ge_rows.append(ge)
+                        if le:
+                            le_rows.append(le)
+
+                    if ge_rows:
+                        df_ge = pd.DataFrame(ge_rows).sort_values(["avg_return", "n"], ascending=[False, False])
+                        df_ge["win_rate"] = df_ge["win_rate"].round(1)
+                        df_ge["avg_return"] = df_ge["avg_return"].round(2)
+                        df_ge["median_return"] = df_ge["median_return"].round(2)
+                        st.subheader("Threshold sweep: score >= t (entered trades)")
+                        st.dataframe(df_ge, use_container_width=True, hide_index=True)
+
+                    if le_rows:
+                        df_le = pd.DataFrame(le_rows).sort_values(["avg_return", "n"], ascending=[False, False])
+                        df_le["win_rate"] = df_le["win_rate"].round(1)
+                        df_le["avg_return"] = df_le["avg_return"].round(2)
+                        df_le["median_return"] = df_le["median_return"].round(2)
+                        st.subheader("Threshold sweep: score <= t (entered trades)")
+                        st.dataframe(df_le, use_container_width=True, hide_index=True)
+
     # Announcements table
     st.header("Announcements")
 
     # Sort controls - use callbacks to persist values
-    sort_options = ["Time (EST)", "Ticker", "Session", "Return", "Status"]
+    sort_options = ["Time (EST)", "Ticker", "Session", "FinBERT", "Return", "Status"]
 
     def on_sort_change():
         st.session_state.sort_column_value = st.session_state.sort_selectbox
@@ -503,7 +877,13 @@ if st.session_state.announcements:
             "SI%": f"{ann.short_interest:.1f}%" if ann.short_interest is not None else "N/A",
             "CTB": "High" if ann.high_ctb else "-",
             "Country": ann.country,
+            "FinBERT": f"{ann.finbert_score:+.3f}" if ann.finbert_score is not None else "N/A",
+            "Sentiment": ann.finbert_label or "N/A",
+            "Gap%": f"{ann.premarket_gap_pct:+.1f}%" if ann.premarket_gap_pct is not None else "N/A",
+            "Premkt $Vol": f"${ann.premarket_dollar_volume/1e6:.1f}M" if ann.premarket_dollar_volume is not None else "N/A",
+            "Financing": "Yes" if ann.headline_is_financing else "-",
             "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else "N/A",
+            "_finbert_numeric": ann.finbert_score if ann.finbert_score is not None else float("-inf"),
             "_return_numeric": return_val,  # Hidden column for sorting
             "Status": status,
         }
@@ -515,6 +895,8 @@ if st.session_state.announcements:
         # Sort the dataframe
         if sort_column == "Return":
             df = df.sort_values("_return_numeric", ascending=sort_ascending)
+        elif sort_column == "FinBERT":
+            df = df.sort_values("_finbert_numeric", ascending=sort_ascending)
         else:
             df = df.sort_values(sort_column, ascending=sort_ascending)
 
@@ -522,7 +904,7 @@ if st.session_state.announcements:
         display_to_original = df["_original_idx"].tolist()
 
         # Remove hidden columns for display
-        display_df = df.drop(columns=["_original_idx", "_return_numeric"])
+        display_df = df.drop(columns=["_original_idx", "_return_numeric", "_finbert_numeric"])
 
         # Display as interactive table
         selected_idx = st.dataframe(
@@ -666,6 +1048,19 @@ if st.session_state.announcements:
                     "float_shares": ann.float_shares,
                     "io_percent": ann.io_percent,
                     "market_cap": ann.market_cap,
+                    "finbert_label": ann.finbert_label,
+                    "finbert_score": ann.finbert_score,
+                    "finbert_pos": ann.finbert_pos,
+                    "finbert_neg": ann.finbert_neg,
+                    "finbert_neu": ann.finbert_neu,
+                    "headline_is_financing": ann.headline_is_financing,
+                    "headline_financing_type": ann.headline_financing_type,
+                    "headline_financing_tags": ann.headline_financing_tags,
+                    "prev_close": ann.prev_close,
+                    "regular_open": ann.regular_open,
+                    "premarket_gap_pct": ann.premarket_gap_pct,
+                    "premarket_volume": ann.premarket_volume,
+                    "premarket_dollar_volume": ann.premarket_dollar_volume,
                     "entry_price": result.entry_price,
                     "entry_time": result.entry_time,
                     "exit_price": result.exit_price,
