@@ -4,8 +4,25 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 from datetime import timedelta
+from zoneinfo import ZoneInfo
 
 from src.postgres_client import PostgresClient
+
+# Timezone for display
+EST = ZoneInfo("America/New_York")
+UTC = ZoneInfo("UTC")
+
+
+def to_est(dt):
+    """Convert a datetime to EST for display."""
+    if dt is None:
+        return None
+    # Assume naive datetimes are UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=UTC)
+    return dt.astimezone(EST)
+
+
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig
 
@@ -303,7 +320,7 @@ rows = []
 for r in summary.results:
     a = r.announcement
     rows.append({
-        "Time": a.timestamp,
+        "Time": to_est(a.timestamp),
         "Ticker": a.ticker,
         "Session": a.market_session,
         "Country": a.country,
@@ -363,7 +380,8 @@ df_to_result_idx = {}
 for df_idx, row in df.iterrows():
     # Find matching result by time and ticker
     for r_idx, r in enumerate(summary.results):
-        if r.announcement.timestamp == row["Time"] and r.announcement.ticker == row["Ticker"]:
+        # Compare EST-converted times
+        if to_est(r.announcement.timestamp) == row["Time"] and r.announcement.ticker == row["Ticker"]:
             df_to_result_idx[df_idx] = r_idx
             break
 
@@ -411,8 +429,8 @@ else:
         bars = bars_dict.get(key, [])
 
         if bars:
-            # Build candlestick data
-            bar_times = [b.timestamp for b in bars]
+            # Build candlestick data (convert to EST)
+            bar_times = [to_est(b.timestamp) for b in bars]
             bar_open = [b.open for b in bars]
             bar_high = [b.high for b in bars]
             bar_low = [b.low for b in bars]
@@ -436,7 +454,7 @@ else:
             # Add entry marker (entry at close of first candle)
             if selected_result.entry_price and selected_result.entry_time:
                 fig.add_trace(go.Scatter(
-                    x=[selected_result.entry_time],
+                    x=[to_est(selected_result.entry_time)],
                     y=[selected_result.entry_price],
                     mode="markers",
                     marker=dict(symbol="triangle-up", size=15, color="blue"),
@@ -447,7 +465,7 @@ else:
             if selected_result.exit_price and selected_result.exit_time:
                 exit_color = "green" if selected_result.return_pct > 0 else "red"
                 fig.add_trace(go.Scatter(
-                    x=[selected_result.exit_time],
+                    x=[to_est(selected_result.exit_time)],
                     y=[selected_result.exit_price],
                     mode="markers",
                     marker=dict(symbol="triangle-down", size=15, color=exit_color),
@@ -470,7 +488,7 @@ else:
             # Layout
             fig.update_layout(
                 title=f"{ann.ticker} - {ann.headline[:80]}{'...' if len(ann.headline) > 80 else ''}",
-                xaxis_title="Time",
+                xaxis_title="Time (EST)",
                 yaxis_title="Price",
                 xaxis_rangeslider_visible=False,
                 height=500,
