@@ -31,6 +31,7 @@ class AnnouncementDB(Base):
     headline = Column(Text, default="")
     country = Column(String(10))
     channel = Column(String(100))
+    author = Column(String(100))  # Discord display name (e.g. "PR - Spike", "Nuntiobot")
 
     # Fundamental data
     float_shares = Column(Float)
