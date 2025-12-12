@@ -185,6 +185,14 @@ with st.sidebar:
         help="Filter out offerings, ATMs, warrants, etc."
     )
 
+    # Has headline filter
+    default_has_headline = get_param("has_hl", False, bool)
+    require_headline = st.checkbox(
+        "Has headline",
+        value=default_has_headline,
+        help="Only show announcements with a headline"
+    )
+
     # Float range
     st.subheader("Float (millions)")
     col1, col2 = st.columns(2)
@@ -210,6 +218,7 @@ with st.sidebar:
     set_param("author", authors)
     set_param("channel", channels)
     set_param("no_fin", exclude_financing)
+    set_param("has_hl", require_headline)
     set_param("float_min", float_min)
     set_param("float_max", float_max)
     set_param("mc_min", mc_min)
@@ -241,6 +250,10 @@ if channels:
 # Financing filter
 if exclude_financing:
     filtered = [a for a in filtered if not a.headline_is_financing]
+
+# Headline filter
+if require_headline:
+    filtered = [a for a in filtered if a.headline and a.headline.strip()]
 
 # Float filter (convert from shares to millions)
 filtered = [a for a in filtered if a.float_shares is None or
