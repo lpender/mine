@@ -88,10 +88,7 @@ class MassiveClient:
         return None
 
     def _save_to_cache(self, ticker: str, start: datetime, end: datetime, bars: List[OHLCVBar]):
-        """Save data to cache."""
-        if not bars:
-            return
-
+        """Save data to cache (including empty results to distinguish from unfetched)."""
         cache_path = self._get_cache_path(ticker, start, end)
         df = pd.DataFrame([{
             'timestamp': bar.timestamp,
@@ -382,7 +379,7 @@ class MassiveClient:
         except Exception:
             return []
 
-    def load_all_cached_data(self) -> Tuple[List[Announcement], dict]:
+    def load_all_cached_data(self, window_minutes: int = 120) -> Tuple[List[Announcement], dict]:
         """
         Load all cached announcements and their OHLCV data.
 
@@ -394,8 +391,12 @@ class MassiveClient:
 
         for ann in announcements:
             key = (ann.ticker, ann.timestamp)
-            bars = self._load_from_cache(ann.ticker, ann.timestamp, ann.timestamp + timedelta(minutes=60))
-            if bars:
+            start = self.get_effective_start_time(ann.timestamp)
+            end = start + timedelta(minutes=window_minutes)
+            bars = self._load_from_cache(ann.ticker, start, end)
+            # Store result if cache file exists (even if empty)
+            # None means unfetched, [] means fetched but no data
+            if bars is not None:
                 bars_by_announcement[key] = bars
 
         return announcements, bars_by_announcement

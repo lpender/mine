@@ -11,5 +11,5 @@
   "filter_closed": false,
   "filter_ctb": "Any",
   "filter_io_min": 0.0,
-  "filter_io_max": 100.0
+  "filter_io_max": 10.0
 }
