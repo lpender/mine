@@ -366,13 +366,12 @@ for df_idx, row in df.iterrows():
             df_to_result_idx[df_idx] = r_idx
             break
 
-# Use data_editor with single-row selection
-selection = st.data_editor(
+# Use dataframe with single-row selection
+event = st.dataframe(
     df,
     column_config=column_config,
     use_container_width=True,
     hide_index=True,
-    disabled=True,  # Read-only, just for selection
     selection_mode="single-row",
     on_select="rerun",
     key="trade_table",
@@ -387,8 +386,8 @@ st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions
 
 st.header("Trade Detail")
 
-# Get selected row from the data_editor selection
-selected_rows = selection.selection.rows if hasattr(selection, 'selection') else []
+# Get selected row from the dataframe selection event
+selected_rows = event.selection.rows if hasattr(event, 'selection') else []
 
 if not selected_rows:
     st.info("Click a row in the table above to view trade details and chart.")
