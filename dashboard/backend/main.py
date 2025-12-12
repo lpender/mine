@@ -1,21 +1,20 @@
-"""FastAPI backend for the backtest dashboard."""
+"""FastAPI backend for the backtesting dashboard."""
 
 import sys
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
-from dataclasses import asdict
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Add parent directories to path for imports
+# Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.massive_client import MassiveClient
-from src.backtest import run_backtest, run_single_backtest
-from src.models import BacktestConfig, Announcement
+from src.postgres_client import PostgresClient
+from src.models import BacktestConfig, get_market_session
+from src.backtest import run_backtest, calculate_summary_stats
 
 app = FastAPI(title="Backtest Dashboard API")
 
@@ -29,39 +28,171 @@ app.add_middleware(
 )
 
 # Initialize client
-client = MassiveClient()
+client = PostgresClient()
 
 
-class BacktestConfigRequest(BaseModel):
+# ─────────────────────────────────────────────────────────────────────────────
+# Pydantic models for API
+# ─────────────────────────────────────────────────────────────────────────────
+
+class BacktestRequest(BaseModel):
     entry_trigger_pct: float = 5.0
     take_profit_pct: float = 10.0
     stop_loss_pct: float = 3.0
     volume_threshold: int = 0
     window_minutes: int = 120
+    entry_at_candle_close: bool = False
     entry_by_message_second: bool = False
 
 
+class AnnouncementResponse(BaseModel):
+    ticker: str
+    timestamp: str
+    price_threshold: float
+    headline: str
+    country: str
+    channel: Optional[str]
+    market_session: str
+    float_shares: Optional[float]
+    io_percent: Optional[float]
+    market_cap: Optional[float]
+    short_interest: Optional[float]
+    reg_sho: bool
+    high_ctb: bool
+    finbert_label: Optional[str]
+    finbert_score: Optional[float]
+    headline_is_financing: Optional[bool]
+    headline_financing_type: Optional[str]
+    prev_close: Optional[float]
+    regular_open: Optional[float]
+    premarket_gap_pct: Optional[float]
+    premarket_volume: Optional[int]
+    premarket_dollar_volume: Optional[float]
+    scanner_gain_pct: Optional[float]
+    is_nhod: bool
+    is_nsh: bool
+    rvol: Optional[float]
+    mention_count: Optional[int]
+    has_news: bool
+    green_bars: Optional[int]
+    bar_minutes: Optional[int]
+    scanner_test: bool
+    scanner_after_lull: bool
+
+
+class TradeResultResponse(BaseModel):
+    ticker: str
+    timestamp: str
+    headline: str
+    market_session: str
+    entry_price: Optional[float]
+    entry_time: Optional[str]
+    exit_price: Optional[float]
+    exit_time: Optional[str]
+    return_pct: Optional[float]
+    trigger_type: str
+    # Include announcement data for filtering
+    country: str
+    channel: Optional[str]
+    float_shares: Optional[float]
+    io_percent: Optional[float]
+    market_cap: Optional[float]
+    short_interest: Optional[float]
+    reg_sho: bool
+    high_ctb: bool
+    finbert_label: Optional[str]
+    finbert_score: Optional[float]
+    headline_is_financing: Optional[bool]
+    headline_financing_type: Optional[str]
+    prev_close: Optional[float]
+    premarket_gap_pct: Optional[float]
+    scanner_gain_pct: Optional[float]
+    is_nhod: bool
+    is_nsh: bool
+    has_news: bool
+
+
 class BacktestResponse(BaseModel):
-    results: list[dict]
+    results: List[TradeResultResponse]
     summary: dict
 
 
-@app.get("/api/announcements")
-async def get_announcements():
-    """Get all cached announcements."""
+class OHLCVBarResponse(BaseModel):
+    timestamp: str
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+    vwap: Optional[float]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/announcements", response_model=List[AnnouncementResponse])
+def get_announcements():
+    """Get all announcements."""
     announcements = client.load_announcements()
-    return [_announcement_to_dict(a) for a in announcements]
+    return [
+        AnnouncementResponse(
+            ticker=a.ticker,
+            timestamp=a.timestamp.isoformat(),
+            price_threshold=a.price_threshold,
+            headline=a.headline,
+            country=a.country,
+            channel=a.channel,
+            market_session=a.market_session,
+            float_shares=a.float_shares,
+            io_percent=a.io_percent,
+            market_cap=a.market_cap,
+            short_interest=a.short_interest,
+            reg_sho=a.reg_sho,
+            high_ctb=a.high_ctb,
+            finbert_label=a.finbert_label,
+            finbert_score=a.finbert_score,
+            headline_is_financing=a.headline_is_financing,
+            headline_financing_type=a.headline_financing_type,
+            prev_close=a.prev_close,
+            regular_open=a.regular_open,
+            premarket_gap_pct=a.premarket_gap_pct,
+            premarket_volume=a.premarket_volume,
+            premarket_dollar_volume=a.premarket_dollar_volume,
+            scanner_gain_pct=a.scanner_gain_pct,
+            is_nhod=a.is_nhod,
+            is_nsh=a.is_nsh,
+            rvol=a.rvol,
+            mention_count=a.mention_count,
+            has_news=a.has_news,
+            green_bars=a.green_bars,
+            bar_minutes=a.bar_minutes,
+            scanner_test=a.scanner_test,
+            scanner_after_lull=a.scanner_after_lull,
+        )
+        for a in announcements
+    ]
 
 
-@app.post("/api/backtest")
-async def run_backtest_endpoint(config: BacktestConfigRequest):
-    """Run backtest on all announcements with given config."""
+@app.post("/api/backtest", response_model=BacktestResponse)
+def run_backtest_endpoint(request: BacktestRequest):
+    """Run backtest with given configuration."""
     announcements = client.load_announcements()
 
     if not announcements:
-        return {"results": [], "summary": _empty_summary()}
+        raise HTTPException(status_code=404, detail="No announcements found")
 
-    # Load OHLCV data for all announcements
+    config = BacktestConfig(
+        entry_trigger_pct=request.entry_trigger_pct,
+        take_profit_pct=request.take_profit_pct,
+        stop_loss_pct=request.stop_loss_pct,
+        volume_threshold=request.volume_threshold,
+        window_minutes=request.window_minutes,
+        entry_at_candle_close=request.entry_at_candle_close,
+        entry_by_message_second=request.entry_by_message_second,
+    )
+
+    # Fetch OHLCV data for all announcements
     bars_by_announcement = {}
     for ann in announcements:
         bars = client.fetch_after_announcement(
@@ -70,160 +201,76 @@ async def run_backtest_endpoint(config: BacktestConfigRequest):
             window_minutes=config.window_minutes,
             use_cache=True,
         )
-        if bars:
-            bars_by_announcement[(ann.ticker, ann.timestamp)] = bars
+        bars_by_announcement[(ann.ticker, ann.timestamp)] = bars
 
     # Run backtest
-    backtest_config = BacktestConfig(
-        entry_trigger_pct=config.entry_trigger_pct,
-        take_profit_pct=config.take_profit_pct,
-        stop_loss_pct=config.stop_loss_pct,
-        volume_threshold=config.volume_threshold,
-        window_minutes=config.window_minutes,
-        entry_by_message_second=config.entry_by_message_second,
-    )
+    summary = run_backtest(announcements, bars_by_announcement, config)
+    stats = calculate_summary_stats(summary.results)
 
-    summary = run_backtest(announcements, bars_by_announcement, backtest_config)
-
-    # Convert results to dicts with announcement info
+    # Convert results to response format
     results = []
-    for i, result in enumerate(summary.results):
-        ann = announcements[i]
-        results.append({
-            "ticker": ann.ticker,
-            "timestamp": ann.timestamp.isoformat(),
-            "headline": ann.headline,
-            "channel": ann.channel,
-            "price_threshold": ann.price_threshold,
-            "market_session": ann.market_session,
-            "float_shares": ann.float_shares,
-            "io_percent": ann.io_percent,
-            "market_cap": ann.market_cap,
-            "short_interest": ann.short_interest,
-            "high_ctb": ann.high_ctb,
-            "country": ann.country,
-            "finbert_label": ann.finbert_label,
-            "finbert_score": ann.finbert_score,
-            "gap_pct": ann.gap_pct,
-            "premarket_dollar_volume": ann.premarket_dollar_volume,
-            "financing_type": ann.financing_type,
-            "scanner_gain_pct": ann.scanner_gain_pct,
-            "rvol": ann.rvol,
-            "mention_count": ann.mention_count,
-            "is_nhod": ann.is_nhod,
-            "is_nsh": ann.is_nsh,
-            "has_news": ann.has_news,
-            # Backtest results
-            "entry_price": result.entry_price,
-            "exit_price": result.exit_price,
-            "return_pct": result.return_pct,
-            "trigger_type": result.trigger_type,
-            "entry_time": result.entry_time.isoformat() if result.entry_time else None,
-            "exit_time": result.exit_time.isoformat() if result.exit_time else None,
-        })
+    for r in summary.results:
+        results.append(TradeResultResponse(
+            ticker=r.announcement.ticker,
+            timestamp=r.announcement.timestamp.isoformat(),
+            headline=r.announcement.headline,
+            market_session=r.announcement.market_session,
+            entry_price=r.entry_price,
+            entry_time=r.entry_time.isoformat() if r.entry_time else None,
+            exit_price=r.exit_price,
+            exit_time=r.exit_time.isoformat() if r.exit_time else None,
+            return_pct=r.return_pct,
+            trigger_type=r.trigger_type,
+            country=r.announcement.country,
+            channel=r.announcement.channel,
+            float_shares=r.announcement.float_shares,
+            io_percent=r.announcement.io_percent,
+            market_cap=r.announcement.market_cap,
+            short_interest=r.announcement.short_interest,
+            reg_sho=r.announcement.reg_sho,
+            high_ctb=r.announcement.high_ctb,
+            finbert_label=r.announcement.finbert_label,
+            finbert_score=r.announcement.finbert_score,
+            headline_is_financing=r.announcement.headline_is_financing,
+            headline_financing_type=r.announcement.headline_financing_type,
+            prev_close=r.announcement.prev_close,
+            premarket_gap_pct=r.announcement.premarket_gap_pct,
+            scanner_gain_pct=r.announcement.scanner_gain_pct,
+            is_nhod=r.announcement.is_nhod,
+            is_nsh=r.announcement.is_nsh,
+            has_news=r.announcement.has_news,
+        ))
 
-    return {
-        "results": results,
-        "summary": {
-            "total_announcements": summary.total_announcements,
-            "total_trades": summary.total_trades,
-            "winners": summary.winners,
-            "losers": summary.losers,
-            "win_rate": summary.win_rate,
-            "avg_return": summary.avg_return,
-            "total_return": summary.total_return,
-            "profit_factor": summary.profit_factor,
-            "best_trade": summary.best_trade,
-            "worst_trade": summary.worst_trade,
-            "no_entry_count": summary.no_entry_count,
-            "no_data_count": summary.no_data_count,
-        }
-    }
+    return BacktestResponse(results=results, summary=stats)
 
 
-@app.get("/api/ohlcv/{ticker}/{timestamp}")
-async def get_ohlcv(ticker: str, timestamp: str, window_minutes: int = 120):
-    """Get OHLCV data for a specific ticker and timestamp."""
+@app.get("/api/ohlcv/{ticker}/{timestamp}", response_model=List[OHLCVBarResponse])
+def get_ohlcv(ticker: str, timestamp: str, window_minutes: int = 120):
+    """Get OHLCV data for a specific announcement."""
     try:
-        ts = datetime.fromisoformat(timestamp)
+        dt = datetime.fromisoformat(timestamp)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid timestamp format")
 
     bars = client.fetch_after_announcement(
-        ticker,
-        ts,
-        window_minutes=window_minutes,
-        use_cache=True,
+        ticker, dt, window_minutes=window_minutes, use_cache=True
     )
 
-    if not bars:
-        return []
-
     return [
-        {
-            "timestamp": bar.timestamp.isoformat(),
-            "open": bar.open,
-            "high": bar.high,
-            "low": bar.low,
-            "close": bar.close,
-            "volume": bar.volume,
-        }
-        for bar in bars
+        OHLCVBarResponse(
+            timestamp=b.timestamp.isoformat(),
+            open=b.open,
+            high=b.high,
+            low=b.low,
+            close=b.close,
+            volume=b.volume,
+            vwap=b.vwap,
+        )
+        for b in bars
     ]
 
 
-def _announcement_to_dict(ann: Announcement) -> dict:
-    """Convert Announcement to dict."""
-    return {
-        "ticker": ann.ticker,
-        "timestamp": ann.timestamp.isoformat(),
-        "headline": ann.headline,
-        "channel": ann.channel,
-        "price_threshold": ann.price_threshold,
-        "market_session": ann.market_session,
-        "float_shares": ann.float_shares,
-        "io_percent": ann.io_percent,
-        "market_cap": ann.market_cap,
-        "short_interest": ann.short_interest,
-        "high_ctb": ann.high_ctb,
-        "reg_sho": ann.reg_sho,
-        "country": ann.country,
-        "finbert_label": ann.finbert_label,
-        "finbert_score": ann.finbert_score,
-        "gap_pct": ann.gap_pct,
-        "premarket_dollar_volume": ann.premarket_dollar_volume,
-        "financing_type": ann.financing_type,
-        "scanner_gain_pct": ann.scanner_gain_pct,
-        "rvol": ann.rvol,
-        "mention_count": ann.mention_count,
-        "is_nhod": ann.is_nhod,
-        "is_nsh": ann.is_nsh,
-        "has_news": ann.has_news,
-        "green_bars": ann.green_bars,
-        "bar_minutes": ann.bar_minutes,
-        "scanner_test": ann.scanner_test,
-        "scanner_after_lull": ann.scanner_after_lull,
-    }
-
-
-def _empty_summary() -> dict:
-    """Return empty summary dict."""
-    return {
-        "total_announcements": 0,
-        "total_trades": 0,
-        "winners": 0,
-        "losers": 0,
-        "win_rate": 0.0,
-        "avg_return": 0.0,
-        "total_return": 0.0,
-        "profit_factor": 0.0,
-        "best_trade": 0.0,
-        "worst_trade": 0.0,
-        "no_entry_count": 0,
-        "no_data_count": 0,
-    }
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint."""
+    return {"status": "ok"}
