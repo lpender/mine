@@ -49,6 +49,25 @@ def run_single_backtest(
         if entry_price <= 0:
             result.trigger_type = "invalid_price"
             return result
+    # Handle "entry within first candle by message second" mode.
+    # This is intended for the common case where you enter immediately (no trigger/volume gate),
+    # but the fill price is somewhere between the first candle's low/high based on how many
+    # seconds into the minute the alert was received.
+    elif config.entry_by_message_second and config.entry_trigger_pct == 0 and config.volume_threshold == 0:
+        first = bars[0]
+
+        if first.low <= 0 or first.high <= 0:
+            result.trigger_type = "invalid_price"
+            return result
+
+        sec = getattr(announcement.timestamp, "second", 0) or 0
+        # Clamp to [0, 59]
+        sec = 0 if sec < 0 else 59 if sec > 59 else sec
+        frac = sec / 60.0
+
+        entry_price = first.low + (first.high - first.low) * frac
+        entry_time = first.timestamp + timedelta(seconds=sec)
+        entry_bar_idx = 0
     else:
         # Original logic: reference price is the first bar's open
         reference_price = bars[0].open

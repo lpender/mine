@@ -344,6 +344,57 @@ class TestIntraCandleVolumeEntry:
         assert result.trigger_type == "no_entry"
 
 
+class TestEntryByMessageSecond:
+    """Tests for entering within first candle based on announcement second."""
+
+    def test_entry_1st_second_is_1_over_60th_through_candle(self):
+        base_time = datetime(2025, 1, 15, 9, 30, 1)  # second=1
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(datetime(2025, 1, 15, 9, 30), open_=1.5, high=2.0, low=1.0, close=1.6, volume=100_000),
+            make_bar(datetime(2025, 1, 15, 9, 31), open_=1.6, high=1.7, low=1.5, close=1.6, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=0.0,
+            volume_threshold=0,
+            take_profit_pct=50.0,
+            stop_loss_pct=50.0,
+            window_minutes=30,
+            entry_at_candle_close=False,
+            entry_by_message_second=True,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+        assert result.entered
+        # low=1, high=2, sec=1 => 1 + (2-1)*(1/60) = 1.016666...
+        assert result.entry_price == pytest.approx(1.0 + 1.0 * (1 / 60.0), rel=1e-6)
+
+    def test_entry_30th_second_is_halfway_through_candle(self):
+        base_time = datetime(2025, 1, 15, 9, 30, 30)  # second=30
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(datetime(2025, 1, 15, 9, 30), open_=1.2, high=2.0, low=1.0, close=1.8, volume=100_000),
+            make_bar(datetime(2025, 1, 15, 9, 31), open_=1.8, high=1.9, low=1.7, close=1.8, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=0.0,
+            volume_threshold=0,
+            take_profit_pct=50.0,
+            stop_loss_pct=50.0,
+            window_minutes=30,
+            entry_at_candle_close=False,
+            entry_by_message_second=True,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+        assert result.entered
+        assert result.entry_price == pytest.approx(1.5, rel=1e-6)
+
+
 class TestExitLogic:
     """Tests to ensure exit logic still works correctly."""
 

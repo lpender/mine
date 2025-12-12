@@ -46,6 +46,8 @@ def main():
                         help="Only fetch OHLCV for postmarket announcements")
     parser.add_argument("--all-sessions", action="store_true",
                         help="Fetch OHLCV for all sessions (including market hours and closed)")
+    parser.add_argument("--rate-limit-delay", type=float, default=None,
+                        help="Minimum seconds between Massive API requests (overrides MASSIVE_RATE_LIMIT_DELAY)")
     args = parser.parse_args()
 
     html_path = Path(args.html_file)
@@ -96,7 +98,10 @@ def main():
         print(f"  {ann.ticker:5} @ {ann.timestamp.strftime('%Y-%m-%d %H:%M')} | ${ann.price_threshold:.2f} | {ann.country} | Float: {float_str} | IO: {io_str} | MC: {mc_str}{flags_str}")
 
     # Load existing data and merge (clobber metadata for existing announcements)
-    client = MassiveClient()
+    client_kwargs = {}
+    if args.rate_limit_delay is not None:
+        client_kwargs["rate_limit_delay"] = args.rate_limit_delay
+    client = MassiveClient(**client_kwargs)
     existing_announcements = client.load_announcements()
     existing_by_key = {(a.ticker, a.timestamp): a for a in existing_announcements}
 

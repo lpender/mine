@@ -1,12 +1,14 @@
 import json
 import os
 import time
+import random
 import requests
 import pandas as pd
 from datetime import datetime, timedelta
+from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
-from .models import OHLCVBar, Announcement
+from typing import List, Optional, Tuple, Dict, Any
+from .models import OHLCVBar, Announcement, get_market_session, MARKET_OPEN, ET_TZ
 
 
 class MassiveClient:
@@ -14,17 +16,65 @@ class MassiveClient:
 
     BASE_URL = "https://api.massive.com"
 
-    def __init__(self, api_key: Optional[str] = None, cache_dir: str = "data/ohlcv", rate_limit_delay: float = 12.0):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        cache_dir: str = "data/ohlcv",
+        rate_limit_delay: float = 12.0,
+        max_retries: int = 8,
+        timeout_s: float = 30.0,
+    ):
         self.api_key = api_key or os.getenv("MASSIVE_API_KEY")
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.rate_limit_delay = rate_limit_delay  # seconds between API calls
-        self._last_request_time = 0.0
+        # Minimum seconds between *all* HTTP attempts (including retries)
+        self.rate_limit_delay = float(os.getenv("MASSIVE_RATE_LIMIT_DELAY", rate_limit_delay))
+        self.max_retries = int(os.getenv("MASSIVE_MAX_RETRIES", max_retries))
+        self.timeout_s = float(os.getenv("MASSIVE_TIMEOUT_S", timeout_s))
+
+        self._session = requests.Session()
+        self._next_allowed_time = 0.0  # epoch seconds
 
     def _get_cache_path(self, ticker: str, start: datetime, end: datetime) -> Path:
         """Generate cache file path for a specific ticker and time range."""
         date_str = start.strftime("%Y%m%d_%H%M")
         return self.cache_dir / f"{ticker}_{date_str}.parquet"
+
+    def _sleep_for_rate_limit(self):
+        now = time.time()
+        if now < self._next_allowed_time:
+            time.sleep(self._next_allowed_time - now)
+
+    def _bump_next_allowed_time(self, extra_delay_s: float = 0.0):
+        """
+        Ensure there's at least `rate_limit_delay` between HTTP attempts, plus optional extra delay.
+        """
+        now = time.time()
+        base = now + self.rate_limit_delay
+        extra = now + max(0.0, float(extra_delay_s))
+        self._next_allowed_time = max(self._next_allowed_time, base, extra)
+
+    def _parse_retry_after_seconds(self, response: requests.Response) -> Optional[float]:
+        ra = response.headers.get("Retry-After")
+        if not ra:
+            return None
+        ra = ra.strip()
+        # Retry-After can be seconds or HTTP-date
+        try:
+            return float(ra)
+        except ValueError:
+            try:
+                dt = parsedate_to_datetime(ra)
+                # parsedate_to_datetime returns aware datetime (usually UTC)
+                return max(0.0, (dt - datetime.now(tz=dt.tzinfo)).total_seconds())
+            except Exception:
+                return None
+
+    def _redact_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        redacted = dict(params)
+        if "apiKey" in redacted:
+            redacted["apiKey"] = "REDACTED"
+        return redacted
 
     def _load_from_cache(self, ticker: str, start: datetime, end: datetime) -> Optional[List[OHLCVBar]]:
         """Try to load data from cache."""
@@ -101,11 +151,6 @@ class MassiveClient:
         if not self.api_key:
             raise ValueError("MASSIVE_API_KEY not set. Please set it in .env or pass to constructor.")
 
-        # Rate limiting
-        elapsed = time.time() - self._last_request_time
-        if elapsed < self.rate_limit_delay:
-            time.sleep(self.rate_limit_delay - elapsed)
-
         # Convert to millisecond timestamps
         start_ms = int(start.timestamp() * 1000)
         end_ms = int(end.timestamp() * 1000)
@@ -121,33 +166,43 @@ class MassiveClient:
             "apiKey": self.api_key,
         }
 
-        max_retries = 3
-        retry_delay = 1.0
+        safe_params = self._redact_params(params)
 
-        for attempt in range(max_retries):
+        # Exponential backoff baseline (in addition to the global min interval)
+        backoff_base_s = float(os.getenv("MASSIVE_BACKOFF_BASE_S", "2.0"))
+        backoff_cap_s = float(os.getenv("MASSIVE_BACKOFF_CAP_S", "120.0"))
+
+        for attempt in range(self.max_retries):
             try:
-                self._last_request_time = time.time()
-                response = requests.get(url, params=params, timeout=30)
-
-                # Build full URL for debugging
-                full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
+                self._sleep_for_rate_limit()
+                response = self._session.get(url, params=params, timeout=self.timeout_s)
+                # After any attempt, enforce the base spacing before the next one
+                self._bump_next_allowed_time()
 
                 # Handle rate limiting with retry
                 if response.status_code == 429:
-                    if attempt < max_retries - 1:
-                        wait_time = retry_delay * (2 ** attempt)  # exponential backoff
-                        print(f"Rate limited for {ticker}, waiting {wait_time}s...")
-                        print(f"  URL: {full_url}")
-                        time.sleep(wait_time)
+                    retry_after = self._parse_retry_after_seconds(response)
+                    exp_backoff = min(backoff_cap_s, backoff_base_s * (2 ** attempt))
+                    wait_time = max(self.rate_limit_delay, retry_after or 0.0, exp_backoff)
+                    # jitter to avoid synchronized retries
+                    wait_time = min(backoff_cap_s, wait_time + random.uniform(0.0, min(1.0, wait_time * 0.25)))
+
+                    if attempt < self.max_retries - 1:
+                        print(f"Rate limited for {ticker}, waiting {wait_time:.1f}s... (attempt {attempt+1}/{self.max_retries})")
+                        print(f"  URL: {url}")
+                        print(f"  Params: {safe_params}")
+                        self._bump_next_allowed_time(wait_time)
                         continue
-                    else:
-                        print(f"Rate limit exceeded for {ticker} after {max_retries} retries")
-                        print(f"  URL: {full_url}")
-                        return []
+
+                    print(f"Rate limit exceeded for {ticker} after {self.max_retries} retries")
+                    print(f"  URL: {url}")
+                    print(f"  Params: {safe_params}")
+                    return []
 
                 if response.status_code != 200:
                     print(f"Error fetching OHLCV for {ticker}: {response.status_code} {response.reason}")
-                    print(f"  URL: {full_url}")
+                    print(f"  URL: {url}")
+                    print(f"  Params: {safe_params}")
                     print(f"  Response: {response.text[:500]}")
                     return []
 
@@ -156,7 +211,8 @@ class MassiveClient:
 
                 if data.get("status") != "OK" or "results" not in data:
                     print(f"No data for {ticker}: status={data.get('status')}, results_count={data.get('resultsCount', 0)}")
-                    print(f"  URL: {full_url}")
+                    print(f"  URL: {url}")
+                    print(f"  Params: {safe_params}")
                     return []
 
                 bars = []
@@ -178,15 +234,18 @@ class MassiveClient:
                 return bars
 
             except requests.RequestException as e:
-                full_url = f"{url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-                if attempt < max_retries - 1 and "429" in str(e):
-                    wait_time = retry_delay * (2 ** attempt)
-                    print(f"Rate limited for {ticker}, waiting {wait_time}s...")
-                    print(f"  URL: {full_url}")
-                    time.sleep(wait_time)
+                if attempt < self.max_retries - 1:
+                    exp_backoff = min(backoff_cap_s, backoff_base_s * (2 ** attempt))
+                    wait_time = max(self.rate_limit_delay, exp_backoff)
+                    wait_time = min(backoff_cap_s, wait_time + random.uniform(0.0, min(1.0, wait_time * 0.25)))
+                    print(f"Request error for {ticker}: {e} (retrying in {wait_time:.1f}s, attempt {attempt+1}/{self.max_retries})")
+                    print(f"  URL: {url}")
+                    print(f"  Params: {safe_params}")
+                    self._bump_next_allowed_time(wait_time)
                     continue
                 print(f"Error fetching OHLCV for {ticker}: {e}")
-                print(f"  URL: {full_url}")
+                print(f"  URL: {url}")
+                print(f"  Params: {safe_params}")
                 return []
 
         return []
@@ -196,20 +255,65 @@ class MassiveClient:
         ticker: str,
         announcement_time: datetime,
         window_minutes: int = 120,
+        use_cache: bool = True,
     ) -> List[OHLCVBar]:
         """
         Fetch OHLCV data for a window after an announcement.
+
+        For postmarket announcements, starts from the next market open.
+        For premarket announcements, starts from market open of the same day.
+        For market announcements, starts from the announcement time.
 
         Args:
             ticker: Stock ticker symbol
             announcement_time: When the announcement was made
             window_minutes: How many minutes of data to fetch
+            use_cache: Whether to use cached parquet data
 
         Returns:
             List of OHLCVBar objects
         """
-        end_time = announcement_time + timedelta(minutes=window_minutes)
-        return self.fetch_ohlcv(ticker, announcement_time, end_time)
+
+        start_time = self.get_effective_start_time(announcement_time)
+        end_time = start_time + timedelta(minutes=window_minutes)
+        return self.fetch_ohlcv(ticker, start_time, end_time, use_cache=use_cache)
+
+    def get_effective_start_time(self, announcement_time: datetime) -> datetime:
+        """
+        Compute the effective OHLCV start time for an announcement.
+
+        - Postmarket: next market open
+        - Premarket: same-day market open
+        - Market: announcement time
+        """
+        # Convert to Eastern Time if needed
+        if announcement_time.tzinfo is None:
+            # Assume naive datetimes are already in ET
+            et_time = announcement_time
+        else:
+            et_time = announcement_time.astimezone(ET_TZ)
+
+        session = get_market_session(et_time)
+        start_time = announcement_time
+
+        if session == "postmarket":
+            # Start from next market open (next trading day 9:30 AM ET)
+            next_day = et_time.date() + timedelta(days=1)
+            # Handle weekends and holidays - for now, just add 1 day
+            # TODO: Add proper holiday/weekend handling
+            start_time = datetime.combine(next_day, MARKET_OPEN, tzinfo=ET_TZ)
+            if announcement_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=None)
+
+        elif session == "premarket":
+            # Start from market open of the same day
+            market_open = datetime.combine(et_time.date(), MARKET_OPEN, tzinfo=ET_TZ)
+            if announcement_time.tzinfo is None:
+                market_open = market_open.replace(tzinfo=None)
+            start_time = max(announcement_time, market_open)
+
+        # For "market" session, start from announcement time as usual
+        return start_time
 
     def _get_announcements_path(self) -> Path:
         """Get path to the announcements JSON file."""

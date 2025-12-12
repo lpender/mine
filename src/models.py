@@ -106,6 +106,7 @@ class BacktestConfig:
     volume_threshold: int = 0  # Minimum volume to trigger entry
     window_minutes: int = 120  # How long to track after announcement
     entry_at_candle_close: bool = False  # If True, enter at end of first candle (more realistic)
+    entry_by_message_second: bool = False  # If True, enter within first candle based on announcement second (more realistic)
 
 
 @dataclass
