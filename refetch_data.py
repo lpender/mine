@@ -41,6 +41,7 @@ def main():
     parser.add_argument("--extended", action="store_true", help="Only refetch extended hours (premarket + postmarket)")
     parser.add_argument("--premarket", action="store_true", help="Only refetch premarket announcements")
     parser.add_argument("--postmarket", action="store_true", help="Only refetch postmarket announcements")
+    parser.add_argument("--market", action="store_true", help="Only refetch market hours (9:30-16:00)")
     parser.add_argument("--ticker", "-t", type=str, help="Only refetch specific ticker")
     parser.add_argument("--window", type=int, default=120, help="OHLCV window in minutes (default: 120)")
     parser.add_argument("--cache-dir", type=str, default="data/ohlcv", help="Cache directory for parquet files (default: data/ohlcv)")
@@ -64,6 +65,8 @@ def main():
         sessions = ["premarket"]
     elif args.postmarket:
         sessions = ["postmarket"]
+    elif args.market:
+        sessions = ["market"]
     elif args.extended:
         sessions = ["premarket", "postmarket"]
 
