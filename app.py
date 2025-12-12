@@ -303,6 +303,27 @@ for r in summary.results:
 
 df = pd.DataFrame(rows)
 
+# Sort controls (persisted to URL)
+sortable_columns = ["Time", "Ticker", "Session", "Country", "Author", "Float (M)", "MC (M)", "Return %", "Exit Type"]
+default_sort_col = get_param("sort", "Time")
+default_sort_asc = get_param("asc", "0") == "1"
+
+col1, col2, col3 = st.columns([2, 2, 6])
+sort_column = col1.selectbox(
+    "Sort by",
+    options=sortable_columns,
+    index=sortable_columns.index(default_sort_col) if default_sort_col in sortable_columns else 0,
+)
+sort_ascending = col2.checkbox("Ascending", value=default_sort_asc)
+
+# Update URL with sort settings
+set_param("sort", sort_column)
+set_param("asc", sort_ascending)
+
+# Apply sorting
+if sort_column in df.columns:
+    df = df.sort_values(by=sort_column, ascending=sort_ascending, na_position="last")
+
 # Configure column display
 column_config = {
     "Time": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm"),
