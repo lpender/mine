@@ -385,6 +385,163 @@ with st.sidebar:
             key="filter_mc_max_m",
         )
 
+    # Scanner-specific filters (collapsed by default)
+    with st.expander("Scanner Filters", expanded=False):
+        # Scanner gain % range
+        if "filter_scanner_gain_min" not in st.session_state:
+            st.session_state.filter_scanner_gain_min = saved_config.get("filter_scanner_gain_min", 0.0)
+        if "filter_scanner_gain_max" not in st.session_state:
+            st.session_state.filter_scanner_gain_max = saved_config.get("filter_scanner_gain_max", 1000.0)
+
+        gain_col1, gain_col2 = st.columns(2)
+        with gain_col1:
+            filter_scanner_gain_min = st.number_input(
+                "Gain Min (%)",
+                min_value=0.0,
+                max_value=1000.0,
+                step=5.0,
+                key="filter_scanner_gain_min",
+                help="Minimum percentage gain from previous close"
+            )
+        with gain_col2:
+            filter_scanner_gain_max = st.number_input(
+                "Gain Max (%)",
+                min_value=0.0,
+                max_value=1000.0,
+                step=5.0,
+                key="filter_scanner_gain_max",
+                help="Maximum percentage gain from previous close"
+            )
+
+        # NHOD filter
+        nhod_options = ["Any", "NHOD", "Not NHOD"]
+        if "filter_nhod" not in st.session_state:
+            st.session_state.filter_nhod = saved_config.get("filter_nhod", "Any")
+        filter_nhod = st.selectbox(
+            "New High of Day",
+            nhod_options,
+            index=nhod_options.index(st.session_state.filter_nhod) if st.session_state.filter_nhod in nhod_options else 0,
+            key="filter_nhod",
+        )
+
+        # NSH filter
+        nsh_options = ["Any", "NSH", "Not NSH"]
+        if "filter_nsh" not in st.session_state:
+            st.session_state.filter_nsh = saved_config.get("filter_nsh", "Any")
+        filter_nsh = st.selectbox(
+            "New Session High",
+            nsh_options,
+            index=nsh_options.index(st.session_state.filter_nsh) if st.session_state.filter_nsh in nsh_options else 0,
+            key="filter_nsh",
+        )
+
+        # Has news filter
+        news_options = ["Any", "Has news", "No news (scanner only)"]
+        if "filter_has_news" not in st.session_state:
+            st.session_state.filter_has_news = saved_config.get("filter_has_news", "Any")
+        filter_has_news = st.selectbox(
+            "News Source",
+            news_options,
+            index=news_options.index(st.session_state.filter_has_news) if st.session_state.filter_has_news in news_options else 0,
+            key="filter_has_news",
+            help="Filter by whether announcement has PR/AR/SEC news or is scanner-only"
+        )
+
+        # RVol range
+        if "filter_rvol_min" not in st.session_state:
+            st.session_state.filter_rvol_min = saved_config.get("filter_rvol_min", 0.0)
+        if "filter_rvol_max" not in st.session_state:
+            st.session_state.filter_rvol_max = saved_config.get("filter_rvol_max", 100.0)
+
+        rvol_col1, rvol_col2 = st.columns(2)
+        with rvol_col1:
+            filter_rvol_min = st.number_input(
+                "RVol Min",
+                min_value=0.0,
+                max_value=100.0,
+                step=0.5,
+                key="filter_rvol_min",
+                help="Minimum relative volume ratio"
+            )
+        with rvol_col2:
+            filter_rvol_max = st.number_input(
+                "RVol Max",
+                min_value=0.0,
+                max_value=100.0,
+                step=0.5,
+                key="filter_rvol_max",
+            )
+
+        # Mention count range
+        if "filter_mentions_min" not in st.session_state:
+            st.session_state.filter_mentions_min = saved_config.get("filter_mentions_min", 0)
+        if "filter_mentions_max" not in st.session_state:
+            st.session_state.filter_mentions_max = saved_config.get("filter_mentions_max", 100)
+
+        mention_col1, mention_col2 = st.columns(2)
+        with mention_col1:
+            filter_mentions_min = st.number_input(
+                "Mentions Min",
+                min_value=0,
+                max_value=100,
+                step=1,
+                key="filter_mentions_min",
+                help="Minimum mention count (• N)"
+            )
+        with mention_col2:
+            filter_mentions_max = st.number_input(
+                "Mentions Max",
+                min_value=0,
+                max_value=100,
+                step=1,
+                key="filter_mentions_max",
+            )
+
+        # Scanner type filters
+        scanner_test_options = ["Any", "Test scanner", "Not test scanner"]
+        if "filter_scanner_test" not in st.session_state:
+            st.session_state.filter_scanner_test = saved_config.get("filter_scanner_test", "Any")
+        filter_scanner_test = st.selectbox(
+            "Test Scanner",
+            scanner_test_options,
+            index=scanner_test_options.index(st.session_state.filter_scanner_test) if st.session_state.filter_scanner_test in scanner_test_options else 0,
+            key="filter_scanner_test",
+        )
+
+        after_lull_options = ["Any", "After lull", "Not after lull"]
+        if "filter_after_lull" not in st.session_state:
+            st.session_state.filter_after_lull = saved_config.get("filter_after_lull", "Any")
+        filter_after_lull = st.selectbox(
+            "After Lull Scanner",
+            after_lull_options,
+            index=after_lull_options.index(st.session_state.filter_after_lull) if st.session_state.filter_after_lull in after_lull_options else 0,
+            key="filter_after_lull",
+        )
+
+        # Green bars range
+        if "filter_green_bars_min" not in st.session_state:
+            st.session_state.filter_green_bars_min = saved_config.get("filter_green_bars_min", 0)
+        if "filter_green_bars_max" not in st.session_state:
+            st.session_state.filter_green_bars_max = saved_config.get("filter_green_bars_max", 20)
+
+        gb_col1, gb_col2 = st.columns(2)
+        with gb_col1:
+            filter_green_bars_min = st.number_input(
+                "Green Bars Min",
+                min_value=0,
+                max_value=20,
+                step=1,
+                key="filter_green_bars_min",
+            )
+        with gb_col2:
+            filter_green_bars_max = st.number_input(
+                "Green Bars Max",
+                min_value=0,
+                max_value=20,
+                step=1,
+                key="filter_green_bars_max",
+            )
+
     # Save config when values change
     current_config = {
         "entry_trigger": entry_trigger,
@@ -413,6 +570,20 @@ with st.sidebar:
         "filter_float_max_m": filter_float_max_m,
         "filter_mc_min_m": filter_mc_min_m,
         "filter_mc_max_m": filter_mc_max_m,
+        # Scanner filters
+        "filter_scanner_gain_min": filter_scanner_gain_min,
+        "filter_scanner_gain_max": filter_scanner_gain_max,
+        "filter_nhod": filter_nhod,
+        "filter_nsh": filter_nsh,
+        "filter_has_news": filter_has_news,
+        "filter_rvol_min": filter_rvol_min,
+        "filter_rvol_max": filter_rvol_max,
+        "filter_mentions_min": filter_mentions_min,
+        "filter_mentions_max": filter_mentions_max,
+        "filter_scanner_test": filter_scanner_test,
+        "filter_after_lull": filter_after_lull,
+        "filter_green_bars_min": filter_green_bars_min,
+        "filter_green_bars_max": filter_green_bars_max,
     }
     if current_config != saved_config:
         save_config(current_config)
@@ -614,6 +785,66 @@ if st.session_state.announcements:
         announcements = [
             a for a in announcements
             if a.market_cap is not None and mc_min <= a.market_cap <= mc_max
+        ]
+
+    # === Scanner-specific filters ===
+
+    # Scanner gain % filter
+    if filter_scanner_gain_min > 0 or filter_scanner_gain_max < 1000:
+        announcements = [
+            a for a in announcements
+            if a.scanner_gain_pct is None or (filter_scanner_gain_min <= a.scanner_gain_pct <= filter_scanner_gain_max)
+        ]
+
+    # NHOD filter
+    if filter_nhod == "NHOD":
+        announcements = [a for a in announcements if a.is_nhod]
+    elif filter_nhod == "Not NHOD":
+        announcements = [a for a in announcements if not a.is_nhod]
+
+    # NSH filter
+    if filter_nsh == "NSH":
+        announcements = [a for a in announcements if a.is_nsh]
+    elif filter_nsh == "Not NSH":
+        announcements = [a for a in announcements if not a.is_nsh]
+
+    # Has news filter
+    if filter_has_news == "Has news":
+        announcements = [a for a in announcements if a.has_news]
+    elif filter_has_news == "No news (scanner only)":
+        announcements = [a for a in announcements if not a.has_news]
+
+    # RVol filter
+    if filter_rvol_min > 0 or filter_rvol_max < 100:
+        announcements = [
+            a for a in announcements
+            if a.rvol is None or (filter_rvol_min <= a.rvol <= filter_rvol_max)
+        ]
+
+    # Mention count filter
+    if filter_mentions_min > 0 or filter_mentions_max < 100:
+        announcements = [
+            a for a in announcements
+            if a.mention_count is None or (filter_mentions_min <= a.mention_count <= filter_mentions_max)
+        ]
+
+    # Scanner test filter
+    if filter_scanner_test == "Test scanner":
+        announcements = [a for a in announcements if a.scanner_test]
+    elif filter_scanner_test == "Not test scanner":
+        announcements = [a for a in announcements if not a.scanner_test]
+
+    # After lull filter
+    if filter_after_lull == "After lull":
+        announcements = [a for a in announcements if a.scanner_after_lull]
+    elif filter_after_lull == "Not after lull":
+        announcements = [a for a in announcements if not a.scanner_after_lull]
+
+    # Green bars filter
+    if filter_green_bars_min > 0 or filter_green_bars_max < 20:
+        announcements = [
+            a for a in announcements
+            if a.green_bars is None or (filter_green_bars_min <= a.green_bars <= filter_green_bars_max)
         ]
 
     if not announcements:
@@ -863,6 +1094,17 @@ if st.session_state.announcements:
         else:
             status = "pending"
 
+        # Build scanner flags string
+        scanner_flags = []
+        if ann.is_nhod:
+            scanner_flags.append("NHOD")
+        if ann.is_nsh:
+            scanner_flags.append("NSH")
+        if ann.scanner_test:
+            scanner_flags.append("test")
+        if ann.scanner_after_lull:
+            scanner_flags.append("lull")
+
         row = {
             "_original_idx": i,  # Hidden column to track original index
             "Ticker": ann.ticker,
@@ -882,6 +1124,12 @@ if st.session_state.announcements:
             "Gap%": f"{ann.premarket_gap_pct:+.1f}%" if ann.premarket_gap_pct is not None else "N/A",
             "Premkt $Vol": f"${ann.premarket_dollar_volume/1e6:.1f}M" if ann.premarket_dollar_volume is not None else "N/A",
             "Financing": "Yes" if ann.headline_is_financing else "-",
+            # Scanner fields
+            "Gain%": f"{ann.scanner_gain_pct:.0f}%" if ann.scanner_gain_pct is not None else "-",
+            "RVol": f"{ann.rvol:.1f}" if ann.rvol is not None else "-",
+            "Mentions": str(ann.mention_count) if ann.mention_count is not None else "-",
+            "Flags": ",".join(scanner_flags) if scanner_flags else "-",
+            "News": "Yes" if ann.has_news else "No",
             "Return": f"{result.return_pct:.2f}%" if result and result.return_pct is not None else "N/A",
             "_finbert_numeric": ann.finbert_score if ann.finbert_score is not None else float("-inf"),
             "_return_numeric": return_val,  # Hidden column for sorting
@@ -1061,6 +1309,19 @@ if st.session_state.announcements:
                     "premarket_gap_pct": ann.premarket_gap_pct,
                     "premarket_volume": ann.premarket_volume,
                     "premarket_dollar_volume": ann.premarket_dollar_volume,
+                    # Scanner fields
+                    "channel": ann.channel,
+                    "scanner_gain_pct": ann.scanner_gain_pct,
+                    "is_nhod": ann.is_nhod,
+                    "is_nsh": ann.is_nsh,
+                    "rvol": ann.rvol,
+                    "mention_count": ann.mention_count,
+                    "has_news": ann.has_news,
+                    "green_bars": ann.green_bars,
+                    "bar_minutes": ann.bar_minutes,
+                    "scanner_test": ann.scanner_test,
+                    "scanner_after_lull": ann.scanner_after_lull,
+                    # Trade results
                     "entry_price": result.entry_price,
                     "entry_time": result.entry_time,
                     "exit_price": result.exit_price,
