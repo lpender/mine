@@ -1,7 +1,7 @@
 /**
  * @name StockAlertMonitor
- * @description Monitors Discord channels for stock alerts (TICKER < $X pattern) and triggers notifications
- * @version 1.0.0
+ * @description Monitors Discord channels for stock alerts (TICKER < $X pattern) and provides backfill widget
+ * @version 2.0.0
  * @author lpender
  */
 
@@ -9,8 +9,12 @@ module.exports = class StockAlertMonitor {
     constructor() {
         this.alertSound = null;
         this.seenMessages = new Set();
+        this.seenBackfill = new Set();
         this.channelFilter = ["pr-spike", "select-news"]; // Channels to monitor
-        this.webhookUrl = "http://localhost:8765/alert"; // Local webhook (optional)
+        this.alertWebhookUrl = "http://localhost:8765/alert";
+        this.backfillWebhookUrl = "http://localhost:8765/backfill";
+        this.widgetContainer = null;
+        this.updateInterval = null;
     }
 
     start() {
@@ -23,12 +27,19 @@ module.exports = class StockAlertMonitor {
         // Subscribe to Discord's message dispatcher
         this.patchMessageCreate();
 
+        // Create backfill widget after a short delay
+        setTimeout(() => this.createBackfillWidget(), 2000);
+
         BdApi.UI.showToast("Stock Alert Monitor started!", { type: "success" });
     }
 
     stop() {
         console.log("[StockAlertMonitor] Stopping...");
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
+        this.removeBackfillWidget();
+        if (this.updateInterval) {
+            clearInterval(this.updateInterval);
+        }
         BdApi.UI.showToast("Stock Alert Monitor stopped", { type: "info" });
     }
 
@@ -81,7 +92,7 @@ module.exports = class StockAlertMonitor {
         const tickerMatch = message.content.match(/\b([A-Z]{2,5})\s*<\s*\$[\d.]+/);
 
         if (tickerMatch) {
-            const ticker = tickerMatch[0];
+            const ticker = tickerMatch[1];
             const fullMatch = tickerMatch[0];
 
             console.log(`[StockAlertMonitor] ALERT: ${ticker} in #${channelName}`);
@@ -128,7 +139,7 @@ Full message: ${fullContent.substring(0, 200)}
         `);
 
         // 5. Send to local webhook (for your trading system)
-        this.sendToWebhook({
+        this.sendToWebhook(this.alertWebhookUrl, {
             ticker: ticker,
             price_info: priceInfo,
             channel: channelName,
@@ -137,15 +148,280 @@ Full message: ${fullContent.substring(0, 200)}
         });
     }
 
-    async sendToWebhook(data) {
+    async sendToWebhook(url, data) {
         try {
-            await fetch(this.webhookUrl, {
+            const response = await fetch(url, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data)
             });
+            return response.ok;
         } catch (e) {
             // Webhook not running - that's OK
+            return false;
+        }
+    }
+
+    // ============== Backfill Widget ==============
+
+    getCurrentChannelName() {
+        const SelectedChannelStore = BdApi.Webpack.getModule(m => m.getChannelId && m.getVoiceChannelId);
+        const ChannelStore = BdApi.Webpack.getModule(m => m.getChannel && m.getDMFromUserId);
+
+        const channelId = SelectedChannelStore?.getChannelId();
+        if (!channelId) return "unknown";
+
+        const channel = ChannelStore?.getChannel(channelId);
+        return channel?.name || "unknown";
+    }
+
+    getVisibleMessageTimestamps() {
+        const timeElements = document.querySelectorAll("time[datetime]");
+        if (timeElements.length === 0) {
+            return { first: null, last: null, count: 0 };
+        }
+
+        const first = timeElements[0].getAttribute("datetime");
+        const last = timeElements[timeElements.length - 1].getAttribute("datetime");
+
+        return { first, last, count: timeElements.length };
+    }
+
+    formatTimestamp(isoString) {
+        if (!isoString) return "N/A";
+        try {
+            const date = new Date(isoString);
+            return date.toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            });
+        } catch {
+            return isoString;
+        }
+    }
+
+    getVisibleMessages() {
+        const messages = [];
+
+        // Find all message list items
+        const messageElements = document.querySelectorAll('li[id^="chat-messages-"]');
+
+        messageElements.forEach((msgEl) => {
+            const id = msgEl.id.replace("chat-messages-", "");
+
+            // Get timestamp
+            const timeEl = msgEl.querySelector("time[datetime]");
+            const timestamp = timeEl?.getAttribute("datetime") || "";
+
+            // Get message content - look for the message content div
+            const contentEl = msgEl.querySelector('div[id^="message-content-"]');
+            const content = contentEl?.textContent?.trim() || "";
+
+            if (content && timestamp) {
+                messages.push({ id, content, timestamp });
+            }
+        });
+
+        return messages;
+    }
+
+    updateWidgetDisplay() {
+        if (!this.widgetContainer) return;
+
+        const timestamps = this.getVisibleMessageTimestamps();
+        const channel = this.getCurrentChannelName();
+
+        const firstSpan = this.widgetContainer.querySelector("#backfill-first");
+        const lastSpan = this.widgetContainer.querySelector("#backfill-last");
+        const countSpan = this.widgetContainer.querySelector("#backfill-count");
+        const channelSpan = this.widgetContainer.querySelector("#backfill-channel");
+
+        if (firstSpan) firstSpan.textContent = this.formatTimestamp(timestamps.first);
+        if (lastSpan) lastSpan.textContent = this.formatTimestamp(timestamps.last);
+        if (countSpan) countSpan.textContent = String(timestamps.count);
+        if (channelSpan) channelSpan.textContent = `#${channel}`;
+    }
+
+    async handleSendData() {
+        const statusEl = this.widgetContainer?.querySelector("#backfill-status");
+        const channel = this.getCurrentChannelName();
+        const messages = this.getVisibleMessages();
+
+        if (messages.length === 0) {
+            if (statusEl) {
+                statusEl.textContent = "No messages found!";
+                statusEl.style.color = "#f04747";
+            }
+            return;
+        }
+
+        if (statusEl) {
+            statusEl.textContent = `Sending ${messages.length} messages...`;
+            statusEl.style.color = "#faa61a";
+        }
+
+        const success = await this.sendToWebhook(this.backfillWebhookUrl, {
+            channel,
+            messages,
+            sent_at: new Date().toISOString()
+        });
+
+        if (statusEl) {
+            if (success) {
+                statusEl.textContent = `Sent ${messages.length} messages!`;
+                statusEl.style.color = "#43b581";
+            } else {
+                statusEl.textContent = "Failed - server not running?";
+                statusEl.style.color = "#f04747";
+            }
+            // Clear status after 3 seconds
+            setTimeout(() => {
+                if (statusEl) statusEl.textContent = "";
+            }, 3000);
+        }
+    }
+
+    createBackfillWidget() {
+        // Remove existing widget if any
+        this.removeBackfillWidget();
+
+        this.widgetContainer = document.createElement("div");
+        this.widgetContainer.id = "stock-alert-backfill-widget";
+        this.widgetContainer.innerHTML = `
+            <style>
+                #stock-alert-backfill-widget {
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #2f3136;
+                    border: 1px solid #202225;
+                    border-radius: 8px;
+                    padding: 12px 16px;
+                    font-family: "gg sans", "Noto Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    color: #dcddde;
+                    z-index: 9999;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    min-width: 220px;
+                }
+                #stock-alert-backfill-widget .widget-header {
+                    font-weight: 600;
+                    color: #fff;
+                    margin-bottom: 8px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                #stock-alert-backfill-widget .widget-close {
+                    cursor: pointer;
+                    color: #72767d;
+                    font-size: 16px;
+                }
+                #stock-alert-backfill-widget .widget-close:hover {
+                    color: #dcddde;
+                }
+                #stock-alert-backfill-widget .widget-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 4px 0;
+                }
+                #stock-alert-backfill-widget .widget-label {
+                    color: #8e9297;
+                }
+                #stock-alert-backfill-widget .widget-value {
+                    color: #fff;
+                    font-weight: 500;
+                }
+                #stock-alert-backfill-widget .widget-channel {
+                    color: #7289da;
+                }
+                #stock-alert-backfill-widget .widget-btn {
+                    width: 100%;
+                    margin-top: 10px;
+                    padding: 8px 16px;
+                    background: #5865f2;
+                    color: #fff;
+                    border: none;
+                    border-radius: 4px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                #stock-alert-backfill-widget .widget-btn:hover {
+                    background: #4752c4;
+                }
+                #stock-alert-backfill-widget .widget-btn:active {
+                    background: #3c45a5;
+                }
+                #stock-alert-backfill-widget .widget-status {
+                    margin-top: 8px;
+                    text-align: center;
+                    font-size: 12px;
+                    min-height: 16px;
+                }
+            </style>
+            <div class="widget-header">
+                <span>Backfill Widget</span>
+                <span class="widget-close" id="backfill-close">&times;</span>
+            </div>
+            <div class="widget-row">
+                <span class="widget-label">Channel:</span>
+                <span class="widget-value widget-channel" id="backfill-channel">#unknown</span>
+            </div>
+            <div class="widget-row">
+                <span class="widget-label">First:</span>
+                <span class="widget-value" id="backfill-first">N/A</span>
+            </div>
+            <div class="widget-row">
+                <span class="widget-label">Last:</span>
+                <span class="widget-value" id="backfill-last">N/A</span>
+            </div>
+            <div class="widget-row">
+                <span class="widget-label">Messages:</span>
+                <span class="widget-value" id="backfill-count">0</span>
+            </div>
+            <button class="widget-btn" id="backfill-send">Send Data</button>
+            <div class="widget-status" id="backfill-status"></div>
+        `;
+
+        document.body.appendChild(this.widgetContainer);
+
+        // Add event listeners
+        const closeBtn = this.widgetContainer.querySelector("#backfill-close");
+        closeBtn?.addEventListener("click", () => {
+            if (this.widgetContainer) this.widgetContainer.style.display = "none";
+        });
+
+        const sendBtn = this.widgetContainer.querySelector("#backfill-send");
+        sendBtn?.addEventListener("click", () => this.handleSendData());
+
+        // Set up scroll listener - debounced
+        let scrollTimeout = null;
+        const debouncedScroll = () => {
+            if (scrollTimeout) clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => this.updateWidgetDisplay(), 100);
+        };
+
+        // Listen for scroll events
+        document.addEventListener("scroll", debouncedScroll, true);
+
+        // Initial update
+        this.updateWidgetDisplay();
+
+        // Update periodically in case DOM changes
+        this.updateInterval = setInterval(() => this.updateWidgetDisplay(), 2000);
+
+        console.log("[StockAlertMonitor] Backfill widget created");
+    }
+
+    removeBackfillWidget() {
+        if (this.widgetContainer) {
+            this.widgetContainer.remove();
+            this.widgetContainer = null;
         }
     }
 
@@ -161,8 +437,13 @@ Full message: ${fullContent.substring(0, 200)}
                     style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
             </div>
             <div style="margin-bottom: 10px;">
-                <label style="color: #b9bbbe;">Local webhook URL:</label><br>
-                <input type="text" id="sam-webhook" value="${this.webhookUrl}"
+                <label style="color: #b9bbbe;">Alert webhook URL:</label><br>
+                <input type="text" id="sam-alert-webhook" value="${this.alertWebhookUrl}"
+                    style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label style="color: #b9bbbe;">Backfill webhook URL:</label><br>
+                <input type="text" id="sam-backfill-webhook" value="${this.backfillWebhookUrl}"
                     style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
             </div>
             <button id="sam-save" style="background: #5865f2; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
@@ -171,6 +452,9 @@ Full message: ${fullContent.substring(0, 200)}
             <button id="sam-test" style="background: #3ba55c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
                 Test Alert
             </button>
+            <button id="sam-toggle-widget" style="background: #faa61a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                Toggle Widget
+            </button>
         `;
 
         // Add event listeners after panel is created
@@ -178,12 +462,22 @@ Full message: ${fullContent.substring(0, 200)}
             document.getElementById("sam-save")?.addEventListener("click", () => {
                 const channels = document.getElementById("sam-channels").value;
                 this.channelFilter = channels.split(",").map(c => c.trim()).filter(c => c);
-                this.webhookUrl = document.getElementById("sam-webhook").value;
+                this.alertWebhookUrl = document.getElementById("sam-alert-webhook").value;
+                this.backfillWebhookUrl = document.getElementById("sam-backfill-webhook").value;
                 BdApi.UI.showToast("Settings saved!", { type: "success" });
             });
 
             document.getElementById("sam-test")?.addEventListener("click", () => {
                 this.triggerAlert("TEST", "TEST < $5.00", "test-channel", "Test alert message");
+            });
+
+            document.getElementById("sam-toggle-widget")?.addEventListener("click", () => {
+                if (this.widgetContainer) {
+                    const isHidden = this.widgetContainer.style.display === "none";
+                    this.widgetContainer.style.display = isHidden ? "block" : "none";
+                } else {
+                    this.createBackfillWidget();
+                }
             });
         }, 100);
 
