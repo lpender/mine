@@ -177,9 +177,17 @@ def parse_message_line(line: str, timestamp: datetime) -> Optional[Announcement]
     if price_threshold is None:
         return None  # Price is required
 
-    # Extract headline (between first '-' and 'Link' - hyphen before Link is optional)
-    headline_match = re.search(r'-\s*(.+?)\s*-?\s*Link', line)
+    # Extract headline (between price and 'Link' before the '~' separator)
+    # Traditional format: "TICKER < $X - HEADLINE - Link ~ ..."
+    # Scanner format: "TIME ↑ TICKER < $X ~ ..." (no headline)
+    # Only look for headline before the first '~' to avoid matching news refs
+    pre_tilde = line.split('~')[0] if '~' in line else line
+    headline_match = re.search(r'<\s*\$[\d.]+c?\s+-\s*(.+?)\s*-?\s*Link', pre_tilde)
     headline = headline_match.group(1).strip() if headline_match else ""
+
+    # Validate headline - reject if it looks like SEC form number or garbage
+    if headline and (len(headline) <= 2 or headline.startswith('Link') or re.match(r'^[\d\-]+$', headline)):
+        headline = ""
 
     # Extract country from flag
     country = parse_country_from_flag(line)
