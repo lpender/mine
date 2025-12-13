@@ -2,7 +2,7 @@
 
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from dotenv import load_dotenv
 
@@ -206,6 +206,11 @@ class PostgresClient:
             return self.get_ohlcv_bars(ticker, start, end)
 
         # Fetch from API with retry logic for rate limits
+        # Treat naive datetimes as UTC (not local time)
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
         start_ms = int(start.timestamp() * 1000)
         end_ms = int(end.timestamp() * 1000)
 
@@ -237,8 +242,9 @@ class PostgresClient:
 
                 bars = []
                 for r in data["results"]:
+                    # Parse timestamp as UTC, then remove tzinfo for consistency with DB storage
                     bar = OHLCVBar(
-                        timestamp=datetime.fromtimestamp(r["t"] / 1000),
+                        timestamp=datetime.utcfromtimestamp(r["t"] / 1000),
                         open=r["o"],
                         high=r["h"],
                         low=r["l"],
