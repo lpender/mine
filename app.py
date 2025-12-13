@@ -110,32 +110,53 @@ all_sessions = ["premarket", "market", "postmarket", "closed"]
 # Sidebar Controls
 # ─────────────────────────────────────────────────────────────────────────────
 
+# Initialize session state from URL params only on first load
+# Widget keys are prefixed with underscore to avoid conflict with URL param names
+if "_initialized" not in st.session_state:
+    st.session_state._initialized = True
+    st.session_state._sl = get_param("sl", 5.0, float)
+    st.session_state._tp = get_param("tp", 10.0, float)
+    st.session_state._hold = get_param("hold", 60, int)
+    # Parse session list, filtering to valid values
+    sess_list = get_param("sess", "premarket,market", list)
+    st.session_state._sess = [s for s in sess_list if s in all_sessions] or ["premarket", "market"]
+    country_list = get_param("country", "", list)
+    st.session_state._country = [c for c in country_list if c in all_countries]
+    author_list = get_param("author", "", list)
+    st.session_state._author = [a for a in author_list if a in all_authors]
+    channel_list = get_param("channel", "", list)
+    st.session_state._channel = [c for c in channel_list if c in all_channels]
+    st.session_state._no_fin = get_param("no_fin", False, bool)
+    st.session_state._has_hl = get_param("has_hl", False, bool)
+    st.session_state._float_min = get_param("float_min", 0.0, float)
+    st.session_state._float_max = get_param("float_max", 1000.0, float)
+    st.session_state._mc_min = get_param("mc_min", 0.0, float)
+    st.session_state._mc_max = get_param("mc_max", 10000.0, float)
+
 with st.sidebar:
     st.header("Trigger Config")
-
-    # Read defaults from URL
-    default_sl = get_param("sl", 5, float)
-    default_tp = get_param("tp", 10, float)
-    default_hold = get_param("hold", 60, int)
 
     stop_loss = st.slider(
         "Stop Loss %",
         min_value=1.0, max_value=20.0,
-        value=default_sl, step=0.5,
+        step=0.5,
+        key="_sl",
         help="Exit when price drops by this percentage"
     )
 
     take_profit = st.slider(
         "Take Profit %",
         min_value=1.0, max_value=50.0,
-        value=default_tp, step=0.5,
+        step=0.5,
+        key="_tp",
         help="Exit when price rises by this percentage"
     )
 
     hold_time = st.slider(
         "Hold Time (min)",
         min_value=5, max_value=120,
-        value=default_hold, step=5,
+        step=5,
+        key="_hold",
         help="Maximum time to hold before timeout exit"
     )
 
@@ -143,73 +164,63 @@ with st.sidebar:
     st.header("Filters")
 
     # Session filter
-    default_sessions = get_param("sess", "premarket,market", list)
     sessions = st.multiselect(
         "Market Session",
         options=all_sessions,
-        default=[s for s in default_sessions if s in all_sessions] or ["premarket", "market"],
+        key="_sess",
     )
 
     # Country filter
-    default_countries = get_param("country", "", list)
     countries = st.multiselect(
         "Country",
         options=all_countries,
-        default=[c for c in default_countries if c in all_countries],
+        key="_country",
         help="Leave empty for all countries"
     )
 
     # Author filter
-    default_authors = get_param("author", "", list)
     authors = st.multiselect(
         "Author",
         options=all_authors,
-        default=[a for a in default_authors if a in all_authors],
+        key="_author",
         help="Leave empty for all authors"
     )
 
     # Channel filter
-    default_channels = get_param("channel", "", list)
     channels = st.multiselect(
         "Channel",
         options=all_channels,
-        default=[c for c in default_channels if c in all_channels],
+        key="_channel",
         help="Leave empty for all channels"
     )
 
     # Financing filter
-    default_no_fin = get_param("no_fin", False, bool)
     exclude_financing = st.checkbox(
         "Exclude financing headlines",
-        value=default_no_fin,
+        key="_no_fin",
         help="Filter out offerings, ATMs, warrants, etc."
     )
 
     # Has headline filter
-    default_has_headline = get_param("has_hl", False, bool)
     require_headline = st.checkbox(
         "Has headline",
-        value=default_has_headline,
+        key="_has_hl",
         help="Only show announcements with a headline"
     )
 
     # Float range
     st.subheader("Float (millions)")
     col1, col2 = st.columns(2)
-    default_float_min = get_param("float_min", 0, float)
-    default_float_max = get_param("float_max", 1000, float)
-    float_min = col1.number_input("Min", value=default_float_min, min_value=0.0, step=1.0, key="float_min")
-    float_max = col2.number_input("Max", value=default_float_max, min_value=0.0, step=10.0, key="float_max")
+    float_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_float_min")
+    float_max = col2.number_input("Max", min_value=0.0, step=10.0, key="_float_max")
 
     # Market cap range
     st.subheader("Market Cap (millions)")
     col1, col2 = st.columns(2)
-    default_mc_min = get_param("mc_min", 0, float)
-    default_mc_max = get_param("mc_max", 10000, float)
-    mc_min = col1.number_input("Min", value=default_mc_min, min_value=0.0, step=1.0, key="mc_min")
-    mc_max = col2.number_input("Max", value=default_mc_max, min_value=0.0, step=100.0, key="mc_max")
+    mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
+    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
 
-    # Update URL with current settings
+    # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
     set_param("hold", hold_time)
