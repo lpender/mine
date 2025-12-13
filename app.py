@@ -437,6 +437,11 @@ else:
         selected_result = summary.results[result_idx]
         ann = selected_result.announcement
 
+        # Show full headline
+        st.subheader(f"{ann.ticker} - {to_est(ann.timestamp).strftime('%Y-%m-%d %H:%M')} EST")
+        if ann.headline:
+            st.markdown(f"**Headline:** {ann.headline}")
+
         # Get the bars for this announcement
         key = (ann.ticker, ann.timestamp)
         bars = bars_dict.get(key, [])
@@ -500,7 +505,6 @@ else:
 
             # Layout
             fig.update_layout(
-                title=f"{ann.ticker} - {ann.headline[:80]}{'...' if len(ann.headline) > 80 else ''}",
                 xaxis_title="Time (EST)",
                 yaxis_title="Price",
                 xaxis_rangeslider_visible=False,
