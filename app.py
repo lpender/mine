@@ -134,6 +134,8 @@ if "_initialized" not in st.session_state:
     st.session_state._mc_max = get_param("mc_max", 10000.0, float)
     st.session_state._sl_from_open = get_param("sl_open", False, bool)
     st.session_state._consec_candles = get_param("consec", 0, int)
+    st.session_state._price_min = get_param("price_min", 0.0, float)
+    st.session_state._price_max = get_param("price_max", 100.0, float)
 
 with st.sidebar:
     st.header("Trigger Config")
@@ -236,6 +238,12 @@ with st.sidebar:
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
     mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
 
+    # Price range
+    st.subheader("Price ($)")
+    col1, col2 = st.columns(2)
+    price_min = col1.number_input("Min", min_value=0.0, step=0.5, key="_price_min")
+    price_max = col2.number_input("Max", min_value=0.0, step=1.0, key="_price_max")
+
     # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
@@ -252,6 +260,8 @@ with st.sidebar:
     set_param("float_max", float_max)
     set_param("mc_min", mc_min)
     set_param("mc_max", mc_max)
+    set_param("price_min", price_min)
+    set_param("price_max", price_max)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -291,6 +301,10 @@ filtered = [a for a in filtered if a.float_shares is None or
 # Market cap filter (stored in dollars, filter in millions)
 filtered = [a for a in filtered if a.market_cap is None or
             (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
+
+# Price filter (uses price_threshold from announcement)
+filtered = [a for a in filtered if a.price_threshold is None or
+            (price_min <= a.price_threshold <= price_max)]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
