@@ -198,7 +198,7 @@ class PostgresClient:
     # ─────────────────────────────────────────────────────────────────────────────
 
     def fetch_ohlcv(self, ticker: str, start: datetime, end: datetime,
-                    use_cache: bool = True) -> List[OHLCVBar]:
+                    use_cache: bool = True) -> Optional[List[OHLCVBar]]:
         """Fetch OHLCV data from Polygon API, caching in PostgreSQL."""
 
         # Check cache first
@@ -281,11 +281,11 @@ class PostgresClient:
                 return []
 
         print(f"Failed to fetch OHLCV for {ticker} after {max_retries} retries")
-        return []
+        return None  # None = retry later, [] = no data exists
 
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
-                                  use_cache: bool = True) -> List[OHLCVBar]:
+                                  use_cache: bool = True) -> Optional[List[OHLCVBar]]:
         """Fetch OHLCV data starting from announcement time."""
         from datetime import date
 

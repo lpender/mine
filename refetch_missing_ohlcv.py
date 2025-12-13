@@ -109,10 +109,14 @@ def main():
                     window_minutes=120,
                     use_cache=False  # Force refetch
                 )
-                if bars:
+                if bars is None:
+                    # Rate limit or network failure - will retry next loop
+                    print(f"  -> Failed (will retry)")
+                elif bars:
                     print(f"  -> Got {len(bars)} bars")
                     success_count += 1
                 else:
+                    # Empty list = API confirmed no data exists
                     print(f"  -> No data available (marking as unavailable)")
                     key = (ann.ticker, ann.timestamp.isoformat())
                     no_data_set.add(key)
