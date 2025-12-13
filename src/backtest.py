@@ -39,8 +39,39 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
+    # Store first candle's open for potential stop loss calculation
+    first_candle_open = bars[0].open
+
+    # Handle "entry after consecutive candles" mode
+    # Wait for X consecutive candles where low > first candle's open
+    if config.entry_after_consecutive_candles > 0:
+        required = config.entry_after_consecutive_candles
+        consecutive_count = 0
+        entry_bar_idx = None
+
+        for i, bar in enumerate(bars):
+            if bar.low > first_candle_open:
+                consecutive_count += 1
+                if consecutive_count >= required:
+                    # Entry at close of this candle
+                    entry_bar_idx = i
+                    break
+            else:
+                consecutive_count = 0  # Reset on failure
+
+        if entry_bar_idx is None:
+            result.trigger_type = "no_entry"
+            return result
+
+        entry_price = bars[entry_bar_idx].close
+        entry_time = bars[entry_bar_idx].timestamp
+
+        if entry_price <= 0:
+            result.trigger_type = "invalid_price"
+            return result
+
     # Handle "entry at candle close" mode - assume we get in at end of first candle
-    if config.entry_at_candle_close:
+    elif config.entry_at_candle_close:
         # Enter at first candle's close (more realistic - takes time to see alert and execute)
         entry_price = bars[0].close
         entry_time = bars[0].timestamp
@@ -123,7 +154,12 @@ def run_single_backtest(
 
     # Phase 2: Look for exit after entry
     take_profit_price = entry_price * (1 + config.take_profit_pct / 100)
-    stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)
+
+    # Stop loss: either from entry price or from first candle's open
+    if config.stop_loss_from_open:
+        stop_loss_price = first_candle_open * (1 - config.stop_loss_pct / 100)
+    else:
+        stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)
 
     exit_price = None
     exit_time = None

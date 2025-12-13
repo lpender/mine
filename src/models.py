@@ -132,10 +132,12 @@ class BacktestConfig:
     entry_trigger_pct: float = 5.0  # Buy when price moves +X%
     take_profit_pct: float = 10.0  # Sell when +X% from entry
     stop_loss_pct: float = 3.0  # Sell when -X% from entry
+    stop_loss_from_open: bool = False  # If True, calculate SL from first candle's open instead of entry price
     volume_threshold: int = 0  # Minimum volume to trigger entry
     window_minutes: int = 120  # How long to track after announcement
     entry_at_candle_close: bool = False  # If True, enter at end of first candle (more realistic)
     entry_by_message_second: bool = False  # If True, enter within first candle based on announcement second (more realistic)
+    entry_after_consecutive_candles: int = 0  # Wait for X consecutive candles with low > first candle open
 
 
 @dataclass

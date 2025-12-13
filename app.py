@@ -132,6 +132,8 @@ if "_initialized" not in st.session_state:
     st.session_state._float_max = get_param("float_max", 1000.0, float)
     st.session_state._mc_min = get_param("mc_min", 0.0, float)
     st.session_state._mc_max = get_param("mc_max", 10000.0, float)
+    st.session_state._sl_from_open = get_param("sl_open", False, bool)
+    st.session_state._consec_candles = get_param("consec", 0, int)
 
 with st.sidebar:
     st.header("Trigger Config")
@@ -158,6 +160,20 @@ with st.sidebar:
         step=5,
         key="_hold",
         help="Maximum time to hold before timeout exit"
+    )
+
+    consec_candles = st.slider(
+        "Entry after X green candles",
+        min_value=0, max_value=10,
+        step=1,
+        key="_consec_candles",
+        help="Wait for X consecutive candles with low > first candle open before entry (0 = disabled)"
+    )
+
+    sl_from_open = st.checkbox(
+        "SL from first candle open",
+        key="_sl_from_open",
+        help="Calculate stop loss from first candle's open instead of entry price"
     )
 
     st.divider()
@@ -224,6 +240,8 @@ with st.sidebar:
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
     set_param("hold", hold_time)
+    set_param("consec", consec_candles)
+    set_param("sl_open", sl_from_open)
     set_param("sess", sessions)
     set_param("country", countries)
     set_param("author", authors)
@@ -300,8 +318,10 @@ config = BacktestConfig(
     entry_trigger_pct=0,  # Enter immediately at announcement
     take_profit_pct=take_profit,
     stop_loss_pct=stop_loss,
+    stop_loss_from_open=sl_from_open,
     window_minutes=hold_time,
-    entry_at_candle_close=True,  # More realistic entry
+    entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
+    entry_after_consecutive_candles=consec_candles,
 )
 
 summary = run_backtest(filtered, bars_dict, config)
@@ -504,8 +524,13 @@ else:
             # Add horizontal lines for entry, TP, SL
             if selected_result.entry_price:
                 entry = selected_result.entry_price
+                first_open = bars[0].open if bars else entry
                 tp_price = entry * (1 + take_profit / 100)
-                sl_price = entry * (1 - stop_loss / 100)
+                # SL from first candle open or entry price
+                if sl_from_open:
+                    sl_price = first_open * (1 - stop_loss / 100)
+                else:
+                    sl_price = entry * (1 - stop_loss / 100)
 
                 fig.add_hline(y=entry, line_dash="solid", line_color="blue", opacity=0.5,
                               annotation_text=f"Entry ${entry:.2f}")
