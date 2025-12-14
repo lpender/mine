@@ -256,11 +256,11 @@ with st.sidebar:
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
     mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
 
-    # Price range
-    st.subheader("Price ($)")
+    # Price range (filters by actual entry price from OHLCV, not announcement price)
+    st.subheader("Entry Price ($)")
     col1, col2 = st.columns(2)
-    price_min = col1.number_input("Min", min_value=0.0, step=0.5, key="_price_min")
-    price_max = col2.number_input("Max", min_value=0.0, step=1.0, key="_price_max")
+    price_min = col1.number_input("Min", min_value=0.0, step=0.5, key="_price_min", help="Exclude if entry price ≤ this")
+    price_max = col2.number_input("Max", min_value=0.0, step=1.0, key="_price_max", help="Exclude if entry price > this")
 
     # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
@@ -322,9 +322,7 @@ filtered = [a for a in filtered if a.float_shares is None or
 filtered = [a for a in filtered if a.market_cap is None or
             (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
 
-# Price filter (uses price_threshold from announcement)
-filtered = [a for a in filtered if a.price_threshold is None or
-            (price_min <= a.price_threshold <= price_max)]
+# Note: Price filter is applied after backtest based on actual entry price (see below)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -361,6 +359,15 @@ config = BacktestConfig(
 )
 
 summary = run_backtest(filtered, bars_dict, config)
+
+# Price filter (applied after backtest based on actual entry price)
+# Filter out results where entry price is outside the min/max range
+if price_min > 0 or price_max < 100:
+    summary.results = [
+        r for r in summary.results
+        if r.entry_price is None or (price_min < r.entry_price <= price_max)
+    ]
+
 stats = calculate_summary_stats(summary.results)
 
 
