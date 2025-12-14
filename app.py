@@ -105,6 +105,7 @@ all_countries = sorted(set(a.country for a in all_announcements if a.country))
 all_authors = sorted(set(a.author for a in all_announcements if a.author))
 all_channels = sorted(set(a.channel for a in all_announcements if a.channel))
 all_sessions = ["premarket", "market", "postmarket", "closed"]
+all_directions = sorted(set(a.direction for a in all_announcements if a.direction))
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Sidebar Controls
@@ -138,6 +139,10 @@ if "_initialized" not in st.session_state:
     st.session_state._price_min = get_param("price_min", 0.0, float)
     st.session_state._price_max = get_param("price_max", 100.0, float)
     st.session_state._trailing_stop = get_param("trail", 0.0, float)
+    direction_list = get_param("direction", "", list)
+    st.session_state._direction = [d for d in direction_list if d in all_directions]
+    st.session_state._scanner_test = get_param("scanner_test", False, bool)
+    st.session_state._scanner_after_lull = get_param("scanner_lull", False, bool)
 
 with st.sidebar:
     st.header("Trigger Config")
@@ -244,6 +249,27 @@ with st.sidebar:
         help="Only show announcements with a headline"
     )
 
+    # Direction filter (up arrow vs up-right arrow)
+    directions = st.multiselect(
+        "Direction",
+        options=all_directions,
+        key="_direction",
+        help="Arrow direction: 'up' (↑) or 'up_right' (↗). Leave empty for all."
+    )
+
+    # Scanner flags
+    scanner_test = st.checkbox(
+        "Scanner: test only",
+        key="_scanner_test",
+        help="Only show announcements detected by the 'test' scanner"
+    )
+
+    scanner_after_lull = st.checkbox(
+        "Scanner: after-lull only",
+        key="_scanner_after_lull",
+        help="Only show announcements detected by the 'after-lull' scanner"
+    )
+
     # Float range
     st.subheader("Float (millions)")
     col1, col2 = st.columns(2)
@@ -282,6 +308,9 @@ with st.sidebar:
     set_param("price_min", price_min)
     set_param("price_max", price_max)
     set_param("trail", trailing_stop)
+    set_param("direction", directions)
+    set_param("scanner_test", scanner_test)
+    set_param("scanner_lull", scanner_after_lull)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -313,6 +342,18 @@ if exclude_financing:
 # Headline filter
 if require_headline:
     filtered = [a for a in filtered if a.headline and a.headline.strip()]
+
+# Direction filter
+if directions:
+    filtered = [a for a in filtered if a.direction in directions]
+
+# Scanner test filter
+if scanner_test:
+    filtered = [a for a in filtered if a.scanner_test]
+
+# Scanner after-lull filter
+if scanner_after_lull:
+    filtered = [a for a in filtered if a.scanner_after_lull]
 
 # Float filter (convert from shares to millions)
 filtered = [a for a in filtered if a.float_shares is None or
