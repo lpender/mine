@@ -64,12 +64,12 @@ class InsightSentryQuoteProvider:
         response.raise_for_status()
         data = response.json()
 
-        # Response format: {"key": "xxx", "expires": "xxx"}
-        self._ws_key = data.get("key")
+        # Response format: {"api_key": "xxx", "expiration": xxx}
+        self._ws_key = data.get("api_key") or data.get("key")
         if not self._ws_key:
             raise ValueError(f"Failed to get WebSocket key: {data}")
 
-        logger.info(f"Got WebSocket key (expires: {data.get('expires', 'unknown')})")
+        logger.info(f"Got WebSocket key (expires: {data.get('expiration', data.get('expires', 'unknown'))})")
         return self._ws_key
 
     async def connect(self):
