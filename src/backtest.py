@@ -177,31 +177,32 @@ def run_single_backtest(
     # Track highest price since entry for trailing stop
     highest_since_entry = entry_price
 
-    # Start looking for exit on the NEXT bar after entry (can't know intra-bar order)
+    # Start looking for exit on the NEXT bar after entry
+    # We check conditions at candle CLOSE since we can't know intra-bar price path
     for bar in bars[entry_bar_idx + 1:]:
-        # Update highest price seen
-        if bar.high > highest_since_entry:
-            highest_since_entry = bar.high
+        # Update highest price seen (use close for trailing stop reference)
+        if bar.close > highest_since_entry:
+            highest_since_entry = bar.close
 
-        # Check for take profit (hit the high)
+        # Check for take profit (bar high reached target - assume we got filled)
         if bar.high >= take_profit_price:
             exit_price = take_profit_price
             exit_time = bar.timestamp
             trigger_type = "take_profit"
             break
 
-        # Check for trailing stop (price drops X% from highest point)
+        # Check for trailing stop at candle close (exit at close, not theoretical price)
         if config.trailing_stop_pct > 0:
             trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
-            if bar.low <= trailing_stop_price:
-                exit_price = trailing_stop_price
+            if bar.close <= trailing_stop_price:
+                exit_price = bar.close
                 exit_time = bar.timestamp
                 trigger_type = "trailing_stop"
                 break
 
-        # Check for stop loss (hit the low)
-        if bar.low <= stop_loss_price:
-            exit_price = stop_loss_price
+        # Check for stop loss at candle close (exit at close, not theoretical price)
+        if bar.close <= stop_loss_price:
+            exit_price = bar.close
             exit_time = bar.timestamp
             trigger_type = "stop_loss"
             break
