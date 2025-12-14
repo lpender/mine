@@ -327,19 +327,46 @@ with st.sidebar:
 
     trading_active = is_live_trading_active()
 
+    # Trading config (only shown when not trading)
+    if not trading_active:
+        # Backend selector
+        trading_backend = st.selectbox(
+            "Backend",
+            options=["Alpaca - Paper", "Alpaca - Live"],
+            index=0,
+            help="Select trading backend. Use Paper for testing!"
+        )
+        is_paper = "Paper" in trading_backend
+
+        # Stake amount
+        stake_amount = st.number_input(
+            "Stake per trade ($)",
+            min_value=10,
+            max_value=10000,
+            value=50,
+            step=10,
+            help="Dollar amount to invest per trade"
+        )
+
     # Show current strategy summary
     st.caption(f"Entry: {consec_candles} green candles, {min_candle_vol}+ vol")
     st.caption(f"Exit: TP {take_profit}%, SL {stop_loss}%, Trail {trailing_stop}%")
 
     if trading_active:
-        st.success("PAPER TRADING ACTIVE")
+        status = get_live_trading_status()
+        is_paper_mode = status.get("paper", True) if status else True
+
+        if is_paper_mode:
+            st.success("LIVE TRADING ENABLED (Paper)")
+        else:
+            st.error("LIVE TRADING ENABLED (REAL MONEY)")
 
         # Show status
-        status = get_live_trading_status()
         if status:
-            col1, col2 = st.columns(2)
+            col1, col2, col3 = st.columns(3)
             col1.metric("Pending", len(status.get("pending_entries", [])))
             col2.metric("Active", len(status.get("active_trades", {})))
+            col3.metric("Completed", status.get("completed_trades", 0))
 
             if status.get("active_trades"):
                 st.subheader("Active Positions")
@@ -348,14 +375,23 @@ with st.sidebar:
                              f"SL ${trade['stop_loss']:.2f}, TP ${trade['take_profit']:.2f}")
 
             if status.get("account"):
-                st.caption(f"Account: ${status['account'].get('equity', 0):,.0f} equity")
+                st.caption(f"Account: ${status['account'].get('equity', 0):,.0f} equity, "
+                          f"${status['account'].get('buying_power', 0):,.0f} buying power")
 
         if st.button("Stop Trading", type="primary", use_container_width=True):
             stop_live_trading()
             st.rerun()
+
+        # Link to trade history
+        st.markdown("[View Trade History →](trade_history)")
+
     else:
-        # Build strategy config from current settings
-        if st.button("Start Paper Trading", type="primary", use_container_width=True):
+        # Start trading button
+        if st.button(
+            f"Start {'Paper' if is_paper else 'LIVE'} Trading",
+            type="primary" if is_paper else "secondary",
+            use_container_width=True
+        ):
             strategy_config = StrategyConfig(
                 channels=channels if channels else [],
                 directions=directions if directions else [],
@@ -369,12 +405,15 @@ with st.sidebar:
                 stop_loss_from_open=sl_from_open,
                 trailing_stop_pct=trailing_stop,
                 timeout_minutes=hold_time,
-                shares=100,
+                stake_amount=stake_amount,
             )
-            start_live_trading(strategy_config, paper=True)
+            start_live_trading(strategy_config, paper=is_paper)
             st.rerun()
 
-        st.info("Configure strategy above, then click to start")
+        if not is_paper:
+            st.warning("LIVE trading uses real money!")
+        else:
+            st.info("Configure strategy above, then click to start")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

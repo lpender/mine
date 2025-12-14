@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs
 
 from .models import Announcement
 from .trading import TradingClient, Position
+from .trade_history import get_trade_history_client
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,13 @@ class StrategyConfig:
     timeout_minutes: int = 15
 
     # Position sizing
-    shares: int = 100
+    stake_amount: float = 50.0  # Dollar amount to stake per trade
+
+    def get_shares(self, price: float) -> int:
+        """Calculate number of shares based on stake amount and price."""
+        if price <= 0:
+            return 0
+        return max(1, int(self.stake_amount / price))
 
     @classmethod
     def from_url_params(cls, url_or_params) -> "StrategyConfig":
@@ -71,7 +78,7 @@ class StrategyConfig:
             stop_loss_from_open=params.get("sl_open", "0") == "1",
             trailing_stop_pct=float(params.get("trail", 0)),
             timeout_minutes=int(params.get("hold", 60)),
-            shares=int(params.get("shares", 100)),
+            stake_amount=float(params.get("stake", 50)),
         )
 
     def to_dict(self) -> dict:
@@ -96,7 +103,7 @@ class StrategyConfig:
                 "timeout_minutes": self.timeout_minutes,
             },
             "position": {
-                "shares": self.shares,
+                "stake_amount": self.stake_amount,
             },
         }
 
@@ -157,15 +164,20 @@ class StrategyEngine:
         trader: TradingClient,
         on_subscribe: Optional[Callable[[str], None]] = None,
         on_unsubscribe: Optional[Callable[[str], None]] = None,
+        paper: bool = True,
     ):
         self.config = config
         self.trader = trader
         self.on_subscribe = on_subscribe  # Called when we need quotes for a ticker
         self.on_unsubscribe = on_unsubscribe  # Called when done with a ticker
+        self.paper = paper
 
         self.pending_entries: Dict[str, PendingEntry] = {}
         self.active_trades: Dict[str, ActiveTrade] = {}
         self.completed_trades: List[dict] = []
+
+        # Trade history persistence
+        self._trade_history = get_trade_history_client()
 
     def on_alert(self, announcement: Announcement) -> bool:
         """
@@ -334,11 +346,17 @@ class StrategyEngine:
 
         take_profit_price = price * (1 + cfg.take_profit_pct / 100)
 
-        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+        # Calculate shares from stake amount
+        shares = cfg.get_shares(price)
+        if shares <= 0:
+            logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f}")
+            return
+
+        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {shares} shares (${cfg.stake_amount}), SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
 
         # Execute buy order
         try:
-            order = self.trader.buy(ticker, cfg.shares)
+            order = self.trader.buy(ticker, shares)
             logger.info(f"[{ticker}] Buy order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
@@ -351,7 +369,7 @@ class StrategyEngine:
             entry_price=price,
             entry_time=timestamp,
             first_candle_open=pending.first_price or price,
-            shares=cfg.shares,
+            shares=shares,
             highest_since_entry=price,
             stop_loss_price=stop_loss_price,
             take_profit_price=take_profit_price,
@@ -410,8 +428,9 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"[{ticker}] Sell order failed: {e}")
 
-        # Record completed trade
-        self.completed_trades.append({
+        # Record completed trade with full details
+        pnl = (price - trade.entry_price) * trade.shares
+        completed = {
             "ticker": ticker,
             "entry_price": trade.entry_price,
             "entry_time": trade.entry_time.isoformat(),
@@ -420,7 +439,16 @@ class StrategyEngine:
             "exit_reason": reason,
             "return_pct": return_pct,
             "shares": trade.shares,
-        })
+            "pnl": pnl,
+            "strategy_params": self.config.to_dict(),
+        }
+        self.completed_trades.append(completed)
+
+        # Persist to database
+        try:
+            self._trade_history.save_trade(completed, paper=self.paper)
+        except Exception as e:
+            logger.error(f"[{ticker}] Failed to save trade to database: {e}")
 
         # Unsubscribe from quotes
         if self.on_unsubscribe:

@@ -1,0 +1,195 @@
+"""Trade history persistence for live/paper trading."""
+
+import json
+import logging
+from datetime import datetime
+from typing import List, Optional
+from dataclasses import dataclass
+
+from sqlalchemy.orm import Session
+
+from .database import SessionLocal, TradeHistoryDB
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class CompletedTrade:
+    """Represents a completed trade."""
+    id: Optional[int]
+    ticker: str
+    entry_price: float
+    entry_time: datetime
+    exit_price: float
+    exit_time: datetime
+    exit_reason: str
+    shares: int
+    return_pct: float
+    pnl: float
+    paper: bool
+    strategy_params: dict
+    created_at: Optional[datetime] = None
+
+
+class TradeHistoryClient:
+    """Client for saving/loading trade history."""
+
+    def _get_db(self) -> Session:
+        return SessionLocal()
+
+    def save_trade(self, trade: dict, paper: bool = True) -> int:
+        """
+        Save a completed trade to the database.
+
+        Args:
+            trade: Dict with trade details from StrategyEngine
+            paper: Whether this was a paper trade
+
+        Returns:
+            ID of the saved trade
+        """
+        db = self._get_db()
+        try:
+            # Parse times if they're strings
+            entry_time = trade["entry_time"]
+            if isinstance(entry_time, str):
+                entry_time = datetime.fromisoformat(entry_time)
+
+            exit_time = trade["exit_time"]
+            if isinstance(exit_time, str):
+                exit_time = datetime.fromisoformat(exit_time)
+
+            db_trade = TradeHistoryDB(
+                ticker=trade["ticker"],
+                entry_price=trade["entry_price"],
+                entry_time=entry_time,
+                exit_price=trade["exit_price"],
+                exit_time=exit_time,
+                exit_reason=trade.get("exit_reason", ""),
+                shares=trade["shares"],
+                return_pct=trade.get("return_pct", 0),
+                pnl=trade.get("pnl", 0),
+                paper=paper,
+                strategy_params=json.dumps(trade.get("strategy_params", {})),
+            )
+            db.add(db_trade)
+            db.commit()
+            db.refresh(db_trade)
+            logger.info(f"Saved trade {db_trade.id}: {trade['ticker']} {trade['return_pct']:+.2f}%")
+            return db_trade.id
+        finally:
+            db.close()
+
+    def get_trades(
+        self,
+        paper: Optional[bool] = None,
+        ticker: Optional[str] = None,
+        start: Optional[datetime] = None,
+        end: Optional[datetime] = None,
+        limit: int = 100,
+    ) -> List[CompletedTrade]:
+        """
+        Load trade history with optional filters.
+
+        Args:
+            paper: Filter by paper/live trading
+            ticker: Filter by ticker symbol
+            start: Filter by entry time >= start
+            end: Filter by entry time <= end
+            limit: Max number of trades to return
+        """
+        db = self._get_db()
+        try:
+            query = db.query(TradeHistoryDB)
+
+            if paper is not None:
+                query = query.filter(TradeHistoryDB.paper == paper)
+            if ticker:
+                query = query.filter(TradeHistoryDB.ticker == ticker)
+            if start:
+                query = query.filter(TradeHistoryDB.entry_time >= start)
+            if end:
+                query = query.filter(TradeHistoryDB.entry_time <= end)
+
+            rows = query.order_by(TradeHistoryDB.entry_time.desc()).limit(limit).all()
+
+            return [self._db_to_trade(row) for row in rows]
+        finally:
+            db.close()
+
+    def get_trade_stats(self, paper: Optional[bool] = None) -> dict:
+        """Get aggregate statistics for trades."""
+        db = self._get_db()
+        try:
+            query = db.query(TradeHistoryDB)
+            if paper is not None:
+                query = query.filter(TradeHistoryDB.paper == paper)
+
+            trades = query.all()
+
+            if not trades:
+                return {
+                    "total_trades": 0,
+                    "wins": 0,
+                    "losses": 0,
+                    "win_rate": 0,
+                    "total_pnl": 0,
+                    "avg_return_pct": 0,
+                    "best_trade_pct": 0,
+                    "worst_trade_pct": 0,
+                }
+
+            wins = sum(1 for t in trades if t.pnl > 0)
+            losses = sum(1 for t in trades if t.pnl <= 0)
+            total_pnl = sum(t.pnl for t in trades)
+            returns = [t.return_pct for t in trades]
+
+            return {
+                "total_trades": len(trades),
+                "wins": wins,
+                "losses": losses,
+                "win_rate": wins / len(trades) * 100 if trades else 0,
+                "total_pnl": total_pnl,
+                "avg_return_pct": sum(returns) / len(returns) if returns else 0,
+                "best_trade_pct": max(returns) if returns else 0,
+                "worst_trade_pct": min(returns) if returns else 0,
+            }
+        finally:
+            db.close()
+
+    def _db_to_trade(self, row: TradeHistoryDB) -> CompletedTrade:
+        """Convert database row to CompletedTrade."""
+        params = {}
+        if row.strategy_params:
+            try:
+                params = json.loads(row.strategy_params)
+            except json.JSONDecodeError:
+                pass
+
+        return CompletedTrade(
+            id=row.id,
+            ticker=row.ticker,
+            entry_price=row.entry_price,
+            entry_time=row.entry_time,
+            exit_price=row.exit_price,
+            exit_time=row.exit_time,
+            exit_reason=row.exit_reason,
+            shares=row.shares,
+            return_pct=row.return_pct,
+            pnl=row.pnl,
+            paper=row.paper,
+            strategy_params=params,
+            created_at=row.created_at,
+        )
+
+
+# Global instance for convenience
+_trade_history_client: Optional[TradeHistoryClient] = None
+
+
+def get_trade_history_client() -> TradeHistoryClient:
+    """Get the global trade history client."""
+    global _trade_history_client
+    if _trade_history_client is None:
+        _trade_history_client = TradeHistoryClient()
+    return _trade_history_client

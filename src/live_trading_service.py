@@ -170,6 +170,7 @@ class LiveTradingService:
             trader=self.trader,
             on_subscribe=self._on_subscribe,
             on_unsubscribe=self._on_unsubscribe,
+            paper=self.paper,
         )
 
         logger.info(f"Strategy config: {self.config.to_dict()}")
