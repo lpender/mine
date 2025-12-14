@@ -178,9 +178,7 @@ def run_single_backtest(
     highest_since_entry = entry_price
 
     # Start looking for exit on the entry bar itself (we enter at open, can exit at close)
-    for idx, bar in enumerate(bars[entry_bar_idx:]):
-        is_entry_bar = (idx == 0)
-
+    for bar in bars[entry_bar_idx:]:
         # Update highest price seen (use high for trailing stop - we know peak was reached)
         if bar.high > highest_since_entry:
             highest_since_entry = bar.high
@@ -192,9 +190,9 @@ def run_single_backtest(
             trigger_type = "take_profit"
             break
 
-        # Check for trailing stop intracandle (only AFTER entry bar - need to establish a high first)
-        # On entry bar we track the high but don't trigger trailing stop yet
-        if not is_entry_bar and config.trailing_stop_pct > 0 and highest_since_entry > entry_price:
+        # Check for trailing stop intracandle
+        # If price went up from entry (highest > entry) and low dropped X% from that high, trigger
+        if config.trailing_stop_pct > 0 and highest_since_entry > entry_price:
             trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
             if bar.low <= trailing_stop_price:
                 exit_price = trailing_stop_price
