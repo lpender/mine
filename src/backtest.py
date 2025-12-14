@@ -44,10 +44,11 @@ def run_single_backtest(
 
     # Handle "entry after consecutive candles" mode
     # Wait for X consecutive candles where low > first candle's open and volume meets threshold
+    # Then enter at the OPEN of the next bar (realistic: can't act until candle closes)
     if config.entry_after_consecutive_candles > 0:
         required = config.entry_after_consecutive_candles
         consecutive_count = 0
-        entry_bar_idx = None
+        signal_bar_idx = None
         min_vol = config.min_candle_volume
 
         for i, bar in enumerate(bars):
@@ -55,17 +56,23 @@ def run_single_backtest(
             if bar.low > first_candle_open and bar.volume >= min_vol:
                 consecutive_count += 1
                 if consecutive_count >= required:
-                    # Entry at close of this candle
-                    entry_bar_idx = i
+                    # Signal triggered after this candle closes
+                    signal_bar_idx = i
                     break
             else:
                 consecutive_count = 0  # Reset on failure
 
-        if entry_bar_idx is None:
+        if signal_bar_idx is None:
             result.trigger_type = "no_entry"
             return result
 
-        entry_price = bars[entry_bar_idx].close
+        # Enter at OPEN of the next bar after signal
+        entry_bar_idx = signal_bar_idx + 1
+        if entry_bar_idx >= len(bars):
+            result.trigger_type = "no_entry"  # No next bar available
+            return result
+
+        entry_price = bars[entry_bar_idx].open
         entry_time = bars[entry_bar_idx].timestamp
 
         if entry_price <= 0:
