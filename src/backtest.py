@@ -84,7 +84,11 @@ def run_single_backtest(
         # Enter at first candle's close (more realistic - takes time to see alert and execute)
         entry_price = bars[0].close
         entry_time = bars[0].timestamp
-        entry_bar_idx = 0
+        entry_bar_idx = 1  # Start exits from NEXT bar (we entered at end of bar 0)
+
+        if len(bars) < 2:
+            result.trigger_type = "no_entry"  # No next bar to check exits
+            return result
 
         if entry_price <= 0:
             result.trigger_type = "invalid_price"
