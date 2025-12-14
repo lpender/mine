@@ -1025,3 +1025,145 @@ class TestRealWorldScenarios:
         assert result.entry_price == 10.00
         # Bar 0's low of $5 should NOT trigger anything because we entered at close
         assert result.trigger_type == "timeout"
+
+
+class TestStopLossEdgeCases:
+    """Tests for stop loss edge cases found in production."""
+
+    def test_sl_from_open_above_entry_falls_back_to_entry_based_stop(self):
+        """
+        MCRP scenario: sl_from_open results in stop above entry price.
+
+        First candle: open=$1.02, close=$0.976 (massive drop)
+        With sl_from_open=True and 1% stop: $1.02 * 0.99 = $1.0098
+        But entry is at $0.976 (close), which is BELOW the stop price!
+
+        A stop above entry makes no sense, so it should fall back to
+        entry-based stop: $0.976 * 0.99 = $0.9662
+        """
+        base_time = datetime(2025, 12, 3, 13, 5)
+        announcement = make_announcement(ticker="MCRP", timestamp=base_time)
+
+        bars = [
+            # Entry bar: big drop from open to close
+            make_bar(base_time, open_=1.02, high=1.03, low=0.957, close=0.976, volume=255_000),
+            # Next bar: gaps down, triggers stop
+            make_bar(base_time + timedelta(minutes=1), open_=0.962, high=0.962, low=0.895, close=0.899, volume=142_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=10.0,
+            stop_loss_pct=1.0,
+            stop_loss_from_open=True,  # Would give $1.0098, above entry!
+            window_minutes=60,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == pytest.approx(0.976, rel=0.01)
+        # Stop should be entry-based: 0.976 * 0.99 = 0.9662 (NOT 1.0098)
+        # Since bar 1 gaps below this, exit at bar.open
+        assert result.trigger_type == "stop_loss"
+        assert result.exit_price == pytest.approx(0.962, rel=0.01)  # Gap fill at bar.open
+        assert result.exit_price < result.entry_price  # Must be a loss
+
+    def test_gap_down_through_stop_fills_at_bar_open(self):
+        """
+        Gap-down scenario: bar opens below stop level.
+
+        Entry at $10, stop at 5% = $9.50
+        Next bar gaps down to open at $9.00 (below stop)
+        Should fill at $9.00 (bar.open), not $9.50 (stop price never traded)
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=9.90, high=10.10, low=9.85, close=10.00, volume=100_000),
+            # Gap down - entire bar is below stop
+            make_bar(base_time + timedelta(minutes=1), open_=9.00, high=9.20, low=8.80, close=9.10, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=5.0,  # Stop at $9.50
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.00
+        assert result.trigger_type == "stop_loss"
+        # Gap through stop: fill at bar.open ($9.00), not stop ($9.50)
+        assert result.exit_price == pytest.approx(9.00, rel=0.01)
+
+    def test_gap_down_trailing_stop_fills_at_bar_open(self):
+        """
+        Gap-down through trailing stop level.
+
+        Entry at $10, peaks at $12, trailing 10% = $10.80
+        Next bar gaps down to open at $10.00 (below trailing stop)
+        Should fill at $10.00 (bar.open), not $10.80 (trailing stop price)
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Bar peaks at $12
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=12.00, low=10.00, close=11.50, volume=50_000),
+            # Gap down below trailing stop level
+            make_bar(base_time + timedelta(minutes=2), open_=10.00, high=10.20, low=9.80, close=10.10, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=20.0,
+            trailing_stop_pct=10.0,  # From $12: $10.80
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        # Gap through trailing stop: fill at bar.open ($10.00), not trailing ($10.80)
+        assert result.exit_price == pytest.approx(10.00, rel=0.01)
+
+    def test_normal_stop_loss_still_fills_at_stop_price(self):
+        """
+        Normal scenario: bar trades through stop level without gap.
+
+        Entry at $10, stop at 5% = $9.50
+        Bar: open=$10, high=$10.05, low=$9.40, close=$9.60
+        Bar.high ($10.05) > stop ($9.50), so stop was traded
+        Should fill at $9.50 (stop price)
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Normal bar - drops through stop but didn't gap
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.05, low=9.40, close=9.60, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=5.0,  # Stop at $9.50
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.00
+        assert result.trigger_type == "stop_loss"
+        # Normal stop (no gap): fill at stop price
+        assert result.exit_price == pytest.approx(9.50, rel=0.01)
