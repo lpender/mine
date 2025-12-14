@@ -1,0 +1,121 @@
+version: '3'
+
+vars:
+  BETTERDISCORD_PLUGINS: ~/Library/Application Support/BetterDiscord/plugins
+  VENV: ./venv
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Development
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  install:
+    desc: Install Python dependencies
+    cmds:
+      - pip install -r requirements.txt
+
+  venv:
+    desc: Create virtual environment and install dependencies
+    cmds:
+      - python3 -m venv {{.VENV}}
+      - "{{.VENV}}/bin/pip install -r requirements.txt"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Dashboard
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  dashboard:
+    desc: Run the Streamlit dashboard
+    cmds:
+      - streamlit run app.py
+
+  dashboard:venv:
+    desc: Run dashboard using venv
+    cmds:
+      - "{{.VENV}}/bin/streamlit run app.py"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Discord Plugin
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  plugin:install:
+    desc: Copy Discord plugin to BetterDiscord plugins directory
+    cmds:
+      - cp discord-monitor/StockAlertMonitor.plugin.js "{{.BETTERDISCORD_PLUGINS}}/"
+      - echo "Plugin installed. Reload Discord or use Ctrl+R to reload plugins."
+
+  plugin:diff:
+    desc: Show diff between repo plugin and installed plugin
+    cmds:
+      - diff discord-monitor/StockAlertMonitor.plugin.js "{{.BETTERDISCORD_PLUGINS}}/StockAlertMonitor.plugin.js" || true
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Alert Server
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  alert-server:
+    desc: Run the Discord alert server
+    cmds:
+      - python discord-monitor/alert_server.py
+
+  alert-server:venv:
+    desc: Run alert server using venv
+    cmds:
+      - "{{.VENV}}/bin/python discord-monitor/alert_server.py"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Database
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  db:init:
+    desc: Initialize database tables
+    cmds:
+      - python -c "from src.database import init_db; init_db(); print('Database initialized')"
+
+  db:migrate:
+    desc: Create any missing tables (safe to run multiple times)
+    cmds:
+      - |
+        python -c "
+        from sqlalchemy import text
+        from src.database import engine, Base
+
+        # Create tables that don't exist
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        print('Migration complete')
+        "
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Testing
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  test:
+    desc: Run tests
+    cmds:
+      - python -m pytest tests/ -v
+
+  test:venv:
+    desc: Run tests using venv
+    cmds:
+      - "{{.VENV}}/bin/python -m pytest tests/ -v"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Utilities
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  logs:
+    desc: Tail the trading logs
+    cmds:
+      - tail -f logs/trading.log 2>/dev/null || echo "No log file found"
+
+  clean:
+    desc: Clean up cache files
+    cmds:
+      - find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+      - find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+      - echo "Cleaned up cache files"
