@@ -20,6 +20,12 @@ from typing import Callable, Optional
 from .parser import parse_message_line
 from .postgres_client import PostgresClient
 
+# Configure logging to print to stdout
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
 logger = logging.getLogger(__name__)
 
 

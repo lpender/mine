@@ -1,0 +1,11 @@
+{
+  "channel": "test",
+  "messages": [
+    {
+      "id": "123",
+      "content": "test message",
+      "timestamp": "2024-12-01T10:00:00Z"
+    }
+  ],
+  "sent_at": "2025-12-14T18:21:26.734773"
+}
