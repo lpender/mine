@@ -35,7 +35,11 @@
       "Bash(psql:*)",
       "Bash(rails new:*)",
       "Bash(bin/rails runner:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(/Users/lpender/dev/trading/backtest/venv/bin/pip install:*)",
+      "Bash(task --list:*)",
+      "Bash(mdfind:*)",
+      "Bash(task plugin:install:*)"
     ]
   }
 }

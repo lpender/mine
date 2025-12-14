@@ -156,7 +156,7 @@ with st.sidebar:
 
     stop_loss = st.slider(
         "Stop Loss %",
-        min_value=1.0, max_value=20.0,
+        min_value=1.0, max_value=30.0,
         step=0.5,
         key="_sl",
         help="Exit when price drops by this percentage"

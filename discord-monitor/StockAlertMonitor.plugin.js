@@ -419,10 +419,42 @@ Full message: ${fullContent.substring(0, 200)}
                     font-size: 12px;
                     min-height: 16px;
                 }
+                #stock-alert-backfill-widget .widget-toggle {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 10px;
+                    margin-bottom: 8px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                }
+                #stock-alert-backfill-widget .widget-toggle.active {
+                    background: #3ba55c;
+                }
+                #stock-alert-backfill-widget .widget-toggle.inactive {
+                    background: #40444b;
+                }
+                #stock-alert-backfill-widget .widget-toggle:hover {
+                    filter: brightness(1.1);
+                }
+                #stock-alert-backfill-widget .widget-toggle-label {
+                    font-size: 13px;
+                    font-weight: 500;
+                }
+                #stock-alert-backfill-widget .widget-toggle-dot {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: #fff;
+                }
             </style>
             <div class="widget-header">
                 <span>Backfill Widget</span>
                 <span class="widget-close" id="backfill-close">&times;</span>
+            </div>
+            <div class="widget-toggle ${this.enableLiveAlerts ? 'active' : 'inactive'}" id="live-alerts-toggle">
+                <span class="widget-toggle-label">${this.enableLiveAlerts ? '● LIVE TRADING' : '○ Live Trading Off'}</span>
             </div>
             <div class="widget-row">
                 <span class="widget-label">Channel:</span>
@@ -454,6 +486,19 @@ Full message: ${fullContent.substring(0, 200)}
 
         const sendBtn = this.widgetContainer.querySelector("#backfill-send");
         sendBtn?.addEventListener("click", () => this.handleSendData());
+
+        // Live alerts toggle
+        const liveToggle = this.widgetContainer.querySelector("#live-alerts-toggle");
+        liveToggle?.addEventListener("click", () => {
+            this.enableLiveAlerts = !this.enableLiveAlerts;
+            liveToggle.className = `widget-toggle ${this.enableLiveAlerts ? 'active' : 'inactive'}`;
+            liveToggle.querySelector('.widget-toggle-label').textContent =
+                this.enableLiveAlerts ? '● LIVE TRADING' : '○ Live Trading Off';
+            BdApi.UI.showToast(
+                this.enableLiveAlerts ? "Live alerts ENABLED" : "Live alerts DISABLED",
+                { type: this.enableLiveAlerts ? "success" : "info" }
+            );
+        });
 
         // Set up scroll listener - debounced
         let scrollTimeout = null;
