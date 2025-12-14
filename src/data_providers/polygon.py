@@ -75,7 +75,7 @@ class PolygonProvider(OHLCVDataProvider):
         start: datetime,
         end: datetime,
         timespan: str = "minute",
-    ) -> List[OHLCVBar]:
+    ) -> Optional[List[OHLCVBar]]:
         if not self.api_key:
             raise ValueError("Polygon API key not set. Set POLYGON_API_KEY or MASSIVE_API_KEY in .env")
 
@@ -112,11 +112,11 @@ class PolygonProvider(OHLCVDataProvider):
                         continue
 
                     print(f"[Polygon] Rate limit exceeded for {ticker} after {self.max_retries} retries")
-                    return []
+                    return None  # None = retry later
 
                 if response.status_code != 200:
                     print(f"[Polygon] Error fetching {ticker}: {response.status_code} {response.reason}")
-                    return []
+                    return None  # None = retry later
 
                 data = response.json()
 
@@ -147,6 +147,6 @@ class PolygonProvider(OHLCVDataProvider):
                     self._bump_next_allowed_time(wait_time)
                     continue
                 print(f"[Polygon] Error fetching {ticker}: {e}")
-                return []
+                return None  # None = retry later
 
-        return []
+        return None  # None = retry later (exhausted retries)

@@ -66,7 +66,7 @@ class AlpacaProvider(OHLCVDataProvider):
         start: datetime,
         end: datetime,
         timespan: str = "minute",
-    ) -> List[OHLCVBar]:
+    ) -> Optional[List[OHLCVBar]]:
         if not self.api_key or not self.secret_key:
             raise ValueError("Alpaca API credentials not set. Set ALPACA_API_KEY and ALPACA_SECRET_KEY in .env")
 
@@ -135,13 +135,13 @@ class AlpacaProvider(OHLCVDataProvider):
                         continue
 
                     print(f"[Alpaca] Rate limit exceeded for {ticker} after {self.max_retries} retries")
-                    return all_bars if all_bars else []
+                    return None  # None = retry later
 
                 if response.status_code != 200:
                     print(f"[Alpaca] Error fetching {ticker}: {response.status_code} {response.reason}")
                     if response.text:
                         print(f"[Alpaca] Response: {response.text[:200]}")
-                    return all_bars if all_bars else []
+                    return None  # None = retry later
 
                 data = response.json()
                 bars_data = data.get("bars", [])
@@ -189,6 +189,6 @@ class AlpacaProvider(OHLCVDataProvider):
                     self._bump_next_allowed_time(wait_time)
                     continue
                 print(f"[Alpaca] Error fetching {ticker}: {e}")
-                return all_bars if all_bars else []
+                return None  # None = retry later
 
-        return all_bars if all_bars else []
+        return None  # None = retry later (exhausted retries)

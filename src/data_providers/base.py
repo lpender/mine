@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 from ..models import OHLCVBar
 
 
@@ -14,7 +14,7 @@ class OHLCVDataProvider(ABC):
         start: datetime,
         end: datetime,
         timespan: str = "minute",
-    ) -> List[OHLCVBar]:
+    ) -> Optional[List[OHLCVBar]]:
         """
         Fetch OHLCV bars for a ticker.
 
@@ -25,7 +25,9 @@ class OHLCVDataProvider(ABC):
             timespan: Time window (minute, hour, day)
 
         Returns:
-            List of OHLCVBar objects
+            - List of OHLCVBar objects if data exists
+            - Empty list [] if API confirms no data for this ticker/period
+            - None if request failed (rate limit, network error) - caller should retry
         """
         pass
 
