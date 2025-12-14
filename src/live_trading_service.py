@@ -1,127 +1,72 @@
-"""Live trading service that coordinates alerts, quotes, and trading."""
+"""Live trading service that coordinates quotes and trading."""
 
 import asyncio
-import json
 import logging
 import threading
 from datetime import datetime
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import Optional, Callable
-from queue import Queue
 
 from .strategy import StrategyConfig, StrategyEngine
 from .trading import get_trading_client, TradingClient
 from .quote_provider import InsightSentryQuoteProvider
 from .parser import parse_message_line
-from .models import Announcement
+from .alert_service import set_alert_callback
 
 logger = logging.getLogger(__name__)
 
 
-class AlertHandler(BaseHTTPRequestHandler):
-    """HTTP handler for incoming Discord alerts."""
-
-    # Class-level references set by LiveTradingService
-    alert_queue: Queue = None
-    service: "LiveTradingService" = None
-
-    def log_message(self, format, *args):
-        logger.debug(f"HTTP: {format % args}")
-
-    def do_OPTIONS(self):
-        """Handle CORS preflight."""
-        self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
-    def do_POST(self):
-        """Handle incoming alert."""
-        if self.path != "/alert":
-            self.send_response(404)
-            self.end_headers()
-            return
-
-        try:
-            content_length = int(self.headers.get("Content-Length", 0))
-            body = self.rfile.read(content_length).decode("utf-8")
-            data = json.loads(body)
-
-            # Queue the alert for processing
-            if self.alert_queue:
-                self.alert_queue.put(data)
-                logger.info(f"Alert queued: {data.get('ticker', 'unknown')}")
-
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "ok"}).encode())
-
-        except Exception as e:
-            logger.error(f"Error handling alert: {e}")
-            self.send_response(500)
-            self.end_headers()
-
-
-class LiveTradingService:
+class TradingEngine:
     """
-    Background service for live trading.
+    Trading engine that processes alerts and manages positions.
 
-    Coordinates:
-    - HTTP server for receiving Discord alerts
-    - WebSocket connection for real-time quotes
-    - Strategy engine for entry/exit decisions
-    - Trading client for order execution
+    Does NOT run its own HTTP server - receives alerts via callback from AlertService.
     """
 
     def __init__(
         self,
         config: StrategyConfig,
         paper: bool = True,
-        alert_port: int = 8765,
     ):
         self.config = config
         self.paper = paper
-        self.alert_port = alert_port
 
         self._running = False
         self._thread: Optional[threading.Thread] = None
         self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._alert_queue: Queue = Queue()
 
         # Components initialized in start()
         self.trader: Optional[TradingClient] = None
         self.quote_provider: Optional[InsightSentryQuoteProvider] = None
         self.engine: Optional[StrategyEngine] = None
-        self.http_server: Optional[HTTPServer] = None
 
         # Callbacks for external status updates
         self.on_status_change: Optional[Callable[[dict], None]] = None
 
     def start(self):
-        """Start the live trading service in a background thread."""
+        """Start the trading engine in a background thread."""
         if self._running:
-            logger.warning("Service already running")
+            logger.warning("Trading engine already running")
             return
 
         self._running = True
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
-        logger.info("Live trading service started")
+
+        # Register callback with alert service
+        set_alert_callback(self._on_alert_received)
+
+        logger.info("Trading engine started")
 
     def stop(self):
-        """Stop the live trading service."""
+        """Stop the trading engine."""
         if not self._running:
             return
 
-        logger.info("Stopping live trading service...")
+        logger.info("Stopping trading engine...")
         self._running = False
 
-        # Stop HTTP server
-        if self.http_server:
-            self.http_server.shutdown()
+        # Unregister callback
+        set_alert_callback(None)
 
         # Stop event loop
         if self._loop and self._loop.is_running():
@@ -131,10 +76,10 @@ class LiveTradingService:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=5.0)
 
-        logger.info("Live trading service stopped")
+        logger.info("Trading engine stopped")
 
     def _run(self):
-        """Main service loop (runs in background thread)."""
+        """Main engine loop (runs in background thread)."""
         try:
             # Create new event loop for this thread
             self._loop = asyncio.new_event_loop()
@@ -147,7 +92,7 @@ class LiveTradingService:
             self._loop.run_until_complete(self._async_main())
 
         except Exception as e:
-            logger.error(f"Service error: {e}", exc_info=True)
+            logger.error(f"Trading engine error: {e}", exc_info=True)
         finally:
             if self._loop:
                 self._loop.close()
@@ -177,14 +122,8 @@ class LiveTradingService:
 
     async def _async_main(self):
         """Async main loop."""
-        # Start HTTP server for alerts
-        self._start_http_server()
-
         # Connect to quote provider
         quote_task = asyncio.create_task(self._run_quote_provider())
-
-        # Process alerts
-        alert_task = asyncio.create_task(self._process_alerts())
 
         # Wait for shutdown
         try:
@@ -195,30 +134,10 @@ class LiveTradingService:
             pass
         finally:
             quote_task.cancel()
-            alert_task.cancel()
             try:
                 await quote_task
             except asyncio.CancelledError:
                 pass
-            try:
-                await alert_task
-            except asyncio.CancelledError:
-                pass
-
-    def _start_http_server(self):
-        """Start HTTP server for receiving alerts."""
-        AlertHandler.alert_queue = self._alert_queue
-        AlertHandler.service = self
-
-        self.http_server = HTTPServer(("0.0.0.0", self.alert_port), AlertHandler)
-
-        # Run in background thread
-        http_thread = threading.Thread(
-            target=self.http_server.serve_forever,
-            daemon=True,
-        )
-        http_thread.start()
-        logger.info(f"HTTP server listening on port {self.alert_port}")
 
     async def _run_quote_provider(self):
         """Run the WebSocket quote provider."""
@@ -228,23 +147,20 @@ class LiveTradingService:
             logger.error(f"Quote provider error: {e}")
             raise
 
-    async def _process_alerts(self):
-        """Process alerts from the queue."""
-        while self._running:
-            try:
-                # Non-blocking check for alerts
-                if not self._alert_queue.empty():
-                    data = self._alert_queue.get_nowait()
-                    await self._handle_alert(data)
-                else:
-                    await asyncio.sleep(0.1)
-            except Exception as e:
-                logger.error(f"Error processing alert: {e}")
+    def _on_alert_received(self, data: dict):
+        """Handle alert from AlertService (called from HTTP thread)."""
+        if not self._running or not self.engine:
+            return
+
+        # Schedule processing in our event loop
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: asyncio.create_task(self._handle_alert(data))
+            )
 
     async def _handle_alert(self, data: dict):
-        """Handle an incoming alert from Discord."""
+        """Process an alert from Discord."""
         try:
-            # Parse the alert into an Announcement
             content = data.get("content", "")
             channel = data.get("channel", "")
             author = data.get("author")
@@ -282,7 +198,6 @@ class LiveTradingService:
         """Callback when strategy needs quotes for a ticker."""
         if self.quote_provider:
             self.quote_provider.subscribe_sync(ticker)
-            # Trigger re-send of subscriptions on next opportunity
             if self._loop:
                 self._loop.call_soon_threadsafe(
                     lambda: asyncio.create_task(self.quote_provider.subscribe(ticker))
@@ -304,7 +219,7 @@ class LiveTradingService:
             self.on_status_change(status)
 
     def get_status(self) -> dict:
-        """Get current service status."""
+        """Get current engine status."""
         status = {
             "running": self._running,
             "paper": self.paper,
@@ -332,42 +247,45 @@ class LiveTradingService:
         return self._running
 
 
+# Backwards compatibility aliases
+LiveTradingService = TradingEngine
+
 # Global instance for dashboard integration
-_service_instance: Optional[LiveTradingService] = None
+_trading_engine: Optional[TradingEngine] = None
 
 
-def start_live_trading(config: StrategyConfig, paper: bool = True) -> LiveTradingService:
-    """Start the global live trading service."""
-    global _service_instance
+def start_live_trading(config: StrategyConfig, paper: bool = True) -> TradingEngine:
+    """Start the global trading engine."""
+    global _trading_engine
 
-    if _service_instance and _service_instance.is_running:
-        logger.warning("Service already running, stopping first...")
-        _service_instance.stop()
+    if _trading_engine and _trading_engine.is_running:
+        logger.warning("Trading engine already running, stopping first...")
+        _trading_engine.stop()
 
-    _service_instance = LiveTradingService(config, paper=paper)
-    _service_instance.start()
-    return _service_instance
+    _trading_engine = TradingEngine(config, paper=paper)
+    _trading_engine.start()
+    return _trading_engine
 
 
 def stop_live_trading():
-    """Stop the global live trading service."""
-    global _service_instance
+    """Stop the global trading engine."""
+    global _trading_engine
 
-    if _service_instance:
-        _service_instance.stop()
-        _service_instance = None
+    if _trading_engine:
+        _trading_engine.stop()
+        _trading_engine = None
 
 
 def get_live_trading_status() -> Optional[dict]:
-    """Get status of the global live trading service."""
-    global _service_instance
+    """Get status of the global trading engine."""
+    global _trading_engine
 
-    if _service_instance and _service_instance.is_running:
-        return _service_instance.get_status()
+    if _trading_engine and _trading_engine.is_running:
+        return _trading_engine.get_status()
     return None
 
 
 def is_live_trading_active() -> bool:
     """Check if live trading is active."""
-    global _service_instance
-    return _service_instance is not None and _service_instance.is_running
+    global _trading_engine
+    return _trading_engine is not None and _trading_engine.is_running
