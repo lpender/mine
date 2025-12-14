@@ -181,12 +181,14 @@ def run_single_backtest(
     # Track highest price since entry for trailing stop
     highest_since_entry = entry_price
 
-    # Start looking for exit on the entry bar itself (we enter at open, can exit at close)
-    # Conservative assumption: price goes DOWN first (hitting stops), then UP (hitting targets)
+    # 4-stage intra-candle model: open -> low (if < open) -> high (if > close) -> close
+    # Stage 1: Price at open (entry happens here)
+    # Stage 2: Price drops to low - only if low < open
+    # Stage 3: Price rises to high - only if high > close
+    # Stage 4: Price settles at close
     for bar in bars[entry_bar_idx:]:
-        # Check for trailing stop FIRST (using previous highest, before this bar's high)
-        # This assumes price drops to low before reaching high within the candle
-        if config.trailing_stop_pct > 0:
+        # Stage 2: Price drops to low (only if low < open)
+        if bar.low < bar.open and config.trailing_stop_pct > 0:
             trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
             if bar.low <= trailing_stop_price:
                 exit_price = trailing_stop_price
@@ -194,22 +196,31 @@ def run_single_backtest(
                 trigger_type = "trailing_stop"
                 break
 
-        # Check for stop loss at candle close (can't know intra-bar path for fixed stop)
-        if bar.close <= stop_loss_price:
-            exit_price = bar.close
-            exit_time = bar.timestamp
-            trigger_type = "stop_loss"
-            break
-
-        # Now price goes up - update highest and check take profit
+        # Stage 3: Price rises to high (only if high > close, meaning it comes back down)
+        # But always update highest_since_entry if we reached a new high
         if bar.high > highest_since_entry:
             highest_since_entry = bar.high
 
-        # Check for take profit (bar high reached target - assume we got filled)
         if bar.high >= take_profit_price:
             exit_price = take_profit_price
             exit_time = bar.timestamp
             trigger_type = "take_profit"
+            break
+
+        # If high > close, price peaked and came back down - check trailing stop at close
+        if bar.high > bar.close and config.trailing_stop_pct > 0:
+            trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
+            if bar.close <= trailing_stop_price:
+                exit_price = trailing_stop_price
+                exit_time = bar.timestamp
+                trigger_type = "trailing_stop"
+                break
+
+        # Stage 4: Check fixed stop loss at close
+        if bar.close <= stop_loss_price:
+            exit_price = bar.close
+            exit_time = bar.timestamp
+            trigger_type = "stop_loss"
             break
 
     # If no exit triggered, use last bar's close
