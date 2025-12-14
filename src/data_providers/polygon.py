@@ -38,6 +38,11 @@ class PolygonProvider(OHLCVDataProvider):
     def supports_extended_hours(self) -> bool:
         return True
 
+    @property
+    def min_delay_minutes(self) -> int:
+        """Polygon free tier only has data up to end of previous trading day."""
+        return 1440  # 24 hours - conservative estimate
+
     def _sleep_for_rate_limit(self):
         now = time.time()
         if now < self._next_allowed_time:

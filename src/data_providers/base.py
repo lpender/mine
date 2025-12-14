@@ -46,3 +46,13 @@ class OHLCVDataProvider(ABC):
     def name(self) -> str:
         """Human-readable name of the provider."""
         return self.__class__.__name__
+
+    @property
+    def min_delay_minutes(self) -> int:
+        """
+        Minimum minutes before 'now' that data is available.
+
+        - Alpaca: ~15 minutes delay for minute bars
+        - Polygon free tier: end of previous trading day (~24+ hours)
+        """
+        return 15  # Default to 15 minutes

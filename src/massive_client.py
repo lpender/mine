@@ -222,6 +222,22 @@ class MassiveClient:
             return []
 
         end_time = start_time + timedelta(minutes=window_minutes)
+
+        # Clip end time based on provider's data availability
+        # (e.g., Alpaca: 15 min delay, Polygon free tier: end of previous day)
+        min_delay = self._provider.min_delay_minutes
+        earliest_available = now_cmp - timedelta(minutes=min_delay)
+        if end_time > earliest_available:
+            end_time = earliest_available
+
+        # If the entire window is too recent for the provider, skip
+        if start_time >= earliest_available:
+            print(
+                f"Skipping OHLCV fetch for {ticker}: data not yet available "
+                f"(provider {self._provider.name} has {min_delay} min delay)."
+            )
+            return []
+
         # Don't request beyond "now" (helps when market is open but window extends into the future)
         if end_time > now_cmp:
             end_time = now_cmp
