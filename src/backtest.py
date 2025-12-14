@@ -43,14 +43,16 @@ def run_single_backtest(
     first_candle_open = bars[0].open
 
     # Handle "entry after consecutive candles" mode
-    # Wait for X consecutive candles where low > first candle's open
+    # Wait for X consecutive candles where low > first candle's open and volume meets threshold
     if config.entry_after_consecutive_candles > 0:
         required = config.entry_after_consecutive_candles
         consecutive_count = 0
         entry_bar_idx = None
+        min_vol = config.min_candle_volume
 
         for i, bar in enumerate(bars):
-            if bar.low > first_candle_open:
+            # Check: low > first candle open AND volume meets minimum
+            if bar.low > first_candle_open and bar.volume >= min_vol:
                 consecutive_count += 1
                 if consecutive_count >= required:
                     # Entry at close of this candle

@@ -134,6 +134,7 @@ if "_initialized" not in st.session_state:
     st.session_state._mc_max = get_param("mc_max", 10000.0, float)
     st.session_state._sl_from_open = get_param("sl_open", False, bool)
     st.session_state._consec_candles = get_param("consec", 0, int)
+    st.session_state._min_candle_vol = get_param("min_vol", 0, int)
     st.session_state._price_min = get_param("price_min", 0.0, float)
     st.session_state._price_max = get_param("price_max", 100.0, float)
 
@@ -170,6 +171,14 @@ with st.sidebar:
         step=1,
         key="_consec_candles",
         help="Wait for X consecutive candles with low > first candle open before entry (0 = disabled)"
+    )
+
+    min_candle_vol = st.number_input(
+        "Min volume per candle",
+        min_value=0,
+        step=1000,
+        key="_min_candle_vol",
+        help="Minimum volume each candle must have for consecutive entry (0 = no minimum)"
     )
 
     sl_from_open = st.checkbox(
@@ -249,6 +258,7 @@ with st.sidebar:
     set_param("tp", take_profit)
     set_param("hold", hold_time)
     set_param("consec", consec_candles)
+    set_param("min_vol", min_candle_vol)
     set_param("sl_open", sl_from_open)
     set_param("sess", sessions)
     set_param("country", countries)
@@ -336,6 +346,7 @@ config = BacktestConfig(
     window_minutes=hold_time,
     entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
     entry_after_consecutive_candles=consec_candles,
+    min_candle_volume=int(min_candle_vol),
 )
 
 summary = run_backtest(filtered, bars_dict, config)

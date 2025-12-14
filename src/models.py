@@ -138,6 +138,7 @@ class BacktestConfig:
     entry_at_candle_close: bool = False  # If True, enter at end of first candle (more realistic)
     entry_by_message_second: bool = False  # If True, enter within first candle based on announcement second (more realistic)
     entry_after_consecutive_candles: int = 0  # Wait for X consecutive candles with low > first candle open
+    min_candle_volume: int = 0  # Minimum volume per candle for consecutive candles entry
 
 
 @dataclass
