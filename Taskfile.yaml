@@ -1,7 +1,7 @@
 version: '3'
 
 vars:
-  BETTERDISCORD_PLUGINS: ~/Library/Application Support/BetterDiscord/plugins
+  BETTERDISCORD_PLUGINS: /Users/lpender/Library/Application Support/BetterDiscord/plugins
   VENV: ./venv
 
 tasks:
