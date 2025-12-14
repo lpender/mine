@@ -171,6 +171,10 @@ def run_single_backtest(
     # Stop loss: either from entry price or from first candle's open
     if config.stop_loss_from_open:
         stop_loss_price = first_candle_open * (1 - config.stop_loss_pct / 100)
+        # Sanity check: stop loss should never be above entry price
+        # (that would be a take profit, not a stop loss)
+        if stop_loss_price > entry_price:
+            stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)
     else:
         stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)
 
@@ -191,7 +195,12 @@ def run_single_backtest(
         if bar.low < bar.open:
             # Check fixed stop loss first at the low
             if bar.low <= stop_loss_price:
-                exit_price = stop_loss_price
+                # If entire bar is below stop (gap down through stop), fill at bar.open
+                # because the stop price was never actually traded
+                if bar.high < stop_loss_price:
+                    exit_price = bar.open
+                else:
+                    exit_price = stop_loss_price
                 exit_time = bar.timestamp
                 trigger_type = "stop_loss"
                 break
@@ -200,7 +209,11 @@ def run_single_backtest(
             if config.trailing_stop_pct > 0:
                 trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
                 if bar.low <= trailing_stop_price:
-                    exit_price = trailing_stop_price
+                    # Same gap handling for trailing stop
+                    if bar.high < trailing_stop_price:
+                        exit_price = bar.open
+                    else:
+                        exit_price = trailing_stop_price
                     exit_time = bar.timestamp
                     trigger_type = "trailing_stop"
                     break
@@ -227,7 +240,11 @@ def run_single_backtest(
 
         # Stage 4: Check fixed stop loss at close
         if bar.close <= stop_loss_price:
-            exit_price = stop_loss_price  # Exit at stop price, not close (we had a stop order)
+            # If entire bar is below stop (gap down scenario), fill at bar.open
+            if bar.high < stop_loss_price:
+                exit_price = bar.open
+            else:
+                exit_price = stop_loss_price
             exit_time = bar.timestamp
             trigger_type = "stop_loss"
             break
