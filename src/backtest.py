@@ -191,8 +191,8 @@ def run_single_backtest(
             trigger_type = "take_profit"
             break
 
-        # Check for trailing stop at candle close (exit at close, not theoretical price)
-        if config.trailing_stop_pct > 0:
+        # Check for trailing stop at candle close (only if price went up from entry first)
+        if config.trailing_stop_pct > 0 and highest_since_entry > entry_price:
             trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
             if bar.close <= trailing_stop_price:
                 exit_price = bar.close
