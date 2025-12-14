@@ -31,6 +31,9 @@ module.exports = class StockAlertMonitor {
         // Create backfill widget after a short delay
         setTimeout(() => this.createBackfillWidget(), 2000);
 
+        // Inject trade buttons on existing messages
+        setTimeout(() => this.startTradeButtonInjection(), 1000);
+
         BdApi.UI.showToast("Stock Alert Monitor started!", { type: "success" });
     }
 
@@ -38,6 +41,7 @@ module.exports = class StockAlertMonitor {
         console.log("[StockAlertMonitor] Stopping...");
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
         this.removeBackfillWidget();
+        this.stopTradeButtonInjection();
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
@@ -166,6 +170,188 @@ Full message: ${fullContent.substring(0, 200)}
             // Webhook not running - that's OK
             return false;
         }
+    }
+
+    // ============== Trade Button Injection ==============
+
+    startTradeButtonInjection() {
+        // Inject CSS for trade buttons
+        this.injectTradeButtonStyles();
+
+        // Initial injection
+        this.injectTradeButtons();
+
+        // Set up mutation observer to catch new messages
+        this._tradeButtonObserver = new MutationObserver((mutations) => {
+            let shouldInject = false;
+            for (const mutation of mutations) {
+                if (mutation.addedNodes.length > 0) {
+                    shouldInject = true;
+                    break;
+                }
+            }
+            if (shouldInject) {
+                // Debounce
+                if (this._tradeButtonTimeout) clearTimeout(this._tradeButtonTimeout);
+                this._tradeButtonTimeout = setTimeout(() => this.injectTradeButtons(), 100);
+            }
+        });
+
+        // Observe the message list
+        const messageList = document.querySelector('[data-list-id="chat-messages"]') ||
+                           document.querySelector('[class*="messagesWrapper"]');
+        if (messageList) {
+            this._tradeButtonObserver.observe(messageList, { childList: true, subtree: true });
+        }
+
+        // Also periodically check (handles channel switches)
+        this._tradeButtonInterval = setInterval(() => this.injectTradeButtons(), 3000);
+
+        console.log("[StockAlertMonitor] Trade button injection started");
+    }
+
+    stopTradeButtonInjection() {
+        if (this._tradeButtonObserver) {
+            this._tradeButtonObserver.disconnect();
+            this._tradeButtonObserver = null;
+        }
+        if (this._tradeButtonInterval) {
+            clearInterval(this._tradeButtonInterval);
+            this._tradeButtonInterval = null;
+        }
+        if (this._tradeButtonTimeout) {
+            clearTimeout(this._tradeButtonTimeout);
+            this._tradeButtonTimeout = null;
+        }
+        // Remove all injected buttons
+        document.querySelectorAll('.sam-trade-btn').forEach(btn => btn.remove());
+        // Remove injected styles
+        document.getElementById('sam-trade-btn-styles')?.remove();
+    }
+
+    injectTradeButtonStyles() {
+        if (document.getElementById('sam-trade-btn-styles')) return;
+
+        const style = document.createElement('style');
+        style.id = 'sam-trade-btn-styles';
+        style.textContent = `
+            .sam-trade-btn {
+                display: inline-flex;
+                align-items: center;
+                padding: 2px 8px;
+                margin-left: 8px;
+                background: #5865f2;
+                color: white;
+                font-size: 11px;
+                font-weight: 600;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+                opacity: 0.8;
+                transition: all 0.15s ease;
+                vertical-align: middle;
+            }
+            .sam-trade-btn:hover {
+                opacity: 1;
+                background: #4752c4;
+                transform: scale(1.05);
+            }
+            .sam-trade-btn:active {
+                background: #3c45a5;
+                transform: scale(0.98);
+            }
+            .sam-trade-btn.sent {
+                background: #3ba55c;
+                pointer-events: none;
+            }
+            .sam-trade-btn.failed {
+                background: #ed4245;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    injectTradeButtons() {
+        const messageElements = document.querySelectorAll('li[id^="chat-messages-"]');
+
+        messageElements.forEach((msgEl) => {
+            // Skip if already has a trade button
+            if (msgEl.querySelector('.sam-trade-btn')) return;
+
+            // Get message content
+            const contentEl = msgEl.querySelector('div[id^="message-content-"]');
+            if (!contentEl) return;
+
+            const content = contentEl.textContent?.trim() || "";
+
+            // Check for stock alert pattern: TICKER < $X
+            const tickerMatch = content.match(/\b([A-Z]{2,5})\s*<\s*\$[\d.]+/);
+            if (!tickerMatch) return;
+
+            const ticker = tickerMatch[1];
+            const priceInfo = tickerMatch[0];
+
+            // Create trade button
+            const btn = document.createElement('button');
+            btn.className = 'sam-trade-btn';
+            btn.textContent = `▶ ${ticker}`;
+            btn.title = `Send ${ticker} to trading server`;
+
+            // Gather message data
+            const timeEl = msgEl.querySelector("time[datetime]");
+            const timestamp = timeEl?.getAttribute("datetime") || new Date().toISOString();
+
+            // Get author - try multiple selectors
+            const authorEl = msgEl.querySelector('[class*="username_"], [class*="headerText_"] [class*="username"], h3[class*="header_"] span');
+            const author = authorEl?.textContent?.trim() || null;
+
+            // Get full content with emoji alt text
+            const clone = contentEl.cloneNode(true);
+            clone.querySelectorAll('img.emoji').forEach(img => {
+                const alt = img.alt || img.dataset?.name || '';
+                img.replaceWith(alt);
+            });
+            const fullContent = clone.textContent?.trim() || content;
+
+            // Handle click
+            btn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                btn.textContent = '...';
+                btn.disabled = true;
+
+                const channel = this.getCurrentChannelName();
+
+                const success = await this.sendToWebhook(this.alertWebhookUrl, {
+                    ticker: ticker,
+                    price_info: priceInfo,
+                    channel: channel,
+                    content: fullContent,
+                    timestamp: timestamp,
+                    author: author,
+                    manual: true  // Flag to indicate manual trigger
+                });
+
+                if (success) {
+                    btn.textContent = `✓ ${ticker}`;
+                    btn.className = 'sam-trade-btn sent';
+                    BdApi.UI.showToast(`Sent ${ticker} to trading server`, { type: "success" });
+                } else {
+                    btn.textContent = `✗ ${ticker}`;
+                    btn.className = 'sam-trade-btn failed';
+                    btn.disabled = false;
+                    BdApi.UI.showToast(`Failed to send ${ticker} - server running?`, { type: "error" });
+
+                    // Reset after 2 seconds
+                    setTimeout(() => {
+                        btn.textContent = `▶ ${ticker}`;
+                        btn.className = 'sam-trade-btn';
+                    }, 2000);
+                }
+            });
+
+            // Insert button after the message content
+            contentEl.appendChild(btn);
+        });
     }
 
     // ============== Backfill Widget ==============
