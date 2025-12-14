@@ -525,9 +525,9 @@ else:
             # Create candlestick chart
             fig = go.Figure()
 
-            # Build hover text with volume
+            # Build hover text with volume (vertical layout)
             hover_text = [
-                f"O: ${o:.2f}  H: ${h:.2f}  L: ${l:.2f}  C: ${c:.2f}<br>Vol: {v:,.0f}"
+                f"Open: ${o:.2f}<br>High: ${h:.2f}<br>Low: ${l:.2f}<br>Close: ${c:.2f}<br>Volume: {v:,.0f}"
                 for o, h, l, c, v in zip(bar_open, bar_high, bar_low, bar_close, bar_volume)
             ]
 
