@@ -171,7 +171,7 @@ with st.sidebar:
         min_value=0, max_value=10,
         step=1,
         key="_consec_candles",
-        help="Wait for X consecutive candles with low > first candle open before entry (0 = disabled)"
+        help="Wait for X consecutive green candles (close > open) before entry (0 = disabled)"
     )
 
     min_candle_vol = st.number_input(
