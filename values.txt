@@ -1,0 +1,42 @@
++3.67% http://localhost:8501/?sl=10.0&tp=10.0&hold=30&author=NuntioBotAPP&country=&has_hl=0&sess=premarket%2Cmarket%2Cpostmarket&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=0.0&price_max=20.0
+
+
++3.46 http://localhost:8501/?sl=10.0&tp=10.0&hold=30&author=NuntioBotAPP&country=&has_hl=0&sess=premarket%2Cmarket%2Cpostmarket&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=4.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=3&sl_open=1&price_min=1.0&price_max=20.0
+
++3.43 http://localhost:8501/?sl=10.0&tp=30.0&hold=30&author=NuntioBotAPP&country=&has_hl=0&sess=premarket%2Cpostmarket%2Cmarket&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=3.0&float_max=90.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=100000&trail=1.0&row=2
+
+Weekly: 610 http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&country=&has_hl=1&sess=premarket%2Cpostmarket%2Cmarket&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=10000&trail=8.5
+
+I'd like to start paper trading this strategy tomorrow:
+
+http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&country=&has_hl=1&sess=market&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=10000&trail=8.5
+
+A couple things will have to happen:
+
+- We need to update the plugin for discord to immediately send messages to the listener server when they arrive. Let's add a toggle that's like "send new messages to server".
+- We need to initiate a websocket connection to insight_sentry (See RapidAPI key in the .env file) and start tracking OHLCV data immediately.
+- We need to encode everything about the strategy (the rules around buying, selling).
+- We need to trade with Alpaca (paper trading for now). We'll default to 100 shares. I'd like to start paper trading this strategy tomorrow:
+
+http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&country=&has_hl=1&sess=market&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=10000&trail=8.5
+
+A couple things will have to happen:
+
+- We need to update the plugin for discord to immediately send messages to the listener server when they arrive. Let's add a toggle that's like "send new messages to server".
+- We need to initiate a websocket connection to insight_sentry (See RapidAPI key in the .env file) and start tracking OHLCV data immediately.
+- We need to encode everything about the strategy (the rules around buying, selling).
+- We need to trade with Alpaca (paper trading for now). We'll default to 100 shares. Let's do something similar -- have
+an abstract interface for trading and then be able to swap out the backend (alpaca, tradier, etc).
+
+For RapidAPI to get websocket key
+
+curl --request GET
+	--url https://insightsentry.p.rapidapi.com/v2/websocket-key
+	--header 'x-rapidapi-host: insightsentry.p.rapidapi.com'
+	--header 'x-rapidapi-key: 940741747amsh82731d0bf343ec2p1e5cc3jsn6db50c49c73c'
+
+To get price updates, see:
+
+https://insightsentry.com/docs/ws (we should probably subscribe for second updates so that we can quickly execute on price / volume changes)
+
+Alpaca should work during off-market hours but it may not...

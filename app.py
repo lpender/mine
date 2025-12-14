@@ -25,6 +25,13 @@ def to_est(dt):
 
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig
+from src.strategy import StrategyConfig
+from src.live_trading_service import (
+    start_live_trading,
+    stop_live_trading,
+    get_live_trading_status,
+    is_live_trading_active,
+)
 
 st.set_page_config(
     page_title="PR Backtest Dashboard",
@@ -311,6 +318,63 @@ with st.sidebar:
     set_param("direction", directions)
     set_param("scanner_test", scanner_test)
     set_param("scanner_lull", scanner_after_lull)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Live Trading Controls
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Live Trading")
+
+    trading_active = is_live_trading_active()
+
+    # Show current strategy summary
+    st.caption(f"Entry: {consec_candles} green candles, {min_candle_vol}+ vol")
+    st.caption(f"Exit: TP {take_profit}%, SL {stop_loss}%, Trail {trailing_stop}%")
+
+    if trading_active:
+        st.success("PAPER TRADING ACTIVE")
+
+        # Show status
+        status = get_live_trading_status()
+        if status:
+            col1, col2 = st.columns(2)
+            col1.metric("Pending", len(status.get("pending_entries", [])))
+            col2.metric("Active", len(status.get("active_trades", {})))
+
+            if status.get("active_trades"):
+                st.subheader("Active Positions")
+                for ticker, trade in status["active_trades"].items():
+                    st.write(f"**{ticker}**: Entry ${trade['entry_price']:.2f}, "
+                             f"SL ${trade['stop_loss']:.2f}, TP ${trade['take_profit']:.2f}")
+
+            if status.get("account"):
+                st.caption(f"Account: ${status['account'].get('equity', 0):,.0f} equity")
+
+        if st.button("Stop Trading", type="primary", use_container_width=True):
+            stop_live_trading()
+            st.rerun()
+    else:
+        # Build strategy config from current settings
+        if st.button("Start Paper Trading", type="primary", use_container_width=True):
+            strategy_config = StrategyConfig(
+                channels=channels if channels else [],
+                directions=directions if directions else [],
+                price_min=price_min,
+                price_max=price_max,
+                sessions=sessions if sessions else ["premarket", "market"],
+                consec_green_candles=consec_candles,
+                min_candle_volume=int(min_candle_vol),
+                take_profit_pct=take_profit,
+                stop_loss_pct=stop_loss,
+                stop_loss_from_open=sl_from_open,
+                trailing_stop_pct=trailing_stop,
+                timeout_minutes=hold_time,
+                shares=100,
+            )
+            start_live_trading(strategy_config, paper=True)
+            st.rerun()
+
+        st.info("Configure strategy above, then click to start")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

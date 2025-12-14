@@ -34,7 +34,8 @@
       "Bash(npm create:*)",
       "Bash(psql:*)",
       "Bash(rails new:*)",
-      "Bash(bin/rails runner:*)"
+      "Bash(bin/rails runner:*)",
+      "Bash(grep:*)"
     ]
   }
 }

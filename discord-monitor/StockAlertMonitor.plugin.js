@@ -15,6 +15,7 @@ module.exports = class StockAlertMonitor {
         this.backfillWebhookUrl = "http://localhost:8765/backfill";
         this.widgetContainer = null;
         this.updateInterval = null;
+        this.enableLiveAlerts = false; // Send real-time alerts to trading server
     }
 
     start() {
@@ -140,14 +141,17 @@ Full message: ${fullContent.substring(0, 200)}
         `);
 
         // 5. Send to local webhook (for your trading system)
-        this.sendToWebhook(this.alertWebhookUrl, {
-            ticker: ticker,
-            price_info: priceInfo,
-            channel: channelName,
-            content: fullContent,
-            timestamp: new Date().toISOString(),
-            author: author
-        });
+        if (this.enableLiveAlerts) {
+            this.sendToWebhook(this.alertWebhookUrl, {
+                ticker: ticker,
+                price_info: priceInfo,
+                channel: channelName,
+                content: fullContent,
+                timestamp: new Date().toISOString(),
+                author: author
+            });
+            console.log(`[StockAlertMonitor] Alert sent to trading server: ${ticker}`);
+        }
     }
 
     async sendToWebhook(url, data) {
@@ -510,6 +514,16 @@ Full message: ${fullContent.substring(0, 200)}
 
         panel.innerHTML = `
             <h3 style="color: white; margin-bottom: 10px;">Stock Alert Monitor Settings</h3>
+            <div style="margin-bottom: 15px; padding: 10px; background: ${this.enableLiveAlerts ? '#3ba55c' : '#40444b'}; border-radius: 4px;">
+                <label style="color: white; display: flex; align-items: center; cursor: pointer;">
+                    <input type="checkbox" id="sam-live-alerts" ${this.enableLiveAlerts ? 'checked' : ''}
+                        style="margin-right: 10px; width: 18px; height: 18px;">
+                    <span style="font-weight: bold;">Send alerts to trading server</span>
+                </label>
+                <div style="color: #b9bbbe; font-size: 12px; margin-top: 5px;">
+                    When enabled, alerts will be sent to your live trading system
+                </div>
+            </div>
             <div style="margin-bottom: 10px;">
                 <label style="color: #b9bbbe;">Channels to monitor (comma-separated):</label><br>
                 <input type="text" id="sam-channels" value="${this.channelFilter.join(", ")}"
@@ -538,6 +552,17 @@ Full message: ${fullContent.substring(0, 200)}
 
         // Add event listeners after panel is created
         setTimeout(() => {
+            // Live alerts toggle - immediate effect
+            document.getElementById("sam-live-alerts")?.addEventListener("change", (e) => {
+                this.enableLiveAlerts = e.target.checked;
+                const container = e.target.closest("div");
+                container.style.background = this.enableLiveAlerts ? '#3ba55c' : '#40444b';
+                BdApi.UI.showToast(
+                    this.enableLiveAlerts ? "Live alerts ENABLED" : "Live alerts DISABLED",
+                    { type: this.enableLiveAlerts ? "success" : "info" }
+                );
+            });
+
             document.getElementById("sam-save")?.addEventListener("click", () => {
                 const channels = document.getElementById("sam-channels").value;
                 this.channelFilter = channels.split(",").map(c => c.trim()).filter(c => c);
