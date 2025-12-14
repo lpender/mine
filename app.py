@@ -372,10 +372,21 @@ st.header("Summary")
 
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
+# Calculate weeks in the data for weekly return
+if filtered:
+    dates = [a.timestamp for a in filtered]
+    date_range_days = (max(dates) - min(dates)).days
+    weeks = max(1, date_range_days / 7)  # At least 1 week
+else:
+    weeks = 1
+
+total_return_1k = stats['expectancy'] * 10 * stats['total_trades']
+weekly_return_1k = total_return_1k / weeks
+
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
 col3.metric("Win Rate", f"{stats['win_rate']:.1f}%")
-col4.metric("Return/$1k", f"${stats['expectancy'] * 10:+.0f}")
+col4.metric("Weekly/$1k", f"${weekly_return_1k:+.0f}", help=f"Total ${total_return_1k:+.0f} over {weeks:.1f} weeks")
 col5.metric("Best", f"{stats['best_trade']:+.1f}%")
 col6.metric("Worst", f"{stats['worst_trade']:+.1f}%")
 
