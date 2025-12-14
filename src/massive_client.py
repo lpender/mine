@@ -1,13 +1,9 @@
 import json
 import os
-import time
-import random
-import requests
 import pandas as pd
 from datetime import datetime, timedelta, date as date_type, time as time_type
-from email.utils import parsedate_to_datetime
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, Any
+from typing import List, Optional, Tuple
 from .models import (
     OHLCVBar,
     Announcement,
@@ -15,6 +11,7 @@ from .models import (
     MARKET_OPEN,
     ET_TZ,
 )
+from .data_providers import get_provider, OHLCVDataProvider
 
 try:
     import pandas_market_calendars as _mcal  # type: ignore
@@ -72,69 +69,42 @@ def _combine_et(d: date_type, t: time_type, naive_input: bool) -> datetime:
 
 
 class MassiveClient:
-    """Client for fetching OHLCV data from Massive.com."""
+    """Client for fetching OHLCV data with caching and market session logic.
 
-    BASE_URL = "https://api.massive.com"
+    Supports multiple backends via DATA_BACKEND env var (polygon, alpaca, ib).
+    """
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         cache_dir: str = "data/ohlcv",
-        rate_limit_delay: float = 12.0,
-        max_retries: int = 8,
-        timeout_s: float = 30.0,
+        backend: Optional[str] = None,
+        provider: Optional[OHLCVDataProvider] = None,
     ):
-        self.api_key = api_key or os.getenv("MASSIVE_API_KEY")
+        # For backwards compatibility, accept api_key but don't require it
+        # (providers manage their own credentials)
+        self._api_key = api_key
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        # Minimum seconds between *all* HTTP attempts (including retries)
-        self.rate_limit_delay = float(os.getenv("MASSIVE_RATE_LIMIT_DELAY", rate_limit_delay))
-        self.max_retries = int(os.getenv("MASSIVE_MAX_RETRIES", max_retries))
-        self.timeout_s = float(os.getenv("MASSIVE_TIMEOUT_S", timeout_s))
 
-        self._session = requests.Session()
-        self._next_allowed_time = 0.0  # epoch seconds
+        # Use provided provider or create one from factory
+        self._provider = provider or get_provider(backend)
+        print(f"[MassiveClient] Using {self._provider.name} backend")
+
+    @property
+    def api_key(self) -> Optional[str]:
+        """For backwards compatibility."""
+        return self._api_key
+
+    @property
+    def rate_limit_delay(self) -> float:
+        """Delegate to provider's rate limit."""
+        return self._provider.rate_limit_delay
 
     def _get_cache_path(self, ticker: str, start: datetime, end: datetime) -> Path:
         """Generate cache file path for a specific ticker and time range."""
         date_str = start.strftime("%Y%m%d_%H%M")
         return self.cache_dir / f"{ticker}_{date_str}.parquet"
-
-    def _sleep_for_rate_limit(self):
-        now = time.time()
-        if now < self._next_allowed_time:
-            time.sleep(self._next_allowed_time - now)
-
-    def _bump_next_allowed_time(self, extra_delay_s: float = 0.0):
-        """
-        Ensure there's at least `rate_limit_delay` between HTTP attempts, plus optional extra delay.
-        """
-        now = time.time()
-        base = now + self.rate_limit_delay
-        extra = now + max(0.0, float(extra_delay_s))
-        self._next_allowed_time = max(self._next_allowed_time, base, extra)
-
-    def _parse_retry_after_seconds(self, response: requests.Response) -> Optional[float]:
-        ra = response.headers.get("Retry-After")
-        if not ra:
-            return None
-        ra = ra.strip()
-        # Retry-After can be seconds or HTTP-date
-        try:
-            return float(ra)
-        except ValueError:
-            try:
-                dt = parsedate_to_datetime(ra)
-                # parsedate_to_datetime returns aware datetime (usually UTC)
-                return max(0.0, (dt - datetime.now(tz=dt.tzinfo)).total_seconds())
-            except Exception:
-                return None
-
-    def _redact_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        redacted = dict(params)
-        if "apiKey" in redacted:
-            redacted["apiKey"] = "REDACTED"
-        return redacted
 
     def _load_from_cache(self, ticker: str, start: datetime, end: datetime) -> Optional[List[OHLCVBar]]:
         """Try to load data from cache."""
@@ -186,13 +156,13 @@ class MassiveClient:
         use_cache: bool = True,
     ) -> List[OHLCVBar]:
         """
-        Fetch OHLCV bars from Massive.com API.
+        Fetch OHLCV bars using the configured data provider.
 
         Args:
             ticker: Stock ticker symbol (e.g., 'AAPL')
             start: Start datetime
             end: End datetime
-            multiplier: Size of timespan multiplier
+            multiplier: Size of timespan multiplier (for compatibility, not used by all providers)
             timespan: Time window (minute, hour, day, etc.)
             use_cache: Whether to use cached data
 
@@ -205,107 +175,14 @@ class MassiveClient:
             if cached is not None:
                 return cached
 
-        if not self.api_key:
-            raise ValueError("MASSIVE_API_KEY not set. Please set it in .env or pass to constructor.")
+        # Delegate to provider
+        bars = self._provider.fetch_ohlcv(ticker, start, end, timespan)
 
-        # Convert to millisecond timestamps
-        start_ms = int(start.timestamp() * 1000)
-        end_ms = int(end.timestamp() * 1000)
+        # Cache the results (including empty results to distinguish from unfetched)
+        if use_cache:
+            self._save_to_cache(ticker, start, end, bars)
 
-        # Log the request with human-readable times
-        print(f"Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
-
-        url = f"{self.BASE_URL}/v2/aggs/ticker/{ticker}/range/{multiplier}/{timespan}/{start_ms}/{end_ms}"
-        params = {
-            "adjusted": "true",
-            "sort": "asc",
-            "limit": 50000,
-            "apiKey": self.api_key,
-        }
-
-        safe_params = self._redact_params(params)
-
-        # Exponential backoff baseline (in addition to the global min interval)
-        backoff_base_s = float(os.getenv("MASSIVE_BACKOFF_BASE_S", "2.0"))
-        backoff_cap_s = float(os.getenv("MASSIVE_BACKOFF_CAP_S", "120.0"))
-
-        for attempt in range(self.max_retries):
-            try:
-                self._sleep_for_rate_limit()
-                response = self._session.get(url, params=params, timeout=self.timeout_s)
-                # After any attempt, enforce the base spacing before the next one
-                self._bump_next_allowed_time()
-
-                # Handle rate limiting with retry
-                if response.status_code == 429:
-                    retry_after = self._parse_retry_after_seconds(response)
-                    exp_backoff = min(backoff_cap_s, backoff_base_s * (2 ** attempt))
-                    wait_time = max(self.rate_limit_delay, retry_after or 0.0, exp_backoff)
-                    # jitter to avoid synchronized retries
-                    wait_time = min(backoff_cap_s, wait_time + random.uniform(0.0, min(1.0, wait_time * 0.25)))
-
-                    if attempt < self.max_retries - 1:
-                        print(f"Rate limited for {ticker}, waiting {wait_time:.1f}s... (attempt {attempt+1}/{self.max_retries})")
-                        print(f"  URL: {url}")
-                        print(f"  Params: {safe_params}")
-                        self._bump_next_allowed_time(wait_time)
-                        continue
-
-                    print(f"Rate limit exceeded for {ticker} after {self.max_retries} retries")
-                    print(f"  URL: {url}")
-                    print(f"  Params: {safe_params}")
-                    return []
-
-                if response.status_code != 200:
-                    print(f"Error fetching OHLCV for {ticker}: {response.status_code} {response.reason}")
-                    print(f"  URL: {url}")
-                    print(f"  Params: {safe_params}")
-                    print(f"  Response: {response.text[:500]}")
-                    return []
-
-                response.raise_for_status()
-                data = response.json()
-
-                if data.get("status") != "OK" or "results" not in data:
-                    print(f"No data for {ticker}: status={data.get('status')}, results_count={data.get('resultsCount', 0)}")
-                    print(f"  URL: {url}")
-                    print(f"  Params: {safe_params}")
-                    return []
-
-                bars = []
-                for result in data["results"]:
-                    bars.append(OHLCVBar(
-                        timestamp=datetime.fromtimestamp(result["t"] / 1000),
-                        open=result["o"],
-                        high=result["h"],
-                        low=result["l"],
-                        close=result["c"],
-                        volume=result["v"],
-                        vwap=result.get("vw"),
-                    ))
-
-                # Cache the results (including empty results to distinguish from unfetched)
-                if use_cache:
-                    self._save_to_cache(ticker, start, end, bars)
-
-                return bars
-
-            except requests.RequestException as e:
-                if attempt < self.max_retries - 1:
-                    exp_backoff = min(backoff_cap_s, backoff_base_s * (2 ** attempt))
-                    wait_time = max(self.rate_limit_delay, exp_backoff)
-                    wait_time = min(backoff_cap_s, wait_time + random.uniform(0.0, min(1.0, wait_time * 0.25)))
-                    print(f"Request error for {ticker}: {e} (retrying in {wait_time:.1f}s, attempt {attempt+1}/{self.max_retries})")
-                    print(f"  URL: {url}")
-                    print(f"  Params: {safe_params}")
-                    self._bump_next_allowed_time(wait_time)
-                    continue
-                print(f"Error fetching OHLCV for {ticker}: {e}")
-                print(f"  URL: {url}")
-                print(f"  Params: {safe_params}")
-                return []
-
-        return []
+        return bars
 
     def fetch_after_announcement(
         self,
