@@ -525,7 +525,13 @@ else:
             # Create candlestick chart
             fig = go.Figure()
 
-            # Add candlestick with volume in hover
+            # Build hover text with volume
+            hover_text = [
+                f"O: ${o:.2f}  H: ${h:.2f}  L: ${l:.2f}  C: ${c:.2f}<br>Vol: {v:,.0f}"
+                for o, h, l, c, v in zip(bar_open, bar_high, bar_low, bar_close, bar_volume)
+            ]
+
+            # Add candlestick
             fig.add_trace(go.Candlestick(
                 x=bar_times,
                 open=bar_open,
@@ -535,15 +541,8 @@ else:
                 name="Price",
                 increasing_line_color="green",
                 decreasing_line_color="red",
-                customdata=bar_volume,
-                hovertemplate=(
-                    "Time: %{x}<br>"
-                    "Open: $%{open:.2f}<br>"
-                    "High: $%{high:.2f}<br>"
-                    "Low: $%{low:.2f}<br>"
-                    "Close: $%{close:.2f}<br>"
-                    "Volume: %{customdata:,.0f}<extra></extra>"
-                ),
+                text=hover_text,
+                hoverinfo="text+x",
             ))
 
             # Add entry marker (entry at close of first candle)
