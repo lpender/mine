@@ -188,13 +188,22 @@ def run_single_backtest(
     # Stage 4: Price settles at close
     for bar in bars[entry_bar_idx:]:
         # Stage 2: Price drops to low (only if low < open)
-        if bar.low < bar.open and config.trailing_stop_pct > 0:
-            trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
-            if bar.low <= trailing_stop_price:
-                exit_price = trailing_stop_price
+        if bar.low < bar.open:
+            # Check fixed stop loss first at the low
+            if bar.low <= stop_loss_price:
+                exit_price = stop_loss_price
                 exit_time = bar.timestamp
-                trigger_type = "trailing_stop"
+                trigger_type = "stop_loss"
                 break
+
+            # Then check trailing stop
+            if config.trailing_stop_pct > 0:
+                trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
+                if bar.low <= trailing_stop_price:
+                    exit_price = trailing_stop_price
+                    exit_time = bar.timestamp
+                    trigger_type = "trailing_stop"
+                    break
 
         # Stage 3: Price rises to high (only if high > close, meaning it comes back down)
         # But always update highest_since_entry if we reached a new high
@@ -218,7 +227,7 @@ def run_single_backtest(
 
         # Stage 4: Check fixed stop loss at close
         if bar.close <= stop_loss_price:
-            exit_price = bar.close
+            exit_price = stop_loss_price  # Exit at stop price, not close (we had a stop order)
             exit_time = bar.timestamp
             trigger_type = "stop_loss"
             break
