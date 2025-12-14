@@ -177,9 +177,9 @@ def run_single_backtest(
     # Track highest price since entry for trailing stop
     highest_since_entry = entry_price
 
-    # Start looking for exit on the NEXT bar after entry
+    # Start looking for exit on the entry bar itself (we enter at open, can exit at close)
     # We check conditions at candle CLOSE since we can't know intra-bar price path
-    for bar in bars[entry_bar_idx + 1:]:
+    for bar in bars[entry_bar_idx:]:
         # Update highest price seen (use close for trailing stop reference)
         if bar.close > highest_since_entry:
             highest_since_entry = bar.close
