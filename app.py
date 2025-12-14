@@ -375,7 +375,7 @@ col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
 col3.metric("Win Rate", f"{stats['win_rate']:.1f}%")
-col4.metric("Expectancy", f"{stats['expectancy']:+.2f}%")
+col4.metric("Return/$1k", f"${stats['expectancy'] * 10:+.0f}")
 col5.metric("Best", f"{stats['best_trade']:+.1f}%")
 col6.metric("Worst", f"{stats['worst_trade']:+.1f}%")
 
