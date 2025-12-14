@@ -191,8 +191,8 @@ def run_single_backtest(
             break
 
         # Check for trailing stop intracandle
-        # If price went up from entry (highest > entry) and low dropped X% from that high, trigger
-        if config.trailing_stop_pct > 0 and highest_since_entry > entry_price:
+        # If low dropped X% from the highest point since entry, trigger
+        if config.trailing_stop_pct > 0:
             trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
             if bar.low <= trailing_stop_price:
                 exit_price = trailing_stop_price
