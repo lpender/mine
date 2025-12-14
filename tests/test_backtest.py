@@ -398,12 +398,12 @@ class TestEntryByMessageSecond:
 class TestExitLogic:
     """Tests to ensure exit logic still works correctly."""
 
-    def test_exit_happens_on_next_bar_not_entry_bar(self):
-        """Exit cannot happen on the same bar as entry."""
+    def test_exit_can_happen_on_entry_bar_with_price_trigger(self):
+        """With price trigger entry (not candle close), exit CAN happen on entry bar."""
         base_time = datetime(2025, 1, 15, 9, 30)
         announcement = make_announcement(timestamp=base_time)
 
-        # Entry bar has high enough to hit take profit, but exit should be on next bar
+        # Entry bar has low that breaches stop loss
         bars = [
             make_bar(base_time, open_=1.0, high=1.20, low=0.99, close=1.15, volume=100_000),
             make_bar(base_time + timedelta(minutes=1), open_=1.15, high=1.20, low=1.10, close=1.18, volume=50_000),
@@ -412,8 +412,8 @@ class TestExitLogic:
         config = BacktestConfig(
             entry_trigger_pct=5.0,  # Entry at 1.05
             volume_threshold=0,
-            take_profit_pct=10.0,  # Exit at 1.155 (10% above 1.05)
-            stop_loss_pct=3.0,
+            take_profit_pct=10.0,  # Exit at 1.155
+            stop_loss_pct=3.0,  # Exit at 1.0185
             window_minutes=30,
         )
 
@@ -421,8 +421,10 @@ class TestExitLogic:
 
         assert result.entered
         assert result.entry_time == base_time
-        # Exit should be on second bar, not first
-        assert result.exit_time == base_time + timedelta(minutes=1)
+        # With price trigger entry, exit CAN happen on same bar
+        # Stop loss at 1.05 * 0.97 = 1.0185, low of 0.99 breaches it
+        assert result.trigger_type == "stop_loss"
+        assert result.exit_time == base_time  # Same bar
 
     def test_stop_loss_exit(self):
         """Stop loss triggers correctly."""
@@ -471,3 +473,555 @@ class TestExitLogic:
         assert result.entered
         assert result.trigger_type == "timeout"
         assert result.exit_price == 1.07  # Last bar's close
+
+
+class TestFourStageIntraCandleModel:
+    """
+    Tests for the 4-stage intra-candle price path model.
+
+    The model assumes price moves within each candle as:
+    1. Stage 1: Opens at open
+    2. Stage 2: Drops to low (only if low < open)
+    3. Stage 3: Rises to high (only if high > close)
+    4. Stage 4: Settles at close
+    """
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Stage 2 Tests: Stop loss and trailing stop at the low
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def test_stop_loss_triggers_at_low_not_close(self):
+        """
+        Stop loss should trigger at the low (stage 2), exiting at stop_loss_price.
+
+        Scenario: Entry at $10, stop loss at 3% ($9.70)
+        Bar has low of $9.50 (below stop) but closes at $9.80 (above stop)
+        Should exit at $9.70 (stop price), not $9.80 (close)
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            # Entry bar - enter at close of $10
+            make_bar(base_time, open_=9.90, high=10.10, low=9.85, close=10.00, volume=100_000),
+            # Exit bar - low breaches stop, but close is above stop
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.05, low=9.50, close=9.80, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=3.0,  # Stop at 10.00 * 0.97 = 9.70
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "stop_loss"
+        assert result.exit_price == pytest.approx(9.70, rel=0.01)  # Stop price, not close
+
+    def test_stop_loss_priority_over_trailing_stop_at_low(self):
+        """
+        Fixed stop loss should be checked before trailing stop at stage 2.
+
+        If both would trigger at the low, stop loss wins.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Low of 9.50 breaches both 3% stop loss ($9.70) and 1% trailing stop ($9.90)
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.05, low=9.50, close=9.80, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=3.0,  # Stop at $9.70
+            trailing_stop_pct=1.0,  # Trailing at $9.90 from entry
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "stop_loss"  # Not trailing_stop
+        assert result.exit_price == pytest.approx(9.70, rel=0.01)
+
+    def test_trailing_stop_triggers_at_low_when_stop_loss_not_breached(self):
+        """
+        Trailing stop triggers at low (stage 2) when stop loss isn't breached.
+
+        Entry at $10, trailing stop at 5% = $9.50
+        Bar low is $9.40 (breaches trailing), stop loss at 10% = $9.00 (not breached)
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.05, low=9.40, close=9.80, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,  # Stop at $9.00 (not breached)
+            trailing_stop_pct=5.0,  # Trailing at $9.50 (breached by low of $9.40)
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        assert result.exit_price == pytest.approx(9.50, rel=0.01)
+
+    def test_stage_2_skipped_when_low_equals_open(self):
+        """
+        Stage 2 (drop to low) is skipped when low >= open.
+
+        For a green candle where price only went up, no stop checks at low.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Green candle: open=10, low=10 (equal), high=10.50, close=10.40
+            # Price never dropped below open, so stage 2 skipped
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.50, low=10.00, close=10.40, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=3.0,  # Would trigger at $9.70 if low was checked
+            trailing_stop_pct=1.0,  # Would trigger at $9.90 if low was checked
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        # Neither stop should trigger since price never dropped below open
+        assert result.trigger_type == "timeout"
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Stage 3 Tests: Take profit at high, trailing stop at close after peak
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def test_take_profit_triggers_at_high(self):
+        """Take profit triggers when high reaches target."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # High of $11.50 exceeds 10% take profit ($11.00)
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=11.50, low=9.90, close=10.50, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=10.0,  # TP at $11.00
+            stop_loss_pct=3.0,
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "take_profit"
+        assert result.exit_price == pytest.approx(11.00, rel=0.01)
+
+    def test_trailing_stop_after_peak_triggers_at_close(self):
+        """
+        Trailing stop triggers at close (stage 4) after price peaked.
+
+        Entry at $10, bar goes: open $10 -> low $9.90 -> high $11 -> close $10.40
+        Trailing stop at 10% from $11 high = $9.90
+        Close of $10.40 is above $9.90, so no trigger.
+
+        But with 5% trailing: $11 * 0.95 = $10.45
+        Close of $10.40 < $10.45, so trailing triggers
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Price peaks at $11, closes at $10.40 (dropped 5.45% from peak)
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=11.00, low=9.90, close=10.40, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,  # Won't hit
+            stop_loss_pct=15.0,  # Won't hit
+            trailing_stop_pct=5.0,  # Triggers: $11 * 0.95 = $10.45, close $10.40 < $10.45
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        assert result.exit_price == pytest.approx(10.45, rel=0.01)
+
+    def test_trailing_stop_at_close_uses_updated_highest(self):
+        """
+        Trailing stop at close (stage 4) uses the bar's high as highest_since_entry.
+
+        Previous highest was $10, current bar high is $12.
+        Trailing stop at 10% from $12 = $10.80
+        Close of $10.50 < $10.80, triggers.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=12.00, low=9.95, close=10.50, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=15.0,
+            trailing_stop_pct=10.0,  # $12 * 0.90 = $10.80
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        # Exit at trailing stop price, not close
+        assert result.exit_price == pytest.approx(10.80, rel=0.01)
+
+    def test_stage_3_trailing_stop_skipped_when_high_equals_close(self):
+        """
+        Stage 3 trailing stop (at close) skipped when high == close.
+
+        If bar closes at its high, price didn't "come back down", so no trailing check.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # High == close, so price didn't drop from peak
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.50, low=9.95, close=10.50, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=15.0,
+            trailing_stop_pct=1.0,  # Would trigger if close was checked vs high
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        # Trailing stop shouldn't trigger because high == close
+        assert result.trigger_type == "timeout"
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Stage 4 Tests: Fixed stop loss at close
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def test_stop_loss_at_close_when_low_didnt_breach(self):
+        """
+        Stop loss triggers at close when low didn't breach but close does.
+
+        Entry at $10, stop at 3% = $9.70
+        Bar: open=$10, low=$9.75 (above stop), close=$9.60 (below stop)
+        Since low >= open (stage 2 skipped), stop checked at close.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Low ($9.75) is above open ($10) ... wait, that's not possible
+            # Let's use a bar where low doesn't breach stop but close does
+            # Actually, if low < open, stage 2 runs. So for stage 4 to matter:
+            # Either low >= open (stage 2 skipped), or low > stop_loss_price
+            make_bar(base_time + timedelta(minutes=1), open_=9.75, high=9.80, low=9.75, close=9.60, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=3.0,  # Stop at $9.70
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "stop_loss"
+        # Exit at stop_loss_price, not close
+        assert result.exit_price == pytest.approx(9.70, rel=0.01)
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Entry Mode Tests
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def test_entry_at_candle_close_exits_start_next_bar(self):
+        """
+        When entering at candle close, exits can't happen on the same candle.
+
+        Even if bar 0 would trigger an exit, we enter at its close,
+        so exits are only checked starting from bar 1.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            # Bar 0: Entry at close ($10). Low would hit 5% trailing but we're not in yet.
+            make_bar(base_time, open_=11.00, high=11.00, low=9.00, close=10.00, volume=100_000),
+            # Bar 1: Price stable, no stops hit
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.50, low=9.80, close=10.20, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=15.0,
+            trailing_stop_pct=5.0,
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.00  # Close of bar 0
+        # Should timeout, not trigger trailing stop from bar 0's low
+        assert result.trigger_type == "timeout"
+
+    def test_consecutive_green_candles_entry(self):
+        """Entry after X consecutive green candles enters at OPEN of next bar."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            # Green candle 1
+            make_bar(base_time, open_=10.00, high=10.50, low=9.90, close=10.30, volume=100_000),
+            # Green candle 2 (signal bar)
+            make_bar(base_time + timedelta(minutes=1), open_=10.30, high=10.80, low=10.20, close=10.60, volume=100_000),
+            # Entry bar - enter at OPEN
+            make_bar(base_time + timedelta(minutes=2), open_=10.60, high=11.00, low=10.40, close=10.80, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.60  # Open of bar after signal
+        assert result.entry_time == base_time + timedelta(minutes=2)
+
+    def test_consecutive_candles_resets_on_red(self):
+        """Consecutive green candle count resets on a red candle."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            # Green candle 1
+            make_bar(base_time, open_=10.00, high=10.50, low=9.90, close=10.30, volume=100_000),
+            # Red candle - resets count
+            make_bar(base_time + timedelta(minutes=1), open_=10.30, high=10.40, low=10.00, close=10.10, volume=100_000),
+            # Green candle 1 (after reset)
+            make_bar(base_time + timedelta(minutes=2), open_=10.10, high=10.60, low=10.00, close=10.50, volume=100_000),
+            # Green candle 2 (signal bar)
+            make_bar(base_time + timedelta(minutes=3), open_=10.50, high=11.00, low=10.40, close=10.80, volume=100_000),
+            # Entry bar
+            make_bar(base_time + timedelta(minutes=4), open_=10.80, high=11.20, low=10.60, close=11.00, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.80  # Open of bar 4 (after 2 consecutive greens)
+        assert result.entry_time == base_time + timedelta(minutes=4)
+
+
+class TestTrailingStopEdgeCases:
+    """Edge cases for trailing stop behavior."""
+
+    def test_trailing_stop_tracks_across_multiple_bars(self):
+        """Trailing stop tracks highest across multiple bars."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Bar 1: High of $11
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=11.00, low=9.95, close=10.50, volume=50_000),
+            # Bar 2: High of $12 (new highest)
+            make_bar(base_time + timedelta(minutes=2), open_=10.50, high=12.00, low=10.40, close=11.50, volume=50_000),
+            # Bar 3: Drops, trailing stop from $12 should trigger
+            make_bar(base_time + timedelta(minutes=3), open_=11.50, high=11.60, low=10.50, close=10.60, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=20.0,
+            trailing_stop_pct=10.0,  # $12 * 0.90 = $10.80
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        # Trailing from highest ($12) at 10% = $10.80
+        assert result.exit_price == pytest.approx(10.80, rel=0.01)
+
+    def test_trailing_stop_at_low_uses_previous_bars_highest(self):
+        """
+        At stage 2 (low), trailing stop uses highest from PREVIOUS bars.
+
+        Entry at $10, bar 1 peaks at $11 (highest = $11)
+        Bar 2: open=$11, drops to low=$9.80
+        Trailing at 10%: $11 * 0.90 = $9.90
+        Low $9.80 < $9.90, triggers at stage 2
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Bar 1: Peaks at $11
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=11.00, low=9.95, close=10.80, volume=50_000),
+            # Bar 2: Low breaches trailing stop from $11
+            make_bar(base_time + timedelta(minutes=2), open_=11.00, high=11.10, low=9.80, close=10.50, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=20.0,
+            trailing_stop_pct=10.0,  # From $11: $9.90
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        assert result.exit_price == pytest.approx(9.90, rel=0.01)
+
+    def test_no_trailing_stop_when_disabled(self):
+        """With trailing_stop_pct=0, no trailing stop triggers."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=15.00, low=9.00, close=10.00, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=60.0,
+            stop_loss_pct=20.0,
+            trailing_stop_pct=0.0,  # Disabled
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        # Despite huge swing from $15 to $9, trailing stop disabled
+        assert result.trigger_type == "timeout"
+
+
+class TestRealWorldScenarios:
+    """Tests based on real scenarios that were fixed."""
+
+    def test_rime_scenario_stop_loss_at_low(self):
+        """
+        RIME scenario: Stop loss should trigger at low, not get bypassed.
+
+        Entry at $2.32, stop loss at 3% = $2.25
+        Bar drops to low of $2.20, closes at $2.22
+        Should exit at $2.25 (stop loss), not $2.22 (close)
+        """
+        base_time = datetime(2025, 11, 19, 7, 30)
+        announcement = make_announcement(ticker="RIME", timestamp=base_time)
+
+        bars = [
+            # Entry bar - close at $2.32
+            make_bar(base_time, open_=2.20, high=2.45, low=2.15, close=2.32, volume=500_000),
+            # Exit bar - low breaches stop loss
+            make_bar(base_time + timedelta(minutes=1), open_=2.30, high=2.32, low=2.20, close=2.22, volume=200_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=3.0,  # $2.32 * 0.97 = $2.25
+            trailing_stop_pct=0.0,
+            window_minutes=120,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == pytest.approx(2.32, rel=0.01)
+        assert result.trigger_type == "stop_loss"
+        assert result.exit_price == pytest.approx(2.25, rel=0.01)  # Stop price, not close
+
+    def test_entry_at_close_cannot_exit_same_bar(self):
+        """
+        Entry at candle close means we can't check exits on that candle.
+
+        If first bar has a huge wick down that would hit stops,
+        we don't care because we enter at the END of that bar.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            # Bar 0: Huge wick down to $5, but we enter at close of $10
+            make_bar(base_time, open_=12.00, high=12.00, low=5.00, close=10.00, volume=500_000),
+            # Bar 1: Normal bar, no stops hit
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=10.50, low=9.80, close=10.20, volume=200_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=5.0,  # Would trigger at $9.50 if bar 0 was checked
+            trailing_stop_pct=10.0,
+            window_minutes=120,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.00
+        # Bar 0's low of $5 should NOT trigger anything because we entered at close
+        assert result.trigger_type == "timeout"
