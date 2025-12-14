@@ -139,6 +139,7 @@ class BacktestConfig:
     entry_by_message_second: bool = False  # If True, enter within first candle based on announcement second (more realistic)
     entry_after_consecutive_candles: int = 0  # Wait for X consecutive candles with low > first candle open
     min_candle_volume: int = 0  # Minimum volume per candle for consecutive candles entry
+    trailing_stop_pct: float = 0.0  # Exit if price drops X% from highest point since entry (0 = disabled)
 
 
 @dataclass

@@ -167,14 +167,30 @@ def run_single_backtest(
     exit_time = None
     trigger_type = "timeout"
 
+    # Track highest price since entry for trailing stop
+    highest_since_entry = entry_price
+
     # Start looking for exit on the NEXT bar after entry (can't know intra-bar order)
     for bar in bars[entry_bar_idx + 1:]:
+        # Update highest price seen
+        if bar.high > highest_since_entry:
+            highest_since_entry = bar.high
+
         # Check for take profit (hit the high)
         if bar.high >= take_profit_price:
             exit_price = take_profit_price
             exit_time = bar.timestamp
             trigger_type = "take_profit"
             break
+
+        # Check for trailing stop (price drops X% from highest point)
+        if config.trailing_stop_pct > 0:
+            trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
+            if bar.low <= trailing_stop_price:
+                exit_price = trailing_stop_price
+                exit_time = bar.timestamp
+                trigger_type = "trailing_stop"
+                break
 
         # Check for stop loss (hit the low)
         if bar.low <= stop_loss_price:

@@ -137,6 +137,7 @@ if "_initialized" not in st.session_state:
     st.session_state._min_candle_vol = get_param("min_vol", 0, int)
     st.session_state._price_min = get_param("price_min", 0.0, float)
     st.session_state._price_max = get_param("price_max", 100.0, float)
+    st.session_state._trailing_stop = get_param("trail", 0.0, float)
 
 with st.sidebar:
     st.header("Trigger Config")
@@ -185,6 +186,14 @@ with st.sidebar:
         "SL from first candle open",
         key="_sl_from_open",
         help="Calculate stop loss from first candle's open instead of entry price"
+    )
+
+    trailing_stop = st.slider(
+        "Trailing Stop %",
+        min_value=0.0, max_value=20.0,
+        step=0.5,
+        key="_trailing_stop",
+        help="Exit if price drops this % from highest point since entry (0 = disabled)"
     )
 
     st.divider()
@@ -272,6 +281,7 @@ with st.sidebar:
     set_param("mc_max", mc_max)
     set_param("price_min", price_min)
     set_param("price_max", price_max)
+    set_param("trail", trailing_stop)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -347,6 +357,7 @@ config = BacktestConfig(
     entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
     entry_after_consecutive_candles=consec_candles,
     min_candle_volume=int(min_candle_vol),
+    trailing_stop_pct=trailing_stop,
 )
 
 summary = run_backtest(filtered, bars_dict, config)
