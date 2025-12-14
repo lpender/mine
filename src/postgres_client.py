@@ -1,8 +1,7 @@
 """PostgreSQL-based data client for announcements and OHLCV data."""
 
 import os
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Optional
 from dotenv import load_dotenv
 
@@ -11,22 +10,20 @@ from sqlalchemy import and_
 
 from .database import SessionLocal, AnnouncementDB, OHLCVBarDB, RawMessageDB
 from .models import Announcement, OHLCVBar, get_market_session
+from .data_providers import get_provider, OHLCVDataProvider
 
 load_dotenv()
 
-# Reuse Massive API client for fetching new data
-import requests
-
-MASSIVE_API_KEY = os.getenv("MASSIVE_API_KEY") or os.getenv("POLYGON_API_KEY")
-MASSIVE_BASE_URL = "https://api.polygon.io"
-
 
 class PostgresClient:
-    """Client for storing/retrieving announcements and OHLCV data in PostgreSQL."""
+    """Client for storing/retrieving announcements and OHLCV data in PostgreSQL.
 
-    def __init__(self):
-        self.api_key = MASSIVE_API_KEY
-        self._session = requests.Session()
+    Uses the configured DATA_BACKEND (polygon, alpaca, ib) for fetching OHLCV data.
+    """
+
+    def __init__(self, backend: Optional[str] = None, provider: Optional[OHLCVDataProvider] = None):
+        self._provider = provider or get_provider(backend)
+        print(f"[PostgresClient] Using {self._provider.name} backend")
 
     def _get_db(self) -> Session:
         return SessionLocal()
@@ -194,94 +191,25 @@ class PostgresClient:
             db.close()
 
     # ─────────────────────────────────────────────────────────────────────────────
-    # Fetch from Polygon API
+    # Fetch OHLCV via Data Provider
     # ─────────────────────────────────────────────────────────────────────────────
 
     def fetch_ohlcv(self, ticker: str, start: datetime, end: datetime,
                     use_cache: bool = True) -> Optional[List[OHLCVBar]]:
-        """Fetch OHLCV data from Polygon API, caching in PostgreSQL."""
+        """Fetch OHLCV data using the configured data provider, caching in PostgreSQL."""
 
         # Check cache first
         if use_cache and self.has_ohlcv_data(ticker, start, end):
             return self.get_ohlcv_bars(ticker, start, end)
 
-        # Fetch from API with retry logic for rate limits
-        # Treat naive datetimes as UTC (not local time)
-        if start.tzinfo is None:
-            start = start.replace(tzinfo=timezone.utc)
-        if end.tzinfo is None:
-            end = end.replace(tzinfo=timezone.utc)
-        start_ms = int(start.timestamp() * 1000)
-        end_ms = int(end.timestamp() * 1000)
+        # Delegate to the configured provider
+        bars = self._provider.fetch_ohlcv(ticker, start, end)
 
-        url = f"{MASSIVE_BASE_URL}/v2/aggs/ticker/{ticker}/range/1/minute/{start_ms}/{end_ms}"
-        params = {
-            "adjusted": "true",
-            "sort": "asc",
-            "limit": 50000,
-            "apiKey": self.api_key,
-        }
+        # Cache in database
+        if bars:
+            self.save_ohlcv_bars(ticker, bars)
 
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
-                response = self._session.get(url, params=params, timeout=30)
-
-                # Handle rate limiting with exponential backoff
-                if response.status_code == 429:
-                    wait_time = 2 ** attempt  # 1, 2, 4, 8, 16 seconds
-                    print(f"  Rate limited on {ticker}, waiting {wait_time}s...")
-                    time.sleep(wait_time)
-                    continue
-
-                response.raise_for_status()
-                data = response.json()
-
-                if data.get("status") != "OK" or not data.get("results"):
-                    return []
-
-                bars = []
-                for r in data["results"]:
-                    # Parse timestamp as UTC, then remove tzinfo for consistency with DB storage
-                    bar = OHLCVBar(
-                        timestamp=datetime.utcfromtimestamp(r["t"] / 1000),
-                        open=r["o"],
-                        high=r["h"],
-                        low=r["l"],
-                        close=r["c"],
-                        volume=r["v"],
-                        vwap=r.get("vw"),
-                    )
-                    bars.append(bar)
-
-                # Cache in database
-                if bars:
-                    self.save_ohlcv_bars(ticker, bars)
-
-                # Polygon free tier: 5 requests/minute = 12s between requests
-                time.sleep(12)
-
-                return bars
-
-            except requests.exceptions.HTTPError as e:
-                status = e.response.status_code if e.response else None
-                if status == 429:
-                    wait_time = 2 ** attempt
-                    print(f"  Rate limited on {ticker}, waiting {wait_time}s...")
-                    time.sleep(wait_time)
-                    continue
-                elif status == 403:
-                    # 403 = forbidden (not subscribed, ticker not available, etc.) - don't retry
-                    print(f"  {ticker}: 403 Forbidden (ticker may require paid Polygon plan)")
-                    return []
-                print(f"Error fetching OHLCV for {ticker}: {e}")
-                return []
-            except Exception as e:
-                print(f"Error fetching OHLCV for {ticker}: {e}")
-                return []
-
-        print(f"Failed to fetch OHLCV for {ticker} after {max_retries} retries")
-        return None  # None = retry later, [] = no data exists
+        return bars
 
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
