@@ -11,6 +11,7 @@ MARKET_CLOSE = time(16, 0)      # 16:00 ET
 POSTMARKET_END = time(20, 0)    # 20:00 ET (some use 21:00)
 
 ET_TZ = ZoneInfo("America/New_York")
+UTC_TZ = ZoneInfo("UTC")
 
 
 def get_market_session(timestamp: datetime) -> str:
@@ -18,18 +19,19 @@ def get_market_session(timestamp: datetime) -> str:
     Determine the market session for a given timestamp.
 
     Args:
-        timestamp: datetime (should be in ET or will be converted)
+        timestamp: datetime (naive assumed UTC, or timezone-aware)
 
     Returns:
         "premarket", "market", "postmarket", or "closed"
     """
-    # Convert to Eastern Time if needed
+    # Convert to Eastern Time
     if timestamp.tzinfo is None:
-        # Assume naive datetimes are already in ET
-        t = timestamp.time()
+        # Naive datetimes from database are stored in UTC
+        utc_time = timestamp.replace(tzinfo=UTC_TZ)
+        et_time = utc_time.astimezone(ET_TZ)
     else:
         et_time = timestamp.astimezone(ET_TZ)
-        t = et_time.time()
+    t = et_time.time()
 
     if PREMARKET_START <= t < MARKET_OPEN:
         return "premarket"
