@@ -188,12 +188,9 @@ class InsightSentryQuoteProvider:
         if not self._ws or self._ws.closed:
             return
 
-        if not self._subscriptions:
-            logger.debug("No subscriptions to send")
-            return
-
         # Build subscription message
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
+        # IMPORTANT: Send empty list to unsubscribe from all - don't skip!
         subs = []
         for ticker in self._subscriptions:
             # Convert ticker to InsightSentry format (e.g., "NASDAQ:AAPL")
