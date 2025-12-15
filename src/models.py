@@ -114,6 +114,7 @@ class TradeResult:
     exit_time: Optional[datetime] = None
     return_pct: Optional[float] = None
     trigger_type: str = "no_entry"  # "take_profit", "stop_loss", "timeout", "no_entry"
+    pre_entry_volume: Optional[int] = None  # Volume of the candle before entry (for position sizing)
 
     @property
     def is_winner(self) -> bool:
@@ -124,6 +125,19 @@ class TradeResult:
     def entered(self) -> bool:
         """Returns True if entry was triggered."""
         return self.entry_price is not None
+
+    @property
+    def pnl_at_1pct_volume(self) -> Optional[float]:
+        """Calculate P&L assuming position size is 1% of pre-entry candle volume."""
+        if not self.entered or self.pre_entry_volume is None or self.pre_entry_volume <= 0:
+            return None
+        if self.return_pct is None or self.entry_price is None:
+            return None
+        shares = int(self.pre_entry_volume * 0.01)
+        if shares <= 0:
+            return None
+        position_value = shares * self.entry_price
+        return position_value * (self.return_pct / 100)
 
 
 @dataclass

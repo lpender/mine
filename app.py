@@ -542,19 +542,27 @@ else:
 total_return_1k = stats['expectancy'] * 10 * stats['total_trades']
 weekly_return_1k = total_return_1k / weeks
 
+# Calculate return assuming 1% of pre-entry candle volume as position size
+total_return_1pct_vol = sum(
+    r.pnl_at_1pct_volume for r in summary.results
+    if r.pnl_at_1pct_volume is not None
+)
+trades_with_volume = sum(1 for r in summary.results if r.pnl_at_1pct_volume is not None)
+weekly_return_1pct_vol = total_return_1pct_vol / weeks if weeks > 0 else 0
+
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
 col3.metric("Win Rate", f"{stats['win_rate']:.1f}%")
 col4.metric("Weekly/$1k", f"${weekly_return_1k:+.0f}", help=f"Total ${total_return_1k:+.0f} over {weeks:.1f} weeks")
-col5.metric("Best", f"{stats['best_trade']:+.1f}%")
-col6.metric("Worst", f"{stats['worst_trade']:+.1f}%")
+col5.metric("Weekly/1%vol", f"${weekly_return_1pct_vol:+.0f}", help=f"Total ${total_return_1pct_vol:+.0f} over {weeks:.1f} weeks ({trades_with_volume} trades with volume data)")
+col6.metric("Profit Factor", f"{stats['profit_factor']:.2f}" if stats['profit_factor'] != float('inf') else "inf")
 
 # Second row
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Winners", stats["winners"])
 col2.metric("Losers", stats["losers"])
 col3.metric("Avg Return", f"{stats['avg_return']:+.2f}%")
-col4.metric("Profit Factor", f"{stats['profit_factor']:.2f}" if stats['profit_factor'] != float('inf') else "inf")
+col4.metric("Best/Worst", f"{stats['best_trade']:+.1f}% / {stats['worst_trade']:.1f}%")
 col5.metric("Avg Win", f"{stats['avg_win']:+.2f}%")
 col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 

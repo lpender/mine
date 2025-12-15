@@ -165,6 +165,12 @@ def run_single_backtest(
     result.entry_price = entry_price
     result.entry_time = entry_time
 
+    # Set pre-entry volume (volume of candle before entry, for position sizing)
+    if entry_bar_idx is not None and entry_bar_idx > 0:
+        result.pre_entry_volume = bars[entry_bar_idx - 1].volume
+    else:
+        result.pre_entry_volume = None  # No previous bar available
+
     # Phase 2: Look for exit after entry
     take_profit_price = entry_price * (1 + config.take_profit_pct / 100)
 
