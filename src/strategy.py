@@ -274,62 +274,20 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"Failed to load from database: {e}", exc_info=True)
 
-        # Then reconcile with broker - add any positions we don't know about
-        logger.info("Checking broker for additional positions...")
+        # Verify our positions still exist at broker (positions may have been manually closed)
+        # NOTE: We do NOT auto-claim broker positions. A strategy only owns positions that
+        # were explicitly created through its entry flow (on_alert -> on_buy_fill).
+        # This prevents all strategies from claiming all broker positions.
+        logger.info("Verifying positions with broker...")
         try:
             positions = self.trader.get_positions()
-            logger.info(f"Broker returned {len(positions)} positions")
+            broker_tickers = {p.ticker for p in positions}
+            logger.info(f"Broker has positions in: {broker_tickers}")
 
-            cfg = self.config
-            for pos in positions:
-                ticker = pos.ticker
-                if ticker in self.active_trades:
-                    continue  # Already recovered from DB
-
-                entry_price = pos.avg_entry_price
-                shares = pos.shares
-
-                # Calculate SL/TP based on current config
-                stop_loss_price = entry_price * (1 - cfg.stop_loss_pct / 100)
-                take_profit_price = entry_price * (1 + cfg.take_profit_pct / 100)
-
-                # Estimate current price from market value
-                current_price = pos.market_value / shares if shares > 0 else entry_price
-
-                # Create active trade
-                self.active_trades[ticker] = ActiveTrade(
-                    ticker=ticker,
-                    announcement=None,
-                    entry_price=entry_price,
-                    entry_time=datetime.now(),  # Approximate
-                    first_candle_open=entry_price,
-                    shares=shares,
-                    highest_since_entry=current_price,
-                    stop_loss_price=stop_loss_price,
-                    take_profit_price=take_profit_price,
-                )
-
-                logger.info(f"[{ticker}] Recovered from broker: {shares} shares @ ${entry_price:.2f}, "
-                           f"SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
-
-                # Save to our DB for next time
-                self._active_trade_store.save_trade(
-                    ticker=ticker,
-                    strategy_id=self.strategy_id,
-                    strategy_name=self.strategy_name,
-                    entry_price=entry_price,
-                    entry_time=datetime.now(),
-                    first_candle_open=entry_price,
-                    shares=shares,
-                    stop_loss_price=stop_loss_price,
-                    take_profit_price=take_profit_price,
-                    highest_since_entry=current_price,
-                    paper=self.paper,
-                )
-
-                # Subscribe to quotes
-                if self.on_subscribe:
-                    self.on_subscribe(ticker)
+            # Check for positions we track but broker doesn't have (manually closed)
+            orphaned = [t for t in self.active_trades.keys() if t not in broker_tickers]
+            for ticker in orphaned:
+                logger.warning(f"[{ticker}] Position not found at broker - may have been manually closed")
 
         except Exception as e:
             logger.error(f"Failed to recover from broker: {e}", exc_info=True)
