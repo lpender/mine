@@ -147,6 +147,7 @@ class InsightSentryQuoteProvider:
             heartbeat_task = asyncio.create_task(self._heartbeat_loop())
 
             try:
+                logger.info("Starting WebSocket message loop...")
                 async for msg in ws:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         await self._handle_message(msg.data)
@@ -154,8 +155,9 @@ class InsightSentryQuoteProvider:
                         logger.error(f"WebSocket error: {ws.exception()}")
                         break
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
-                        logger.info("WebSocket closed")
+                        logger.info("WebSocket closed by server")
                         break
+                logger.warning("WebSocket message loop ended")
             finally:
                 heartbeat_task.cancel()
                 try:
@@ -204,6 +206,9 @@ class InsightSentryQuoteProvider:
             "subscriptions": subs,
         }
 
+        # Log subscription (mask API key)
+        log_msg = {**message, "api_key": message["api_key"][:8] + "..."}
+        logger.info(f"Sending subscription: {log_msg}")
         await self._ws.send_json(message)
         logger.info(f"Sent subscriptions for {len(subs)} tickers: {list(self._subscriptions)}")
 
