@@ -56,16 +56,22 @@ def get_param(key: str, default, param_type=str):
     elif param_type == bool:
         return val == "1" or val == "true"
     elif param_type == list:
-        return val.split(",") if val else []
+        # Handle empty string properly - "".split(",") returns [''] not []
+        if not val or val == "":
+            return []
+        return [x for x in val.split(",") if x]  # Filter empty strings
     return val
 
 
 def set_param(key: str, value):
-    """Set a query parameter."""
+    """Set a query parameter. Skip empty lists to keep URL clean."""
     if isinstance(value, bool):
         st.query_params[key] = "1" if value else "0"
     elif isinstance(value, list):
-        st.query_params[key] = ",".join(value) if value else ""
+        if value:  # Only set if non-empty
+            st.query_params[key] = ",".join(value)
+        elif key in st.query_params:
+            del st.query_params[key]  # Remove empty lists from URL
     else:
         st.query_params[key] = str(value)
 
@@ -121,13 +127,18 @@ all_directions = sorted(set(a.direction for a in all_announcements if a.directio
 # Sidebar Controls
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Initialize session state from URL params only on first load
+# Initialize session state from URL params
+# Re-initialize on every page load to ensure URL is source of truth
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
-if "_initialized" not in st.session_state:
-    st.session_state._initialized = True
-    st.session_state._sl = get_param("sl", 5.0, float)
-    st.session_state._tp = get_param("tp", 10.0, float)
-    st.session_state._hold = get_param("hold", 60, int)
+def init_from_url():
+    """Initialize session state from URL params. Always run to keep URL as source of truth."""
+    # Validate slider values against their min/max ranges
+    sl_val = get_param("sl", 5.0, float)
+    st.session_state._sl = max(1.0, min(30.0, sl_val)) if sl_val > 0 else 5.0
+    tp_val = get_param("tp", 10.0, float)
+    st.session_state._tp = max(1.0, min(50.0, tp_val)) if tp_val > 0 else 10.0
+    hold_val = get_param("hold", 60, int)
+    st.session_state._hold = max(5, min(120, hold_val)) if hold_val > 0 else 60
     # Parse session list, filtering to valid values
     sess_list = get_param("sess", "premarket,market", list)
     st.session_state._sess = [s for s in sess_list if s in all_sessions] or ["premarket", "market"]
@@ -141,19 +152,27 @@ if "_initialized" not in st.session_state:
     st.session_state._has_hl = get_param("has_hl", False, bool)
     st.session_state._no_hl = get_param("no_hl", False, bool)
     st.session_state._float_min = get_param("float_min", 0.0, float)
-    st.session_state._float_max = get_param("float_max", 1000.0, float)
+    # float_max=0 is invalid, use default
+    float_max_val = get_param("float_max", 1000.0, float)
+    st.session_state._float_max = float_max_val if float_max_val > 0 else 1000.0
     st.session_state._mc_min = get_param("mc_min", 0.0, float)
-    st.session_state._mc_max = get_param("mc_max", 10000.0, float)
+    # mc_max=0 is invalid, use default
+    mc_max_val = get_param("mc_max", 10000.0, float)
+    st.session_state._mc_max = mc_max_val if mc_max_val > 0 else 10000.0
     st.session_state._sl_from_open = get_param("sl_open", False, bool)
     st.session_state._consec_candles = get_param("consec", 0, int)
     st.session_state._min_candle_vol = get_param("min_vol", 0, int)
     st.session_state._price_min = get_param("price_min", 0.0, float)
-    st.session_state._price_max = get_param("price_max", 100.0, float)
+    # price_max=0 is invalid (would filter everything), use default
+    price_max_val = get_param("price_max", 100.0, float)
+    st.session_state._price_max = price_max_val if price_max_val > 0 else 100.0
     st.session_state._trailing_stop = get_param("trail", 0.0, float)
     direction_list = get_param("direction", "", list)
     st.session_state._direction = [d for d in direction_list if d in all_directions]
     st.session_state._scanner_test = get_param("scanner_test", False, bool)
     st.session_state._scanner_after_lull = get_param("scanner_lull", False, bool)
+
+init_from_url()
 
 with st.sidebar:
     st.header("Trigger Config")
