@@ -349,4 +349,13 @@ else:
                             timeout_dt = datetime.fromisoformat(timeout_at)
                             timeout_str = f" | Timeout: {timeout_dt.strftime('%H:%M:%S')}"
 
-                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}")
+                        # Show stale data warning
+                        last_quote = trade.get("last_quote_time")
+                        stale_str = ""
+                        if last_quote:
+                            last_dt = datetime.fromisoformat(last_quote)
+                            age_secs = (datetime.now() - last_dt).total_seconds()
+                            if age_secs > 30:
+                                stale_str = f" :orange[(stale: {int(age_secs)}s ago)]"
+
+                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str}{stale_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}")
