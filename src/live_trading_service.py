@@ -466,28 +466,32 @@ class TradingEngine:
         Fetches positions once and passes to all strategies to avoid rate limits.
         """
         if not self.strategies:
+            # Still reconcile subscriptions even with no strategies
+            self._reconcile_subscriptions()
             return
 
         # Fetch positions once for all strategies
+        broker_positions = None
         try:
             positions = self.trader.get_positions()
             broker_positions = {p.ticker: p for p in positions}
             logger.debug(f"Reconciliation: fetched {len(broker_positions)} positions from broker")
         except Exception as e:
             if "429" in str(e):
-                logger.warning("Rate limited by broker - skipping reconciliation")
+                logger.warning("Rate limited by broker - skipping position reconciliation (will still reconcile subscriptions)")
             else:
                 logger.error(f"Failed to fetch positions for reconciliation: {e}")
-            return
 
-        # Pass pre-fetched positions to each strategy
-        for strategy_id, engine in self.strategies.items():
-            try:
-                engine.reconcile_positions(broker_positions)
-            except Exception as e:
-                logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
+        # Pass pre-fetched positions to each strategy (if we got them)
+        if broker_positions is not None:
+            for strategy_id, engine in self.strategies.items():
+                try:
+                    engine.reconcile_positions(broker_positions)
+                except Exception as e:
+                    logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
 
-        # Also reconcile subscriptions
+        # Always reconcile subscriptions - this doesn't require broker API calls
+        # and catches drift even when we can't check broker positions
         self._reconcile_subscriptions()
 
     def _reconcile_subscriptions(self):
