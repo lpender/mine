@@ -292,7 +292,7 @@ class TradingEngine:
 
         logger.info(f"Removed strategy '{name}' ({strategy_id})")
 
-    def add_strategy(self, strategy_id: str, name: str, config: StrategyConfig):
+    def add_strategy(self, strategy_id: str, name: str, config: StrategyConfig, priority: int = 0):
         """Add and start tracking a strategy (call from main thread)."""
         if not self._running:
             logger.warning("Trading engine not running, cannot add strategy")
@@ -300,7 +300,7 @@ class TradingEngine:
 
         if self._loop and self._loop.is_running():
             self._loop.call_soon_threadsafe(
-                lambda: self._add_strategy_engine(strategy_id, name, config)
+                lambda sid=strategy_id, n=name, c=config, p=priority: self._add_strategy_engine(sid, n, c, p)
             )
 
     def remove_strategy(self, strategy_id: str):
@@ -906,7 +906,7 @@ def force_release_trading_lock():
 
 
 def enable_strategy(strategy_id: str) -> bool:
-    """Enable a strategy for live trading."""
+    """Enable a strategy for live trading (hot-reload supported)."""
     global _trading_engine
 
     store = get_strategy_store()
@@ -916,28 +916,32 @@ def enable_strategy(strategy_id: str) -> bool:
         logger.error(f"Strategy {strategy_id} not found")
         return False
 
-    # If engine is running, add the strategy dynamically
+    # If engine is running, add the strategy dynamically (no restart needed)
     if _trading_engine and _trading_engine.is_running:
         strategy = store.get_strategy(strategy_id)
         if strategy:
-            _trading_engine.add_strategy(strategy.id, strategy.name, strategy.config)
+            _trading_engine.add_strategy(strategy.id, strategy.name, strategy.config, strategy.priority)
+            logger.info(f"Hot-reloaded strategy '{strategy.name}' (enabled)")
 
     return True
 
 
 def disable_strategy(strategy_id: str) -> bool:
-    """Disable a strategy from live trading."""
+    """Disable a strategy from live trading (hot-reload supported)."""
     global _trading_engine
 
     store = get_strategy_store()
+    strategy = store.get_strategy(strategy_id)
+    strategy_name = strategy.name if strategy else strategy_id
 
     # Update database
     if not store.set_enabled(strategy_id, False):
         logger.error(f"Strategy {strategy_id} not found")
         return False
 
-    # If engine is running, remove the strategy dynamically
+    # If engine is running, remove the strategy dynamically (no restart needed)
     if _trading_engine and _trading_engine.is_running:
         _trading_engine.remove_strategy(strategy_id)
+        logger.info(f"Hot-reloaded strategy '{strategy_name}' (disabled)")
 
     return True
