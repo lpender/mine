@@ -275,29 +275,37 @@ else:
                         st.rerun()
 
             with col2:
-                # Load in Backtest button - sets URL params
-                if st.button("Load in Backtest"):
-                    cfg = strategy.config
-                    params = {
-                        "channel": ",".join(cfg.channels),
-                        "direction": ",".join(cfg.directions),
-                        "sess": ",".join(cfg.sessions),
-                        "price_min": str(cfg.price_min),
-                        "price_max": str(cfg.price_max),
-                        "consec": str(cfg.consec_green_candles),
-                        "min_vol": str(cfg.min_candle_volume),
-                        "tp": str(cfg.take_profit_pct),
-                        "sl": str(cfg.stop_loss_pct),
-                        "trail": str(cfg.trailing_stop_pct),
-                        "sl_open": "1" if cfg.stop_loss_from_open else "0",
-                        "hold": str(cfg.timeout_minutes),
-                        "stake_mode": cfg.stake_mode,
-                        "stake": str(cfg.stake_amount),
-                        "vol_pct": str(cfg.volume_pct),
-                        "max_stake": str(cfg.max_stake),
-                    }
-                    query_string = "&".join(f"{k}={v}" for k, v in params.items())
-                    st.markdown(f"[Open Backtest with these settings](../?{query_string})")
+                # Load in Backtest - direct navigation with strategy params
+                cfg = strategy.config
+                params = {
+                    "channel": ",".join(cfg.channels),
+                    "direction": ",".join(cfg.directions),
+                    "sess": ",".join(cfg.sessions),
+                    "price_min": str(cfg.price_min),
+                    "price_max": str(cfg.price_max),
+                    "consec": str(cfg.consec_green_candles),
+                    "min_vol": str(cfg.min_candle_volume),
+                    "tp": str(cfg.take_profit_pct),
+                    "sl": str(cfg.stop_loss_pct),
+                    "trail": str(cfg.trailing_stop_pct),
+                    "sl_open": "1" if cfg.stop_loss_from_open else "0",
+                    "hold": str(cfg.timeout_minutes),
+                    "stake_mode": cfg.stake_mode,
+                    "stake": str(cfg.stake_amount),
+                    "vol_pct": str(cfg.volume_pct),
+                    "max_stake": str(cfg.max_stake),
+                }
+                query_string = "&".join(f"{k}={v}" for k, v in params.items())
+                # Use markdown link styled as button - opens in same tab
+                st.markdown(
+                    f'<a href="../?{query_string}" target="_self" style="'
+                    'display: inline-block; padding: 0.25rem 0.75rem; '
+                    'background-color: rgb(49, 51, 63); color: white; '
+                    'border-radius: 0.25rem; text-decoration: none; '
+                    'font-size: 14px; font-weight: 400; text-align: center;">'
+                    'Load in Backtest</a>',
+                    unsafe_allow_html=True
+                )
 
             with col3:
                 if st.button("Edit Sizing"):
