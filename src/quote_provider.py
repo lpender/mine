@@ -32,6 +32,7 @@ class InsightSentryQuoteProvider:
         self,
         api_key: Optional[str] = None,
         on_quote: Optional[Callable[[str, float, int, datetime], None]] = None,
+        on_bar: Optional[Callable[[str, datetime, float, float, float, float, int], None]] = None,
     ):
         """
         Initialize the quote provider.
@@ -39,9 +40,11 @@ class InsightSentryQuoteProvider:
         Args:
             api_key: InsightSentry API key (Bearer token)
             on_quote: Callback for quote updates (ticker, price, volume, timestamp)
+            on_bar: Callback for full bar data (ticker, timestamp, open, high, low, close, volume)
         """
         self.api_key = api_key or os.getenv("INSIGHT_SENTRY_KEY")
         self.on_quote = on_quote
+        self.on_bar = on_bar
 
         self._ws_key: Optional[str] = None
         self._ws: Optional[aiohttp.ClientWebSocketResponse] = None
@@ -283,12 +286,20 @@ class InsightSentryQuoteProvider:
             ts = bar.get("time", 0)
             timestamp = datetime.fromtimestamp(ts) if ts else datetime.now()
 
-            # Use close price as the current price
-            price = bar.get("close", 0)
+            # Extract full OHLCV
+            open_price = bar.get("open", 0)
+            high = bar.get("high", 0)
+            low = bar.get("low", 0)
+            close = bar.get("close", 0)
             volume = int(bar.get("volume", 0))
 
-            if self.on_quote and price > 0:
-                self.on_quote(ticker, price, volume, timestamp)
+            # Use close price as the current price for quote callback
+            if self.on_quote and close > 0:
+                self.on_quote(ticker, close, volume, timestamp)
+
+            # Full bar callback for storage
+            if self.on_bar and close > 0:
+                self.on_bar(ticker, timestamp, open_price, high, low, close, volume)
 
     async def _handle_quote(self, quote: dict):
         """Handle quote data."""

@@ -178,6 +178,29 @@ class StrategyDB(Base):
     )
 
 
+class LiveBarDB(Base):
+    """1-second bars captured during live trading for visualization."""
+    __tablename__ = "live_bars"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    ticker = Column(String(10), nullable=False, index=True)
+    timestamp = Column(DateTime, nullable=False, index=True)
+    open = Column(Float, nullable=False)
+    high = Column(Float, nullable=False)
+    low = Column(Float, nullable=False)
+    close = Column(Float, nullable=False)
+    volume = Column(Integer, nullable=False)
+
+    # Optional strategy reference for filtering
+    strategy_id = Column(String(36), nullable=True, index=True)
+
+    __table_args__ = (
+        UniqueConstraint('ticker', 'timestamp', name='uq_live_bar_ticker_timestamp'),
+        Index('ix_live_bars_ticker_timestamp', 'ticker', 'timestamp'),
+    )
+
+
 class ActiveTradeDB(Base):
     """Active trade position - persisted for recovery across restarts."""
     __tablename__ = "active_trades"

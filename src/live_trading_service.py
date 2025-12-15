@@ -15,6 +15,7 @@ from .quote_provider import InsightSentryQuoteProvider
 from .parser import parse_message_line
 from .alert_service import set_alert_callback
 from .strategy_store import get_strategy_store, Strategy
+from .live_bar_store import get_live_bar_store
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,9 @@ class TradingEngine:
 
         # Track subscriptions per strategy for proper cleanup
         self._strategy_subscriptions: Dict[str, set] = {}  # strategy_id -> set of tickers
+
+        # Live bar storage for TradingView visualization
+        self._live_bar_store = get_live_bar_store()
 
         # Callbacks for external status updates
         self.on_status_change: Optional[Callable[[dict], None]] = None
@@ -187,6 +191,7 @@ class TradingEngine:
         # Quote provider (shared across all strategies)
         self.quote_provider = InsightSentryQuoteProvider(
             on_quote=self._on_quote,
+            on_bar=self._on_bar,
         )
 
         # Load enabled strategies from database
@@ -373,6 +378,42 @@ class TradingEngine:
         for strategy_id, engine in self.strategies.items():
             # Each strategy receives all quotes, filters internally
             engine.on_quote(ticker, price, volume, timestamp)
+
+    def _on_bar(
+        self,
+        ticker: str,
+        timestamp: datetime,
+        open_price: float,
+        high: float,
+        low: float,
+        close: float,
+        volume: int,
+    ):
+        """Callback for 1-second bar data - store for TradingView visualization."""
+        # Only store bars for tickers we're actively tracking
+        is_tracked = False
+        strategy_id = None
+
+        for sid, engine in self.strategies.items():
+            if ticker in engine.pending_entries or ticker in engine.active_trades:
+                is_tracked = True
+                strategy_id = sid
+                break
+
+        if not is_tracked:
+            return
+
+        # Store the bar
+        self._live_bar_store.save_bar(
+            ticker=ticker,
+            timestamp=timestamp,
+            open_price=open_price,
+            high=high,
+            low=low,
+            close=close,
+            volume=volume,
+            strategy_id=strategy_id,
+        )
 
     def _on_subscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy needs quotes for a ticker."""
