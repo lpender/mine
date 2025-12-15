@@ -11,6 +11,7 @@ from typing import Optional, Callable, Dict
 
 from .strategy import StrategyConfig, StrategyEngine
 from .trading import get_trading_client, TradingClient
+from .trading.alpaca_stream import AlpacaTradeStream
 from .quote_provider import InsightSentryQuoteProvider
 from .parser import parse_message_line
 from .alert_service import set_alert_callback
@@ -43,6 +44,7 @@ class TradingEngine:
         # Components initialized in start()
         self.trader: Optional[TradingClient] = None
         self.quote_provider: Optional[InsightSentryQuoteProvider] = None
+        self.trade_stream: Optional[AlpacaTradeStream] = None
 
         # Multi-strategy support: strategy_id -> StrategyEngine
         self.strategies: Dict[str, StrategyEngine] = {}
@@ -145,6 +147,10 @@ class TradingEngine:
         # Unregister callback
         set_alert_callback(None)
 
+        # Stop the trade stream
+        if self.trade_stream:
+            self.trade_stream.stop()
+
         # Give the loop time to exit gracefully (up to 3 seconds)
         # This allows the finally block to run and disconnect WebSocket
         if self._thread and self._thread.is_alive():
@@ -187,6 +193,17 @@ class TradingEngine:
         # Trading client
         self.trader = get_trading_client(paper=self.paper)
         logger.info(f"Trading client: {self.trader.name} (paper={self.paper})")
+
+        # Trade updates stream (order fills, cancellations)
+        self.trade_stream = AlpacaTradeStream(
+            paper=self.paper,
+            on_fill=self._on_order_fill,
+            on_partial_fill=self._on_order_fill,  # Treat same as fill for now
+            on_canceled=self._on_order_canceled,
+            on_rejected=self._on_order_rejected,
+        )
+        self.trade_stream.start()
+        logger.info("Alpaca trade stream started")
 
         # Quote provider (shared across all strategies)
         self.quote_provider = InsightSentryQuoteProvider(
@@ -432,6 +449,47 @@ class TradingEngine:
         # Also unsubscribe from this ticker
         if self.quote_provider:
             self.quote_provider.unsubscribe_sync(ticker)
+
+    def _on_order_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        side: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
+        """Handle order fill from Alpaca stream - route to appropriate strategy."""
+        logger.info(f"[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id})")
+
+        # Find which strategy has this pending order
+        for strategy_id, engine in self.strategies.items():
+            if order_id in engine.pending_orders:
+                if side == "buy":
+                    engine.on_buy_fill(order_id, ticker, shares, filled_price, timestamp)
+                else:
+                    engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
+                return
+
+        logger.warning(f"[{ticker}] Fill for unknown order {order_id} - no strategy owns it")
+
+    def _on_order_canceled(self, order_id: str, ticker: str, side: str):
+        """Handle order cancellation from Alpaca stream."""
+        logger.warning(f"[{ticker}] Order canceled: {side} (order={order_id})")
+
+        for strategy_id, engine in self.strategies.items():
+            if order_id in engine.pending_orders:
+                engine.on_order_canceled(order_id, ticker, side)
+                return
+
+    def _on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str):
+        """Handle order rejection from Alpaca stream."""
+        logger.error(f"[{ticker}] Order rejected: {side} - {reason} (order={order_id})")
+
+        for strategy_id, engine in self.strategies.items():
+            if order_id in engine.pending_orders:
+                engine.on_order_rejected(order_id, ticker, side, reason)
+                return
 
     def _on_subscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy needs quotes for a ticker."""

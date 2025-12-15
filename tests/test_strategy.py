@@ -146,15 +146,14 @@ class TestCandleVolumeAggregation:
         """Entry should trigger when green candle meets volume threshold."""
         engine = self.create_engine(consec_green_candles=1, min_candle_volume=5000)
 
-        # Mock the trader to track orders
-        engine.trader.place_order = Mock(return_value=Mock(
-            order_id="test-order",
+        # Mock the trader.buy to return an order (pending orders flow)
+        engine.trader.buy = Mock(return_value=Mock(
+            order_id="test-order-123",
             ticker="TEST",
             side="buy",
             shares=100,
-            status="filled",
-            filled_price=5.25,
-            filled_at=datetime.now(),
+            order_type="limit",
+            status="new",
         ))
         engine.trader.is_tradeable = Mock(return_value=(True, "tradeable"))
 
@@ -170,6 +169,7 @@ class TestCandleVolumeAggregation:
         minute2 = datetime(2025, 12, 12, 15, 31, 0)
         engine.on_quote("TEST", price=5.30, volume=1000, timestamp=minute2)
 
-        # Should have triggered entry - candle was green (close 5.25 > open 5.00) with volume 6000
-        # Entry happens on the first quote of the new candle after confirming the previous candle
-        assert "TEST" in engine.active_trades or engine.trader.place_order.called
+        # Should have triggered entry - buy order submitted, now in pending_orders
+        # (ActiveTrade is created when fill is confirmed)
+        assert engine.trader.buy.called
+        assert "test-order-123" in engine.pending_orders

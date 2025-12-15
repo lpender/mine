@@ -182,6 +182,25 @@ class ActiveTrade:
     last_quote_time: Optional[datetime] = None
 
 
+@dataclass
+class PendingOrder:
+    """Tracks an order waiting for fill confirmation."""
+    order_id: str
+    ticker: str
+    side: str  # "buy" or "sell"
+    shares: int
+    limit_price: float
+    submitted_at: datetime
+    # Context for creating ActiveTrade on fill (buy orders)
+    announcement: Optional[Announcement] = None
+    first_candle_open: Optional[float] = None
+    stop_loss_price: Optional[float] = None
+    take_profit_price: Optional[float] = None
+    # Context for recording trade on fill (sell orders)
+    entry_price: Optional[float] = None
+    entry_time: Optional[datetime] = None
+
+
 class StrategyEngine:
     """
     Executes trading strategy based on alerts and price updates.
@@ -210,6 +229,7 @@ class StrategyEngine:
         self.strategy_name = strategy_name or "default"
 
         self.pending_entries: Dict[str, PendingEntry] = {}
+        self.pending_orders: Dict[str, PendingOrder] = {}  # order_id -> PendingOrder
         self.active_trades: Dict[str, ActiveTrade] = {}
         self.completed_trades: List[dict] = []
 
@@ -591,15 +611,55 @@ class StrategyEngine:
                 self.on_unsubscribe(ticker)
             return
 
-        # Track active trade
+        # Track pending order - will create ActiveTrade when fill confirmed
+        self.pending_orders[order.order_id] = PendingOrder(
+            order_id=order.order_id,
+            ticker=ticker,
+            side="buy",
+            shares=shares,
+            limit_price=price,
+            submitted_at=timestamp,
+            announcement=pending.announcement,
+            first_candle_open=pending.first_price or price,
+            stop_loss_price=stop_loss_price,
+            take_profit_price=take_profit_price,
+        )
+        logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation")
+
+    def on_buy_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
+        """Handle buy order fill - create ActiveTrade."""
+        pending = self.pending_orders.pop(order_id, None)
+        if not pending:
+            logger.warning(f"[{ticker}] Fill for unknown order {order_id}")
+            return
+
+        logger.info(f"[{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
+
+        # Recalculate SL/TP based on actual fill price
+        cfg = self.config
+        if pending.stop_loss_price and pending.first_candle_open:
+            # Keep the original SL if it was from candle open
+            stop_loss_price = pending.stop_loss_price
+        else:
+            stop_loss_price = filled_price * (1 - cfg.stop_loss_pct / 100)
+        take_profit_price = filled_price * (1 + cfg.take_profit_pct / 100)
+
+        # Create active trade with actual fill price
         self.active_trades[ticker] = ActiveTrade(
             ticker=ticker,
             announcement=pending.announcement,
-            entry_price=price,
+            entry_price=filled_price,
             entry_time=timestamp,
-            first_candle_open=pending.first_price or price,
+            first_candle_open=pending.first_candle_open or filled_price,
             shares=shares,
-            highest_since_entry=price,
+            highest_since_entry=filled_price,
             stop_loss_price=stop_loss_price,
             take_profit_price=take_profit_price,
         )
@@ -609,17 +669,102 @@ class StrategyEngine:
             ticker=ticker,
             strategy_id=self.strategy_id,
             strategy_name=self.strategy_name,
-            entry_price=price,
+            entry_price=filled_price,
             entry_time=timestamp,
-            first_candle_open=pending.first_price or price,
+            first_candle_open=pending.first_candle_open or filled_price,
             shares=shares,
             stop_loss_price=stop_loss_price,
             take_profit_price=take_profit_price,
-            highest_since_entry=price,
+            highest_since_entry=filled_price,
             paper=self.paper,
             announcement_ticker=pending.announcement.ticker if pending.announcement else None,
             announcement_timestamp=pending.announcement.timestamp if pending.announcement else None,
         )
+
+    def on_sell_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
+        """Handle sell order fill - complete the trade."""
+        pending = self.pending_orders.pop(order_id, None)
+        if not pending:
+            logger.warning(f"[{ticker}] Fill for unknown sell order {order_id}")
+            return
+
+        return_pct = ((filled_price - pending.entry_price) / pending.entry_price) * 100
+        pnl = (filled_price - pending.entry_price) * shares
+
+        logger.info(f"[{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
+
+        # Record completed trade
+        completed = {
+            "ticker": ticker,
+            "entry_price": pending.entry_price,
+            "entry_time": pending.entry_time.isoformat() if pending.entry_time else timestamp.isoformat(),
+            "exit_price": filled_price,
+            "exit_time": timestamp.isoformat(),
+            "shares": shares,
+            "pnl": pnl,
+            "return_pct": return_pct,
+        }
+        self.completed_trades.append(completed)
+
+        # Persist to trade history
+        try:
+            self._trade_history.record_trade(
+                ticker=ticker,
+                entry_price=pending.entry_price,
+                exit_price=filled_price,
+                entry_time=pending.entry_time or timestamp,
+                exit_time=timestamp,
+                shares=shares,
+                exit_reason="filled",  # Exit reason was tracked when order submitted
+                paper=self.paper,
+                strategy_name=self.strategy_name,
+                strategy_params=self.config.to_dict(),
+            )
+        except Exception as e:
+            logger.error(f"[{ticker}] Failed to record trade: {e}")
+
+        # Remove from database active trades
+        try:
+            self._active_trade_store.delete_trade(ticker, self.strategy_id)
+        except Exception as e:
+            logger.error(f"[{ticker}] Failed to delete from active_trades: {e}")
+
+        # Unsubscribe from quotes
+        if self.on_unsubscribe:
+            self.on_unsubscribe(ticker)
+
+    def on_order_canceled(self, order_id: str, ticker: str, side: str):
+        """Handle order cancellation."""
+        pending = self.pending_orders.pop(order_id, None)
+        if pending:
+            logger.warning(f"[{ticker}] Order {order_id} ({side}) was CANCELED")
+            if side == "buy":
+                # Buy canceled - just unsubscribe
+                if self.on_unsubscribe:
+                    self.on_unsubscribe(ticker)
+            else:
+                # Sell canceled - need to re-add to active trades or retry
+                logger.warning(f"[{ticker}] Sell order canceled - position still open!")
+
+    def on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str):
+        """Handle order rejection."""
+        pending = self.pending_orders.pop(order_id, None)
+        if pending:
+            logger.error(f"[{ticker}] Order {order_id} ({side}) was REJECTED: {reason}")
+            if side == "buy":
+                # Buy rejected - just unsubscribe
+                if self.on_unsubscribe:
+                    self.on_unsubscribe(ticker)
+            else:
+                # Sell rejected - position still open
+                logger.error(f"[{ticker}] Sell order rejected - position still open!")
 
     def _check_exit(self, ticker: str, price: float, timestamp: datetime):
         """Check exit conditions for an active trade."""
@@ -666,6 +811,12 @@ class StrategyEngine:
             logger.warning(f"[{ticker}] No active trade found for exit")
             return
 
+        # Check if we already have a pending sell order for this ticker
+        for pending in self.pending_orders.values():
+            if pending.ticker == ticker and pending.side == "sell":
+                logger.debug(f"[{ticker}] Already have pending sell order, skipping")
+                return
+
         return_pct = ((price - trade.entry_price) / trade.entry_price) * 100
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
@@ -679,44 +830,21 @@ class StrategyEngine:
             logger.warning(f"[{ticker}] Keeping position in active_trades - will retry on next exit signal")
             return  # Don't remove from tracking, will retry later
 
-        # Sell succeeded - remove from active trades
+        # Track pending sell order - will complete trade when fill confirmed
+        self.pending_orders[order.order_id] = PendingOrder(
+            order_id=order.order_id,
+            ticker=ticker,
+            side="sell",
+            shares=trade.shares,
+            limit_price=price,
+            submitted_at=timestamp,
+            entry_price=trade.entry_price,
+            entry_time=trade.entry_time,
+        )
+        logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation")
+
+        # Remove from active trades (we have a pending sell order now)
         self.active_trades.pop(ticker, None)
-
-        # Record completed trade with full details
-        pnl = (price - trade.entry_price) * trade.shares
-        completed = {
-            "ticker": ticker,
-            "entry_price": trade.entry_price,
-            "entry_time": trade.entry_time.isoformat(),
-            "exit_price": price,
-            "exit_time": timestamp.isoformat(),
-            "exit_reason": reason,
-            "return_pct": return_pct,
-            "shares": trade.shares,
-            "pnl": pnl,
-            "strategy_params": self.config.to_dict(),
-            "strategy_id": self.strategy_id,
-            "strategy_name": self.strategy_name,
-        }
-        self.completed_trades.append(completed)
-
-        # Persist to trade history database
-        try:
-            self._trade_history.save_trade(
-                completed,
-                paper=self.paper,
-                strategy_id=self.strategy_id,
-                strategy_name=self.strategy_name,
-            )
-        except Exception as e:
-            logger.error(f"[{ticker}] Failed to save trade to database: {e}")
-
-        # Remove from active trades database
-        self._active_trade_store.delete_trade(ticker, self.strategy_id)
-
-        # Unsubscribe from quotes
-        if self.on_unsubscribe:
-            self.on_unsubscribe(ticker)
 
     def _abandon_pending(self, ticker: str):
         """Abandon a pending entry (timeout or other reason)."""
