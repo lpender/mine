@@ -184,10 +184,11 @@ class StrategyEngine:
 
     def _recover_positions(self):
         """Recover open positions from broker on startup."""
+        logger.info("Checking broker for open positions...")
         try:
             positions = self.trader.get_positions()
+            logger.info(f"Broker returned {len(positions)} positions")
             if not positions:
-                logger.info("No open positions to recover")
                 return
 
             cfg = self.config
@@ -224,7 +225,7 @@ class StrategyEngine:
                     self.on_subscribe(ticker)
 
         except Exception as e:
-            logger.error(f"Failed to recover positions: {e}")
+            logger.error(f"Failed to recover positions: {e}", exc_info=True)
 
     def on_alert(self, announcement: Announcement) -> bool:
         """
