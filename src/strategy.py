@@ -179,6 +179,53 @@ class StrategyEngine:
         # Trade history persistence
         self._trade_history = get_trade_history_client()
 
+        # Recover any open positions from broker
+        self._recover_positions()
+
+    def _recover_positions(self):
+        """Recover open positions from broker on startup."""
+        try:
+            positions = self.trader.get_positions()
+            if not positions:
+                logger.info("No open positions to recover")
+                return
+
+            cfg = self.config
+            for pos in positions:
+                ticker = pos.ticker
+                entry_price = pos.avg_entry_price
+                shares = pos.shares
+
+                # Calculate SL/TP based on current config
+                stop_loss_price = entry_price * (1 - cfg.stop_loss_pct / 100)
+                take_profit_price = entry_price * (1 + cfg.take_profit_pct / 100)
+
+                # Estimate current price from market value
+                current_price = pos.market_value / shares if shares > 0 else entry_price
+
+                # Create active trade (we don't have original announcement)
+                self.active_trades[ticker] = ActiveTrade(
+                    ticker=ticker,
+                    announcement=None,  # Lost on restart
+                    entry_price=entry_price,
+                    entry_time=datetime.now(),  # Approximate
+                    first_candle_open=entry_price,
+                    shares=shares,
+                    highest_since_entry=current_price,
+                    stop_loss_price=stop_loss_price,
+                    take_profit_price=take_profit_price,
+                )
+
+                logger.info(f"[{ticker}] Recovered position: {shares} shares @ ${entry_price:.2f}, "
+                           f"current=${current_price:.2f}, SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+
+                # Subscribe to quotes
+                if self.on_subscribe:
+                    self.on_subscribe(ticker)
+
+        except Exception as e:
+            logger.error(f"Failed to recover positions: {e}")
+
     def on_alert(self, announcement: Announcement) -> bool:
         """
         Handle new alert from Discord.
