@@ -192,6 +192,7 @@ class TradingEngine:
         self.quote_provider = InsightSentryQuoteProvider(
             on_quote=self._on_quote,
             on_bar=self._on_bar,
+            on_symbol_error=self._on_symbol_error,
         )
 
         # Load enabled strategies from database
@@ -417,6 +418,20 @@ class TradingEngine:
             volume=volume,
             strategy_id=strategy_id,
         )
+
+    def _on_symbol_error(self, ticker: str, error_type: str, message: str):
+        """Handle symbol errors from WebSocket (e.g., invalid symbol, series error)."""
+        logger.warning(f"[{ticker}] Symbol error: {message} ({error_type}) - aborting pending entries")
+
+        # Abort pending entries for this ticker across all strategies
+        for strategy_id, engine in self.strategies.items():
+            if ticker in engine.pending_entries:
+                engine._abandon_pending(ticker)
+                logger.info(f"[{ticker}] Removed from pending entries for strategy {self.strategy_names.get(strategy_id, strategy_id)}")
+
+        # Also unsubscribe from this ticker
+        if self.quote_provider:
+            self.quote_provider.unsubscribe_sync(ticker)
 
     def _on_subscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy needs quotes for a ticker."""

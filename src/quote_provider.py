@@ -33,6 +33,7 @@ class InsightSentryQuoteProvider:
         api_key: Optional[str] = None,
         on_quote: Optional[Callable[[str, float, int, datetime], None]] = None,
         on_bar: Optional[Callable[[str, datetime, float, float, float, float, int], None]] = None,
+        on_symbol_error: Optional[Callable[[str, str, str], None]] = None,
     ):
         """
         Initialize the quote provider.
@@ -41,10 +42,12 @@ class InsightSentryQuoteProvider:
             api_key: InsightSentry API key (Bearer token)
             on_quote: Callback for quote updates (ticker, price, volume, timestamp)
             on_bar: Callback for full bar data (ticker, timestamp, open, high, low, close, volume)
+            on_symbol_error: Callback for symbol errors (ticker, error_type, message)
         """
         self.api_key = api_key or os.getenv("INSIGHT_SENTRY_KEY")
         self.on_quote = on_quote
         self.on_bar = on_bar
+        self.on_symbol_error = on_symbol_error
 
         self._ws_key: Optional[str] = None
         self._ws: Optional[aiohttp.ClientWebSocketResponse] = None
@@ -256,9 +259,18 @@ class InsightSentryQuoteProvider:
             self._last_heartbeat = time.time()
             return
 
-        # Error message
-        if "message" in msg and "error" in msg.get("message", "").lower():
-            logger.error(f"Server error: {msg}")
+        # Error message (e.g., invalid_symbol, series_error)
+        if "error" in msg:
+            error_type = msg.get("error", "")
+            code = msg.get("code", "")
+            ticker = code.split(":")[-1] if ":" in code else code
+            message = msg.get("message", "Unknown error")
+
+            logger.warning(f"[{ticker}] WebSocket error: {message} ({error_type})")
+
+            # Notify about symbol error so trading engine can abort pending entry
+            if self.on_symbol_error and ticker:
+                self.on_symbol_error(ticker, error_type, message)
             return
 
         # Series data (OHLCV bars)
