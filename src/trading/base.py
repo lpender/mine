@@ -45,13 +45,14 @@ class TradingClient(ABC):
     """Abstract base class for trading clients."""
 
     @abstractmethod
-    def buy(self, ticker: str, shares: int) -> Order:
+    def buy(self, ticker: str, shares: int, limit_price: Optional[float] = None) -> Order:
         """
-        Submit a market buy order.
+        Submit a buy order.
 
         Args:
             ticker: Stock ticker symbol
             shares: Number of shares to buy
+            limit_price: Limit price (required for extended hours)
 
         Returns:
             Order object with order details
@@ -59,13 +60,14 @@ class TradingClient(ABC):
         pass
 
     @abstractmethod
-    def sell(self, ticker: str, shares: int) -> Order:
+    def sell(self, ticker: str, shares: int, limit_price: Optional[float] = None) -> Order:
         """
-        Submit a market sell order.
+        Submit a sell order.
 
         Args:
             ticker: Stock ticker symbol
             shares: Number of shares to sell
+            limit_price: Limit price (required for extended hours)
 
         Returns:
             Order object with order details

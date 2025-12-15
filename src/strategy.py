@@ -580,9 +580,9 @@ class StrategyEngine:
         logger.info(f"{'$'*60}")
         logger.info(f"")
 
-        # Execute buy order
+        # Execute buy order (limit order at current price + slippage)
         try:
-            order = self.trader.buy(ticker, shares)
+            order = self.trader.buy(ticker, shares, limit_price=price)
             logger.info(f"[{ticker}] ✅ Buy order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
@@ -670,9 +670,9 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
-        # Execute sell order - only remove from tracking if successful
+        # Execute sell order (limit order at current price - slippage)
         try:
-            order = self.trader.sell(ticker, trade.shares)
+            order = self.trader.sell(ticker, trade.shares, limit_price=price)
             logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Sell order failed: {e}")

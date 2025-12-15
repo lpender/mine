@@ -11,8 +11,12 @@ import requests
 
 from .base import TradingClient, Position, Order, Quote
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("src.trading.alpaca")
 ET_TZ = ZoneInfo("America/New_York")
+
+# Slippage for limit orders (default 1%)
+# Buy limit = price * (1 + slippage), Sell limit = price * (1 - slippage)
+DEFAULT_SLIPPAGE_PCT = float(os.getenv("TRADE_SLIPPAGE_PCT", "1.0"))
 
 
 class AlpacaTradingClient(TradingClient):
@@ -102,27 +106,45 @@ class AlpacaTradingClient(TradingClient):
     def is_paper(self) -> bool:
         return self._paper
 
-    def buy(self, ticker: str, shares: int) -> Order:
-        """Submit a market buy order."""
+    def buy(self, ticker: str, shares: int, limit_price: Optional[float] = None) -> Order:
+        """Submit a buy order (limit order with extended hours support)."""
+        if limit_price is None:
+            raise ValueError("limit_price is required for buy orders")
+
+        # Apply slippage - willing to pay up to X% more
+        limit_with_slippage = round(limit_price * (1 + DEFAULT_SLIPPAGE_PCT / 100), 4)
+
         data = {
             "symbol": ticker,
             "qty": shares,
             "side": "buy",
-            "type": "market",
+            "type": "limit",
+            "limit_price": str(limit_with_slippage),
             "time_in_force": "day",
+            "extended_hours": True,
         }
+        logger.info(f"[{ticker}] BUY LIMIT ${limit_with_slippage:.4f} (price=${limit_price:.4f} + {DEFAULT_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
-    def sell(self, ticker: str, shares: int) -> Order:
-        """Submit a market sell order."""
+    def sell(self, ticker: str, shares: int, limit_price: Optional[float] = None) -> Order:
+        """Submit a sell order (limit order with extended hours support)."""
+        if limit_price is None:
+            raise ValueError("limit_price is required for sell orders")
+
+        # Apply slippage - willing to accept up to X% less
+        limit_with_slippage = round(limit_price * (1 - DEFAULT_SLIPPAGE_PCT / 100), 4)
+
         data = {
             "symbol": ticker,
             "qty": shares,
             "side": "sell",
-            "type": "market",
+            "type": "limit",
+            "limit_price": str(limit_with_slippage),
             "time_in_force": "day",
+            "extended_hours": True,
         }
+        logger.info(f"[{ticker}] SELL LIMIT ${limit_with_slippage:.4f} (price=${limit_price:.4f} - {DEFAULT_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
