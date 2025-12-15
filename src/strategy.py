@@ -426,6 +426,9 @@ class StrategyEngine:
         pending = self.pending_entries[ticker]
         cfg = self.config
 
+        # Log every quote for debugging (to quotes.log)
+        quotes_logger.info(f"[{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
+
         # Check timeout - abandon if too long since alert
         time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
         if time_since_alert > cfg.timeout_minutes:
@@ -435,7 +438,7 @@ class StrategyEngine:
 
         # Price filter at actual price
         if price <= cfg.price_min or price > cfg.price_max:
-            logger.debug(f"[{ticker}] Price ${price:.2f} outside filter range")
+            quotes_logger.info(f"[{ticker}] FILTERED: ${price:.4f} outside ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
             return
 
         # Record first price
@@ -571,8 +574,9 @@ class StrategyEngine:
         logger.info(f"")
         logger.info(f"{'$'*60}")
         logger.info(f"[{ticker}] 💰💰💰 EXECUTING BUY ORDER 💰💰💰")
-        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {sizing_info}")
-        logger.info(f"[{ticker}] SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+        logger.info(f"[{ticker}] ENTRY @ ${price:.4f}, {sizing_info}")
+        logger.info(f"[{ticker}] Config: price_min=${cfg.price_min:.2f}, price_max=${cfg.price_max:.2f}")
+        logger.info(f"[{ticker}] SL=${stop_loss_price:.4f}, TP=${take_profit_price:.4f}")
         logger.info(f"{'$'*60}")
         logger.info(f"")
 

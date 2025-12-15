@@ -232,6 +232,9 @@ class TradingEngine:
         self._strategy_subscriptions[strategy_id] = set()
 
         logger.info(f"Added strategy '{name}' ({strategy_id})")
+        logger.info(f"  Filters: channels={config.channels}, price=${config.price_min:.2f}-${config.price_max:.2f}")
+        logger.info(f"  Entry: {config.consec_green_candles} green candles, {config.min_candle_volume:,} min volume")
+        logger.info(f"  Exit: TP={config.take_profit_pct}%, SL={config.stop_loss_pct}%, timeout={config.timeout_minutes}m")
 
     def _remove_strategy_engine(self, strategy_id: str):
         """Remove a StrategyEngine."""
