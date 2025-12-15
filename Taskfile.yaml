@@ -110,6 +110,20 @@ tasks:
         "
 
   # ─────────────────────────────────────────────────────────────────────────────
+  # Data
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  ohlcv:check:
+    desc: Check for announcements missing OHLCV data
+    cmds:
+      - python refetch_missing_ohlcv.py
+
+  ohlcv:refetch:
+    desc: Refetch missing OHLCV data from Polygon API
+    cmds:
+      - python refetch_missing_ohlcv.py --refetch
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # Testing
   # ─────────────────────────────────────────────────────────────────────────────
 
