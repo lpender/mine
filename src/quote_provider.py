@@ -199,7 +199,7 @@ class InsightSentryQuoteProvider:
         # InsightSentry rejects empty subscription arrays with "Subscriptions field or value is invalid"
         # When we have no subscriptions, we need to force a reconnect to clear server state
         if not self._subscriptions:
-            logger.info("No subscriptions to send - triggering reconnect to clear server state")
+            logger.debug("No subscriptions to send - triggering reconnect to clear server state")
             await self._force_reconnect()
             return
 
@@ -226,14 +226,14 @@ class InsightSentryQuoteProvider:
 
         # Log subscription (mask API key)
         log_msg = {**message, "api_key": message["api_key"][:8] + "..."}
-        logger.info(f"Sending subscription: {log_msg}")
+        logger.debug(f"Sending subscription: {log_msg}")
         await self._ws.send_json(message)
-        logger.info(f"Sent subscriptions for {len(subs)} tickers: {list(self._subscriptions)}")
+        logger.info(f"Subscribed to {len(subs)} tickers: {list(self._subscriptions)}")
 
     async def _force_reconnect(self):
         """Force a WebSocket reconnect to clear server-side subscription state."""
         if self._ws and not self._ws.closed:
-            logger.info("Forcing WebSocket close to clear subscriptions")
+            logger.debug("Forcing WebSocket close to clear subscriptions")
             await self._ws.close()
             # The connect() loop will automatically reconnect
             # On reconnect, if _subscriptions is still empty, we won't send anything
@@ -247,9 +247,9 @@ class InsightSentryQuoteProvider:
             logger.warning(f"Failed to parse message: {data[:100]}")
             return
 
-        # Log non-heartbeat messages
+        # Log non-heartbeat messages (DEBUG to avoid stdout noise)
         if "server_time" not in msg:
-            logger.info(f"WS message: {str(msg)[:300]}")
+            logger.debug(f"WS message: {str(msg)[:300]}")
 
         # Server heartbeat
         if "server_time" in msg:
@@ -340,7 +340,7 @@ class InsightSentryQuoteProvider:
             return
 
         self._subscriptions.discard(ticker)
-        logger.info(f"Unsubscribed from {ticker}, remaining: {self._subscriptions}")
+        logger.debug(f"Unsubscribed from {ticker}, remaining: {self._subscriptions}")
 
         if self._ws and not self._ws.closed:
             await self._send_subscriptions()
@@ -349,13 +349,13 @@ class InsightSentryQuoteProvider:
         """Sync wrapper for subscribe (for use from non-async code)."""
         ticker = ticker.upper()
         self._subscriptions.add(ticker)
-        logger.info(f"Queued subscription for {ticker}")
+        logger.debug(f"Queued subscription for {ticker}")
 
     def unsubscribe_sync(self, ticker: str):
         """Sync wrapper for unsubscribe (for use from non-async code)."""
         ticker = ticker.upper()
         self._subscriptions.discard(ticker)
-        logger.info(f"Queued unsubscription for {ticker}")
+        logger.debug(f"Queued unsubscription for {ticker}")
 
     async def disconnect(self):
         """Disconnect from WebSocket."""
