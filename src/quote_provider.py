@@ -78,45 +78,14 @@ class InsightSentryQuoteProvider:
         except Exception as e:
             logger.warning(f"Failed to cache WS key: {e}")
 
-    async def get_ws_key(self) -> str:
-        """Get WebSocket key from InsightSentry API."""
+    def get_ws_key(self) -> str:
+        """Get WebSocket key - for native subscribers, the API key IS the WS key."""
         if not self.api_key:
             raise ValueError("INSIGHT_SENTRY_KEY not set")
 
-        # Check cache first
-        cached_key = self._load_cached_key()
-        if cached_key:
-            self._ws_key = cached_key
-            return cached_key
-
-        logger.info(f"Fetching WS key from {self.KEY_URL}...")
-
-        response = requests.get(
-            self.KEY_URL,
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-            },
-            timeout=10,
-        )
-
-        if not response.ok:
-            logger.error(f"API error {response.status_code}: {response.text}")
-            response.raise_for_status()
-
-        data = response.json()
-        logger.debug(f"API response: {data}")
-
-        self._ws_key = data.get("api_key") or data.get("key")
-        if not self._ws_key:
-            raise ValueError(f"Failed to get WebSocket key: {data}")
-
-        # Cache the key
-        expires = data.get("expiration") or data.get("expires") or (time.time() + 3600)
-        if isinstance(expires, str):
-            expires = int(time.time() + 3600)
-        self._save_key_to_cache(self._ws_key, expires)
-
-        logger.info(f"Got WebSocket key (expires: {expires})")
+        # For native InsightSentry subscribers, the API key works directly as the WS key
+        self._ws_key = self.api_key
+        logger.info("Using INSIGHT_SENTRY_KEY as WebSocket key (native subscriber)")
         return self._ws_key
 
     async def _cleanup_existing_connections(self):
@@ -143,7 +112,7 @@ class InsightSentryQuoteProvider:
         await self._cleanup_existing_connections()
 
         if not self._ws_key:
-            await self.get_ws_key()
+            self.get_ws_key()
 
         self._session = aiohttp.ClientSession()
         self._running = True

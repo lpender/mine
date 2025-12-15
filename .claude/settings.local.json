@@ -39,7 +39,8 @@
       "Bash(/Users/lpender/dev/trading/backtest/venv/bin/pip install:*)",
       "Bash(task --list:*)",
       "Bash(mdfind:*)",
-      "Bash(task plugin:install:*)"
+      "Bash(task plugin:install:*)",
+      "Bash(and WebSocket API\" - no need to fetch a separate WS key.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ]
   }
 }
