@@ -260,11 +260,21 @@ class TradingEngine:
         # Connect to quote provider
         quote_task = asyncio.create_task(self._run_quote_provider())
 
+        # Reconciliation counter (run every 30 iterations = 30 seconds)
+        reconcile_counter = 0
+        RECONCILE_INTERVAL = 30
+
         # Wait for shutdown
         try:
             while self._running:
                 await asyncio.sleep(1)
                 self._broadcast_status()
+
+                # Periodic position reconciliation
+                reconcile_counter += 1
+                if reconcile_counter >= RECONCILE_INTERVAL:
+                    reconcile_counter = 0
+                    self._reconcile_all_positions()
         except asyncio.CancelledError:
             pass
         finally:
@@ -401,6 +411,14 @@ class TradingEngine:
         if self.on_status_change:
             status = self.get_status()
             self.on_status_change(status)
+
+    def _reconcile_all_positions(self):
+        """Reconcile positions across all strategies with broker."""
+        for strategy_id, engine in self.strategies.items():
+            try:
+                engine.reconcile_positions()
+            except Exception as e:
+                logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
 
     def get_status(self) -> dict:
         """Get current engine status with per-strategy breakdown."""

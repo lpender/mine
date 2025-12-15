@@ -235,20 +235,20 @@ class StrategyEngine:
         self._recover_pending_orders()
 
     def _recover_pending_orders(self):
-        """Subscribe to quotes for any pending orders."""
+        """Check for pending orders - we don't track these, just log them.
+
+        Note: We don't subscribe to quotes for pending orders because we don't
+        have the context (announcement, entry time, etc.) to manage them properly.
+        They'll be picked up on the next startup after they fill.
+        """
         try:
             orders = self.trader.get_open_orders()
-            logger.info(f"Broker returned {len(orders)} open orders")
-
-            for order in orders:
-                ticker = order.ticker
-                if ticker not in self.active_trades and ticker not in self.pending_entries:
-                    logger.info(f"[{ticker}] Found pending {order.side} order for {order.shares} shares ({order.status})")
-                    # Subscribe to quotes so we can track when it fills
-                    if self.on_subscribe:
-                        self.on_subscribe(ticker)
+            if orders:
+                logger.info(f"Broker has {len(orders)} open orders (not tracking)")
+                for order in orders:
+                    logger.info(f"[{order.ticker}] Pending {order.side} order: {order.shares} shares ({order.status})")
         except Exception as e:
-            logger.error(f"Failed to recover pending orders: {e}", exc_info=True)
+            logger.error(f"Failed to check pending orders: {e}", exc_info=True)
 
     def on_alert(self, announcement: Announcement) -> bool:
         """
@@ -542,6 +542,35 @@ class StrategyEngine:
             logger.info(f"[{ticker}] Abandoned pending entry")
             if self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
+
+    def reconcile_positions(self):
+        """
+        Reconcile our tracked positions with actual broker positions.
+
+        Removes active_trades entries for positions that no longer exist
+        (e.g., manually closed via broker dashboard).
+        """
+        try:
+            broker_positions = {p.ticker: p for p in self.trader.get_positions()}
+
+            # Check each active trade
+            stale_tickers = []
+            for ticker in self.active_trades:
+                if ticker not in broker_positions:
+                    logger.warning(f"[{ticker}] Position no longer exists at broker - removing from tracking")
+                    stale_tickers.append(ticker)
+
+            # Remove stale trades and unsubscribe
+            for ticker in stale_tickers:
+                del self.active_trades[ticker]
+                if self.on_unsubscribe:
+                    self.on_unsubscribe(ticker)
+
+            if stale_tickers:
+                logger.info(f"Reconciliation removed {len(stale_tickers)} stale positions: {stale_tickers}")
+
+        except Exception as e:
+            logger.error(f"Position reconciliation failed: {e}", exc_info=True)
 
     def get_status(self) -> dict:
         """Get current engine status."""
