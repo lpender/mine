@@ -463,6 +463,52 @@ class TradingEngine:
             except Exception as e:
                 logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
 
+        # Also reconcile subscriptions
+        self._reconcile_subscriptions()
+
+    def _reconcile_subscriptions(self):
+        """Ensure WebSocket subscriptions match what we actually need.
+
+        Catches any drift between what we think we're subscribed to vs
+        what tickers are actually needed by active trades/pending entries.
+        """
+        if not self.quote_provider:
+            return
+
+        # Calculate what we actually need
+        needed_tickers: set = set()
+        for strategy_id, engine in self.strategies.items():
+            # Add tickers from pending entries
+            needed_tickers.update(engine.pending_entries.keys())
+            # Add tickers from active trades
+            needed_tickers.update(engine.active_trades.keys())
+
+        # What does the quote provider think it's subscribed to?
+        current_subs = self.quote_provider.subscribed_tickers
+
+        # Find extras (subscribed but not needed)
+        extras = current_subs - needed_tickers
+        if extras:
+            logger.warning(f"Subscription drift detected - unsubscribing from: {extras}")
+            for ticker in extras:
+                if self._loop:
+                    self._loop.call_soon_threadsafe(
+                        lambda t=ticker: asyncio.create_task(self.quote_provider.unsubscribe(t))
+                    )
+
+        # Find missing (needed but not subscribed)
+        missing = needed_tickers - current_subs
+        if missing:
+            logger.warning(f"Subscription drift detected - subscribing to: {missing}")
+            for ticker in missing:
+                if self._loop:
+                    self._loop.call_soon_threadsafe(
+                        lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
+                    )
+
+        if not extras and not missing:
+            logger.debug(f"Subscriptions OK: {len(current_subs)} tickers")
+
     def get_status(self) -> dict:
         """Get current engine status with per-strategy breakdown."""
         status = {
