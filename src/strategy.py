@@ -227,6 +227,25 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"Failed to recover positions: {e}", exc_info=True)
 
+        # Also check for pending orders and subscribe to their quotes
+        self._recover_pending_orders()
+
+    def _recover_pending_orders(self):
+        """Subscribe to quotes for any pending orders."""
+        try:
+            orders = self.trader.get_open_orders()
+            logger.info(f"Broker returned {len(orders)} open orders")
+
+            for order in orders:
+                ticker = order.ticker
+                if ticker not in self.active_trades and ticker not in self.pending_entries:
+                    logger.info(f"[{ticker}] Found pending {order.side} order for {order.shares} shares ({order.status})")
+                    # Subscribe to quotes so we can track when it fills
+                    if self.on_subscribe:
+                        self.on_subscribe(ticker)
+        except Exception as e:
+            logger.error(f"Failed to recover pending orders: {e}", exc_info=True)
+
     def on_alert(self, announcement: Announcement) -> bool:
         """
         Handle new alert from Discord.
