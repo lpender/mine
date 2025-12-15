@@ -461,7 +461,17 @@ class StrategyEngine:
                     volume=pending.current_candle_data["volume"],
                 )
                 pending.candles.append(candle)
-                logger.debug(f"[{ticker}] Candle closed: O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f} V={candle.volume} green={candle.is_green}")
+
+                # Detailed candle close logging
+                color = "GREEN" if candle.is_green else "RED"
+                meets_vol = candle.volume >= cfg.min_candle_volume
+                qualifies = candle.is_green and meets_vol
+                logger.info(f"")
+                logger.info(f"[{ticker}] ━━━ CANDLE CLOSED ━━━")
+                logger.info(f"[{ticker}] {color} candle | O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f}")
+                logger.info(f"[{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
+                logger.info(f"[{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
+                logger.info(f"")
 
             # Start new candle
             pending.current_candle_start = candle_start
@@ -480,6 +490,19 @@ class StrategyEngine:
                 pending.current_candle_data["close"] = price
                 pending.current_candle_data["volume"] += volume  # Sum volume from all 1-second bars
 
+        # Log current candle volume progress
+        if pending.current_candle_data:
+            curr_vol = pending.current_candle_data["volume"]
+            curr_open = pending.current_candle_data["open"]
+            curr_close = pending.current_candle_data["close"]
+            is_green = curr_close > curr_open
+            pct_of_threshold = (curr_vol / cfg.min_candle_volume * 100) if cfg.min_candle_volume > 0 else 0
+            color = "GREEN" if is_green else "RED"
+            logger.info(
+                f"[{ticker}] CANDLE BUILDING: {color} | Vol: {curr_vol:,} / {cfg.min_candle_volume:,} ({pct_of_threshold:.0f}%) | "
+                f"O={curr_open:.2f} C={curr_close:.2f}"
+            )
+
         # Check for consecutive green candles with volume
         green_count = 0
         for candle in reversed(pending.candles):
@@ -488,8 +511,22 @@ class StrategyEngine:
             else:
                 break
 
+        # Log completed candles status
+        if pending.candles:
+            last_candle = pending.candles[-1]
+            meets_vol = last_candle.volume >= cfg.min_candle_volume
+            logger.info(
+                f"[{ticker}] LAST COMPLETED CANDLE: {'GREEN' if last_candle.is_green else 'RED'} | "
+                f"Vol: {last_candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} | "
+                f"Green candles with vol: {green_count}/{cfg.consec_green_candles} needed"
+            )
+
         if green_count >= cfg.consec_green_candles:
-            logger.info(f"[{ticker}] Entry condition met: {green_count} consecutive green candles")
+            logger.info(f"")
+            logger.info(f"{'='*60}")
+            logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {green_count} consecutive green candles with volume!")
+            logger.info(f"{'='*60}")
+            logger.info(f"")
             self._execute_entry(ticker, price, timestamp)
 
     def _execute_entry(self, ticker: str, price: float, timestamp: datetime):
@@ -528,12 +565,19 @@ class StrategyEngine:
             sizing_info = f"{cfg.volume_pct}% of {prev_candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
         else:
             sizing_info = f"${cfg.stake_amount:.0f} stake = {shares} shares"
-        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {sizing_info}, SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+
+        logger.info(f"")
+        logger.info(f"{'$'*60}")
+        logger.info(f"[{ticker}] 💰💰💰 EXECUTING BUY ORDER 💰💰💰")
+        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {sizing_info}")
+        logger.info(f"[{ticker}] SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+        logger.info(f"{'$'*60}")
+        logger.info(f"")
 
         # Execute buy order
         try:
             order = self.trader.buy(ticker, shares)
-            logger.info(f"[{ticker}] Buy order submitted: {order.order_id} ({order.status})")
+            logger.info(f"[{ticker}] ✅ Buy order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
             # Unsubscribe since we're no longer tracking this ticker
