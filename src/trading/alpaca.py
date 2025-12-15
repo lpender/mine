@@ -19,6 +19,18 @@ ET_TZ = ZoneInfo("America/New_York")
 DEFAULT_SLIPPAGE_PCT = float(os.getenv("TRADE_SLIPPAGE_PCT", "1.0"))
 
 
+def _round_price(price: float) -> float:
+    """
+    Round price to valid Alpaca tick size.
+    - Prices >= $1.00: penny increments (2 decimals)
+    - Prices < $1.00: sub-penny allowed (4 decimals)
+    """
+    if price >= 1.0:
+        return round(price, 2)
+    else:
+        return round(price, 4)
+
+
 class AlpacaTradingClient(TradingClient):
     """Trading client using Alpaca Markets API."""
 
@@ -112,7 +124,8 @@ class AlpacaTradingClient(TradingClient):
             raise ValueError("limit_price is required for buy orders")
 
         # Apply slippage - willing to pay up to X% more
-        limit_with_slippage = round(limit_price * (1 + DEFAULT_SLIPPAGE_PCT / 100), 4)
+        # Round to valid tick size (2 decimals >= $1, 4 decimals < $1)
+        limit_with_slippage = _round_price(limit_price * (1 + DEFAULT_SLIPPAGE_PCT / 100))
 
         data = {
             "symbol": ticker,
@@ -123,7 +136,7 @@ class AlpacaTradingClient(TradingClient):
             "time_in_force": "day",
             "extended_hours": True,
         }
-        logger.info(f"[{ticker}] BUY LIMIT ${limit_with_slippage:.4f} (price=${limit_price:.4f} + {DEFAULT_SLIPPAGE_PCT}% slippage)")
+        logger.info(f"[{ticker}] BUY LIMIT ${limit_with_slippage} (price=${limit_price:.4f} + {DEFAULT_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
@@ -133,7 +146,8 @@ class AlpacaTradingClient(TradingClient):
             raise ValueError("limit_price is required for sell orders")
 
         # Apply slippage - willing to accept up to X% less
-        limit_with_slippage = round(limit_price * (1 - DEFAULT_SLIPPAGE_PCT / 100), 4)
+        # Round to valid tick size (2 decimals >= $1, 4 decimals < $1)
+        limit_with_slippage = _round_price(limit_price * (1 - DEFAULT_SLIPPAGE_PCT / 100))
 
         data = {
             "symbol": ticker,
@@ -144,7 +158,7 @@ class AlpacaTradingClient(TradingClient):
             "time_in_force": "day",
             "extended_hours": True,
         }
-        logger.info(f"[{ticker}] SELL LIMIT ${limit_with_slippage:.4f} (price=${limit_price:.4f} - {DEFAULT_SLIPPAGE_PCT}% slippage)")
+        logger.info(f"[{ticker}] SELL LIMIT ${limit_with_slippage} (price=${limit_price:.4f} - {DEFAULT_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
