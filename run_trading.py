@@ -53,6 +53,21 @@ logger = logging.getLogger(__name__)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 logging.getLogger('aiohttp').setLevel(logging.WARNING)
 
+# Set up separate file handler for quote/candle logs
+# These go to logs/quotes.log instead of stdout (tail -f logs/quotes.log)
+quotes_logger = logging.getLogger('src.strategy.quotes')
+quotes_logger.setLevel(logging.INFO)
+quotes_logger.propagate = False  # Don't send to root logger (stdout)
+
+# Create logs directory if needed
+import os
+os.makedirs('logs', exist_ok=True)
+
+# File handler for quote logs
+quotes_handler = logging.FileHandler('logs/quotes.log')
+quotes_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%H:%M:%S'))
+quotes_logger.addHandler(quotes_handler)
+
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully."""

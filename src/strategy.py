@@ -12,6 +12,8 @@ from .trade_history import get_trade_history_client
 from .active_trade_store import get_active_trade_store
 
 logger = logging.getLogger(__name__)
+# Separate logger for verbose quote/candle logs - writes to logs/quotes.log
+quotes_logger = logging.getLogger(__name__ + '.quotes')
 
 
 @dataclass
@@ -462,16 +464,16 @@ class StrategyEngine:
                 )
                 pending.candles.append(candle)
 
-                # Detailed candle close logging
+                # Detailed candle close logging (to quotes.log file)
                 color = "GREEN" if candle.is_green else "RED"
                 meets_vol = candle.volume >= cfg.min_candle_volume
                 qualifies = candle.is_green and meets_vol
-                logger.info(f"")
-                logger.info(f"[{ticker}] ━━━ CANDLE CLOSED ━━━")
-                logger.info(f"[{ticker}] {color} candle | O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f}")
-                logger.info(f"[{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
-                logger.info(f"[{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
-                logger.info(f"")
+                quotes_logger.info(f"")
+                quotes_logger.info(f"[{ticker}] ━━━ CANDLE CLOSED ━━━")
+                quotes_logger.info(f"[{ticker}] {color} candle | O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f}")
+                quotes_logger.info(f"[{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
+                quotes_logger.info(f"[{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
+                quotes_logger.info(f"")
 
             # Start new candle
             pending.current_candle_start = candle_start
@@ -490,7 +492,7 @@ class StrategyEngine:
                 pending.current_candle_data["close"] = price
                 pending.current_candle_data["volume"] += volume  # Sum volume from all 1-second bars
 
-        # Log current candle volume progress
+        # Log current candle volume progress (to quotes.log file)
         if pending.current_candle_data:
             curr_vol = pending.current_candle_data["volume"]
             curr_open = pending.current_candle_data["open"]
@@ -498,7 +500,7 @@ class StrategyEngine:
             is_green = curr_close > curr_open
             pct_of_threshold = (curr_vol / cfg.min_candle_volume * 100) if cfg.min_candle_volume > 0 else 0
             color = "GREEN" if is_green else "RED"
-            logger.info(
+            quotes_logger.info(
                 f"[{ticker}] CANDLE BUILDING: {color} | Vol: {curr_vol:,} / {cfg.min_candle_volume:,} ({pct_of_threshold:.0f}%) | "
                 f"O={curr_open:.2f} C={curr_close:.2f}"
             )
@@ -511,11 +513,11 @@ class StrategyEngine:
             else:
                 break
 
-        # Log completed candles status
+        # Log completed candles status (to quotes.log file)
         if pending.candles:
             last_candle = pending.candles[-1]
             meets_vol = last_candle.volume >= cfg.min_candle_volume
-            logger.info(
+            quotes_logger.info(
                 f"[{ticker}] LAST COMPLETED CANDLE: {'GREEN' if last_candle.is_green else 'RED'} | "
                 f"Vol: {last_candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} | "
                 f"Green candles with vol: {green_count}/{cfg.consec_green_candles} needed"
