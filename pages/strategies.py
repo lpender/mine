@@ -186,7 +186,6 @@ if not strategies:
     st.info("No strategies created yet. Use the form above to create one.")
 else:
     # Get live status if engine is running
-    engine = get_trading_engine()
     live_status = get_live_trading_status() or {}
     strategies_status = live_status.get("strategies", {})
 
