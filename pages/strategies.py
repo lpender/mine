@@ -185,13 +185,18 @@ else:
     for s in strategies:
         strategy_live = strategies_status.get(s.id, {})
 
+        # Use strings for all columns to avoid Arrow mixed-type errors
+        pending = str(len(strategy_live.get("pending_entries", []))) if s.enabled else "-"
+        active = str(len(strategy_live.get("active_trades", {}))) if s.enabled else "-"
+        completed = str(strategy_live.get("completed_trades", 0)) if s.enabled else "-"
+
         rows.append({
             "id": s.id,
             "Name": s.name,
             "Enabled": s.enabled,
-            "Pending": len(strategy_live.get("pending_entries", [])) if s.enabled else "-",
-            "Active": len(strategy_live.get("active_trades", {})) if s.enabled else "-",
-            "Completed": strategy_live.get("completed_trades", 0) if s.enabled else "-",
+            "Pending": pending,
+            "Active": active,
+            "Completed": completed,
             "Stake": f"${s.config.stake_amount:.0f}",
             "TP/SL": f"{s.config.take_profit_pct:.0f}% / {s.config.stop_loss_pct:.0f}%",
             "Created": s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "",
