@@ -141,6 +141,7 @@ if "_initialized" not in st.session_state:
     st.session_state._channel = [c for c in channel_list if c in all_channels]
     st.session_state._no_fin = get_param("no_fin", False, bool)
     st.session_state._has_hl = get_param("has_hl", False, bool)
+    st.session_state._no_hl = get_param("no_hl", False, bool)
     st.session_state._float_min = get_param("float_min", 0.0, float)
     st.session_state._float_max = get_param("float_max", 1000.0, float)
     st.session_state._mc_min = get_param("mc_min", 0.0, float)
@@ -261,6 +262,13 @@ with st.sidebar:
         help="Only show announcements with a headline"
     )
 
+    # No headline filter
+    exclude_headline = st.checkbox(
+        "No headline",
+        key="_no_hl",
+        help="Only show announcements WITHOUT a headline"
+    )
+
     # Direction filter (up arrow vs up-right arrow)
     directions = st.multiselect(
         "Direction",
@@ -313,6 +321,7 @@ with st.sidebar:
     set_param("channel", channels)
     set_param("no_fin", exclude_financing)
     set_param("has_hl", require_headline)
+    set_param("no_hl", exclude_headline)
     set_param("float_min", float_min)
     set_param("float_max", float_max)
     set_param("mc_min", mc_min)
@@ -450,6 +459,8 @@ if exclude_financing:
 # Headline filter
 if require_headline:
     filtered = [a for a in filtered if a.headline and a.headline.strip()]
+if exclude_headline:
+    filtered = [a for a in filtered if not a.headline or not a.headline.strip()]
 
 # Direction filter
 if directions:
