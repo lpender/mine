@@ -127,52 +127,57 @@ all_directions = sorted(set(a.direction for a in all_announcements if a.directio
 # Sidebar Controls
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Initialize session state from URL params
-# Re-initialize on every page load to ensure URL is source of truth
+# Initialize session state from URL params ONLY if not already set
+# This ensures URL params are used on first load, but widget changes aren't overwritten
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
-def init_from_url():
-    """Initialize session state from URL params. Always run to keep URL as source of truth."""
+def init_session_state():
+    """Initialize session state from URL params only for missing keys."""
+    # Helper to set if missing
+    def set_if_missing(key, value):
+        if key not in st.session_state:
+            st.session_state[key] = value
+
     # Validate slider values against their min/max ranges
     sl_val = get_param("sl", 5.0, float)
-    st.session_state._sl = max(1.0, min(30.0, sl_val)) if sl_val > 0 else 5.0
+    set_if_missing("_sl", max(1.0, min(30.0, sl_val)) if sl_val > 0 else 5.0)
     tp_val = get_param("tp", 10.0, float)
-    st.session_state._tp = max(1.0, min(50.0, tp_val)) if tp_val > 0 else 10.0
+    set_if_missing("_tp", max(1.0, min(50.0, tp_val)) if tp_val > 0 else 10.0)
     hold_val = get_param("hold", 60, int)
-    st.session_state._hold = max(5, min(120, hold_val)) if hold_val > 0 else 60
+    set_if_missing("_hold", max(5, min(120, hold_val)) if hold_val > 0 else 60)
     # Parse session list, filtering to valid values
     sess_list = get_param("sess", "premarket,market", list)
-    st.session_state._sess = [s for s in sess_list if s in all_sessions] or ["premarket", "market"]
+    set_if_missing("_sess", [s for s in sess_list if s in all_sessions] or ["premarket", "market"])
     country_list = get_param("country", "", list)
-    st.session_state._country = [c for c in country_list if c in all_countries]
+    set_if_missing("_country", [c for c in country_list if c in all_countries])
     author_list = get_param("author", "", list)
-    st.session_state._author = [a for a in author_list if a in all_authors]
+    set_if_missing("_author", [a for a in author_list if a in all_authors])
     channel_list = get_param("channel", "", list)
-    st.session_state._channel = [c for c in channel_list if c in all_channels]
-    st.session_state._no_fin = get_param("no_fin", False, bool)
-    st.session_state._has_hl = get_param("has_hl", False, bool)
-    st.session_state._no_hl = get_param("no_hl", False, bool)
-    st.session_state._float_min = get_param("float_min", 0.0, float)
+    set_if_missing("_channel", [c for c in channel_list if c in all_channels])
+    set_if_missing("_no_fin", get_param("no_fin", False, bool))
+    set_if_missing("_has_hl", get_param("has_hl", False, bool))
+    set_if_missing("_no_hl", get_param("no_hl", False, bool))
+    set_if_missing("_float_min", get_param("float_min", 0.0, float))
     # float_max=0 is invalid, use default
     float_max_val = get_param("float_max", 1000.0, float)
-    st.session_state._float_max = float_max_val if float_max_val > 0 else 1000.0
-    st.session_state._mc_min = get_param("mc_min", 0.0, float)
+    set_if_missing("_float_max", float_max_val if float_max_val > 0 else 1000.0)
+    set_if_missing("_mc_min", get_param("mc_min", 0.0, float))
     # mc_max=0 is invalid, use default
     mc_max_val = get_param("mc_max", 10000.0, float)
-    st.session_state._mc_max = mc_max_val if mc_max_val > 0 else 10000.0
-    st.session_state._sl_from_open = get_param("sl_open", False, bool)
-    st.session_state._consec_candles = get_param("consec", 0, int)
-    st.session_state._min_candle_vol = get_param("min_vol", 0, int)
-    st.session_state._price_min = get_param("price_min", 0.0, float)
+    set_if_missing("_mc_max", mc_max_val if mc_max_val > 0 else 10000.0)
+    set_if_missing("_sl_from_open", get_param("sl_open", False, bool))
+    set_if_missing("_consec_candles", get_param("consec", 0, int))
+    set_if_missing("_min_candle_vol", get_param("min_vol", 0, int))
+    set_if_missing("_price_min", get_param("price_min", 0.0, float))
     # price_max=0 is invalid (would filter everything), use default
     price_max_val = get_param("price_max", 100.0, float)
-    st.session_state._price_max = price_max_val if price_max_val > 0 else 100.0
-    st.session_state._trailing_stop = get_param("trail", 0.0, float)
+    set_if_missing("_price_max", price_max_val if price_max_val > 0 else 100.0)
+    set_if_missing("_trailing_stop", get_param("trail", 0.0, float))
     direction_list = get_param("direction", "", list)
-    st.session_state._direction = [d for d in direction_list if d in all_directions]
-    st.session_state._scanner_test = get_param("scanner_test", False, bool)
-    st.session_state._scanner_after_lull = get_param("scanner_lull", False, bool)
+    set_if_missing("_direction", [d for d in direction_list if d in all_directions])
+    set_if_missing("_scanner_test", get_param("scanner_test", False, bool))
+    set_if_missing("_scanner_after_lull", get_param("scanner_lull", False, bool))
 
-init_from_url()
+init_session_state()
 
 with st.sidebar:
     st.header("Trigger Config")
