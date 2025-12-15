@@ -286,8 +286,8 @@ module.exports = class StockAlertMonitor {
         const contentPreview = message.content.substring(0, 100);
         console.log(`[StockAlertMonitor] Message in #${channelName}: "${contentPreview}"`);
 
-        // Check for stock alert pattern: TICKER < $X
-        const tickerMatch = message.content.match(/\b([A-Z]{2,5})\s*<\s*\$[\d.]+/);
+        // Check for stock alert pattern: TICKER < $X (handles **TICKER** markdown bold)
+        const tickerMatch = message.content.match(/\*{0,2}([A-Z]{2,5})\*{0,2}\s*<\s*\$[\d.]+/);
 
         if (tickerMatch) {
             const ticker = tickerMatch[1];
