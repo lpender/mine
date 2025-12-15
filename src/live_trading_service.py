@@ -4,6 +4,7 @@ import asyncio
 import logging
 import threading
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Callable
 
 from .strategy import StrategyConfig, StrategyEngine
@@ -13,6 +14,9 @@ from .parser import parse_message_line
 from .alert_service import set_alert_callback
 
 logger = logging.getLogger(__name__)
+
+# Lock file to detect if service is already running (survives module reloads)
+TRADING_LOCK_FILE = Path(__file__).parent.parent / "data" / ".trading.lock"
 
 
 class TradingEngine:
@@ -42,14 +46,72 @@ class TradingEngine:
         # Callbacks for external status updates
         self.on_status_change: Optional[Callable[[dict], None]] = None
 
+    def _acquire_lock(self) -> bool:
+        """Try to acquire the trading lock file. Returns True if acquired."""
+        import os
+        import time
+
+        try:
+            TRADING_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+            # Check if lock file exists and is recent (within 30 seconds)
+            if TRADING_LOCK_FILE.exists():
+                try:
+                    lock_data = TRADING_LOCK_FILE.read_text().strip().split("\n")
+                    lock_pid = int(lock_data[0])
+                    lock_time = float(lock_data[1])
+
+                    # Check if the process is still alive
+                    try:
+                        os.kill(lock_pid, 0)  # Doesn't kill, just checks
+                        # Process exists - check if lock is stale (>60s old)
+                        if time.time() - lock_time < 60:
+                            logger.warning(f"Trading already running (PID {lock_pid})")
+                            return False
+                    except OSError:
+                        # Process is dead, lock is stale
+                        logger.info("Found stale lock file, removing...")
+                except (ValueError, IndexError):
+                    pass  # Invalid lock file, overwrite it
+
+            # Write our lock
+            TRADING_LOCK_FILE.write_text(f"{os.getpid()}\n{time.time()}")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error acquiring lock: {e}")
+            return True  # Proceed anyway if lock check fails
+
+    def _release_lock(self):
+        """Release the trading lock file."""
+        try:
+            if TRADING_LOCK_FILE.exists():
+                TRADING_LOCK_FILE.unlink()
+        except Exception as e:
+            logger.warning(f"Error releasing lock: {e}")
+
+    def _update_lock(self):
+        """Update lock file timestamp (heartbeat)."""
+        import os
+        import time
+        try:
+            TRADING_LOCK_FILE.write_text(f"{os.getpid()}\n{time.time()}")
+        except Exception:
+            pass
+
     def start(self):
         """Start the trading engine in a background thread."""
         if self._running:
             logger.warning("Trading engine already running")
             return
 
+        # Check lock file to prevent duplicate instances
+        if not self._acquire_lock():
+            logger.error("Cannot start: trading engine already running in another instance")
+            return
+
         self._running = True
-        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread = threading.Thread(target=self._run, daemon=True, name="TradingEngine")
         self._thread.start()
 
         # Register callback with alert service
@@ -75,6 +137,9 @@ class TradingEngine:
         # Wait for thread to finish
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=5.0)
+
+        # Release lock file
+        self._release_lock()
 
         logger.info("Trading engine stopped")
 
@@ -214,6 +279,9 @@ class TradingEngine:
 
     def _broadcast_status(self):
         """Broadcast current status to listeners."""
+        # Update lock file heartbeat
+        self._update_lock()
+
         if self.on_status_change and self.engine:
             status = self.get_status()
             self.on_status_change(status)
@@ -254,13 +322,19 @@ LiveTradingService = TradingEngine
 _trading_engine: Optional[TradingEngine] = None
 
 
-def start_live_trading(config: StrategyConfig, paper: bool = True) -> TradingEngine:
+def start_live_trading(config: StrategyConfig, paper: bool = True) -> Optional[TradingEngine]:
     """Start the global trading engine."""
     global _trading_engine
 
+    # Check if already running in this process
     if _trading_engine and _trading_engine.is_running:
         logger.warning("Trading engine already running, stopping first...")
         _trading_engine.stop()
+
+    # Check if running in another process (or after module reload)
+    if is_trading_locked():
+        logger.warning("Trading appears to be running (lock file exists). Use force_release_trading_lock() if stuck.")
+        return None
 
     _trading_engine = TradingEngine(config, paper=paper)
     _trading_engine.start()
@@ -289,3 +363,38 @@ def is_live_trading_active() -> bool:
     """Check if live trading is active."""
     global _trading_engine
     return _trading_engine is not None and _trading_engine.is_running
+
+
+def is_trading_locked() -> bool:
+    """Check if trading is running (even across module reloads)."""
+    import os
+    import time
+
+    try:
+        if not TRADING_LOCK_FILE.exists():
+            return False
+
+        lock_data = TRADING_LOCK_FILE.read_text().strip().split("\n")
+        lock_pid = int(lock_data[0])
+        lock_time = float(lock_data[1])
+
+        # Check if process is alive
+        try:
+            os.kill(lock_pid, 0)
+            # Process exists - check if lock is fresh (<60s old)
+            return time.time() - lock_time < 60
+        except OSError:
+            return False  # Process is dead
+
+    except Exception:
+        return False
+
+
+def force_release_trading_lock():
+    """Force release the trading lock (for debugging/recovery)."""
+    try:
+        if TRADING_LOCK_FILE.exists():
+            TRADING_LOCK_FILE.unlink()
+            logger.info("Force released trading lock")
+    except Exception as e:
+        logger.error(f"Error force releasing lock: {e}")
