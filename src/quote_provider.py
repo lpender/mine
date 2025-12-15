@@ -89,11 +89,10 @@ class InsightSentryQuoteProvider:
             self._ws_key = cached_key
             return cached_key
 
-        # Retry logic for rate limits
-        max_retries = 3
-        retry_delay = 30  # Start with 30s for 429 errors
+        # Retry logic for rate limits - progressive backoff
+        retry_delays = [1, 10, 30, 60]  # Quick first retry, then increase
 
-        for attempt in range(max_retries):
+        for attempt in range(len(retry_delays)):
             try:
                 response = requests.get(
                     self.KEY_URL,
@@ -106,8 +105,8 @@ class InsightSentryQuoteProvider:
 
                 if response.status_code == 429:
                     # Rate limited - wait and retry
-                    wait_time = retry_delay * (2 ** attempt)
-                    logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry...")
+                    wait_time = retry_delays[attempt]
+                    logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry (attempt {attempt + 1}/{len(retry_delays)})...")
                     await asyncio.sleep(wait_time)
                     continue
 
