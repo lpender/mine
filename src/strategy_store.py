@@ -23,6 +23,7 @@ class Strategy:
     description: Optional[str]
     config: StrategyConfig
     enabled: bool
+    priority: int  # Lower = higher priority (processed first)
     created_at: datetime
     updated_at: datetime
 
@@ -53,18 +54,25 @@ class StrategyStore:
         db = self._get_db()
         try:
             strategy_id = str(uuid.uuid4())
+
+            # Get next priority (new strategies go to end)
+            from sqlalchemy import func
+            max_priority = db.query(func.max(StrategyDB.priority)).scalar() or -1
+            next_priority = max_priority + 1
+
             db_strategy = StrategyDB(
                 id=strategy_id,
                 name=name,
                 description=description,
                 config=json.dumps(config.to_dict()),
                 enabled=False,
+                priority=next_priority,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
             )
             db.add(db_strategy)
             db.commit()
-            logger.info(f"Saved strategy '{name}' with ID {strategy_id}")
+            logger.info(f"Saved strategy '{name}' with ID {strategy_id}, priority={next_priority}")
             return strategy_id
         finally:
             db.close()
@@ -93,7 +101,7 @@ class StrategyStore:
 
     def list_strategies(self, enabled_only: bool = False) -> List[Strategy]:
         """
-        List all strategies.
+        List all strategies ordered by priority (lower = higher priority).
 
         Args:
             enabled_only: If True, only return enabled strategies
@@ -103,7 +111,7 @@ class StrategyStore:
             query = db.query(StrategyDB)
             if enabled_only:
                 query = query.filter(StrategyDB.enabled == True)
-            rows = query.order_by(StrategyDB.name).all()
+            rows = query.order_by(StrategyDB.priority, StrategyDB.name).all()
             return [self._db_to_strategy(row) for row in rows]
         finally:
             db.close()
@@ -189,6 +197,70 @@ class StrategyStore:
         finally:
             db.close()
 
+    def move_strategy_up(self, strategy_id: str) -> bool:
+        """
+        Move a strategy up in priority (lower number = higher priority).
+
+        Returns:
+            True if moved, False if already at top or not found
+        """
+        db = self._get_db()
+        try:
+            # Get current strategy
+            current = db.query(StrategyDB).filter(StrategyDB.id == strategy_id).first()
+            if not current:
+                return False
+
+            # Find strategy with next lower priority (higher in list)
+            above = db.query(StrategyDB).filter(
+                StrategyDB.priority < current.priority
+            ).order_by(StrategyDB.priority.desc()).first()
+
+            if not above:
+                return False  # Already at top
+
+            # Swap priorities
+            current.priority, above.priority = above.priority, current.priority
+            current.updated_at = datetime.utcnow()
+            above.updated_at = datetime.utcnow()
+            db.commit()
+            logger.info(f"Moved strategy {strategy_id} up (priority {current.priority} <-> {above.priority})")
+            return True
+        finally:
+            db.close()
+
+    def move_strategy_down(self, strategy_id: str) -> bool:
+        """
+        Move a strategy down in priority (higher number = lower priority).
+
+        Returns:
+            True if moved, False if already at bottom or not found
+        """
+        db = self._get_db()
+        try:
+            # Get current strategy
+            current = db.query(StrategyDB).filter(StrategyDB.id == strategy_id).first()
+            if not current:
+                return False
+
+            # Find strategy with next higher priority (lower in list)
+            below = db.query(StrategyDB).filter(
+                StrategyDB.priority > current.priority
+            ).order_by(StrategyDB.priority.asc()).first()
+
+            if not below:
+                return False  # Already at bottom
+
+            # Swap priorities
+            current.priority, below.priority = below.priority, current.priority
+            current.updated_at = datetime.utcnow()
+            below.updated_at = datetime.utcnow()
+            db.commit()
+            logger.info(f"Moved strategy {strategy_id} down (priority {current.priority} <-> {below.priority})")
+            return True
+        finally:
+            db.close()
+
     def _db_to_strategy(self, row: StrategyDB) -> Strategy:
         """Convert database row to Strategy."""
         config_dict = {}
@@ -206,6 +278,7 @@ class StrategyStore:
             description=row.description,
             config=config,
             enabled=row.enabled,
+            priority=row.priority if row.priority is not None else 0,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )

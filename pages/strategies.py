@@ -225,6 +225,8 @@ else:
 
         rows.append({
             "id": s.id,
+            "priority": s.priority,
+            "#": s.priority + 1,  # 1-indexed for display
             "Name": s.name,
             "Enabled": s.enabled,
             "Pending": pending,
@@ -232,14 +234,13 @@ else:
             "Completed": completed,
             "Sizing": sizing_str,
             "TP/SL": f"{s.config.take_profit_pct:.0f}% / {s.config.stop_loss_pct:.0f}%",
-            "Created": s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "",
         })
 
     df = pd.DataFrame(rows)
 
-    # Display with selection
+    # Display with selection (hide internal columns)
     event = st.dataframe(
-        df.drop(columns=["id"]),
+        df.drop(columns=["id", "priority"]),
         hide_index=True,
         selection_mode="single-row",
         on_select="rerun",
@@ -259,7 +260,23 @@ else:
 
         if strategy:
             st.divider()
-            st.subheader(f"Strategy: {strategy.name}")
+
+            # Strategy header with priority controls
+            header_cols = st.columns([3, 1, 1, 1])
+            with header_cols[0]:
+                st.subheader(f"Strategy: {strategy.name}")
+            with header_cols[1]:
+                st.caption(f"Priority: #{strategy.priority + 1}")
+            with header_cols[2]:
+                if st.button("⬆️ Move Up", key=f"up_{strategy_id}", disabled=strategy.priority == 0):
+                    store.move_strategy_up(strategy_id)
+                    st.rerun()
+            with header_cols[3]:
+                # Check if at bottom (highest priority number)
+                max_priority = max(s.priority for s in strategies)
+                if st.button("⬇️ Move Down", key=f"down_{strategy_id}", disabled=strategy.priority >= max_priority):
+                    store.move_strategy_down(strategy_id)
+                    st.rerun()
 
             # Action buttons
             col1, col2, col3, col4 = st.columns(4)

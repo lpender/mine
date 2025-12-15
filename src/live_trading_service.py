@@ -49,9 +49,13 @@ class TradingEngine:
         # Multi-strategy support: strategy_id -> StrategyEngine
         self.strategies: Dict[str, StrategyEngine] = {}
         self.strategy_names: Dict[str, str] = {}  # strategy_id -> name
+        self.strategy_priorities: Dict[str, int] = {}  # strategy_id -> priority
 
         # Track subscriptions per strategy for proper cleanup
         self._strategy_subscriptions: Dict[str, set] = {}  # strategy_id -> set of tickers
+
+        # Global ticker lock - prevents multiple strategies from trading same ticker
+        self._locked_tickers: Dict[str, str] = {}  # ticker -> strategy_id that owns it
 
         # Live bar storage for TradingView visualization
         self._live_bar_store = get_live_bar_store()
@@ -220,16 +224,29 @@ class TradingEngine:
         logger.info("Alert callback registered")
 
     def _load_enabled_strategies(self):
-        """Load all enabled strategies from the database."""
+        """Load all enabled strategies from the database (ordered by priority)."""
         store = get_strategy_store()
-        enabled = store.list_strategies(enabled_only=True)
+        enabled = store.list_strategies(enabled_only=True)  # Already ordered by priority
 
         for strategy in enabled:
-            self._add_strategy_engine(strategy.id, strategy.name, strategy.config)
+            self._add_strategy_engine(strategy.id, strategy.name, strategy.config, strategy.priority)
 
-        logger.info(f"Loaded {len(enabled)} enabled strategies")
+        # Initialize ticker locks for any recovered positions
+        for strategy_id, engine in self.strategies.items():
+            # Lock tickers from active trades
+            for ticker in engine.active_trades.keys():
+                if ticker not in self._locked_tickers:
+                    self._locked_tickers[ticker] = strategy_id
+                    logger.info(f"[{ticker}] Locked (recovered active trade for '{self.strategy_names[strategy_id]}')")
+            # Lock tickers from pending entries
+            for ticker in engine.pending_entries.keys():
+                if ticker not in self._locked_tickers:
+                    self._locked_tickers[ticker] = strategy_id
+                    logger.info(f"[{ticker}] Locked (recovered pending entry for '{self.strategy_names[strategy_id]}')")
 
-    def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig):
+        logger.info(f"Loaded {len(enabled)} enabled strategies, {len(self._locked_tickers)} tickers locked")
+
+    def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig, priority: int = 0):
         """Create and add a StrategyEngine for a strategy."""
         if strategy_id in self.strategies:
             logger.warning(f"Strategy {strategy_id} already running")
@@ -247,9 +264,10 @@ class TradingEngine:
 
         self.strategies[strategy_id] = engine
         self.strategy_names[strategy_id] = name
+        self.strategy_priorities[strategy_id] = priority
         self._strategy_subscriptions[strategy_id] = set()
 
-        logger.info(f"Added strategy '{name}' ({strategy_id})")
+        logger.info(f"Added strategy '{name}' ({strategy_id}) [priority={priority}]")
         logger.info(f"  Filters: channels={config.channels}, price=${config.price_min:.2f}-${config.price_max:.2f}")
         logger.info(f"  Entry: {config.consec_green_candles} green candles, {config.min_candle_volume:,} min volume")
         logger.info(f"  Exit: TP={config.take_profit_pct}%, SL={config.stop_loss_pct}%, timeout={config.timeout_minutes}m")
@@ -267,6 +285,8 @@ class TradingEngine:
 
         del self.strategies[strategy_id]
         del self.strategy_names[strategy_id]
+        if strategy_id in self.strategy_priorities:
+            del self.strategy_priorities[strategy_id]
         if strategy_id in self._strategy_subscriptions:
             del self._strategy_subscriptions[strategy_id]
 
@@ -355,7 +375,7 @@ class TradingEngine:
             )
 
     async def _handle_alert(self, data: dict):
-        """Process an alert from Discord - fan out to all strategies."""
+        """Process an alert from Discord - route to highest priority strategy that accepts it."""
         try:
             content = data.get("content", "")
             channel = data.get("channel", "")
@@ -379,17 +399,32 @@ class TradingEngine:
             if author:
                 announcement.author = author
 
-            logger.info(f"Alert received: {announcement.ticker} @ ${announcement.price_threshold}")
+            ticker = announcement.ticker
+            logger.info(f"Alert received: {ticker} @ ${announcement.price_threshold}")
 
-            # Fan out to all strategies - each decides independently
-            accepted_by = []
-            for strategy_id, engine in self.strategies.items():
+            # Check if ticker is already locked by another strategy
+            if ticker in self._locked_tickers:
+                owner = self._locked_tickers[ticker]
+                owner_name = self.strategy_names.get(owner, owner)
+                logger.info(f"[{ticker}] Already locked by strategy '{owner_name}' - skipping alert")
+                return
+
+            # Sort strategies by priority (lower = higher priority)
+            sorted_strategies = sorted(
+                self.strategies.items(),
+                key=lambda x: self.strategy_priorities.get(x[0], 999)
+            )
+
+            # Offer to strategies in priority order - first to accept wins
+            for strategy_id, engine in sorted_strategies:
                 name = self.strategy_names.get(strategy_id, strategy_id)
                 if engine.on_alert(announcement):
-                    accepted_by.append(name)
+                    # Lock the ticker for this strategy
+                    self._locked_tickers[ticker] = strategy_id
+                    logger.info(f"[{ticker}] Alert accepted by '{name}' (locked)")
+                    return
 
-            if accepted_by:
-                logger.info(f"Alert accepted by: {', '.join(accepted_by)}")
+            logger.debug(f"[{ticker}] No strategy accepted the alert")
 
         except Exception as e:
             logger.error(f"Error handling alert: {e}", exc_info=True)
@@ -523,6 +558,11 @@ class TradingEngine:
     def _on_unsubscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy no longer needs quotes for a ticker."""
         strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
+
+        # Release the ticker lock if this strategy owned it
+        if self._locked_tickers.get(ticker) == strategy_id:
+            del self._locked_tickers[ticker]
+            logger.info(f"[{ticker}] Lock released by '{strategy_name}'")
 
         # Remove from this strategy's subscriptions
         if strategy_id in self._strategy_subscriptions:
