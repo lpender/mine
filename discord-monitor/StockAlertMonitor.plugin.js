@@ -202,6 +202,13 @@ module.exports = class StockAlertMonitor {
 
     stop() {
         console.log("[StockAlertMonitor] Stopping...");
+
+        // Unsubscribe from MESSAGE_CREATE events
+        if (this._dispatcher && this._boundMessageHandler) {
+            this._dispatcher.unsubscribe("MESSAGE_CREATE", this._boundMessageHandler);
+            console.log("[StockAlertMonitor] Unsubscribed from MESSAGE_CREATE events");
+        }
+
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
         this.removeBackfillWidget();
         this.stopTradeButtonInjection();
@@ -220,13 +227,16 @@ module.exports = class StockAlertMonitor {
             return;
         }
 
-        // Subscribe to MESSAGE_CREATE events
-        Dispatcher.subscribe("MESSAGE_CREATE", this.handleMessage.bind(this));
+        // Store bound handler so we can properly unsubscribe later
+        // (bind() creates a new function each time, so we need to keep the same reference)
+        this._boundMessageHandler = this.handleMessage.bind(this);
 
-        // Store for cleanup
-        this._unsubscribe = () => {
-            Dispatcher.unsubscribe("MESSAGE_CREATE", this.handleMessage.bind(this));
-        };
+        // Subscribe to MESSAGE_CREATE events
+        Dispatcher.subscribe("MESSAGE_CREATE", this._boundMessageHandler);
+        console.log("[StockAlertMonitor] Subscribed to MESSAGE_CREATE events");
+
+        // Store dispatcher for cleanup
+        this._dispatcher = Dispatcher;
     }
 
     handleMessage(event) {
