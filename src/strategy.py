@@ -661,6 +661,9 @@ class StrategyEngine:
             pnl_pct = ((current_price - t.entry_price) / t.entry_price) * 100 if t.entry_price > 0 else 0
             pnl_dollars = (current_price - t.entry_price) * t.shares
 
+            # Calculate timeout time
+            timeout_at = t.entry_time + timedelta(minutes=self.config.timeout_minutes)
+
             active_trades[ticker] = {
                 "entry_price": t.entry_price,
                 "entry_time": t.entry_time.isoformat(),
@@ -671,6 +674,7 @@ class StrategyEngine:
                 "highest": t.highest_since_entry,
                 "stop_loss": t.stop_loss_price,
                 "take_profit": t.take_profit_price,
+                "timeout_at": timeout_at.isoformat(),
                 "last_quote_time": t.last_quote_time.isoformat() if t.last_quote_time else None,
             }
 

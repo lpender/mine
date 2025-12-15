@@ -337,9 +337,16 @@ else:
                         sl = trade.get("stop_loss", 0)
                         tp = trade.get("take_profit", 0)
                         shares = trade.get("shares", 0)
+                        timeout_at = trade.get("timeout_at")
 
                         # Color P&L
                         pnl_color = "green" if pnl_pct >= 0 else "red"
                         pnl_str = f":{pnl_color}[{pnl_pct:+.2f}% (${pnl_dollars:+.2f})]"
 
-                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str} | SL: ${sl:.2f} | TP: ${tp:.2f}")
+                        # Format timeout time
+                        timeout_str = ""
+                        if timeout_at:
+                            timeout_dt = datetime.fromisoformat(timeout_at)
+                            timeout_str = f" | Timeout: {timeout_dt.strftime('%H:%M:%S')}"
+
+                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}")
