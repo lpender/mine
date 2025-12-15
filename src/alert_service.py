@@ -147,10 +147,14 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
 
         # Forward to trading engine if callback is set
         if UnifiedAlertHandler.alert_callback and content:
+            logger.debug(f"Forwarding alert to trading engine callback")
             try:
                 UnifiedAlertHandler.alert_callback(data)
+                logger.debug(f"Alert callback completed")
             except Exception as e:
                 logger.error(f"Error in alert callback: {e}")
+        elif not UnifiedAlertHandler.alert_callback:
+            logger.warning(f"Alert received but no callback registered - trading engine may not be running")
 
     def _handle_backfill(self, data):
         """Handle backfill data from the Discord plugin."""
@@ -310,11 +314,8 @@ class AlertService:
 
             logger.info(f"Alert service started on port {self.port}")
         except OSError as e:
-            if "Address already in use" in str(e):
-                logger.warning(f"Port {self.port} already in use - alert service may already be running")
-                self._running = True  # Assume it's our service
-            else:
-                raise
+            # Re-raise so caller can decide what to do
+            raise
 
     def _run(self):
         """Server loop."""
@@ -360,3 +361,6 @@ def set_alert_callback(callback: Optional[Callable]):
     """Set the callback for real-time alerts."""
     if AlertService._instance:
         AlertService._instance.set_alert_callback(callback)
+        logger.info(f"Alert callback set: {callback is not None}")
+    else:
+        logger.warning("Cannot set alert callback: AlertService not initialized")

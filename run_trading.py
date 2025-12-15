@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from src.database import init_db
-from src.alert_service import start_alert_service, AlertService
+from src.alert_service import start_alert_service
 from src.live_trading_service import (
     start_live_trading,
     stop_live_trading,
@@ -88,10 +88,16 @@ def main():
     logger.info("Initializing database...")
     init_db()
 
-    # Start alert service if not running
-    if not AlertService.is_running():
-        logger.info("Starting alert service...")
+    # Start alert service (this process must own it for callbacks to work)
+    logger.info("Starting alert service...")
+    try:
         start_alert_service(port=8765)
+    except OSError as e:
+        if "Address already in use" in str(e):
+            logger.error("Port 8765 already in use! Stop any other processes using it (e.g., Streamlit).")
+            logger.error("The trading engine must own the alert service for callbacks to work.")
+            sys.exit(1)
+        raise
 
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)

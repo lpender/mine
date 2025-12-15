@@ -120,9 +120,7 @@ class TradingEngine:
         self._thread = threading.Thread(target=self._run, daemon=True, name="TradingEngine")
         self._thread.start()
 
-        # Register callback with alert service
-        set_alert_callback(self._on_alert_received)
-
+        # Note: callback is registered in _init_components after strategies are loaded
         logger.info("Trading engine started")
 
     def stop(self):
@@ -186,6 +184,10 @@ class TradingEngine:
 
         # Load enabled strategies from database
         self._load_enabled_strategies()
+
+        # Register callback with alert service (after strategies are loaded)
+        set_alert_callback(self._on_alert_received)
+        logger.info("Alert callback registered")
 
     def _load_enabled_strategies(self):
         """Load all enabled strategies from the database."""
@@ -306,7 +308,11 @@ class TradingEngine:
 
     def _on_alert_received(self, data: dict):
         """Handle alert from AlertService (called from HTTP thread)."""
-        if not self._running or not self.strategies:
+        if not self._running:
+            logger.warning("Alert received but trading engine not running - dropping")
+            return
+        if not self.strategies:
+            logger.warning(f"Alert received but no strategies loaded - dropping: {data.get('content', '')[:50]}")
             return
 
         # Schedule processing in our event loop

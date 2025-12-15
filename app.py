@@ -30,11 +30,8 @@ from src.live_trading_service import (
     get_live_trading_status,
     is_live_trading_active,
 )
-from src.alert_service import start_alert_service, AlertService
-
-# Start alert service on dashboard startup (handles /alert and /backfill)
-if not AlertService.is_running():
-    start_alert_service(port=8765)
+# Note: Alert service is now started by run_trading.py, not the dashboard
+# This ensures alerts go to the trading engine's callback handler
 
 st.set_page_config(
     page_title="PR Backtest Dashboard",

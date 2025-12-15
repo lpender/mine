@@ -14,14 +14,10 @@ from src.live_trading_service import (
     enable_strategy,
     disable_strategy,
 )
-from src.alert_service import start_alert_service, AlertService
-
 # Initialize database tables
 init_db()
 
-# Start alert service if not running
-if not AlertService.is_running():
-    start_alert_service(port=8765)
+# Note: Alert service is now started by run_trading.py only
 
 st.set_page_config(
     page_title="Strategies",
