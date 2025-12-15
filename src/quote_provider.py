@@ -104,8 +104,15 @@ class InsightSentryQuoteProvider:
                 )
 
                 if response.status_code == 429:
-                    # Rate limited - wait and retry
-                    wait_time = retry_delays[attempt]
+                    # Rate limited - check Retry-After header or use default
+                    retry_after = response.headers.get("Retry-After")
+                    if retry_after:
+                        try:
+                            wait_time = int(retry_after)
+                        except ValueError:
+                            wait_time = retry_delays[attempt]
+                    else:
+                        wait_time = retry_delays[attempt]
                     logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry (attempt {attempt + 1}/{len(retry_delays)})...")
                     await asyncio.sleep(wait_time)
                     continue
