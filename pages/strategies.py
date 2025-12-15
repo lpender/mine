@@ -298,7 +298,8 @@ else:
                     st.markdown(f"[Open Backtest with these settings](../?{query_string})")
 
             with col3:
-                pass  # Placeholder for future actions
+                if st.button("Edit Sizing"):
+                    st.session_state[f"edit_sizing_{strategy_id}"] = True
 
             with col4:
                 if st.button("Delete", type="secondary"):
@@ -343,6 +344,79 @@ else:
                 else:
                     st.write(f"Mode: Fixed")
                     st.write(f"Stake: ${cfg.stake_amount:.0f}")
+
+            # Edit Position Sizing form
+            if st.session_state.get(f"edit_sizing_{strategy_id}", False):
+                st.divider()
+                st.markdown("**Edit Position Sizing**")
+
+                edit_mode = st.radio(
+                    "Sizing Mode",
+                    ["fixed", "volume_pct"],
+                    index=0 if cfg.stake_mode == "fixed" else 1,
+                    format_func=lambda x: "Fixed Dollar Amount" if x == "fixed" else "% of Previous Candle Volume",
+                    horizontal=True,
+                    key=f"edit_mode_{strategy_id}",
+                )
+
+                if edit_mode == "fixed":
+                    edit_stake = st.number_input(
+                        "Stake per Trade ($)",
+                        value=cfg.stake_amount,
+                        min_value=1.0,
+                        key=f"edit_stake_{strategy_id}",
+                    )
+                    edit_vol_pct = cfg.volume_pct
+                    edit_max_stake = cfg.max_stake
+                else:
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        edit_vol_pct = st.number_input(
+                            "Volume %",
+                            value=cfg.volume_pct,
+                            min_value=0.1,
+                            max_value=100.0,
+                            key=f"edit_vol_pct_{strategy_id}",
+                        )
+                    with col_b:
+                        edit_max_stake = st.number_input(
+                            "Max Cost ($)",
+                            value=cfg.max_stake,
+                            min_value=1.0,
+                            key=f"edit_max_stake_{strategy_id}",
+                        )
+                    edit_stake = cfg.stake_amount
+
+                col_save, col_cancel = st.columns(2)
+                with col_save:
+                    if st.button("Save Changes", type="primary", key=f"save_{strategy_id}"):
+                        # Update config
+                        new_config = StrategyConfig(
+                            channels=cfg.channels,
+                            directions=cfg.directions,
+                            sessions=cfg.sessions,
+                            price_min=cfg.price_min,
+                            price_max=cfg.price_max,
+                            consec_green_candles=cfg.consec_green_candles,
+                            min_candle_volume=cfg.min_candle_volume,
+                            take_profit_pct=cfg.take_profit_pct,
+                            stop_loss_pct=cfg.stop_loss_pct,
+                            trailing_stop_pct=cfg.trailing_stop_pct,
+                            stop_loss_from_open=cfg.stop_loss_from_open,
+                            timeout_minutes=cfg.timeout_minutes,
+                            stake_mode=edit_mode,
+                            stake_amount=edit_stake,
+                            volume_pct=edit_vol_pct,
+                            max_stake=edit_max_stake,
+                        )
+                        store.update_strategy(strategy_id, config=new_config)
+                        st.session_state[f"edit_sizing_{strategy_id}"] = False
+                        st.success("Position sizing updated!")
+                        st.rerun()
+                with col_cancel:
+                    if st.button("Cancel", key=f"cancel_{strategy_id}"):
+                        st.session_state[f"edit_sizing_{strategy_id}"] = False
+                        st.rerun()
 
             # Live status if enabled
             if strategy.enabled and strategy_id in strategies_status:
