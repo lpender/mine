@@ -6,12 +6,16 @@ import logging
 import os
 import time
 from datetime import datetime
+from pathlib import Path
 from typing import Callable, Dict, Optional, Set
 
 import aiohttp
 import requests
 
 logger = logging.getLogger(__name__)
+
+# Cache file for WS key (survives restarts)
+WS_KEY_CACHE_FILE = Path(__file__).parent.parent / "data" / ".ws_key_cache.json"
 
 
 class InsightSentryQuoteProvider:
@@ -47,30 +51,92 @@ class InsightSentryQuoteProvider:
         self._reconnect_delay = 1.0
         self._last_heartbeat = 0.0
 
+    def _load_cached_key(self) -> Optional[str]:
+        """Load cached WS key if still valid."""
+        try:
+            if WS_KEY_CACHE_FILE.exists():
+                data = json.loads(WS_KEY_CACHE_FILE.read_text())
+                expires = data.get("expires", 0)
+                # Key valid if expiration is more than 5 minutes away
+                if expires > time.time() + 300:
+                    logger.info(f"Using cached WS key (expires in {int((expires - time.time()) / 60)} min)")
+                    return data.get("key")
+        except Exception as e:
+            logger.debug(f"Failed to load cached key: {e}")
+        return None
+
+    def _save_key_to_cache(self, key: str, expires: int):
+        """Save WS key to cache file."""
+        try:
+            WS_KEY_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            WS_KEY_CACHE_FILE.write_text(json.dumps({
+                "key": key,
+                "expires": expires,
+                "saved_at": time.time(),
+            }))
+            logger.debug("Saved WS key to cache")
+        except Exception as e:
+            logger.warning(f"Failed to cache WS key: {e}")
+
     async def get_ws_key(self) -> str:
         """Get WebSocket key from InsightSentry API."""
         if not self.rapidapi_key:
             raise ValueError("RAPIDAPI_KEY not set")
 
-        # Use sync request for simplicity (only called once)
-        response = requests.get(
-            self.KEY_URL,
-            headers={
-                "x-rapidapi-host": "insightsentry.p.rapidapi.com",
-                "x-rapidapi-key": self.rapidapi_key,
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
+        # Check cache first
+        cached_key = self._load_cached_key()
+        if cached_key:
+            self._ws_key = cached_key
+            return cached_key
 
-        # Response format: {"api_key": "xxx", "expiration": xxx}
-        self._ws_key = data.get("api_key") or data.get("key")
-        if not self._ws_key:
-            raise ValueError(f"Failed to get WebSocket key: {data}")
+        # Retry logic for rate limits
+        max_retries = 3
+        retry_delay = 30  # Start with 30s for 429 errors
 
-        logger.info(f"Got WebSocket key (expires: {data.get('expiration', data.get('expires', 'unknown'))})")
-        return self._ws_key
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(
+                    self.KEY_URL,
+                    headers={
+                        "x-rapidapi-host": "insightsentry.p.rapidapi.com",
+                        "x-rapidapi-key": self.rapidapi_key,
+                    },
+                    timeout=10,
+                )
+
+                if response.status_code == 429:
+                    # Rate limited - wait and retry
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry...")
+                    await asyncio.sleep(wait_time)
+                    continue
+
+                response.raise_for_status()
+                data = response.json()
+
+                # Response format: {"api_key": "xxx", "expiration": xxx}
+                self._ws_key = data.get("api_key") or data.get("key")
+                if not self._ws_key:
+                    raise ValueError(f"Failed to get WebSocket key: {data}")
+
+                # Cache the key
+                expires = data.get("expiration") or data.get("expires") or (time.time() + 3600)
+                if isinstance(expires, str):
+                    expires = int(time.time() + 3600)  # Default 1 hour
+                self._save_key_to_cache(self._ws_key, expires)
+
+                logger.info(f"Got WebSocket key (expires: {expires})")
+                return self._ws_key
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429 and attempt < max_retries - 1:
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"Rate limited. Waiting {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                    continue
+                raise
+
+        raise RuntimeError("Failed to get WS key after retries")
 
     async def connect(self):
         """Connect to WebSocket and start receiving data."""
