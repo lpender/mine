@@ -130,13 +130,17 @@ class TradingEngine:
         # Unregister callback
         set_alert_callback(None)
 
-        # Stop event loop
-        if self._loop and self._loop.is_running():
-            self._loop.call_soon_threadsafe(self._loop.stop)
-
-        # Wait for thread to finish
+        # Give the loop time to exit gracefully (up to 3 seconds)
+        # This allows the finally block to run and disconnect WebSocket
         if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=5.0)
+            self._thread.join(timeout=3.0)
+
+        # If still running, force stop the event loop
+        if self._thread and self._thread.is_alive():
+            logger.warning("Forcing event loop stop...")
+            if self._loop and self._loop.is_running():
+                self._loop.call_soon_threadsafe(self._loop.stop)
+            self._thread.join(timeout=2.0)
 
         # Release lock file
         self._release_lock()
@@ -198,11 +202,20 @@ class TradingEngine:
         except asyncio.CancelledError:
             pass
         finally:
+            # Cancel the quote task
             quote_task.cancel()
             try:
                 await quote_task
             except asyncio.CancelledError:
                 pass
+
+            # Explicitly disconnect WebSocket
+            if self.quote_provider:
+                try:
+                    await self.quote_provider.disconnect()
+                    logger.info("WebSocket disconnected")
+                except Exception as e:
+                    logger.warning(f"Error disconnecting WebSocket: {e}")
 
     async def _run_quote_provider(self):
         """Run the WebSocket quote provider."""
