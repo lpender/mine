@@ -17,27 +17,71 @@ module.exports = class StockAlertMonitor {
         const savedSettings = BdApi.Data.load("StockAlertMonitor", "settings") || {};
         console.log("[StockAlertMonitor] Loaded settings:", JSON.stringify(savedSettings));
 
-        this.channelFilter = savedSettings.channelFilter || ["pr-spike", "select-news"];
+        // Channels enabled for live trading (by channel ID)
+        this.enabledChannels = new Set(savedSettings.enabledChannels || []);
         this.alertWebhookUrl = savedSettings.alertWebhookUrl || "http://localhost:8765/alert";
         this.backfillWebhookUrl = savedSettings.backfillWebhookUrl || "http://localhost:8765/backfill";
-        this.enableLiveAlerts = savedSettings.enableLiveAlerts || false;
 
-        console.log("[StockAlertMonitor] Using channelFilter:", this.channelFilter);
+        console.log("[StockAlertMonitor] Enabled channels:", Array.from(this.enabledChannels));
     }
 
     saveSettings() {
         const settings = {
-            channelFilter: this.channelFilter,
+            enabledChannels: Array.from(this.enabledChannels),
             alertWebhookUrl: this.alertWebhookUrl,
             backfillWebhookUrl: this.backfillWebhookUrl,
-            enableLiveAlerts: this.enableLiveAlerts
         };
         console.log("[StockAlertMonitor] Saving settings:", JSON.stringify(settings));
         BdApi.Data.save("StockAlertMonitor", "settings", settings);
+    }
 
-        // Verify save worked
-        const verify = BdApi.Data.load("StockAlertMonitor", "settings");
-        console.log("[StockAlertMonitor] Verified saved:", JSON.stringify(verify));
+    getCurrentChannel() {
+        // Get the currently selected channel
+        const SelectedChannelStore = BdApi.Webpack.getModule(m => m.getChannelId && m.getVoiceChannelId);
+        const ChannelStore = BdApi.Webpack.getModule(m => m.getChannel && m.getDMFromUserId);
+        const channelId = SelectedChannelStore?.getChannelId();
+        if (!channelId) return null;
+        const channel = ChannelStore?.getChannel(channelId);
+        return channel ? { id: channelId, name: channel.name || "unknown" } : null;
+    }
+
+    isChannelEnabled(channelId) {
+        return this.enabledChannels.has(channelId);
+    }
+
+    toggleCurrentChannel() {
+        const channel = this.getCurrentChannel();
+        if (!channel) {
+            BdApi.UI.showToast("No channel selected", { type: "error" });
+            return;
+        }
+
+        if (this.enabledChannels.has(channel.id)) {
+            this.enabledChannels.delete(channel.id);
+            BdApi.UI.showToast(`Disabled live trading for #${channel.name}`, { type: "info" });
+        } else {
+            this.enabledChannels.add(channel.id);
+            BdApi.UI.showToast(`ENABLED live trading for #${channel.name}`, { type: "success" });
+        }
+        this.saveSettings();
+        this.updateChannelToggleButton();
+    }
+
+    updateChannelToggleButton() {
+        const btn = document.getElementById("channel-toggle-btn");
+        if (!btn) return;
+
+        const channel = this.getCurrentChannel();
+        if (!channel) {
+            btn.textContent = "No channel selected";
+            btn.className = "widget-btn disabled";
+            return;
+        }
+
+        const isEnabled = this.isChannelEnabled(channel.id);
+        btn.textContent = isEnabled ? `● #${channel.name} ENABLED` : `○ Enable #${channel.name}`;
+        btn.className = isEnabled ? "widget-btn enabled" : "widget-btn";
+        btn.style.background = isEnabled ? "#3ba55c" : "#5865f2";
     }
 
     start() {
@@ -107,14 +151,6 @@ module.exports = class StockAlertMonitor {
         const channel = ChannelStore?.getChannel(channelId);
         const channelName = channel?.name || "";
 
-        // Filter by channel name (if filter is set)
-        if (this.channelFilter.length > 0) {
-            const matchesFilter = this.channelFilter.some(name =>
-                channelName.toLowerCase().includes(name.toLowerCase())
-            );
-            if (!matchesFilter) return;
-        }
-
         // Check for stock alert pattern: TICKER < $X
         const tickerMatch = message.content.match(/\b([A-Z]{2,5})\s*<\s*\$[\d.]+/);
 
@@ -123,30 +159,32 @@ module.exports = class StockAlertMonitor {
             const fullMatch = tickerMatch[0];
             const author = message?.author?.globalName || message?.author?.global_name || message?.author?.username || null;
 
-            console.log(`[StockAlertMonitor] ALERT: ${ticker} in #${channelName}`);
+            console.log(`[StockAlertMonitor] ALERT: ${ticker} in #${channelName} (channel enabled: ${this.isChannelEnabled(channelId)})`);
 
-            this.triggerAlert(ticker, fullMatch, channelName, message.content, author);
+            this.triggerAlert(ticker, fullMatch, channelName, message.content, author, channelId);
         }
     }
 
-    triggerAlert(ticker, priceInfo, channelName, fullContent, author) {
+    triggerAlert(ticker, priceInfo, channelName, fullContent, author, channelId) {
         const timestamp = new Date().toLocaleTimeString();
+        const isChannelEnabled = channelId && this.isChannelEnabled(channelId);
 
-        // 1. Play sound
+        // 1. Play sound (always, for any alert)
         if (this.alertSound) {
             this.alertSound.currentTime = 0;
             this.alertSound.play().catch(e => console.log("Audio play failed:", e));
         }
 
         // 2. Show BetterDiscord toast
-        BdApi.UI.showToast(`NEW ALERT: ${priceInfo}`, {
-            type: "warning",
+        const toastSuffix = isChannelEnabled ? " → TRADING" : "";
+        BdApi.UI.showToast(`NEW ALERT: ${priceInfo}${toastSuffix}`, {
+            type: isChannelEnabled ? "success" : "warning",
             timeout: 10000
         });
 
         // 3. Browser notification (if permitted)
         if (Notification.permission === "granted") {
-            new Notification(`Stock Alert: ${ticker}`, {
+            new Notification(`Stock Alert: ${ticker}${isChannelEnabled ? " → TRADING" : ""}`, {
                 body: `${priceInfo}\nChannel: #${channelName}`,
                 icon: "https://cdn-icons-png.flaticon.com/512/2534/2534204.png",
                 requireInteraction: true
@@ -162,12 +200,13 @@ Time: ${timestamp}
 Ticker: ${ticker}
 Info: ${priceInfo}
 Channel: #${channelName}
+Live Trading: ${isChannelEnabled ? "YES" : "NO"}
 Full message: ${fullContent.substring(0, 200)}
 =================================
         `);
 
-        // 5. Send to local webhook (for your trading system)
-        if (this.enableLiveAlerts) {
+        // 5. Send to local webhook only if channel is enabled for live trading
+        if (isChannelEnabled) {
             this.sendToWebhook(this.alertWebhookUrl, {
                 ticker: ticker,
                 price_info: priceInfo,
@@ -177,6 +216,8 @@ Full message: ${fullContent.substring(0, 200)}
                 author: author
             });
             console.log(`[StockAlertMonitor] Alert sent to trading server: ${ticker}`);
+        } else {
+            console.log(`[StockAlertMonitor] Alert NOT sent (channel not enabled): ${ticker}`);
         }
     }
 
@@ -658,12 +699,12 @@ Full message: ${fullContent.substring(0, 200)}
                 }
             </style>
             <div class="widget-header">
-                <span>Backfill Widget</span>
+                <span>Stock Alert Monitor</span>
                 <span class="widget-close" id="backfill-close">&times;</span>
             </div>
-            <div class="widget-toggle ${this.enableLiveAlerts ? 'active' : 'inactive'}" id="live-alerts-toggle">
-                <span class="widget-toggle-label">${this.enableLiveAlerts ? '● LIVE TRADING' : '○ Live Trading Off'}</span>
-            </div>
+            <button class="widget-btn" id="channel-toggle-btn" style="margin-bottom: 8px;">
+                Loading...
+            </button>
             <div class="widget-row">
                 <span class="widget-label">Channel:</span>
                 <span class="widget-value widget-channel" id="backfill-channel">#unknown</span>
@@ -695,19 +736,21 @@ Full message: ${fullContent.substring(0, 200)}
         const sendBtn = this.widgetContainer.querySelector("#backfill-send");
         sendBtn?.addEventListener("click", () => this.handleSendData());
 
-        // Live alerts toggle
-        const liveToggle = this.widgetContainer.querySelector("#live-alerts-toggle");
-        liveToggle?.addEventListener("click", () => {
-            this.enableLiveAlerts = !this.enableLiveAlerts;
-            this.saveSettings();
-            liveToggle.className = `widget-toggle ${this.enableLiveAlerts ? 'active' : 'inactive'}`;
-            liveToggle.querySelector('.widget-toggle-label').textContent =
-                this.enableLiveAlerts ? '● LIVE TRADING' : '○ Live Trading Off';
-            BdApi.UI.showToast(
-                this.enableLiveAlerts ? "Live alerts ENABLED" : "Live alerts DISABLED",
-                { type: this.enableLiveAlerts ? "success" : "info" }
-            );
-        });
+        // Channel toggle button
+        const channelToggleBtn = this.widgetContainer.querySelector("#channel-toggle-btn");
+        channelToggleBtn?.addEventListener("click", () => this.toggleCurrentChannel());
+
+        // Update button when channel changes
+        this.updateChannelToggleButton();
+
+        // Listen for channel changes via Discord's dispatcher
+        const Dispatcher = BdApi.Webpack.getModule(m => m.dispatch && m.subscribe);
+        if (Dispatcher) {
+            this._channelChangeHandler = () => {
+                setTimeout(() => this.updateChannelToggleButton(), 100);
+            };
+            Dispatcher.subscribe("CHANNEL_SELECT", this._channelChangeHandler);
+        }
 
         // Set up scroll listener - debounced
         let scrollTimeout = null;
@@ -756,6 +799,13 @@ Full message: ${fullContent.substring(0, 200)}
     }
 
     removeBackfillWidget() {
+        // Unsubscribe from channel changes
+        if (this._channelChangeHandler) {
+            const Dispatcher = BdApi.Webpack.getModule(m => m.dispatch && m.subscribe);
+            Dispatcher?.unsubscribe("CHANNEL_SELECT", this._channelChangeHandler);
+            this._channelChangeHandler = null;
+        }
+
         if (this.widgetContainer) {
             this.widgetContainer.remove();
             this.widgetContainer = null;
@@ -766,23 +816,21 @@ Full message: ${fullContent.substring(0, 200)}
         const panel = document.createElement("div");
         panel.style.padding = "10px";
 
+        const enabledCount = this.enabledChannels.size;
+
         panel.innerHTML = `
             <h3 style="color: white; margin-bottom: 10px;">Stock Alert Monitor Settings</h3>
-            <div style="margin-bottom: 15px; padding: 10px; background: ${this.enableLiveAlerts ? '#3ba55c' : '#40444b'}; border-radius: 4px;">
-                <label style="color: white; display: flex; align-items: center; cursor: pointer;">
-                    <input type="checkbox" id="sam-live-alerts" ${this.enableLiveAlerts ? 'checked' : ''}
-                        style="margin-right: 10px; width: 18px; height: 18px;">
-                    <span style="font-weight: bold;">Send alerts to trading server</span>
-                </label>
-                <div style="color: #b9bbbe; font-size: 12px; margin-top: 5px;">
-                    When enabled, alerts will be sent to your live trading system
+
+            <div style="margin-bottom: 15px; padding: 10px; background: #40444b; border-radius: 4px;">
+                <div style="color: #b9bbbe; font-size: 12px; margin-bottom: 8px;">
+                    <strong style="color: white;">How it works:</strong> Use the widget button to enable/disable
+                    live trading for each channel. Navigate to a channel and click the toggle button.
+                </div>
+                <div style="color: ${enabledCount > 0 ? '#3ba55c' : '#ed4245'}; font-weight: bold;">
+                    ${enabledCount} channel${enabledCount !== 1 ? 's' : ''} enabled for live trading
                 </div>
             </div>
-            <div style="margin-bottom: 10px;">
-                <label style="color: #b9bbbe;">Channels to monitor (comma-separated):</label><br>
-                <input type="text" id="sam-channels" value="${this.channelFilter.join(", ")}"
-                    style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
-            </div>
+
             <div style="margin-bottom: 10px;">
                 <label style="color: #b9bbbe;">Alert webhook URL:</label><br>
                 <input type="text" id="sam-alert-webhook" value="${this.alertWebhookUrl}"
@@ -794,10 +842,10 @@ Full message: ${fullContent.substring(0, 200)}
                     style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
             </div>
             <button id="sam-save" style="background: #5865f2; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                Save Settings
+                Save URLs
             </button>
-            <button id="sam-test" style="background: #3ba55c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
-                Test Alert
+            <button id="sam-clear" style="background: #ed4245; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                Clear All Channels
             </button>
             <button id="sam-toggle-widget" style="background: #faa61a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
                 Toggle Widget
@@ -806,29 +854,18 @@ Full message: ${fullContent.substring(0, 200)}
 
         // Add event listeners after panel is created
         setTimeout(() => {
-            // Live alerts toggle - immediate effect
-            document.getElementById("sam-live-alerts")?.addEventListener("change", (e) => {
-                this.enableLiveAlerts = e.target.checked;
-                this.saveSettings();
-                const container = e.target.closest("div");
-                container.style.background = this.enableLiveAlerts ? '#3ba55c' : '#40444b';
-                BdApi.UI.showToast(
-                    this.enableLiveAlerts ? "Live alerts ENABLED" : "Live alerts DISABLED",
-                    { type: this.enableLiveAlerts ? "success" : "info" }
-                );
-            });
-
             document.getElementById("sam-save")?.addEventListener("click", () => {
-                const channels = document.getElementById("sam-channels").value;
-                this.channelFilter = channels.split(",").map(c => c.trim()).filter(c => c);
                 this.alertWebhookUrl = document.getElementById("sam-alert-webhook").value;
                 this.backfillWebhookUrl = document.getElementById("sam-backfill-webhook").value;
                 this.saveSettings();
                 BdApi.UI.showToast("Settings saved!", { type: "success" });
             });
 
-            document.getElementById("sam-test")?.addEventListener("click", () => {
-                this.triggerAlert("TEST", "TEST < $5.00", "test-channel", "Test alert message");
+            document.getElementById("sam-clear")?.addEventListener("click", () => {
+                this.enabledChannels.clear();
+                this.saveSettings();
+                this.updateChannelToggleButton();
+                BdApi.UI.showToast("All channels disabled", { type: "info" });
             });
 
             document.getElementById("sam-toggle-widget")?.addEventListener("click", () => {
