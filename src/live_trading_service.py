@@ -374,38 +374,54 @@ class TradingEngine:
             self._strategy_subscriptions[strategy_id] = set()
         self._strategy_subscriptions[strategy_id].add(ticker)
 
-        # Only subscribe to WebSocket if this is a new ticker (not already subscribed by another strategy)
-        all_subscribed = set()
+        # Log subscription state
+        all_strategy_subs = set()
         for subs in self._strategy_subscriptions.values():
-            all_subscribed.update(subs)
+            all_strategy_subs.update(subs)
+        logger.debug(f"[{ticker}] Subscribe requested by strategy, all tracked: {all_strategy_subs}")
 
         if self.quote_provider:
             # Check if already subscribed via quote provider
-            if ticker not in self.quote_provider.subscribed_tickers:
+            current_ws_subs = self.quote_provider.subscribed_tickers
+            if ticker not in current_ws_subs:
                 self.quote_provider.subscribe_sync(ticker)
+                logger.info(f"[{ticker}] Added to WS subscriptions: {self.quote_provider.subscribed_tickers}")
                 if self._loop and self._loop.is_running():
-                    logger.info(f"Scheduling async subscribe for {ticker} (requested by strategy {strategy_id})")
+                    logger.info(f"Scheduling async subscribe for {ticker}")
                     self._loop.call_soon_threadsafe(
                         lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
                     )
                 else:
-                    logger.warning(f"Event loop not running, cannot send subscription for {ticker}")
+                    logger.warning(f"[{ticker}] Event loop not running - subscription queued (will send on WS connect)")
+            else:
+                logger.debug(f"[{ticker}] Already in WS subscriptions")
 
     def _on_unsubscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy no longer needs quotes for a ticker."""
+        strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
+
         # Remove from this strategy's subscriptions
         if strategy_id in self._strategy_subscriptions:
             self._strategy_subscriptions[strategy_id].discard(ticker)
 
+        # Log current subscription state across all strategies
+        all_strategy_subs = set()
+        for subs in self._strategy_subscriptions.values():
+            all_strategy_subs.update(subs)
+        logger.info(f"[{ticker}] Unsubscribe requested by {strategy_name}, all tracked: {all_strategy_subs}")
+
         # Check if any other strategy still needs this ticker
-        still_needed = False
-        for sid, subs in self._strategy_subscriptions.items():
-            if ticker in subs:
-                still_needed = True
-                break
+        still_needed = ticker in all_strategy_subs
+
+        if still_needed:
+            logger.debug(f"[{ticker}] Still needed by another strategy - keeping WS subscription")
+            return
 
         # Only unsubscribe from WebSocket if no strategy needs it
-        if not still_needed and self.quote_provider:
+        if self.quote_provider:
+            current_ws_subs = self.quote_provider.subscribed_tickers
+            logger.info(f"[{ticker}] No longer needed by any strategy, removing from WS. Current WS subs: {current_ws_subs}")
+
             # Use async unsubscribe - it handles both removing from set and sending to WebSocket
             # Don't call unsubscribe_sync first, as that would cause the async version to skip
             # updating the WebSocket (it checks if ticker is still in subscriptions)
@@ -415,6 +431,7 @@ class TradingEngine:
                 )
             else:
                 # Fallback: at least remove from local tracking
+                logger.warning(f"[{ticker}] Event loop not running - using sync unsubscribe")
                 self.quote_provider.unsubscribe_sync(ticker)
 
     def _broadcast_status(self):

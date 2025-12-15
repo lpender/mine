@@ -186,11 +186,16 @@ class InsightSentryQuoteProvider:
     async def _send_subscriptions(self):
         """Send current subscriptions to server."""
         if not self._ws or self._ws.closed:
+            logger.debug("Cannot send subscriptions - WebSocket not connected")
             return
 
         # Build subscription message
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
-        # IMPORTANT: Send empty list to unsubscribe from all - don't skip!
+        # NOTE: InsightSentry rejects empty subscriptions array, so skip if empty
+        if not self._subscriptions:
+            logger.info("No subscriptions to send (empty list) - skipping WebSocket update")
+            return
+
         subs = []
         for ticker in self._subscriptions:
             # Convert ticker to InsightSentry format (e.g., "NASDAQ:AAPL")
@@ -305,10 +310,11 @@ class InsightSentryQuoteProvider:
         """Unsubscribe from a ticker."""
         ticker = ticker.upper()
         if ticker not in self._subscriptions:
+            logger.debug(f"Unsubscribe called for {ticker} but not in subscriptions: {self._subscriptions}")
             return
 
         self._subscriptions.discard(ticker)
-        logger.info(f"Unsubscribing from {ticker}")
+        logger.info(f"Unsubscribed from {ticker}, remaining: {self._subscriptions}")
 
         if self._ws and not self._ws.closed:
             await self._send_subscriptions()

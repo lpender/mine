@@ -1,6 +1,8 @@
 """Alpaca trading client implementation."""
 
+import logging
 import os
+import time
 from datetime import datetime, timezone
 from typing import Optional, List
 from zoneinfo import ZoneInfo
@@ -9,6 +11,7 @@ import requests
 
 from .base import TradingClient, Position, Order, Quote
 
+logger = logging.getLogger(__name__)
 ET_TZ = ZoneInfo("America/New_York")
 
 
@@ -43,17 +46,40 @@ class AlpacaTradingClient(TradingClient):
             "APCA-API-SECRET-KEY": self.secret_key,
         }
 
-    def _request(self, method: str, endpoint: str, base_url: Optional[str] = None, **kwargs) -> dict:
-        """Make an API request."""
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        base_url: Optional[str] = None,
+        max_retries: int = 3,
+        **kwargs,
+    ) -> dict:
+        """Make an API request with retry on rate limit (429)."""
         url = f"{base_url or self.base_url}{endpoint}"
-        response = self._session.request(
-            method,
-            url,
-            headers=self._get_headers(),
-            **kwargs,
-        )
-        response.raise_for_status()
-        return response.json() if response.text else {}
+
+        for attempt in range(max_retries):
+            response = self._session.request(
+                method,
+                url,
+                headers=self._get_headers(),
+                **kwargs,
+            )
+
+            if response.status_code == 429:
+                # Rate limited - wait and retry
+                retry_after = int(response.headers.get("Retry-After", 1))
+                wait_time = max(retry_after, 2 ** attempt)  # Exponential backoff, min from header
+                logger.warning(f"Rate limited by Alpaca (429), waiting {wait_time}s before retry {attempt + 1}/{max_retries}")
+                time.sleep(wait_time)
+                continue
+
+            response.raise_for_status()
+            return response.json() if response.text else {}
+
+        # All retries exhausted
+        logger.error(f"Alpaca rate limit: all {max_retries} retries exhausted for {method} {endpoint}")
+        response.raise_for_status()  # Will raise the 429 error
+        return {}
 
     @property
     def is_paper(self) -> bool:
