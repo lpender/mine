@@ -10,12 +10,24 @@ module.exports = class StockAlertMonitor {
         this.alertSound = null;
         this.seenMessages = new Set();
         this.seenBackfill = new Set();
-        this.channelFilter = ["pr-spike", "select-news"]; // Channels to monitor
-        this.alertWebhookUrl = "http://localhost:8765/alert";
-        this.backfillWebhookUrl = "http://localhost:8765/backfill";
         this.widgetContainer = null;
         this.updateInterval = null;
-        this.enableLiveAlerts = false; // Send real-time alerts to trading server
+
+        // Load saved settings or use defaults
+        const savedSettings = BdApi.Data.load("StockAlertMonitor", "settings") || {};
+        this.channelFilter = savedSettings.channelFilter || ["pr-spike", "select-news"];
+        this.alertWebhookUrl = savedSettings.alertWebhookUrl || "http://localhost:8765/alert";
+        this.backfillWebhookUrl = savedSettings.backfillWebhookUrl || "http://localhost:8765/backfill";
+        this.enableLiveAlerts = savedSettings.enableLiveAlerts || false;
+    }
+
+    saveSettings() {
+        BdApi.Data.save("StockAlertMonitor", "settings", {
+            channelFilter: this.channelFilter,
+            alertWebhookUrl: this.alertWebhookUrl,
+            backfillWebhookUrl: this.backfillWebhookUrl,
+            enableLiveAlerts: this.enableLiveAlerts
+        });
     }
 
     start() {
@@ -677,6 +689,7 @@ Full message: ${fullContent.substring(0, 200)}
         const liveToggle = this.widgetContainer.querySelector("#live-alerts-toggle");
         liveToggle?.addEventListener("click", () => {
             this.enableLiveAlerts = !this.enableLiveAlerts;
+            this.saveSettings();
             liveToggle.className = `widget-toggle ${this.enableLiveAlerts ? 'active' : 'inactive'}`;
             liveToggle.querySelector('.widget-toggle-label').textContent =
                 this.enableLiveAlerts ? '● LIVE TRADING' : '○ Live Trading Off';
@@ -786,6 +799,7 @@ Full message: ${fullContent.substring(0, 200)}
             // Live alerts toggle - immediate effect
             document.getElementById("sam-live-alerts")?.addEventListener("change", (e) => {
                 this.enableLiveAlerts = e.target.checked;
+                this.saveSettings();
                 const container = e.target.closest("div");
                 container.style.background = this.enableLiveAlerts ? '#3ba55c' : '#40444b';
                 BdApi.UI.showToast(
@@ -799,6 +813,7 @@ Full message: ${fullContent.substring(0, 200)}
                 this.channelFilter = channels.split(",").map(c => c.trim()).filter(c => c);
                 this.alertWebhookUrl = document.getElementById("sam-alert-webhook").value;
                 this.backfillWebhookUrl = document.getElementById("sam-backfill-webhook").value;
+                this.saveSettings();
                 BdApi.UI.showToast("Settings saved!", { type: "success" });
             });
 
