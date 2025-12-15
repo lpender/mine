@@ -65,6 +65,7 @@ module.exports = class StockAlertMonitor {
         }
         this.saveSettings();
         this.updateChannelToggleButton();
+        this.updateChannelIndicators();
     }
 
     updateChannelToggleButton() {
@@ -84,6 +85,99 @@ module.exports = class StockAlertMonitor {
         btn.style.background = isEnabled ? "#3ba55c" : "#5865f2";
     }
 
+    // ============== Channel Indicators ==============
+
+    startChannelIndicators() {
+        // Inject CSS for indicators
+        const css = `
+            .sam-channel-indicator {
+                color: #3ba55c;
+                font-size: 10px;
+                margin-left: 4px;
+                vertical-align: middle;
+            }
+        `;
+        BdApi.DOM.addStyle("StockAlertMonitor-indicators", css);
+
+        // Initial update
+        this.updateChannelIndicators();
+
+        // Set up observer for DOM changes (channel list updates)
+        this._channelIndicatorObserver = new MutationObserver(() => {
+            this.updateChannelIndicators();
+        });
+
+        // Observe the channel list area
+        const channelList = document.querySelector('[class*="sidebar"]');
+        if (channelList) {
+            this._channelIndicatorObserver.observe(channelList, {
+                childList: true,
+                subtree: true
+            });
+        }
+
+        // Also update periodically (catches any missed updates)
+        this._indicatorInterval = setInterval(() => this.updateChannelIndicators(), 3000);
+    }
+
+    stopChannelIndicators() {
+        BdApi.DOM.removeStyle("StockAlertMonitor-indicators");
+        if (this._channelIndicatorObserver) {
+            this._channelIndicatorObserver.disconnect();
+            this._channelIndicatorObserver = null;
+        }
+        if (this._indicatorInterval) {
+            clearInterval(this._indicatorInterval);
+            this._indicatorInterval = null;
+        }
+        // Remove all indicators
+        document.querySelectorAll(".sam-channel-indicator").forEach(el => el.remove());
+    }
+
+    updateChannelIndicators() {
+        // Find all channel links in the sidebar
+        const channelLinks = document.querySelectorAll('[class*="link_"][class*="channel_"], [data-list-item-id^="channels___"]');
+
+        channelLinks.forEach(link => {
+            // Try to extract channel ID from the element
+            const dataId = link.getAttribute("data-list-item-id");
+            let channelId = null;
+
+            if (dataId && dataId.startsWith("channels___")) {
+                channelId = dataId.replace("channels___", "");
+            } else {
+                // Try href approach
+                const href = link.getAttribute("href");
+                if (href) {
+                    const match = href.match(/\/channels\/\d+\/(\d+)/);
+                    if (match) channelId = match[1];
+                }
+            }
+
+            if (!channelId) return;
+
+            // Find the channel name element
+            const nameEl = link.querySelector('[class*="name_"]') || link.querySelector('[class*="channelName"]');
+            if (!nameEl) return;
+
+            // Check if indicator already exists
+            let indicator = nameEl.querySelector(".sam-channel-indicator");
+            const isEnabled = this.isChannelEnabled(channelId);
+
+            if (isEnabled && !indicator) {
+                // Add indicator
+                indicator = document.createElement("span");
+                indicator.className = "sam-channel-indicator";
+                indicator.textContent = "📈";
+                indicator.title = "Live trading enabled";
+                nameEl.appendChild(indicator);
+            } else if (!isEnabled && indicator) {
+                // Remove indicator
+                indicator.remove();
+            }
+        });
+    }
+
     start() {
         console.log("[StockAlertMonitor] Starting...");
 
@@ -100,6 +194,9 @@ module.exports = class StockAlertMonitor {
         // Inject trade buttons on existing messages
         setTimeout(() => this.startTradeButtonInjection(), 1000);
 
+        // Start channel indicators (shows emoji next to enabled channels)
+        setTimeout(() => this.startChannelIndicators(), 1500);
+
         BdApi.UI.showToast("Stock Alert Monitor started!", { type: "success" });
     }
 
@@ -108,6 +205,7 @@ module.exports = class StockAlertMonitor {
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
         this.removeBackfillWidget();
         this.stopTradeButtonInjection();
+        this.stopChannelIndicators();
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
         }
@@ -865,6 +963,7 @@ Full message: ${fullContent.substring(0, 200)}
                 this.enabledChannels.clear();
                 this.saveSettings();
                 this.updateChannelToggleButton();
+                this.updateChannelIndicators();
                 BdApi.UI.showToast("All channels disabled", { type: "info" });
             });
 
