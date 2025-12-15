@@ -155,9 +155,13 @@ class InsightSentryQuoteProvider:
                         logger.error(f"WebSocket error: {ws.exception()}")
                         break
                     elif msg.type == aiohttp.WSMsgType.CLOSED:
-                        logger.info("WebSocket closed by server")
+                        logger.warning(f"WebSocket closed by server (close_code={ws.close_code})")
                         break
-                logger.warning("WebSocket message loop ended")
+                    elif msg.type == aiohttp.WSMsgType.PING:
+                        logger.debug("Received ping from server")
+                    elif msg.type == aiohttp.WSMsgType.PONG:
+                        logger.debug("Received pong from server")
+                logger.warning(f"WebSocket message loop ended (running={self._running})")
             finally:
                 heartbeat_task.cancel()
                 try:
@@ -172,9 +176,12 @@ class InsightSentryQuoteProvider:
             if self._ws and not self._ws.closed:
                 try:
                     await self._ws.ping()
+                    self._last_heartbeat = time.time()
                     logger.debug("Sent ping")
                 except Exception as e:
                     logger.warning(f"Ping failed: {e}")
+            else:
+                logger.debug("Heartbeat skipped - no WebSocket connection")
 
     async def _send_subscriptions(self):
         """Send current subscriptions to server."""
@@ -334,6 +341,17 @@ class InsightSentryQuoteProvider:
     def is_connected(self) -> bool:
         """Check if WebSocket is connected."""
         return self._ws is not None and not self._ws.closed
+
+    @property
+    def connection_status(self) -> dict:
+        """Get detailed connection status."""
+        return {
+            "connected": self.is_connected,
+            "running": self._running,
+            "last_heartbeat": self._last_heartbeat,
+            "seconds_since_heartbeat": time.time() - self._last_heartbeat if self._last_heartbeat else None,
+            "subscriptions": len(self._subscriptions),
+        }
 
     @property
     def subscribed_tickers(self) -> Set[str]:
