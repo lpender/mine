@@ -15,19 +15,29 @@ module.exports = class StockAlertMonitor {
 
         // Load saved settings or use defaults
         const savedSettings = BdApi.Data.load("StockAlertMonitor", "settings") || {};
+        console.log("[StockAlertMonitor] Loaded settings:", JSON.stringify(savedSettings));
+
         this.channelFilter = savedSettings.channelFilter || ["pr-spike", "select-news"];
         this.alertWebhookUrl = savedSettings.alertWebhookUrl || "http://localhost:8765/alert";
         this.backfillWebhookUrl = savedSettings.backfillWebhookUrl || "http://localhost:8765/backfill";
         this.enableLiveAlerts = savedSettings.enableLiveAlerts || false;
+
+        console.log("[StockAlertMonitor] Using channelFilter:", this.channelFilter);
     }
 
     saveSettings() {
-        BdApi.Data.save("StockAlertMonitor", "settings", {
+        const settings = {
             channelFilter: this.channelFilter,
             alertWebhookUrl: this.alertWebhookUrl,
             backfillWebhookUrl: this.backfillWebhookUrl,
             enableLiveAlerts: this.enableLiveAlerts
-        });
+        };
+        console.log("[StockAlertMonitor] Saving settings:", JSON.stringify(settings));
+        BdApi.Data.save("StockAlertMonitor", "settings", settings);
+
+        // Verify save worked
+        const verify = BdApi.Data.load("StockAlertMonitor", "settings");
+        console.log("[StockAlertMonitor] Verified saved:", JSON.stringify(verify));
     }
 
     start() {
