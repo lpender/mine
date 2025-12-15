@@ -55,6 +55,25 @@ tasks:
       - diff discord-monitor/StockAlertMonitor.plugin.js "{{.BETTERDISCORD_PLUGINS}}/StockAlertMonitor.plugin.js" || true
 
   # ─────────────────────────────────────────────────────────────────────────────
+  # Trading Engine
+  # ─────────────────────────────────────────────────────────────────────────────
+
+  trade:
+    desc: Run the trading engine (paper mode)
+    cmds:
+      - python run_trading.py
+
+  trade:live:
+    desc: Run the trading engine (LIVE mode - real money!)
+    cmds:
+      - python run_trading.py --live
+
+  trade:venv:
+    desc: Run the trading engine using venv (paper mode)
+    cmds:
+      - "{{.VENV}}/bin/python run_trading.py"
+
+  # ─────────────────────────────────────────────────────────────────────────────
   # Alert Server
   # ─────────────────────────────────────────────────────────────────────────────
 

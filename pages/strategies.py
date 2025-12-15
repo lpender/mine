@@ -9,13 +9,10 @@ from src.database import init_db
 from src.strategy import StrategyConfig
 from src.strategy_store import get_strategy_store, Strategy
 from src.live_trading_service import (
-    start_live_trading,
-    stop_live_trading,
     get_live_trading_status,
     is_live_trading_active,
     enable_strategy,
     disable_strategy,
-    get_trading_engine,
 )
 from src.alert_service import start_alert_service, AlertService
 
@@ -45,7 +42,9 @@ with st.sidebar:
     status = get_live_trading_status()
 
     if trading_active and status:
-        st.success(f"Engine Running ({status.get('strategy_count', 0)} strategies)")
+        is_paper = status.get("paper", True)
+        mode_str = "Paper" if is_paper else "LIVE"
+        st.success(f"Engine Running ({mode_str})")
 
         col1, col2 = st.columns(2)
         with col1:
@@ -54,24 +53,27 @@ with st.sidebar:
             connected = status.get("quote_connected", False)
             st.metric("WebSocket", "Connected" if connected else "Disconnected")
 
-        if st.button("Stop Engine", type="secondary"):
-            stop_live_trading()
-            st.rerun()
-
         # Auto-refresh for live price updates
         st.divider()
         auto_refresh = st.checkbox("Auto-refresh (2s)", value=False, key="auto_refresh")
         if auto_refresh:
             time.sleep(2)
             st.rerun()
+
+        st.caption("Stop with Ctrl+C in terminal")
     else:
-        st.warning("Engine Stopped")
-
-        paper_mode = st.toggle("Paper Trading", value=True)
-
-        if st.button("Start Engine", type="primary"):
-            start_live_trading(paper=paper_mode)
-            st.rerun()
+        st.warning("Engine Not Running")
+        st.markdown("""
+        **Start the engine from terminal:**
+        ```bash
+        task trade        # paper mode
+        task trade:live   # live mode
+        ```
+        Or directly:
+        ```bash
+        python run_trading.py
+        ```
+        """)
 
     st.divider()
     st.markdown("[← Back to Backtest](../)")

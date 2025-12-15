@@ -178,6 +178,50 @@ class StrategyDB(Base):
     )
 
 
+class ActiveTradeDB(Base):
+    """Active trade position - persisted for recovery across restarts."""
+    __tablename__ = "active_trades"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Position identification
+    ticker = Column(String(10), nullable=False, index=True)
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    strategy_name = Column(String(100), nullable=True)
+
+    # Entry details
+    entry_price = Column(Float, nullable=False)
+    entry_time = Column(DateTime, nullable=False)
+    first_candle_open = Column(Float, nullable=False)
+    shares = Column(Integer, nullable=False)
+
+    # Exit levels
+    stop_loss_price = Column(Float, nullable=False)
+    take_profit_price = Column(Float, nullable=False)
+
+    # Tracking
+    highest_since_entry = Column(Float, nullable=False)
+    last_price = Column(Float, default=0.0)
+    last_quote_time = Column(DateTime, nullable=True)
+
+    # Trading mode
+    paper = Column(Boolean, default=True)
+
+    # Announcement reference (optional - may be lost on restart)
+    announcement_ticker = Column(String(10), nullable=True)
+    announcement_timestamp = Column(DateTime, nullable=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        # Only one active trade per ticker per strategy
+        UniqueConstraint('ticker', 'strategy_id', name='uq_active_trade_ticker_strategy'),
+        Index('ix_active_trades_strategy', 'strategy_id'),
+    )
+
+
 def init_db():
     """Create all tables."""
     Base.metadata.create_all(bind=engine)

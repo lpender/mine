@@ -9,6 +9,7 @@ from urllib.parse import urlparse, parse_qs
 from .models import Announcement
 from .trading import TradingClient, Position
 from .trade_history import get_trade_history_client
+from .active_trade_store import get_active_trade_store
 
 logger = logging.getLogger(__name__)
 
@@ -184,22 +185,55 @@ class StrategyEngine:
 
         # Trade history persistence
         self._trade_history = get_trade_history_client()
+        self._active_trade_store = get_active_trade_store()
 
-        # Recover any open positions from broker
+        # Recover any open positions from database and broker
         self._recover_positions()
 
     def _recover_positions(self):
-        """Recover open positions from broker on startup."""
-        logger.info("Checking broker for open positions...")
+        """Recover open positions from database and broker on startup."""
+        # First, load from our database (has accurate entry times, SL/TP)
+        logger.info(f"Loading active trades from database for strategy {self.strategy_id}...")
+        try:
+            db_trades = self._active_trade_store.get_trades_for_strategy(self.strategy_id)
+            logger.info(f"Database returned {len(db_trades)} active trades")
+
+            for t in db_trades:
+                self.active_trades[t.ticker] = ActiveTrade(
+                    ticker=t.ticker,
+                    announcement=None,  # Lost on restart
+                    entry_price=t.entry_price,
+                    entry_time=t.entry_time,
+                    first_candle_open=t.first_candle_open,
+                    shares=t.shares,
+                    highest_since_entry=t.highest_since_entry,
+                    stop_loss_price=t.stop_loss_price,
+                    take_profit_price=t.take_profit_price,
+                    last_price=t.last_price or 0.0,
+                    last_quote_time=t.last_quote_time,
+                )
+                logger.info(f"[{t.ticker}] Recovered from DB: {t.shares} shares @ ${t.entry_price:.2f}, "
+                           f"SL=${t.stop_loss_price:.2f}, TP=${t.take_profit_price:.2f}")
+
+                # Subscribe to quotes
+                if self.on_subscribe:
+                    self.on_subscribe(t.ticker)
+
+        except Exception as e:
+            logger.error(f"Failed to load from database: {e}", exc_info=True)
+
+        # Then reconcile with broker - add any positions we don't know about
+        logger.info("Checking broker for additional positions...")
         try:
             positions = self.trader.get_positions()
             logger.info(f"Broker returned {len(positions)} positions")
-            if not positions:
-                return
 
             cfg = self.config
             for pos in positions:
                 ticker = pos.ticker
+                if ticker in self.active_trades:
+                    continue  # Already recovered from DB
+
                 entry_price = pos.avg_entry_price
                 shares = pos.shares
 
@@ -210,10 +244,10 @@ class StrategyEngine:
                 # Estimate current price from market value
                 current_price = pos.market_value / shares if shares > 0 else entry_price
 
-                # Create active trade (we don't have original announcement)
+                # Create active trade
                 self.active_trades[ticker] = ActiveTrade(
                     ticker=ticker,
-                    announcement=None,  # Lost on restart
+                    announcement=None,
                     entry_price=entry_price,
                     entry_time=datetime.now(),  # Approximate
                     first_candle_open=entry_price,
@@ -223,17 +257,32 @@ class StrategyEngine:
                     take_profit_price=take_profit_price,
                 )
 
-                logger.info(f"[{ticker}] Recovered position: {shares} shares @ ${entry_price:.2f}, "
-                           f"current=${current_price:.2f}, SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+                logger.info(f"[{ticker}] Recovered from broker: {shares} shares @ ${entry_price:.2f}, "
+                           f"SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+
+                # Save to our DB for next time
+                self._active_trade_store.save_trade(
+                    ticker=ticker,
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    entry_price=entry_price,
+                    entry_time=datetime.now(),
+                    first_candle_open=entry_price,
+                    shares=shares,
+                    stop_loss_price=stop_loss_price,
+                    take_profit_price=take_profit_price,
+                    highest_since_entry=current_price,
+                    paper=self.paper,
+                )
 
                 # Subscribe to quotes
                 if self.on_subscribe:
                     self.on_subscribe(ticker)
 
         except Exception as e:
-            logger.error(f"Failed to recover positions: {e}", exc_info=True)
+            logger.error(f"Failed to recover from broker: {e}", exc_info=True)
 
-        # Also check for pending orders and subscribe to their quotes
+        # Also check for pending orders
         self._recover_pending_orders()
 
     def _recover_pending_orders(self):
@@ -454,6 +503,23 @@ class StrategyEngine:
             take_profit_price=take_profit_price,
         )
 
+        # Persist to database
+        self._active_trade_store.save_trade(
+            ticker=ticker,
+            strategy_id=self.strategy_id,
+            strategy_name=self.strategy_name,
+            entry_price=price,
+            entry_time=timestamp,
+            first_candle_open=pending.first_price or price,
+            shares=shares,
+            stop_loss_price=stop_loss_price,
+            take_profit_price=take_profit_price,
+            highest_since_entry=price,
+            paper=self.paper,
+            announcement_ticker=pending.announcement.ticker if pending.announcement else None,
+            announcement_timestamp=pending.announcement.timestamp if pending.announcement else None,
+        )
+
     def _check_exit(self, ticker: str, price: float, timestamp: datetime):
         """Check exit conditions for an active trade."""
         trade = self.active_trades[ticker]
@@ -525,7 +591,7 @@ class StrategyEngine:
         }
         self.completed_trades.append(completed)
 
-        # Persist to database
+        # Persist to trade history database
         try:
             self._trade_history.save_trade(
                 completed,
@@ -535,6 +601,9 @@ class StrategyEngine:
             )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to save trade to database: {e}")
+
+        # Remove from active trades database
+        self._active_trade_store.delete_trade(ticker, self.strategy_id)
 
         # Unsubscribe from quotes
         if self.on_unsubscribe:
@@ -568,6 +637,8 @@ class StrategyEngine:
             # Remove stale trades and unsubscribe
             for ticker in stale_tickers:
                 del self.active_trades[ticker]
+                # Also remove from database
+                self._active_trade_store.delete_trade(ticker, self.strategy_id)
                 if self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
 
