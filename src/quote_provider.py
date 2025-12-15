@@ -140,8 +140,12 @@ class InsightSentryQuoteProvider:
             self._reconnect_delay = 1.0  # Reset on successful connect
             logger.info("WebSocket connected")
 
-            # Send initial authentication and subscriptions
-            await self._send_subscriptions()
+            # Send initial subscriptions only if we have any
+            # (Empty array is rejected by InsightSentry with "Subscriptions field or value is invalid")
+            if self._subscriptions:
+                await self._send_subscriptions()
+            else:
+                logger.info("No subscriptions to send on connect - server starts with clean state")
 
             # Start heartbeat task
             heartbeat_task = asyncio.create_task(self._heartbeat_loop())
@@ -189,9 +193,15 @@ class InsightSentryQuoteProvider:
             logger.debug("Cannot send subscriptions - WebSocket not connected")
             return
 
+        # InsightSentry rejects empty subscription arrays with "Subscriptions field or value is invalid"
+        # When we have no subscriptions, we need to force a reconnect to clear server state
+        if not self._subscriptions:
+            logger.info("No subscriptions to send - triggering reconnect to clear server state")
+            await self._force_reconnect()
+            return
+
         # Build subscription message
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
-        # Sending empty array should clear all subscriptions on the server
         subs = []
         for ticker in self._subscriptions:
             # Convert ticker to InsightSentry format (e.g., "NASDAQ:AAPL")
@@ -216,6 +226,15 @@ class InsightSentryQuoteProvider:
         logger.info(f"Sending subscription: {log_msg}")
         await self._ws.send_json(message)
         logger.info(f"Sent subscriptions for {len(subs)} tickers: {list(self._subscriptions)}")
+
+    async def _force_reconnect(self):
+        """Force a WebSocket reconnect to clear server-side subscription state."""
+        if self._ws and not self._ws.closed:
+            logger.info("Forcing WebSocket close to clear subscriptions")
+            await self._ws.close()
+            # The connect() loop will automatically reconnect
+            # On reconnect, if _subscriptions is still empty, we won't send anything
+            # and the server will have no subscriptions for this connection
 
     async def _handle_message(self, data: str):
         """Handle incoming WebSocket message."""

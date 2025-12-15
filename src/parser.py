@@ -192,7 +192,8 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
 
     # Extract ticker - look for uppercase letters followed by < $
     # This handles both old format (ticker at start) and new format (timestamp ↗ TICKER < $)
-    ticker_match = re.search(r'\b([A-Z]{2,5})\s*<\s*\$', line)
+    # Also handles markdown bold format: **TICKER** < $
+    ticker_match = re.search(r'\*{0,2}([A-Z]{2,5})\*{0,2}\s*<\s*\$', line)
     if not ticker_match:
         return None
     ticker = ticker_match.group(1)
@@ -239,7 +240,8 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
     country = parse_country_from_flag(line)
 
     # Extract Float (handle optional space before colon from HTML parsing)
-    float_match = re.search(r'Float\s*:\s*([\d.]+\s*[kKmMbB]?)', line)
+    # Also handles markdown bold: **Float**: value
+    float_match = re.search(r'\*{0,2}Float\*{0,2}\s*:\s*([\d.]+\s*[kKmMbB]?)', line)
     float_shares = parse_value_with_suffix(float_match.group(1)) if float_match else None
 
     # Extract IO%
@@ -264,7 +266,8 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
     is_nsh = 'NSH' in line
 
     # Extract RVol (relative volume)
-    rvol_match = re.search(r'RVol\s*:\s*([\d.]+)', line)
+    # Also handles markdown bold: **RVol**: value
+    rvol_match = re.search(r'\*{0,2}RVol\*{0,2}\s*:\s*([\d.]+)', line)
     rvol = float(rvol_match.group(1)) if rvol_match else None
 
     # Extract mention count (• 3 pattern)
