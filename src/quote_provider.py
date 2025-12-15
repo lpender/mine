@@ -56,6 +56,7 @@ class InsightSentryQuoteProvider:
         self._running = False
         self._reconnect_delay = 1.0
         self._last_heartbeat = 0.0
+        self._last_data_time: Optional[float] = None
 
     def _load_cached_key(self) -> Optional[str]:
         """Load cached WS key if still valid."""
@@ -180,7 +181,7 @@ class InsightSentryQuoteProvider:
                     pass
 
     async def _heartbeat_loop(self):
-        """Send periodic pings to keep connection alive."""
+        """Send periodic pings and detect stale connections."""
         while self._running:
             await asyncio.sleep(25)
             if self._ws and not self._ws.closed:
@@ -188,6 +189,15 @@ class InsightSentryQuoteProvider:
                     await self._ws.ping()
                     self._last_heartbeat = time.time()
                     logger.debug("Sent ping")
+
+                    # Check for stale data - if we have subscriptions but haven't
+                    # received data in 2 minutes, force reconnect
+                    if self._subscriptions and self._last_data_time:
+                        stale_seconds = time.time() - self._last_data_time
+                        if stale_seconds > 120:
+                            logger.warning(f"No data received in {stale_seconds:.0f}s - forcing reconnect")
+                            await self._force_reconnect()
+
                 except Exception as e:
                     logger.warning(f"Ping failed: {e}")
             else:
@@ -275,11 +285,13 @@ class InsightSentryQuoteProvider:
 
         # Series data (OHLCV bars)
         if "code" in msg and "series" in msg:
+            self._last_data_time = time.time()
             await self._handle_series(msg)
             return
 
         # Quote data
         if "data" in msg:
+            self._last_data_time = time.time()
             for quote in msg["data"]:
                 if "code" in quote:
                     await self._handle_quote(quote)
@@ -391,6 +403,8 @@ class InsightSentryQuoteProvider:
             "running": self._running,
             "last_heartbeat": self._last_heartbeat,
             "seconds_since_heartbeat": time.time() - self._last_heartbeat if self._last_heartbeat else None,
+            "last_data_time": self._last_data_time,
+            "seconds_since_data": time.time() - self._last_data_time if self._last_data_time else None,
             "subscriptions": len(self._subscriptions),
         }
 
