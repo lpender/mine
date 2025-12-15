@@ -826,7 +826,22 @@ class StrategyEngine:
             order = self.trader.sell(ticker, trade.shares, limit_price=price)
             logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
         except Exception as e:
+            error_msg = str(e).lower()
             logger.error(f"[{ticker}] Sell order failed: {e}")
+
+            # Check if error indicates position doesn't exist at broker
+            if "insufficient qty" in error_msg or "position does not exist" in error_msg:
+                # Verify with broker - maybe position was already closed
+                broker_position = self.trader.get_position(ticker)
+                if broker_position is None or broker_position.shares == 0:
+                    logger.warning(f"[{ticker}] Position not found at broker - removing orphaned trade from tracking")
+                    self._remove_orphaned_trade(ticker, trade, reason="position_not_found")
+                    return
+                elif broker_position.shares != trade.shares:
+                    # Position exists but with different quantity - update our tracking
+                    logger.warning(f"[{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
+                    trade.shares = broker_position.shares
+
             logger.warning(f"[{ticker}] Keeping position in active_trades - will retry on next exit signal")
             return  # Don't remove from tracking, will retry later
 
@@ -853,6 +868,40 @@ class StrategyEngine:
             logger.info(f"[{ticker}] Abandoned pending entry")
             if self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
+
+    def _remove_orphaned_trade(self, ticker: str, trade: ActiveTrade, reason: str = "orphaned"):
+        """Remove an orphaned trade (position doesn't exist at broker)."""
+        logger.warning(f"[{ticker}] Removing orphaned trade: {trade.shares} shares @ ${trade.entry_price:.4f} ({reason})")
+
+        # Record as a failed/orphaned trade so we have a record
+        try:
+            self._trade_history.record_trade(
+                ticker=ticker,
+                entry_price=trade.entry_price,
+                exit_price=trade.entry_price,  # No actual exit, use entry price
+                entry_time=trade.entry_time,
+                exit_time=datetime.now(),
+                shares=trade.shares,
+                exit_reason=reason,
+                paper=self.paper,
+                strategy_name=self.strategy_name,
+                strategy_params=self.config.to_dict(),
+            )
+        except Exception as e:
+            logger.error(f"[{ticker}] Failed to record orphaned trade: {e}")
+
+        # Remove from active trades
+        self.active_trades.pop(ticker, None)
+
+        # Remove from database
+        try:
+            self._active_trade_store.delete_trade(ticker, self.strategy_id)
+        except Exception as e:
+            logger.error(f"[{ticker}] Failed to delete orphaned trade from database: {e}")
+
+        # Unsubscribe from quotes
+        if self.on_unsubscribe:
+            self.on_unsubscribe(ticker)
 
     def reconcile_positions(self, broker_positions: Optional[Dict[str, 'Position']] = None):
         """
