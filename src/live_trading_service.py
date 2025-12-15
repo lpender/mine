@@ -1,6 +1,7 @@
 """Live trading service that coordinates quotes and trading."""
 
 import asyncio
+import json
 import logging
 import threading
 from datetime import datetime
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 # Lock file to detect if service is already running (survives module reloads)
 TRADING_LOCK_FILE = Path(__file__).parent.parent / "data" / ".trading.lock"
+# Status file for cross-process status sharing
+TRADING_STATUS_FILE = Path(__file__).parent.parent / "data" / ".trading_status.json"
 
 
 class TradingEngine:
@@ -404,13 +407,23 @@ class TradingEngine:
                 )
 
     def _broadcast_status(self):
-        """Broadcast current status to listeners."""
+        """Broadcast current status to listeners and persist to file."""
         # Update lock file heartbeat
         self._update_lock()
 
+        # Get and persist status
+        status = self.get_status()
+        self._write_status_file(status)
+
         if self.on_status_change:
-            status = self.get_status()
             self.on_status_change(status)
+
+    def _write_status_file(self, status: dict):
+        """Write status to file for cross-process reading."""
+        try:
+            TRADING_STATUS_FILE.write_text(json.dumps(status))
+        except Exception:
+            pass  # Don't fail on status write errors
 
     def _reconcile_all_positions(self):
         """Reconcile positions across all strategies with broker."""
@@ -533,6 +546,13 @@ def stop_live_trading():
         _trading_engine.stop()
         _trading_engine = None
 
+    # Clean up status file
+    try:
+        if TRADING_STATUS_FILE.exists():
+            TRADING_STATUS_FILE.unlink()
+    except Exception:
+        pass
+
 
 def get_trading_engine() -> Optional[TradingEngine]:
     """Get the global trading engine instance."""
@@ -544,15 +564,29 @@ def get_live_trading_status() -> Optional[dict]:
     """Get status of the global trading engine."""
     global _trading_engine
 
+    # First try in-memory engine
     if _trading_engine and _trading_engine.is_running:
         return _trading_engine.get_status()
+
+    # Fall back to status file (for cross-process/module-reload)
+    if is_trading_locked():
+        try:
+            if TRADING_STATUS_FILE.exists():
+                return json.loads(TRADING_STATUS_FILE.read_text())
+        except Exception:
+            pass
+
     return None
 
 
 def is_live_trading_active() -> bool:
-    """Check if live trading is active."""
+    """Check if live trading is active (in this process or another)."""
     global _trading_engine
-    return _trading_engine is not None and _trading_engine.is_running
+    # First check in-memory reference
+    if _trading_engine is not None and _trading_engine.is_running:
+        return True
+    # Fall back to lock file check (for cross-process/module-reload detection)
+    return is_trading_locked()
 
 
 def is_trading_locked() -> bool:
@@ -586,6 +620,9 @@ def force_release_trading_lock():
         if TRADING_LOCK_FILE.exists():
             TRADING_LOCK_FILE.unlink()
             logger.info("Force released trading lock")
+        if TRADING_STATUS_FILE.exists():
+            TRADING_STATUS_FILE.unlink()
+            logger.info("Removed stale status file")
     except Exception as e:
         logger.error(f"Error force releasing lock: {e}")
 

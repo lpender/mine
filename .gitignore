@@ -16,6 +16,9 @@ dist/
 # Data
 data/ohlcv/*.parquet
 data/messages.txt
+data/.trading.lock
+data/.trading_status.json
+data/.ws_key_cache.json
 
 # IDE
 .idea/
