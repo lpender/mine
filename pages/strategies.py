@@ -8,6 +8,8 @@ from datetime import datetime
 from src.database import init_db
 from src.strategy import StrategyConfig
 from src.strategy_store import get_strategy_store, Strategy
+from src.active_trade_store import get_active_trade_store
+from src.trading import get_trading_client
 from src.live_trading_service import (
     get_live_trading_status,
     is_live_trading_active,
@@ -306,8 +308,58 @@ else:
                     if strategy.enabled:
                         st.error("Disable strategy before deleting")
                     else:
+                        # Check for active trades in DB
+                        active_store = get_active_trade_store()
+                        active_trades = active_store.get_trades_for_strategy(strategy_id)
+                        if active_trades:
+                            st.session_state[f"confirm_delete_{strategy_id}"] = True
+                            st.warning(f"Found {len(active_trades)} active trade(s) in DB for this strategy")
+                        else:
+                            store.delete_strategy(strategy_id)
+                            st.success(f"Deleted strategy '{strategy.name}'")
+                            st.rerun()
+
+            # Delete confirmation dialog
+            if st.session_state.get(f"confirm_delete_{strategy_id}", False):
+                st.divider()
+                st.markdown("**⚠️ Delete Confirmation**")
+                active_store = get_active_trade_store()
+                active_trades = active_store.get_trades_for_strategy(strategy_id)
+                st.warning(f"This strategy has {len(active_trades)} active trade record(s) in the database:")
+                for trade in active_trades:
+                    st.write(f"- **{trade.ticker}**: {trade.shares} shares @ ${trade.entry_price:.2f}")
+
+                st.info("If these positions are still open at the broker, they should be sold first.")
+
+                col_sell, col_force, col_cancel = st.columns(3)
+                with col_sell:
+                    if st.button("🔴 Sell Positions & Delete", type="primary", key=f"sell_delete_{strategy_id}"):
+                        try:
+                            trader = get_trading_client()
+                            for trade in active_trades:
+                                try:
+                                    order = trader.sell(trade.ticker, trade.shares)
+                                    st.info(f"Sold {trade.ticker}: {order.status}")
+                                except Exception as e:
+                                    st.warning(f"Failed to sell {trade.ticker}: {e}")
+                        except Exception as e:
+                            st.error(f"Failed to connect to broker: {e}")
+                        # Delete the strategy (will clean up trade records)
                         store.delete_strategy(strategy_id)
+                        st.session_state[f"confirm_delete_{strategy_id}"] = False
                         st.success(f"Deleted strategy '{strategy.name}'")
+                        st.rerun()
+
+                with col_force:
+                    if st.button("⚠️ Force Delete (no sell)", type="secondary", key=f"force_delete_{strategy_id}"):
+                        store.delete_strategy(strategy_id)
+                        st.session_state[f"confirm_delete_{strategy_id}"] = False
+                        st.success(f"Force deleted strategy '{strategy.name}' (positions NOT sold)")
+                        st.rerun()
+
+                with col_cancel:
+                    if st.button("Cancel", key=f"cancel_delete_{strategy_id}"):
+                        st.session_state[f"confirm_delete_{strategy_id}"] = False
                         st.rerun()
 
             # Configuration details

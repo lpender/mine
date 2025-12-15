@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from .database import SessionLocal, StrategyDB
+from .database import SessionLocal, StrategyDB, ActiveTradeDB
 from .strategy import StrategyConfig
 
 logger = logging.getLogger(__name__)
@@ -143,7 +143,7 @@ class StrategyStore:
 
     def delete_strategy(self, strategy_id: str) -> bool:
         """
-        Delete a strategy.
+        Delete a strategy and any associated active trades.
 
         Returns:
             True if deleted, False if not found
@@ -153,6 +153,13 @@ class StrategyStore:
             row = db.query(StrategyDB).filter(StrategyDB.id == strategy_id).first()
             if not row:
                 return False
+
+            # Delete any active trades for this strategy first (foreign key constraint)
+            deleted_trades = db.query(ActiveTradeDB).filter(
+                ActiveTradeDB.strategy_id == strategy_id
+            ).delete()
+            if deleted_trades > 0:
+                logger.info(f"Deleted {deleted_trades} active trades for strategy {strategy_id}")
 
             db.delete(row)
             db.commit()
