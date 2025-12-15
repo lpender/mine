@@ -209,6 +209,12 @@ module.exports = class StockAlertMonitor {
             console.log("[StockAlertMonitor] Unsubscribed from MESSAGE_CREATE events");
         }
 
+        // Restore original dispatch if we patched it
+        if (this._dispatcher && this._originalDispatch) {
+            this._dispatcher.dispatch = this._originalDispatch;
+            console.log("[StockAlertMonitor] Restored original dispatch");
+        }
+
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
         this.removeBackfillWidget();
         this.stopTradeButtonInjection();
@@ -220,23 +226,53 @@ module.exports = class StockAlertMonitor {
     }
 
     patchMessageCreate() {
-        const Dispatcher = BdApi.Webpack.getModule(m => m.dispatch && m.subscribe);
+        // Try multiple approaches to catch messages
 
-        if (!Dispatcher) {
-            console.error("[StockAlertMonitor] Could not find Dispatcher");
-            return;
+        // Approach 1: FluxDispatcher subscription
+        const Dispatcher = BdApi.Webpack.getModule(m => m.dispatch && m.subscribe);
+        if (Dispatcher) {
+            this._boundMessageHandler = this.handleMessage.bind(this);
+            Dispatcher.subscribe("MESSAGE_CREATE", this._boundMessageHandler);
+            console.log("[StockAlertMonitor] Subscribed to MESSAGE_CREATE via FluxDispatcher");
+            this._dispatcher = Dispatcher;
+
+            // Debug: log ALL events to see what's coming through
+            this._debugHandler = (event) => {
+                if (event && event.type && event.type.includes("MESSAGE")) {
+                    console.log("[StockAlertMonitor] DEBUG - Dispatcher event:", event.type);
+                }
+            };
+            // Temporarily subscribe to see what events we get
+            const originalDispatch = Dispatcher.dispatch.bind(Dispatcher);
+            Dispatcher.dispatch = (event) => {
+                if (event && event.type && event.type.includes("MESSAGE")) {
+                    console.log("[StockAlertMonitor] DEBUG dispatch:", event.type, event);
+                }
+                return originalDispatch(event);
+            };
+            this._originalDispatch = originalDispatch;
         }
 
-        // Store bound handler so we can properly unsubscribe later
-        // (bind() creates a new function each time, so we need to keep the same reference)
-        this._boundMessageHandler = this.handleMessage.bind(this);
+        // Approach 2: Patch MessageActions.receiveMessage
+        const MessageActions = BdApi.Webpack.getModule(m => m.receiveMessage && m.sendMessage);
+        if (MessageActions && MessageActions.receiveMessage) {
+            console.log("[StockAlertMonitor] Found MessageActions, patching receiveMessage");
+            BdApi.Patcher.after("StockAlertMonitor", MessageActions, "receiveMessage", (thisObj, args, ret) => {
+                const [channelId, message] = args;
+                console.log("[StockAlertMonitor] receiveMessage intercepted:", channelId, message?.content?.substring(0, 50));
+                if (message && message.content) {
+                    this.handleMessage({ message, channelId });
+                }
+            });
+        } else {
+            console.warn("[StockAlertMonitor] Could not find MessageActions.receiveMessage");
+        }
 
-        // Subscribe to MESSAGE_CREATE events
-        Dispatcher.subscribe("MESSAGE_CREATE", this._boundMessageHandler);
-        console.log("[StockAlertMonitor] Subscribed to MESSAGE_CREATE events");
-
-        // Store dispatcher for cleanup
-        this._dispatcher = Dispatcher;
+        // Approach 3: Try the newer MessageStore approach
+        const MessageStore = BdApi.Webpack.getModule(m => m.getMessage && m.getMessages);
+        if (MessageStore) {
+            console.log("[StockAlertMonitor] Found MessageStore");
+        }
     }
 
     handleMessage(event) {
