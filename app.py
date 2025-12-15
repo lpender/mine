@@ -173,6 +173,11 @@ def init_session_state():
     set_if_missing("_direction", [d for d in direction_list if d in all_directions])
     set_if_missing("_scanner_test", get_param("scanner_test", False, bool))
     set_if_missing("_scanner_after_lull", get_param("scanner_lull", False, bool))
+    # Position sizing
+    set_if_missing("_stake_mode", get_param("stake_mode", "fixed"))
+    set_if_missing("_stake_amount", get_param("stake", 1000.0, float))
+    set_if_missing("_volume_pct", get_param("vol_pct", 1.0, float))
+    set_if_missing("_max_stake", get_param("max_stake", 10000.0, float))
 
 init_session_state()
 
@@ -327,6 +332,52 @@ with st.sidebar:
     price_min = col1.number_input("Min", min_value=0.0, step=0.5, key="_price_min", help="Exclude if entry price ≤ this")
     price_max = col2.number_input("Max", min_value=0.0, step=1.0, key="_price_max", help="Exclude if entry price > this")
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Position Sizing
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Position Sizing")
+
+    stake_mode = st.radio(
+        "Sizing Mode",
+        ["fixed", "volume_pct"],
+        format_func=lambda x: "Fixed $" if x == "fixed" else "% of Volume",
+        horizontal=True,
+        key="_stake_mode",
+    )
+
+    if stake_mode == "fixed":
+        stake_amount = st.number_input(
+            "Stake per Trade ($)",
+            value=st.session_state.get("_stake_amount", 1000.0),
+            min_value=1.0,
+            step=100.0,
+            key="_stake_amount",
+            help="Fixed dollar amount per trade"
+        )
+        volume_pct = st.session_state.get("_volume_pct", 1.0)
+        max_stake = st.session_state.get("_max_stake", 10000.0)
+    else:
+        col1, col2 = st.columns(2)
+        volume_pct = col1.number_input(
+            "Volume %",
+            value=st.session_state.get("_volume_pct", 1.0),
+            min_value=0.1,
+            max_value=100.0,
+            step=0.1,
+            key="_volume_pct",
+            help="Buy this % of the previous candle's volume"
+        )
+        max_stake = col2.number_input(
+            "Max Cost ($)",
+            value=st.session_state.get("_max_stake", 10000.0),
+            min_value=1.0,
+            step=100.0,
+            key="_max_stake",
+            help="Maximum position cost cap"
+        )
+        stake_amount = st.session_state.get("_stake_amount", 1000.0)
+
     # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
@@ -351,6 +402,11 @@ with st.sidebar:
     set_param("direction", directions)
     set_param("scanner_test", scanner_test)
     set_param("scanner_lull", scanner_after_lull)
+    # Position sizing params
+    set_param("stake_mode", stake_mode)
+    set_param("stake", stake_amount)
+    set_param("vol_pct", volume_pct)
+    set_param("max_stake", max_stake)
 
     # ─────────────────────────────────────────────────────────────────────────
     # Save Strategy / Live Trading
@@ -388,7 +444,10 @@ with st.sidebar:
                     stop_loss_from_open=sl_from_open,
                     trailing_stop_pct=trailing_stop,
                     timeout_minutes=hold_time,
-                    stake_amount=50.0,  # Default stake
+                    stake_mode=stake_mode,
+                    stake_amount=stake_amount,
+                    volume_pct=volume_pct,
+                    max_stake=max_stake,
                 )
                 store.save_strategy(strategy_name, strategy_config)
                 st.success(f"Saved strategy '{strategy_name}'")
@@ -539,23 +598,30 @@ if filtered:
 else:
     weeks = 1
 
-total_return_1k = stats['expectancy'] * 10 * stats['total_trades']
-weekly_return_1k = total_return_1k / weeks
-
-# Calculate return assuming 1% of pre-entry candle volume as position size
-total_return_1pct_vol = sum(
-    r.pnl_at_1pct_volume for r in summary.results
-    if r.pnl_at_1pct_volume is not None
+# Calculate P/L using position sizing settings
+total_pnl = sum(
+    r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake)
+    for r in summary.results
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake) is not None
 )
-trades_with_volume = sum(1 for r in summary.results if r.pnl_at_1pct_volume is not None)
-weekly_return_1pct_vol = total_return_1pct_vol / weeks if weeks > 0 else 0
+trades_with_pnl = sum(
+    1 for r in summary.results
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake) is not None
+)
+weekly_pnl = total_pnl / weeks if weeks > 0 else 0
+
+# Build sizing description for metric help
+if stake_mode == "volume_pct":
+    sizing_desc = f"{volume_pct}% vol (max ${max_stake:,.0f})"
+else:
+    sizing_desc = f"${stake_amount:,.0f} fixed"
 
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
 col3.metric("Win Rate", f"{stats['win_rate']:.1f}%")
-col4.metric("Weekly/$1k", f"${weekly_return_1k:+.0f}", help=f"Total ${total_return_1k:+.0f} over {weeks:.1f} weeks")
-col5.metric("Weekly/1%vol", f"${weekly_return_1pct_vol:+.0f}", help=f"Total ${total_return_1pct_vol:+.0f} over {weeks:.1f} weeks ({trades_with_volume} trades with volume data)")
-col6.metric("Profit Factor", f"{stats['profit_factor']:.2f}" if stats['profit_factor'] != float('inf') else "inf")
+col4.metric("Weekly P/L", f"${weekly_pnl:+,.0f}", help=f"Total ${total_pnl:+,.0f} over {weeks:.1f} weeks | Sizing: {sizing_desc} | {trades_with_pnl} trades")
+col5.metric("Profit Factor", f"{stats['profit_factor']:.2f}" if stats['profit_factor'] != float('inf') else "inf")
+col6.metric("Expectancy", f"{stats['expectancy']:+.2f}%", help="Average return per trade")
 
 # Second row
 col1, col2, col3, col4, col5, col6 = st.columns(6)

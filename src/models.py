@@ -139,6 +139,46 @@ class TradeResult:
         position_value = shares * self.entry_price
         return position_value * (self.return_pct / 100)
 
+    def pnl_with_sizing(
+        self,
+        stake_mode: str = "fixed",
+        stake_amount: float = 1000.0,
+        volume_pct: float = 1.0,
+        max_stake: float = 10000.0,
+    ) -> Optional[float]:
+        """
+        Calculate P&L based on position sizing settings.
+
+        Args:
+            stake_mode: "fixed" for fixed dollar amount, "volume_pct" for % of pre-entry volume
+            stake_amount: Dollar amount for fixed stake mode
+            volume_pct: Percentage of pre-entry candle volume to buy
+            max_stake: Maximum position cost (for volume_pct mode)
+
+        Returns:
+            Dollar P&L for the trade, or None if not entered
+        """
+        if not self.entered or self.return_pct is None or self.entry_price is None:
+            return None
+        if self.entry_price <= 0:
+            return None
+
+        if stake_mode == "volume_pct":
+            # Volume-based sizing: buy volume_pct% of pre-entry candle volume
+            if self.pre_entry_volume is None or self.pre_entry_volume <= 0:
+                return None
+            shares_from_volume = int(self.pre_entry_volume * volume_pct / 100)
+            max_shares = int(max_stake / self.entry_price)
+            shares = min(shares_from_volume, max_shares)
+            if shares <= 0:
+                return None
+        else:
+            # Fixed stake mode (default)
+            shares = max(1, int(stake_amount / self.entry_price))
+
+        position_value = shares * self.entry_price
+        return position_value * (self.return_pct / 100)
+
 
 @dataclass
 class BacktestConfig:
