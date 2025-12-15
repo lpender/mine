@@ -392,7 +392,7 @@ with st.sidebar:
                 st.caption(f"Account: ${status['account'].get('equity', 0):,.0f} equity, "
                           f"${status['account'].get('buying_power', 0):,.0f} buying power")
 
-        if st.button("Stop Trading", type="primary", use_container_width=True):
+        if st.button("Stop Trading", type="primary", width="stretch"):
             stop_live_trading()
             st.rerun()
 
@@ -404,7 +404,7 @@ with st.sidebar:
         if st.button(
             f"Start {'Paper' if is_paper else 'LIVE'} Trading",
             type="primary" if is_paper else "secondary",
-            use_container_width=True
+            width="stretch"
         ):
             strategy_config = StrategyConfig(
                 channels=channels if channels else [],
@@ -647,7 +647,7 @@ for df_idx, row in df.iterrows():
 event = st.dataframe(
     df,
     column_config=column_config,
-    use_container_width=True,
+    width="stretch",
     hide_index=True,
     selection_mode="single-row",
     on_select="rerun",
@@ -770,7 +770,7 @@ else:
                 height=500,
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
             # Show trade details
             col1, col2, col3, col4 = st.columns(4)
