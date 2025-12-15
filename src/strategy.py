@@ -478,7 +478,7 @@ class StrategyEngine:
                 pending.current_candle_data["high"] = max(pending.current_candle_data["high"], price)
                 pending.current_candle_data["low"] = min(pending.current_candle_data["low"], price)
                 pending.current_candle_data["close"] = price
-                pending.current_candle_data["volume"] = volume  # Use latest volume
+                pending.current_candle_data["volume"] += volume  # Sum volume from all 1-second bars
 
         # Check for consecutive green candles with volume
         green_count = 0

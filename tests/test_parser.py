@@ -443,12 +443,20 @@ class TestRealHtmlParsing:
 
 
 class TestMarketSession:
-    """Test market session detection from timestamps."""
+    """Test market session detection from timestamps.
+
+    Note: Naive datetimes are treated as UTC, not ET.
+    During EST (winter), ET = UTC-5, so:
+    - 8:00 AM ET = 13:00 UTC
+    - 10:30 AM ET = 15:30 UTC
+    - 5:00 PM ET = 22:00 UTC
+    - 9:00 PM ET = 02:00 UTC (next day)
+    """
 
     def test_premarket_session(self):
         line = "TEST  < $1  - News - Link  ~  :flag_us:  |  Float: 10 M  |  IO: 5%  |  MC: 50 M"
-        # 8:00 AM ET = premarket
-        timestamp = datetime(2025, 12, 8, 8, 0, 0)
+        # 8:00 AM ET = 13:00 UTC (premarket)
+        timestamp = datetime(2025, 12, 8, 13, 0, 0)
         ann = parse_message_line(line, timestamp)
 
         assert ann is not None
@@ -456,8 +464,8 @@ class TestMarketSession:
 
     def test_market_session(self):
         line = "TEST  < $1  - News - Link  ~  :flag_us:  |  Float: 10 M  |  IO: 5%  |  MC: 50 M"
-        # 10:30 AM ET = market hours
-        timestamp = datetime(2025, 12, 8, 10, 30, 0)
+        # 10:30 AM ET = 15:30 UTC (market hours)
+        timestamp = datetime(2025, 12, 8, 15, 30, 0)
         ann = parse_message_line(line, timestamp)
 
         assert ann is not None
@@ -465,8 +473,8 @@ class TestMarketSession:
 
     def test_postmarket_session(self):
         line = "TEST  < $1  - News - Link  ~  :flag_us:  |  Float: 10 M  |  IO: 5%  |  MC: 50 M"
-        # 5:00 PM ET = postmarket
-        timestamp = datetime(2025, 12, 8, 17, 0, 0)
+        # 5:00 PM ET = 22:00 UTC (postmarket)
+        timestamp = datetime(2025, 12, 8, 22, 0, 0)
         ann = parse_message_line(line, timestamp)
 
         assert ann is not None
@@ -474,8 +482,8 @@ class TestMarketSession:
 
     def test_closed_session(self):
         line = "TEST  < $1  - News - Link  ~  :flag_us:  |  Float: 10 M  |  IO: 5%  |  MC: 50 M"
-        # 9:00 PM ET = closed
-        timestamp = datetime(2025, 12, 8, 21, 0, 0)
+        # 9:00 PM ET = 02:00 UTC next day (closed)
+        timestamp = datetime(2025, 12, 9, 2, 0, 0)
         ann = parse_message_line(line, timestamp)
 
         assert ann is not None
