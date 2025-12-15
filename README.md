@@ -97,16 +97,6 @@ python trade.py cancel-all
 python trade.py --live buy AAPL
 ```
 
-### Real-time Discord Monitor
-
-Run the local webhook server, then use the Discord plugin to send alerts/backfills:
-
-```bash
-python discord-monitor/alert_server.py
-```
-
-You can optionally enable auto-trading flags on the server (see `discord-monitor/alert_server.py --help`).
-
 ## Project Structure
 
 ```

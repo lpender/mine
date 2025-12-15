@@ -40,7 +40,8 @@
       "Bash(task --list:*)",
       "Bash(mdfind:*)",
       "Bash(task plugin:install:*)",
-      "Bash(and WebSocket API\" - no need to fetch a separate WS key.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(and WebSocket API\" - no need to fetch a separate WS key.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd live price display for active positions\n\n- Track last_price and last_quote_time in ActiveTrade\n- Update get_status() to include current_price, pnl_pct, pnl_dollars\n- Display live prices with colored P&L on strategies page\n- Add auto-refresh checkbox (2s) for live updates\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n)\")"
     ]
   }
 }

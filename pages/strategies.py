@@ -2,6 +2,7 @@
 
 import streamlit as st
 import pandas as pd
+import time
 from datetime import datetime
 
 from src.database import init_db
@@ -55,6 +56,13 @@ with st.sidebar:
 
         if st.button("Stop Engine", type="secondary"):
             stop_live_trading()
+            st.rerun()
+
+        # Auto-refresh for live price updates
+        st.divider()
+        auto_refresh = st.checkbox("Auto-refresh (2s)", value=False, key="auto_refresh")
+        if auto_refresh:
+            time.sleep(2)
             st.rerun()
     else:
         st.warning("Engine Stopped")
@@ -326,9 +334,15 @@ else:
                     st.markdown("**Active Positions**")
                     for ticker, trade in active.items():
                         entry = trade.get("entry_price", 0)
+                        current = trade.get("current_price", entry)
+                        pnl_pct = trade.get("pnl_pct", 0)
+                        pnl_dollars = trade.get("pnl_dollars", 0)
                         sl = trade.get("stop_loss", 0)
                         tp = trade.get("take_profit", 0)
                         shares = trade.get("shares", 0)
-                        highest = trade.get("highest", 0)
 
-                        st.write(f"**{ticker}**: {shares} shares @ ${entry:.2f} | SL: ${sl:.2f} | TP: ${tp:.2f} | High: ${highest:.2f}")
+                        # Color P&L
+                        pnl_color = "green" if pnl_pct >= 0 else "red"
+                        pnl_str = f":{pnl_color}[{pnl_pct:+.2f}% (${pnl_dollars:+.2f})]"
+
+                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str} | SL: ${sl:.2f} | TP: ${tp:.2f}")

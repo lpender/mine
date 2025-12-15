@@ -147,6 +147,8 @@ class ActiveTrade:
     highest_since_entry: float
     stop_loss_price: float
     take_profit_price: float
+    last_price: float = 0.0  # Updated by quotes
+    last_quote_time: Optional[datetime] = None
 
 
 class StrategyEngine:
@@ -299,6 +301,9 @@ class StrategyEngine:
         # Check active trades
         if ticker in self.active_trades:
             trade = self.active_trades[ticker]
+            # Update last price for display
+            trade.last_price = price
+            trade.last_quote_time = timestamp
             pnl_pct = ((price - trade.entry_price) / trade.entry_price) * 100
             logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f}")
             self._check_exit(ticker, price, timestamp)
@@ -574,18 +579,27 @@ class StrategyEngine:
 
     def get_status(self) -> dict:
         """Get current engine status."""
+        active_trades = {}
+        for ticker, t in self.active_trades.items():
+            current_price = t.last_price if t.last_price > 0 else t.entry_price
+            pnl_pct = ((current_price - t.entry_price) / t.entry_price) * 100 if t.entry_price > 0 else 0
+            pnl_dollars = (current_price - t.entry_price) * t.shares
+
+            active_trades[ticker] = {
+                "entry_price": t.entry_price,
+                "entry_time": t.entry_time.isoformat(),
+                "shares": t.shares,
+                "current_price": current_price,
+                "pnl_pct": pnl_pct,
+                "pnl_dollars": pnl_dollars,
+                "highest": t.highest_since_entry,
+                "stop_loss": t.stop_loss_price,
+                "take_profit": t.take_profit_price,
+                "last_quote_time": t.last_quote_time.isoformat() if t.last_quote_time else None,
+            }
+
         return {
             "pending_entries": list(self.pending_entries.keys()),
-            "active_trades": {
-                ticker: {
-                    "entry_price": t.entry_price,
-                    "entry_time": t.entry_time.isoformat(),
-                    "highest": t.highest_since_entry,
-                    "stop_loss": t.stop_loss_price,
-                    "take_profit": t.take_profit_price,
-                    "shares": t.shares,
-                }
-                for ticker, t in self.active_trades.items()
-            },
+            "active_trades": active_trades,
             "completed_trades": len(self.completed_trades),
         }

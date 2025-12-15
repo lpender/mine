@@ -26,16 +26,16 @@ tasks:
       - "{{.VENV}}/bin/pip install -r requirements.txt"
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Dashboard (includes alert server)
+  # Dashboard
   # ─────────────────────────────────────────────────────────────────────────────
 
   dashboard:
-    desc: Run dashboard + alert server (all-in-one)
+    desc: Run the Streamlit dashboard
     cmds:
       - streamlit run app.py
 
   dashboard:venv:
-    desc: Run dashboard using venv (all-in-one)
+    desc: Run dashboard using venv
     cmds:
       - "{{.VENV}}/bin/streamlit run app.py"
 
@@ -55,11 +55,11 @@ tasks:
       - diff discord-monitor/StockAlertMonitor.plugin.js "{{.BETTERDISCORD_PLUGINS}}/StockAlertMonitor.plugin.js" || true
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Alert Server (standalone - use 'dashboard' instead for all-in-one)
+  # Alert Server
   # ─────────────────────────────────────────────────────────────────────────────
 
   alert-server:
-    desc: Run standalone alert server (deprecated - use 'dashboard')
+    desc: Run the Discord alert server
     cmds:
       - python discord-monitor/alert_server.py
 

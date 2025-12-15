@@ -9,16 +9,7 @@ Weekly: 610 http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&co
 
 I'd like to start paper trading this strategy tomorrow:
 
-http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&country=&has_hl=1&sess=market&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=10000&trail=8.5
-
-A couple things will have to happen:
-
-- We need to update the plugin for discord to immediately send messages to the listener server when they arrive. Let's add a toggle that's like "send new messages to server".
-- We need to initiate a websocket connection to insight_sentry (See RapidAPI key in the .env file) and start tracking OHLCV data immediately.
-- We need to encode everything about the strategy (the rules around buying, selling).
-- We need to trade with Alpaca (paper trading for now). We'll default to 100 shares. I'd like to start paper trading this strategy tomorrow:
-
-http://localhost:8501/?sl=1.0&tp=22.5&hold=30&author=NuntioBotAPP&country=&has_hl=1&sess=market&channel=%F0%9F%8D%92-select-news&no_fin=0&float_min=0.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&sort=Return+%25&asc=1&consec=2&sl_open=1&price_min=1.0&price_max=20.0&min_vol=10000&trail=8.5
+http://localhost:8501/?sl=11.0&tp=10.0&hold=15&consec=1&min_vol=5000&sl_open=1&sess=market%2Cpremarket&country=&author=&channel=%F0%9F%8D%92-select-news&no_fin=0&has_hl=0&float_min=0.0&float_max=1000.0&mc_min=0.0&mc_max=10000.0&price_min=1.0&price_max=10.0&trail=7.0&direction=up_right&scanner_test=0&scanner_lull=0&sort=Return+%25&asc=1
 
 A couple things will have to happen:
 
@@ -38,5 +29,4 @@ curl --request GET
 To get price updates, see:
 
 https://insightsentry.com/docs/ws (we should probably subscribe for second updates so that we can quickly execute on price / volume changes)
-
-Alpaca should work during off-market hours but it may not...
+http://localhost:8501/?sl=30.0&tp=50.0&hold=120&consec=0&min_vol=0&sl_open=0&sess=premarket%2Cmarket&country=&author=NuntioBotAPP%2CPR+-+SpikeAPP&channel=&no_fin=0&has_hl=0&float_min=2.0&float_max=100.0&mc_min=0.0&mc_max=10000.0&price_min=1.0&price_max=10.0&trail=0.0&direction=up_right&scanner_test=0&scanner_lull=0&sort=Time&asc=0
