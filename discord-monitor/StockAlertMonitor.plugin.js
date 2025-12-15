@@ -1,9 +1,20 @@
 /**
  * @name StockAlertMonitor
  * @description Monitors Discord channels for stock alerts (TICKER < $X pattern) and provides backfill widget
- * @version 2.0.0
+ * @version 2.1.0
  * @author lpender
  */
+
+// Get Dispatcher at module load time (like PingNotification does)
+// This is more reliable than getting it inside methods
+const { Webpack } = BdApi;
+const Dispatcher = Webpack.getModule(Webpack.Filters.byKeys("subscribe", "dispatch"));
+
+if (!Dispatcher) {
+    console.error("[StockAlertMonitor] CRITICAL: Could not find Dispatcher module!");
+} else {
+    console.log("[StockAlertMonitor] Dispatcher found at module load time");
+}
 
 module.exports = class StockAlertMonitor {
     constructor() {
@@ -203,16 +214,10 @@ module.exports = class StockAlertMonitor {
     stop() {
         console.log("[StockAlertMonitor] Stopping...");
 
-        // Unsubscribe from MESSAGE_CREATE events
-        if (this._dispatcher && this._boundMessageHandler) {
-            this._dispatcher.unsubscribe("MESSAGE_CREATE", this._boundMessageHandler);
+        // Unsubscribe from MESSAGE_CREATE events using global Dispatcher
+        if (Dispatcher && this.messageCreateHandler) {
+            Dispatcher.unsubscribe("MESSAGE_CREATE", this.messageCreateHandler);
             console.log("[StockAlertMonitor] Unsubscribed from MESSAGE_CREATE events");
-        }
-
-        // Restore original dispatch if we patched it
-        if (this._dispatcher && this._originalDispatch) {
-            this._dispatcher.dispatch = this._originalDispatch;
-            console.log("[StockAlertMonitor] Restored original dispatch");
         }
 
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
@@ -226,53 +231,22 @@ module.exports = class StockAlertMonitor {
     }
 
     patchMessageCreate() {
-        // Try multiple approaches to catch messages
-
-        // Approach 1: FluxDispatcher subscription
-        const Dispatcher = BdApi.Webpack.getModule(m => m.dispatch && m.subscribe);
-        if (Dispatcher) {
-            this._boundMessageHandler = this.handleMessage.bind(this);
-            Dispatcher.subscribe("MESSAGE_CREATE", this._boundMessageHandler);
-            console.log("[StockAlertMonitor] Subscribed to MESSAGE_CREATE via FluxDispatcher");
-            this._dispatcher = Dispatcher;
-
-            // Debug: log ALL events to see what's coming through
-            this._debugHandler = (event) => {
-                if (event && event.type && event.type.includes("MESSAGE")) {
-                    console.log("[StockAlertMonitor] DEBUG - Dispatcher event:", event.type);
-                }
-            };
-            // Temporarily subscribe to see what events we get
-            const originalDispatch = Dispatcher.dispatch.bind(Dispatcher);
-            Dispatcher.dispatch = (event) => {
-                if (event && event.type && event.type.includes("MESSAGE")) {
-                    console.log("[StockAlertMonitor] DEBUG dispatch:", event.type, event);
-                }
-                return originalDispatch(event);
-            };
-            this._originalDispatch = originalDispatch;
+        // Use the global Dispatcher (loaded at module init, like PingNotification)
+        if (!Dispatcher) {
+            console.error("[StockAlertMonitor] Dispatcher not available - cannot subscribe to MESSAGE_CREATE");
+            BdApi.UI.showToast("StockAlertMonitor: Dispatcher not found!", { type: "error" });
+            return;
         }
 
-        // Approach 2: Patch MessageActions.receiveMessage
-        const MessageActions = BdApi.Webpack.getModule(m => m.receiveMessage && m.sendMessage);
-        if (MessageActions && MessageActions.receiveMessage) {
-            console.log("[StockAlertMonitor] Found MessageActions, patching receiveMessage");
-            BdApi.Patcher.after("StockAlertMonitor", MessageActions, "receiveMessage", (thisObj, args, ret) => {
-                const [channelId, message] = args;
-                console.log("[StockAlertMonitor] receiveMessage intercepted:", channelId, message?.content?.substring(0, 50));
-                if (message && message.content) {
-                    this.handleMessage({ message, channelId });
-                }
-            });
-        } else {
-            console.warn("[StockAlertMonitor] Could not find MessageActions.receiveMessage");
-        }
+        // Define handler exactly like PingNotification does
+        this.messageCreateHandler = (event) => {
+            if (!event?.message) return;
+            this.handleMessage(event);
+        };
 
-        // Approach 3: Try the newer MessageStore approach
-        const MessageStore = BdApi.Webpack.getModule(m => m.getMessage && m.getMessages);
-        if (MessageStore) {
-            console.log("[StockAlertMonitor] Found MessageStore");
-        }
+        // Subscribe to MESSAGE_CREATE
+        Dispatcher.subscribe("MESSAGE_CREATE", this.messageCreateHandler);
+        console.log("[StockAlertMonitor] Subscribed to MESSAGE_CREATE via global Dispatcher");
     }
 
     handleMessage(event) {
