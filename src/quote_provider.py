@@ -191,11 +191,7 @@ class InsightSentryQuoteProvider:
 
         # Build subscription message
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
-        # NOTE: InsightSentry rejects empty subscriptions array, so skip if empty
-        if not self._subscriptions:
-            logger.info("No subscriptions to send (empty list) - skipping WebSocket update")
-            return
-
+        # Sending empty array should clear all subscriptions on the server
         subs = []
         for ticker in self._subscriptions:
             # Convert ticker to InsightSentry format (e.g., "NASDAQ:AAPL")
