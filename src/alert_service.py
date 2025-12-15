@@ -131,7 +131,8 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
 
         # Log the alert
         now = datetime.now().strftime("%H:%M:%S")
-        logger.info(f"ALERT @ {now}: {ticker_symbol} ${price:.2f if price else 0} #{channel}")
+        price_str = f"${price:.2f}" if price else "$?"
+        logger.info(f"ALERT @ {now}: {ticker_symbol} {price_str} #{channel}")
 
         # Forward to trading engine if callback is set
         if UnifiedAlertHandler.alert_callback and content:
