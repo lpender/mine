@@ -377,10 +377,16 @@ with st.sidebar:
 
         # Show status
         if status:
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Pending", len(status.get("pending_entries", [])))
-            col2.metric("Active", len(status.get("active_trades", {})))
-            col3.metric("Completed", status.get("completed_trades", 0))
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("Watching", len(status.get("pending_entries", [])))
+            col2.metric("Orders", len(status.get("open_orders", [])))
+            col3.metric("Positions", len(status.get("active_trades", {})))
+            col4.metric("Completed", status.get("completed_trades", 0))
+
+            if status.get("open_orders"):
+                st.subheader("Pending Orders")
+                for order in status["open_orders"]:
+                    st.write(f"**{order['ticker']}**: {order['side'].upper()} {order['shares']} shares ({order['status']})")
 
             if status.get("active_trades"):
                 st.subheader("Active Positions")

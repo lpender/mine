@@ -329,6 +329,21 @@ class TradingEngine:
             except Exception:
                 pass
 
+            try:
+                open_orders = self.trader.get_open_orders()
+                status["open_orders"] = [
+                    {
+                        "order_id": o.order_id,
+                        "ticker": o.ticker,
+                        "side": o.side,
+                        "shares": o.shares,
+                        "status": o.status,
+                    }
+                    for o in open_orders
+                ]
+            except Exception:
+                status["open_orders"] = []
+
         return status
 
     @property

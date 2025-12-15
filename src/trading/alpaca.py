@@ -127,6 +127,21 @@ class AlpacaTradingClient(TradingClient):
             timestamp=ts,
         )
 
+    def get_open_orders(self) -> List[Order]:
+        """Get all open orders."""
+        results = self._request("GET", "/v2/orders", params={"status": "open"})
+        orders = []
+        for data in results:
+            orders.append(Order(
+                order_id=data["id"],
+                ticker=data["symbol"],
+                side=data["side"],
+                shares=int(data["qty"]),
+                order_type=data["type"],
+                status=data["status"],
+            ))
+        return orders
+
     def cancel_all_orders(self, ticker: Optional[str] = None) -> int:
         """Cancel all open orders."""
         if ticker:

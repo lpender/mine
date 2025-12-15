@@ -96,6 +96,16 @@ class TradingClient(ABC):
         pass
 
     @abstractmethod
+    def get_open_orders(self) -> List[Order]:
+        """
+        Get all open/pending orders.
+
+        Returns:
+            List of Order objects
+        """
+        pass
+
+    @abstractmethod
     def get_quote(self, ticker: str) -> Quote:
         """
         Get current quote for a ticker.
