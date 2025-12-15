@@ -224,14 +224,19 @@ class TradingEngine:
         logger.info("Alert callback registered")
 
     def _load_enabled_strategies(self):
-        """Load all enabled strategies from the database (ordered by priority)."""
+        """Load all enabled strategies from the database (ordered by priority).
+
+        IMPORTANT: Each ticker can only be owned by ONE strategy. During recovery,
+        if multiple strategies have the same ticker in their DB records, only the
+        highest priority strategy (loaded first) gets to keep it.
+        """
         store = get_strategy_store()
         enabled = store.list_strategies(enabled_only=True)  # Already ordered by priority
 
         for strategy in enabled:
             self._add_strategy_engine(strategy.id, strategy.name, strategy.config, strategy.priority)
 
-        # Initialize ticker locks for any recovered positions
+        # Initialize ticker locks for any recovered positions (first strategy wins)
         for strategy_id, engine in self.strategies.items():
             # Lock tickers from active trades
             for ticker in engine.active_trades.keys():
@@ -243,6 +248,31 @@ class TradingEngine:
                 if ticker not in self._locked_tickers:
                     self._locked_tickers[ticker] = strategy_id
                     logger.info(f"[{ticker}] Locked (recovered pending entry for '{self.strategy_names[strategy_id]}')")
+
+        # CRITICAL: Remove duplicate active_trades from strategies that don't own the lock
+        # This prevents multiple strategies from trying to manage the same position
+        for strategy_id, engine in self.strategies.items():
+            stale_trades = [t for t in engine.active_trades.keys()
+                          if self._locked_tickers.get(t) != strategy_id]
+            for ticker in stale_trades:
+                del engine.active_trades[ticker]
+                owner_id = self._locked_tickers.get(ticker)
+                owner_name = self.strategy_names.get(owner_id, "unknown") if owner_id else "none"
+                logger.warning(f"[{ticker}] Removed duplicate from '{self.strategy_names[strategy_id]}' - owned by '{owner_name}'")
+                # Remove from this strategy's subscription tracking
+                if strategy_id in self._strategy_subscriptions:
+                    self._strategy_subscriptions[strategy_id].discard(ticker)
+
+            stale_pending = [t for t in engine.pending_entries.keys()
+                           if self._locked_tickers.get(t) != strategy_id]
+            for ticker in stale_pending:
+                del engine.pending_entries[ticker]
+                owner_id = self._locked_tickers.get(ticker)
+                owner_name = self.strategy_names.get(owner_id, "unknown") if owner_id else "none"
+                logger.warning(f"[{ticker}] Removed duplicate pending from '{self.strategy_names[strategy_id]}' - owned by '{owner_name}'")
+                # Remove from this strategy's subscription tracking
+                if strategy_id in self._strategy_subscriptions:
+                    self._strategy_subscriptions[strategy_id].discard(ticker)
 
         logger.info(f"Loaded {len(enabled)} enabled strategies, {len(self._locked_tickers)} tickers locked")
 
@@ -430,10 +460,19 @@ class TradingEngine:
             logger.error(f"Error handling alert: {e}", exc_info=True)
 
     def _on_quote(self, ticker: str, price: float, volume: int, timestamp: datetime):
-        """Callback for quote updates - fan out to all strategies tracking this ticker."""
-        for strategy_id, engine in self.strategies.items():
-            # Each strategy receives all quotes, filters internally
-            engine.on_quote(ticker, price, volume, timestamp)
+        """Callback for quote updates - dispatch to owning strategy only.
+
+        A ticker should only be tracked by ONE strategy at a time (enforced by ticker lock).
+        Dispatching to all strategies would cause duplicate exit attempts.
+        """
+        # Only dispatch to the strategy that owns this ticker
+        owner_id = self._locked_tickers.get(ticker)
+        if owner_id and owner_id in self.strategies:
+            self.strategies[owner_id].on_quote(ticker, price, volume, timestamp)
+        else:
+            # No owner - this shouldn't happen for actively tracked tickers
+            # Log warning but don't crash
+            logger.debug(f"[{ticker}] Quote received but no owning strategy found")
 
     def _on_bar(
         self,
