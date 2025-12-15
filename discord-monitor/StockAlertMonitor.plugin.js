@@ -240,12 +240,25 @@ module.exports = class StockAlertMonitor {
     }
 
     handleMessage(event) {
+        // Debug: log that we received ANY message event
+        console.log("[StockAlertMonitor] MESSAGE_CREATE event received");
+
         const { message, channelId } = event;
 
-        if (!message || !message.content) return;
+        if (!message) {
+            console.log("[StockAlertMonitor] No message in event:", event);
+            return;
+        }
+        if (!message.content) {
+            console.log("[StockAlertMonitor] Message has no content:", message);
+            return;
+        }
 
         // Avoid duplicate processing
-        if (this.seenMessages.has(message.id)) return;
+        if (this.seenMessages.has(message.id)) {
+            console.log("[StockAlertMonitor] Duplicate message, skipping:", message.id);
+            return;
+        }
         this.seenMessages.add(message.id);
 
         // Limit seen messages set size
@@ -259,6 +272,10 @@ module.exports = class StockAlertMonitor {
         const channel = ChannelStore?.getChannel(channelId);
         const channelName = channel?.name || "";
 
+        // Debug: show message content for pattern debugging
+        const contentPreview = message.content.substring(0, 100);
+        console.log(`[StockAlertMonitor] Message in #${channelName}: "${contentPreview}"`);
+
         // Check for stock alert pattern: TICKER < $X
         const tickerMatch = message.content.match(/\b([A-Z]{2,5})\s*<\s*\$[\d.]+/);
 
@@ -270,6 +287,8 @@ module.exports = class StockAlertMonitor {
             console.log(`[StockAlertMonitor] ALERT: ${ticker} in #${channelName} (channel enabled: ${this.isChannelEnabled(channelId)})`);
 
             this.triggerAlert(ticker, fullMatch, channelName, message.content, author, channelId);
+        } else {
+            console.log(`[StockAlertMonitor] No ticker pattern match in message`);
         }
     }
 
