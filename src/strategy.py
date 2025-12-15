@@ -37,13 +37,35 @@ class StrategyConfig:
     timeout_minutes: int = 15
 
     # Position sizing
-    stake_amount: float = 50.0  # Dollar amount to stake per trade
+    stake_mode: str = "fixed"  # "fixed" or "volume_pct"
+    stake_amount: float = 50.0  # Dollar amount for fixed stake
+    volume_pct: float = 1.0  # Percentage of prev candle volume (e.g., 1.0 = 1%)
+    max_stake: float = 10000.0  # Max dollar amount for volume-based sizing
 
-    def get_shares(self, price: float) -> int:
-        """Calculate number of shares based on stake amount and price."""
+    def get_shares(self, price: float, prev_candle_volume: Optional[int] = None) -> int:
+        """
+        Calculate number of shares based on stake mode and price.
+
+        Args:
+            price: Entry price per share
+            prev_candle_volume: Volume of the previous candle (for volume_pct mode)
+
+        Returns:
+            Number of shares to buy
+        """
         if price <= 0:
             return 0
-        return max(1, int(self.stake_amount / price))
+
+        if self.stake_mode == "volume_pct" and prev_candle_volume is not None:
+            # Volume-based sizing: buy volume_pct% of prev candle volume
+            shares_from_volume = int(prev_candle_volume * self.volume_pct / 100)
+            # Cap by max_stake
+            max_shares = int(self.max_stake / price)
+            shares = min(shares_from_volume, max_shares)
+            return max(1, shares) if shares > 0 else 0
+        else:
+            # Fixed stake mode (default)
+            return max(1, int(self.stake_amount / price))
 
     @classmethod
     def from_url_params(cls, url_or_params) -> "StrategyConfig":
@@ -79,7 +101,10 @@ class StrategyConfig:
             stop_loss_from_open=params.get("sl_open", "0") == "1",
             trailing_stop_pct=float(params.get("trail", 0)),
             timeout_minutes=int(params.get("hold", 60)),
+            stake_mode=params.get("stake_mode", "fixed"),
             stake_amount=float(params.get("stake", 50)),
+            volume_pct=float(params.get("vol_pct", 1.0)),
+            max_stake=float(params.get("max_stake", 10000)),
         )
 
     def to_dict(self) -> dict:
@@ -104,7 +129,10 @@ class StrategyConfig:
                 "timeout_minutes": self.timeout_minutes,
             },
             "position": {
+                "stake_mode": self.stake_mode,
                 "stake_amount": self.stake_amount,
+                "volume_pct": self.volume_pct,
+                "max_stake": self.max_stake,
             },
         }
 
@@ -474,8 +502,13 @@ class StrategyEngine:
 
         take_profit_price = price * (1 + cfg.take_profit_pct / 100)
 
-        # Calculate shares from stake amount
-        shares = cfg.get_shares(price)
+        # Get previous candle volume for volume-based sizing
+        prev_candle_volume = None
+        if pending.candles:
+            prev_candle_volume = pending.candles[-1].volume
+
+        # Calculate shares based on position sizing mode
+        shares = cfg.get_shares(price, prev_candle_volume)
         if shares <= 0:
             logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f}")
             # Unsubscribe since we're no longer tracking this ticker
@@ -483,7 +516,13 @@ class StrategyEngine:
                 self.on_unsubscribe(ticker)
             return
 
-        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {shares} shares (${cfg.stake_amount}), SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+        # Log entry with sizing details
+        position_cost = shares * price
+        if cfg.stake_mode == "volume_pct" and prev_candle_volume:
+            sizing_info = f"{cfg.volume_pct}% of {prev_candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
+        else:
+            sizing_info = f"${cfg.stake_amount:.0f} stake = {shares} shares"
+        logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {sizing_info}, SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
 
         # Execute buy order
         try:

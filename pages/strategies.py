@@ -141,7 +141,24 @@ with st.expander("Create New Strategy", expanded=False):
             sl_from_open = st.checkbox("Stop Loss from Open", value=True)
 
         st.subheader("Position Sizing")
-        stake = st.number_input("Stake per Trade ($)", value=50.0, min_value=1.0)
+        stake_mode = st.radio(
+            "Sizing Mode",
+            ["fixed", "volume_pct"],
+            format_func=lambda x: "Fixed Dollar Amount" if x == "fixed" else "% of Previous Candle Volume",
+            horizontal=True,
+        )
+
+        if stake_mode == "fixed":
+            stake = st.number_input("Stake per Trade ($)", value=50.0, min_value=1.0)
+            volume_pct = 1.0  # Default
+            max_stake = 10000.0  # Default
+        else:
+            col1, col2 = st.columns(2)
+            with col1:
+                volume_pct = st.number_input("Volume %", value=1.0, min_value=0.1, max_value=100.0, help="Buy this % of the previous candle's volume")
+            with col2:
+                max_stake = st.number_input("Max Cost ($)", value=10000.0, min_value=1.0, help="Maximum position cost cap")
+            stake = 50.0  # Default for fixed mode
 
         submitted = st.form_submit_button("Create Strategy", type="primary")
 
@@ -164,7 +181,10 @@ with st.expander("Create New Strategy", expanded=False):
                     trailing_stop_pct=trailing_stop,
                     stop_loss_from_open=sl_from_open,
                     timeout_minutes=timeout,
+                    stake_mode=stake_mode,
                     stake_amount=stake,
+                    volume_pct=volume_pct,
+                    max_stake=max_stake,
                 )
                 strategy_id = store.save_strategy(name, config, description)
                 st.success(f"Created strategy '{name}'")
@@ -195,6 +215,12 @@ else:
         active = str(len(strategy_live.get("active_trades", {}))) if s.enabled else "-"
         completed = str(strategy_live.get("completed_trades", 0)) if s.enabled else "-"
 
+        # Format position sizing display
+        if s.config.stake_mode == "volume_pct":
+            sizing_str = f"{s.config.volume_pct}% vol (max ${s.config.max_stake:.0f})"
+        else:
+            sizing_str = f"${s.config.stake_amount:.0f}"
+
         rows.append({
             "id": s.id,
             "Name": s.name,
@@ -202,7 +228,7 @@ else:
             "Pending": pending,
             "Active": active,
             "Completed": completed,
-            "Stake": f"${s.config.stake_amount:.0f}",
+            "Sizing": sizing_str,
             "TP/SL": f"{s.config.take_profit_pct:.0f}% / {s.config.stop_loss_pct:.0f}%",
             "Created": s.created_at.strftime("%Y-%m-%d %H:%M") if s.created_at else "",
         })
@@ -263,7 +289,10 @@ else:
                         "trail": str(cfg.trailing_stop_pct),
                         "sl_open": "1" if cfg.stop_loss_from_open else "0",
                         "hold": str(cfg.timeout_minutes),
+                        "stake_mode": cfg.stake_mode,
                         "stake": str(cfg.stake_amount),
+                        "vol_pct": str(cfg.volume_pct),
+                        "max_stake": str(cfg.max_stake),
                     }
                     query_string = "&".join(f"{k}={v}" for k, v in params.items())
                     st.markdown(f"[Open Backtest with these settings](../?{query_string})")
@@ -283,7 +312,7 @@ else:
             # Configuration details
             st.markdown("**Configuration**")
             cfg = strategy.config
-            col1, col2, col3 = st.columns(3)
+            col1, col2, col3, col4 = st.columns(4)
 
             with col1:
                 st.markdown("**Filters**")
@@ -304,6 +333,16 @@ else:
                 st.write(f"Trailing Stop: {cfg.trailing_stop_pct}%")
                 st.write(f"Timeout: {cfg.timeout_minutes} min")
                 st.write(f"SL from Open: {'Yes' if cfg.stop_loss_from_open else 'No'}")
+
+            with col4:
+                st.markdown("**Position Sizing**")
+                if cfg.stake_mode == "volume_pct":
+                    st.write(f"Mode: Volume %")
+                    st.write(f"Volume: {cfg.volume_pct}%")
+                    st.write(f"Max Cost: ${cfg.max_stake:,.0f}")
+                else:
+                    st.write(f"Mode: Fixed")
+                    st.write(f"Stake: ${cfg.stake_amount:.0f}")
 
             # Live status if enabled
             if strategy.enabled and strategy_id in strategies_status:

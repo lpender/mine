@@ -227,7 +227,10 @@ def _config_from_dict(data: dict) -> StrategyConfig:
         stop_loss_from_open=exit_rules.get("stop_loss_from_open", True),
         trailing_stop_pct=exit_rules.get("trailing_stop_pct", 7.0),
         timeout_minutes=exit_rules.get("timeout_minutes", 15),
+        stake_mode=position.get("stake_mode", "fixed"),
         stake_amount=position.get("stake_amount", 50.0),
+        volume_pct=position.get("volume_pct", 1.0),
+        max_stake=position.get("max_stake", 10000.0),
     )
 
 
