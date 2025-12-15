@@ -23,31 +23,24 @@ class InsightSentryQuoteProvider:
     Real-time quote provider using InsightSentry WebSocket API.
 
     Provides second-level bar data for subscribed tickers.
-    Supports both native InsightSentry API and RapidAPI.
     """
 
     WS_URL = "wss://realtime.insightsentry.com/live"
-    # Native InsightSentry API (Bearer token auth)
-    NATIVE_KEY_URL = "https://api.insightsentry.com/v2/websocket-key"
-    # RapidAPI endpoint (x-rapidapi-key auth)
-    RAPIDAPI_KEY_URL = "https://insightsentry.p.rapidapi.com/v2/websocket-key"
+    KEY_URL = "https://api.insightsentry.com/v2/websocket-key"
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        rapidapi_key: Optional[str] = None,
         on_quote: Optional[Callable[[str, float, int, datetime], None]] = None,
     ):
         """
         Initialize the quote provider.
 
         Args:
-            api_key: Native InsightSentry API key (Bearer token)
-            rapidapi_key: RapidAPI key for InsightSentry (fallback)
+            api_key: InsightSentry API key (Bearer token)
             on_quote: Callback for quote updates (ticker, price, volume, timestamp)
         """
         self.api_key = api_key or os.getenv("INSIGHT_SENTRY_KEY")
-        self.rapidapi_key = rapidapi_key or os.getenv("RAPIDAPI_KEY")
         self.on_quote = on_quote
 
         self._ws_key: Optional[str] = None
@@ -87,8 +80,8 @@ class InsightSentryQuoteProvider:
 
     async def get_ws_key(self) -> str:
         """Get WebSocket key from InsightSentry API."""
-        if not self.api_key and not self.rapidapi_key:
-            raise ValueError("Neither INSIGHT_SENTRY_KEY nor RAPIDAPI_KEY is set")
+        if not self.api_key:
+            raise ValueError("INSIGHT_SENTRY_KEY not set")
 
         # Check cache first
         cached_key = self._load_cached_key()
@@ -96,26 +89,10 @@ class InsightSentryQuoteProvider:
             self._ws_key = cached_key
             return cached_key
 
-        # Try native API first if key is set
-        if self.api_key:
-            try:
-                return await self._fetch_ws_key_native()
-            except Exception as e:
-                logger.warning(f"Native API failed: {e}")
-                if self.rapidapi_key:
-                    logger.info("Falling back to RapidAPI...")
-                else:
-                    raise
-
-        # Fall back to RapidAPI
-        return await self._fetch_ws_key_rapidapi()
-
-    async def _fetch_ws_key_native(self) -> str:
-        """Fetch WS key using native InsightSentry API (Bearer token)."""
-        logger.info("Fetching WS key from native InsightSentry API...")
+        logger.info("Fetching WS key from InsightSentry API...")
 
         response = requests.get(
-            self.NATIVE_KEY_URL,
+            self.KEY_URL,
             headers={
                 "Authorization": f"Bearer {self.api_key}",
             },
@@ -134,63 +111,8 @@ class InsightSentryQuoteProvider:
             expires = int(time.time() + 3600)
         self._save_key_to_cache(self._ws_key, expires)
 
-        logger.info(f"Got WebSocket key via native API (expires: {expires})")
+        logger.info(f"Got WebSocket key (expires: {expires})")
         return self._ws_key
-
-    async def _fetch_ws_key_rapidapi(self) -> str:
-        """Fetch WS key using RapidAPI (with retry logic)."""
-        logger.info("Fetching WS key from RapidAPI...")
-
-        retry_delays = [1, 10, 30, 60]
-
-        for attempt in range(len(retry_delays)):
-            try:
-                response = requests.get(
-                    self.RAPIDAPI_KEY_URL,
-                    headers={
-                        "x-rapidapi-host": "insightsentry.p.rapidapi.com",
-                        "x-rapidapi-key": self.rapidapi_key,
-                    },
-                    timeout=10,
-                )
-
-                if response.status_code == 429:
-                    retry_after = response.headers.get("Retry-After")
-                    if retry_after:
-                        try:
-                            wait_time = int(retry_after)
-                        except ValueError:
-                            wait_time = retry_delays[attempt]
-                    else:
-                        wait_time = retry_delays[attempt]
-                    logger.warning(f"Rate limited (429). Waiting {wait_time}s before retry (attempt {attempt + 1}/{len(retry_delays)})...")
-                    await asyncio.sleep(wait_time)
-                    continue
-
-                response.raise_for_status()
-                data = response.json()
-
-                self._ws_key = data.get("api_key") or data.get("key")
-                if not self._ws_key:
-                    raise ValueError(f"Failed to get WebSocket key: {data}")
-
-                # Cache the key
-                expires = data.get("expiration") or data.get("expires") or (time.time() + 3600)
-                if isinstance(expires, str):
-                    expires = int(time.time() + 3600)
-                self._save_key_to_cache(self._ws_key, expires)
-
-                logger.info(f"Got WebSocket key via RapidAPI (expires: {expires})")
-                return self._ws_key
-
-            except requests.exceptions.HTTPError as e:
-                if attempt < len(retry_delays) - 1:
-                    logger.warning(f"HTTP error getting WS key: {e}. Retrying...")
-                    await asyncio.sleep(retry_delays[attempt])
-                else:
-                    raise
-
-        raise RuntimeError("Failed to get WS key after retries")
 
     async def _cleanup_existing_connections(self):
         """Close any existing WebSocket/session before creating new ones."""
