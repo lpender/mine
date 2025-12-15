@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Callable, Dict
@@ -51,6 +52,12 @@ class TradingEngine:
 
         # Callbacks for external status updates
         self.on_status_change: Optional[Callable[[dict], None]] = None
+
+        # Cache for Alpaca API calls (reduce rate limiting)
+        self._cached_account: Optional[dict] = None
+        self._cached_orders: Optional[list] = None
+        self._cache_time: float = 0
+        self._cache_ttl: float = 30.0  # Cache for 30 seconds
 
     def _acquire_lock(self) -> bool:
         """Try to acquire the trading lock file. Returns True if acquired."""
@@ -561,17 +568,34 @@ class TradingEngine:
         status["completed_trades"] = total_completed
 
         if self.trader:
-            try:
-                account = self.trader.get_account_info()
-                status["account"] = {
-                    "equity": account.get("equity", 0),
-                    "buying_power": account.get("buying_power", 0),
-                }
-            except Exception:
-                pass
+            # Use cached values if fresh, otherwise fetch from Alpaca
+            now = time.time()
+            cache_expired = (now - self._cache_time) > self._cache_ttl
 
-            try:
-                open_orders = self.trader.get_open_orders()
+            if cache_expired:
+                # Refresh cache
+                try:
+                    self._cached_account = self.trader.get_account_info()
+                except Exception as e:
+                    logger.debug(f"Failed to fetch account info: {e}")
+                    # Keep old cache on error
+
+                try:
+                    self._cached_orders = self.trader.get_open_orders()
+                except Exception as e:
+                    logger.debug(f"Failed to fetch open orders: {e}")
+                    # Keep old cache on error
+
+                self._cache_time = now
+
+            # Use cached values
+            if self._cached_account:
+                status["account"] = {
+                    "equity": self._cached_account.get("equity", 0),
+                    "buying_power": self._cached_account.get("buying_power", 0),
+                }
+
+            if self._cached_orders is not None:
                 status["open_orders"] = [
                     {
                         "order_id": o.order_id,
@@ -580,9 +604,9 @@ class TradingEngine:
                         "shares": o.shares,
                         "status": o.status,
                     }
-                    for o in open_orders
+                    for o in self._cached_orders
                 ]
-            except Exception:
+            else:
                 status["open_orders"] = []
 
         return status

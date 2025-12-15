@@ -20,22 +20,8 @@ from typing import Callable, Optional
 from .parser import parse_message_line
 from .postgres_client import PostgresClient
 
-# Configure logging to print to stdout
-# Use force=True to override any existing configuration (e.g., from Streamlit)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(name)s] %(message)s",
-    datefmt="%H:%M:%S",
-    force=True,
-)
+# Configure logging - use module logger only, don't add extra handlers
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
-# Also add a handler directly to ensure output
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("%(asctime)s [%(name)s] %(message)s", datefmt="%H:%M:%S"))
-    logger.addHandler(handler)
 
 
 def _infer_author(channel: str, author: Optional[str]) -> Optional[str]:
