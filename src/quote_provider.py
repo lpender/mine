@@ -137,8 +137,29 @@ class InsightSentryQuoteProvider:
 
         raise RuntimeError("Failed to get WS key after retries")
 
+    async def _cleanup_existing_connections(self):
+        """Close any existing WebSocket/session before creating new ones."""
+        if self._ws and not self._ws.closed:
+            try:
+                await self._ws.close()
+                logger.info("Closed existing WebSocket connection")
+            except Exception as e:
+                logger.warning(f"Error closing existing WebSocket: {e}")
+            self._ws = None
+
+        if self._session and not self._session.closed:
+            try:
+                await self._session.close()
+                logger.info("Closed existing HTTP session")
+            except Exception as e:
+                logger.warning(f"Error closing existing session: {e}")
+            self._session = None
+
     async def connect(self):
         """Connect to WebSocket and start receiving data."""
+        # Clean up any existing connections first
+        await self._cleanup_existing_connections()
+
         if not self._ws_key:
             await self.get_ws_key()
 
