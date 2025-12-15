@@ -14,7 +14,14 @@ from datetime import datetime
 
 from src.postgres_client import PostgresClient
 from src.backtest import run_backtest, BacktestConfig
-from src.models import Announcement
+from src.models import Announcement, OHLCVBar
+
+
+def calc_total_volume(bars: List[OHLCVBar]) -> int:
+    """Calculate total share volume from OHLCV bars."""
+    if not bars:
+        return 0
+    return sum(bar.volume for bar in bars)
 
 
 @dataclass
@@ -69,6 +76,7 @@ def load_data(window_minutes: int = 120):
 
 def filter_announcements(
     announcements: List[Announcement],
+    bars_dict: dict,
     channels: Optional[List[str]] = None,
     directions: Optional[List[str]] = None,
     countries: Optional[List[str]] = None,
@@ -76,6 +84,7 @@ def filter_announcements(
     price_max: float = 100,
     exclude_financing: bool = False,
     require_headline: bool = False,
+    min_volume: int = 0,
 ) -> List[Announcement]:
     """Filter announcements by various criteria."""
     filtered = []
@@ -108,6 +117,14 @@ def filter_announcements(
         # Headline filter
         if require_headline and not ann.headline:
             continue
+
+        # Volume filter (liquidity - shares traded)
+        if min_volume > 0:
+            key = (ann.ticker, ann.timestamp)
+            bars = bars_dict.get(key, [])
+            total_vol = calc_total_volume(bars)
+            if total_vol < min_volume:
+                continue
 
         filtered.append(ann)
 
@@ -146,6 +163,7 @@ def run_optimization(
         # Apply filters
         filtered = filter_announcements(
             announcements,
+            bars_dict,
             channels=params.get("channels"),
             directions=params.get("directions"),
             countries=params.get("countries"),
@@ -153,6 +171,7 @@ def run_optimization(
             price_max=params.get("price_max", 100),
             exclude_financing=params.get("exclude_financing", False),
             require_headline=params.get("require_headline", False),
+            min_volume=params.get("min_volume", 0),
         )
 
         if len(filtered) < 5:
@@ -234,6 +253,9 @@ def main():
         "directions": [None, ["up_right"]],
         "price_max": [10, 20],
         "sl_from_open": [False, True],
+
+        # Liquidity filter - 100k shares minimum volume
+        "min_volume": [100_000],
     }
 
     results = run_optimization(announcements, bars_dict, param_grid)
