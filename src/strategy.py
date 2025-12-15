@@ -661,18 +661,26 @@ class StrategyEngine:
 
     def _execute_exit(self, ticker: str, price: float, reason: str, timestamp: datetime):
         """Execute exit order."""
-        trade = self.active_trades.pop(ticker)
+        trade = self.active_trades.get(ticker)
+        if not trade:
+            logger.warning(f"[{ticker}] No active trade found for exit")
+            return
 
         return_pct = ((price - trade.entry_price) / trade.entry_price) * 100
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
-        # Execute sell order
+        # Execute sell order - only remove from tracking if successful
         try:
             order = self.trader.sell(ticker, trade.shares)
             logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Sell order failed: {e}")
+            logger.warning(f"[{ticker}] Keeping position in active_trades - will retry on next exit signal")
+            return  # Don't remove from tracking, will retry later
+
+        # Sell succeeded - remove from active trades
+        self.active_trades.pop(ticker, None)
 
         # Record completed trade with full details
         pnl = (price - trade.entry_price) * trade.shares
