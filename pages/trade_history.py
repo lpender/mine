@@ -8,6 +8,16 @@ from src.trade_history import get_trade_history_client
 from src.strategy_store import get_strategy_store
 from src.database import init_db
 
+
+def format_price(price: float) -> str:
+    """Format price with appropriate decimals for penny stocks."""
+    if price >= 1.0:
+        return f"${price:.2f}"
+    elif price >= 0.01:
+        return f"${price:.4f}"
+    else:
+        return f"${price:.6f}"
+
 # Initialize database tables
 init_db()
 
@@ -138,9 +148,9 @@ else:
             "Strategy": t.strategy_name or "-",
             "Ticker": t.ticker,
             "Entry Time": t.entry_time.strftime("%Y-%m-%d %H:%M"),
-            "Entry $": f"${t.entry_price:.2f}",
+            "Entry $": format_price(t.entry_price),
             "Exit Time": t.exit_time.strftime("%Y-%m-%d %H:%M"),
-            "Exit $": f"${t.exit_price:.2f}",
+            "Exit $": format_price(t.exit_price),
             "Exit Reason": t.exit_reason,
             "Shares": t.shares,
             "Return %": f"{t.return_pct:+.2f}%",
@@ -185,8 +195,8 @@ else:
         with col1:
             st.write("**Trade Info**")
             st.write(f"- Ticker: {selected_trade.ticker}")
-            st.write(f"- Entry: ${selected_trade.entry_price:.2f} @ {selected_trade.entry_time}")
-            st.write(f"- Exit: ${selected_trade.exit_price:.2f} @ {selected_trade.exit_time}")
+            st.write(f"- Entry: {format_price(selected_trade.entry_price)} @ {selected_trade.entry_time}")
+            st.write(f"- Exit: {format_price(selected_trade.exit_price)} @ {selected_trade.exit_time}")
             st.write(f"- Reason: {selected_trade.exit_reason}")
             st.write(f"- Shares: {selected_trade.shares}")
             st.write(f"- P&L: ${selected_trade.pnl:+.2f} ({selected_trade.return_pct:+.2f}%)")
