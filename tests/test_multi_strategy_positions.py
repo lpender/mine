@@ -530,11 +530,16 @@ class TestTradingEngineQuoteDispatch:
         assert "strategy-a" in strategies_with_position
         assert "strategy-b" in strategies_with_position
 
-    def test_current_behavior_single_owner_quote_dispatch(self):
-        """CURRENT: Quotes only go to the ticker lock owner."""
+    def test_multi_strategy_quote_dispatch(self):
+        """Quotes go to ALL strategies with active positions in that ticker.
+
+        Multi-strategy support: each strategy tracks its own position independently.
+        When a quote arrives, it's dispatched to every strategy that has an active
+        trade or pending entry for that ticker.
+        """
         engine = TradingEngine(paper=True)
 
-        # Mock strategy engines
+        # Mock strategy engines - both have positions in AMCI
         strategy_a = Mock()
         strategy_a.active_trades = {"AMCI": Mock()}
         strategy_a.pending_entries = {}
@@ -551,41 +556,32 @@ class TestTradingEngineQuoteDispatch:
             "strategy-a": "Strategy A",
             "strategy-b": "Strategy B",
         }
-        # Only strategy-a owns the lock
+        # Ticker lock only affects alert routing, not quote dispatch
         engine._locked_tickers = {"AMCI": "strategy-a"}
 
         # Dispatch quote
         engine._on_quote("AMCI", 5.50, 1000, datetime.now())
 
-        # Only strategy A should receive the quote (current behavior)
+        # BOTH strategies should receive the quote (multi-strategy support)
         strategy_a.on_quote.assert_called_once()
-        strategy_b.on_quote.assert_not_called()
+        strategy_b.on_quote.assert_called_once()
 
-    def test_desired_behavior_multi_owner_quote_dispatch(self):
-        """DESIRED: Quotes go to ALL strategies with active positions in that ticker.
+    def test_quote_only_to_strategies_with_position(self):
+        """Quotes only go to strategies that actually have a position.
 
-        This test documents the desired behavior for multi-strategy support.
-        Currently this test shows what we WANT, not what we have.
+        A strategy without an active trade or pending entry for a ticker
+        should NOT receive quotes for that ticker.
         """
-        # For multi-strategy support, the quote dispatch should be:
-        # 1. Find all strategies that have this ticker in active_trades
-        # 2. Dispatch quote to each of them
-        # 3. Each strategy manages its own position independently
-
-        def desired_on_quote(engine, ticker, price, volume, timestamp):
-            """What _on_quote SHOULD do for multi-strategy support."""
-            for strategy_id, strategy_engine in engine.strategies.items():
-                if ticker in strategy_engine.active_trades:
-                    strategy_engine.on_quote(ticker, price, volume, timestamp)
-
         engine = TradingEngine(paper=True)
 
+        # Strategy A has position in AMCI
         strategy_a = Mock()
         strategy_a.active_trades = {"AMCI": Mock()}
         strategy_a.pending_entries = {}
 
+        # Strategy B has NO position in AMCI (different ticker)
         strategy_b = Mock()
-        strategy_b.active_trades = {"AMCI": Mock()}
+        strategy_b.active_trades = {"TSLA": Mock()}
         strategy_b.pending_entries = {}
 
         engine.strategies = {
@@ -593,8 +589,37 @@ class TestTradingEngineQuoteDispatch:
             "strategy-b": strategy_b,
         }
 
-        # Use desired behavior
-        desired_on_quote(engine, "AMCI", 5.50, 1000, datetime.now())
+        # Dispatch quote for AMCI
+        engine._on_quote("AMCI", 5.50, 1000, datetime.now())
+
+        # Only strategy A should receive the quote
+        strategy_a.on_quote.assert_called_once()
+        strategy_b.on_quote.assert_not_called()
+
+    def test_pending_entries_also_receive_quotes(self):
+        """Strategies with pending entries (not just active trades) receive quotes.
+
+        This ensures strategies waiting for entry conditions get price updates.
+        """
+        engine = TradingEngine(paper=True)
+
+        # Strategy A has active trade
+        strategy_a = Mock()
+        strategy_a.active_trades = {"AMCI": Mock()}
+        strategy_a.pending_entries = {}
+
+        # Strategy B has pending entry (watching for entry conditions)
+        strategy_b = Mock()
+        strategy_b.active_trades = {}
+        strategy_b.pending_entries = {"AMCI": Mock()}
+
+        engine.strategies = {
+            "strategy-a": strategy_a,
+            "strategy-b": strategy_b,
+        }
+
+        # Dispatch quote
+        engine._on_quote("AMCI", 5.50, 1000, datetime.now())
 
         # Both should receive the quote
         strategy_a.on_quote.assert_called_once()
