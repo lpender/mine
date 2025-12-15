@@ -346,6 +346,12 @@ class StrategyEngine:
         if not self._passes_filters(announcement):
             return False
 
+        # Check if tradeable on broker before tracking
+        tradeable, reason = self.trader.is_tradeable(ticker)
+        if not tradeable:
+            logger.warning(f"[{ticker}] Not tradeable: {reason}")
+            return False
+
         logger.info(f"[{ticker}] Alert passed filters, starting to track")
 
         # Start tracking for entry

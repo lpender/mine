@@ -147,6 +147,19 @@ class TradingClient(ABC):
         """Whether this client is using paper trading."""
         pass
 
+    def is_tradeable(self, ticker: str) -> tuple[bool, str]:
+        """
+        Check if a ticker is tradeable.
+
+        Args:
+            ticker: Stock ticker symbol
+
+        Returns:
+            (is_tradeable, reason) - True if tradeable, False with reason if not
+        """
+        # Default implementation assumes all tickers are tradeable
+        return True, "tradeable"
+
     @property
     def name(self) -> str:
         """Human-readable name of the trading client."""

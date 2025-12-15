@@ -216,6 +216,36 @@ class AlpacaTradingClient(TradingClient):
             "pattern_day_trader": result.get("pattern_day_trader", False),
         }
 
+    def is_tradeable(self, ticker: str) -> tuple[bool, str]:
+        """
+        Check if a ticker is tradeable on Alpaca.
+
+        Returns:
+            (is_tradeable, reason) - True if tradeable, False with reason if not
+        """
+        try:
+            result = self._request("GET", f"/v2/assets/{ticker}")
+
+            if not result.get("tradable", False):
+                return False, "asset not tradable on Alpaca"
+
+            if result.get("status") != "active":
+                return False, f"asset status is '{result.get('status')}'"
+
+            # Check asset class (we only trade US equities)
+            asset_class = result.get("class", "")
+            if asset_class not in ("us_equity",):
+                return False, f"asset class '{asset_class}' not supported"
+
+            return True, "tradeable"
+
+        except requests.HTTPError as e:
+            if e.response and e.response.status_code == 404:
+                return False, "ticker not found"
+            return False, f"API error: {e}"
+        except Exception as e:
+            return False, f"check failed: {e}"
+
     def _parse_order(self, data: dict) -> Order:
         """Parse API response into Order object."""
         filled_at = None
