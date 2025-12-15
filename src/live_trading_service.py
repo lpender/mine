@@ -406,11 +406,16 @@ class TradingEngine:
 
         # Only unsubscribe from WebSocket if no strategy needs it
         if not still_needed and self.quote_provider:
-            self.quote_provider.unsubscribe_sync(ticker)
+            # Use async unsubscribe - it handles both removing from set and sending to WebSocket
+            # Don't call unsubscribe_sync first, as that would cause the async version to skip
+            # updating the WebSocket (it checks if ticker is still in subscriptions)
             if self._loop:
                 self._loop.call_soon_threadsafe(
                     lambda t=ticker: asyncio.create_task(self.quote_provider.unsubscribe(t))
                 )
+            else:
+                # Fallback: at least remove from local tracking
+                self.quote_provider.unsubscribe_sync(ticker)
 
     def _broadcast_status(self):
         """Broadcast current status to listeners and persist to file."""
