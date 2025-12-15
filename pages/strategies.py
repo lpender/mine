@@ -531,4 +531,12 @@ else:
                             if age_secs > 30:
                                 stale_str = f" :orange[(stale: {int(age_secs)}s ago)]"
 
-                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str}{stale_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}")
+                        # Show manual exit warning
+                        manual_exit_str = ""
+                        if trade.get("needs_manual_exit"):
+                            manual_exit_str = " :red[⚠️ NEEDS MANUAL EXIT]"
+                        elif trade.get("sell_attempts", 0) > 0:
+                            attempts = trade.get("sell_attempts", 0)
+                            manual_exit_str = f" :orange[(sell attempts: {attempts}/3)]"
+
+                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str}{stale_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}{manual_exit_str}")

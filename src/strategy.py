@@ -180,6 +180,8 @@ class ActiveTrade:
     take_profit_price: float
     last_price: float = 0.0  # Updated by quotes
     last_quote_time: Optional[datetime] = None
+    sell_attempts: int = 0  # Track failed sell attempts
+    needs_manual_exit: bool = False  # True after 3 failed sell attempts
 
 
 @dataclass
@@ -811,6 +813,10 @@ class StrategyEngine:
             logger.warning(f"[{ticker}] No active trade found for exit")
             return
 
+        # Skip if already marked as needing manual exit (3+ failed attempts)
+        if trade.needs_manual_exit:
+            return
+
         # Check if we already have a pending sell order for this ticker
         for pending in self.pending_orders.values():
             if pending.ticker == ticker and pending.side == "sell":
@@ -842,8 +848,14 @@ class StrategyEngine:
                     logger.warning(f"[{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
                     trade.shares = broker_position.shares
 
-            logger.warning(f"[{ticker}] Keeping position in active_trades - will retry on next exit signal")
-            return  # Don't remove from tracking, will retry later
+            # Track sell attempts - after 3 failures, stop retrying
+            trade.sell_attempts += 1
+            if trade.sell_attempts >= 3:
+                trade.needs_manual_exit = True
+                logger.error(f"[{ticker}] ⚠️ SELL FAILED 3 TIMES - needs manual exit! Position: {trade.shares} shares @ ${trade.entry_price:.4f}")
+            else:
+                logger.warning(f"[{ticker}] Sell attempt {trade.sell_attempts}/3 failed - will retry on next exit signal")
+            return  # Don't remove from tracking
 
         # Track pending sell order - will complete trade when fill confirmed
         self.pending_orders[order.order_id] = PendingOrder(
@@ -962,6 +974,8 @@ class StrategyEngine:
                 "take_profit": t.take_profit_price,
                 "timeout_at": timeout_at.isoformat(),
                 "last_quote_time": t.last_quote_time.isoformat() if t.last_quote_time else None,
+                "needs_manual_exit": t.needs_manual_exit,
+                "sell_attempts": t.sell_attempts,
             }
 
         return {
