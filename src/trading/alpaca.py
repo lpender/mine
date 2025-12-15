@@ -73,6 +73,23 @@ class AlpacaTradingClient(TradingClient):
                 time.sleep(wait_time)
                 continue
 
+            # For client errors (4xx), capture response body for better error messages
+            if 400 <= response.status_code < 500:
+                try:
+                    error_body = response.json()
+                    error_msg = error_body.get("message", response.text)
+                    error_code = error_body.get("code", "")
+                    logger.error(f"Alpaca {response.status_code} error: {error_msg} (code={error_code})")
+                except Exception:
+                    error_msg = response.text
+                    logger.error(f"Alpaca {response.status_code} error: {error_msg}")
+
+                # Raise with detailed message
+                raise requests.HTTPError(
+                    f"{response.status_code} Error: {error_msg}",
+                    response=response,
+                )
+
             response.raise_for_status()
             return response.json() if response.text else {}
 
