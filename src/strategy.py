@@ -478,6 +478,9 @@ class StrategyEngine:
         shares = cfg.get_shares(price)
         if shares <= 0:
             logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f}")
+            # Unsubscribe since we're no longer tracking this ticker
+            if self.on_unsubscribe:
+                self.on_unsubscribe(ticker)
             return
 
         logger.info(f"[{ticker}] ENTRY @ ${price:.2f}, {shares} shares (${cfg.stake_amount}), SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
@@ -488,6 +491,9 @@ class StrategyEngine:
             logger.info(f"[{ticker}] Buy order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
+            # Unsubscribe since we're no longer tracking this ticker
+            if self.on_unsubscribe:
+                self.on_unsubscribe(ticker)
             return
 
         # Track active trade
