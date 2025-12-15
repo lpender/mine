@@ -227,6 +227,9 @@ class StrategyEngine:
 
         # Check active trades
         if ticker in self.active_trades:
+            trade = self.active_trades[ticker]
+            pnl_pct = ((price - trade.entry_price) / trade.entry_price) * 100
+            logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f}")
             self._check_exit(ticker, price, timestamp)
 
     def _passes_filters(self, ann: Announcement) -> bool:
