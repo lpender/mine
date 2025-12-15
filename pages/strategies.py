@@ -53,7 +53,7 @@ with st.sidebar:
             connected = status.get("quote_connected", False)
             st.metric("WebSocket", "Connected" if connected else "Disconnected")
 
-        if st.button("Stop Engine", type="secondary", use_container_width=True):
+        if st.button("Stop Engine", type="secondary"):
             stop_live_trading()
             st.rerun()
     else:
@@ -61,7 +61,7 @@ with st.sidebar:
 
         paper_mode = st.toggle("Paper Trading", value=True)
 
-        if st.button("Start Engine", type="primary", use_container_width=True):
+        if st.button("Start Engine", type="primary"):
             start_live_trading(paper=paper_mode)
             st.rerun()
 
@@ -202,7 +202,6 @@ else:
     # Display with selection
     event = st.dataframe(
         df.drop(columns=["id"]),
-        use_container_width=True,
         hide_index=True,
         selection_mode="single-row",
         on_select="rerun",
@@ -229,17 +228,17 @@ else:
 
             with col1:
                 if strategy.enabled:
-                    if st.button("Disable", type="secondary", use_container_width=True):
+                    if st.button("Disable", type="secondary"):
                         disable_strategy(strategy_id)
                         st.rerun()
                 else:
-                    if st.button("Enable", type="primary", use_container_width=True):
+                    if st.button("Enable", type="primary"):
                         enable_strategy(strategy_id)
                         st.rerun()
 
             with col2:
                 # Load in Backtest button - sets URL params
-                if st.button("Load in Backtest", use_container_width=True):
+                if st.button("Load in Backtest"):
                     cfg = strategy.config
                     params = {
                         "channel": ",".join(cfg.channels),
@@ -263,7 +262,7 @@ else:
                 pass  # Placeholder for future actions
 
             with col4:
-                if st.button("Delete", type="secondary", use_container_width=True):
+                if st.button("Delete", type="secondary"):
                     if strategy.enabled:
                         st.error("Disable strategy before deleting")
                     else:

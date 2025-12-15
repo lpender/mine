@@ -344,7 +344,7 @@ with st.sidebar:
     # Save as Strategy button
     strategy_name = st.text_input("Strategy Name", placeholder="e.g., My Scalper", key="save_strategy_name")
 
-    if st.button("Save as Strategy", use_container_width=True):
+    if st.button("Save as Strategy"):
         if not strategy_name:
             st.error("Please enter a strategy name")
         else:
