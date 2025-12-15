@@ -27,8 +27,6 @@ from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig
 from src.strategy import StrategyConfig
 from src.live_trading_service import (
-    start_live_trading,
-    stop_live_trading,
     get_live_trading_status,
     is_live_trading_active,
 )
@@ -334,106 +332,73 @@ with st.sidebar:
     set_param("scanner_lull", scanner_after_lull)
 
     # ─────────────────────────────────────────────────────────────────────────
-    # Live Trading Controls
+    # Save Strategy / Live Trading
     # ─────────────────────────────────────────────────────────────────────────
     st.divider()
-    st.header("Live Trading")
-
-    trading_active = is_live_trading_active()
-
-    # Trading config (only shown when not trading)
-    if not trading_active:
-        # Backend selector
-        trading_backend = st.selectbox(
-            "Backend",
-            options=["Alpaca - Paper", "Alpaca - Live"],
-            index=0,
-            help="Select trading backend. Use Paper for testing!"
-        )
-        is_paper = "Paper" in trading_backend
-
-        # Stake amount
-        stake_amount = st.number_input(
-            "Stake per trade ($)",
-            min_value=10,
-            max_value=10000,
-            value=50,
-            step=10,
-            help="Dollar amount to invest per trade"
-        )
+    st.header("Strategy")
 
     # Show current strategy summary
     st.caption(f"Entry: {consec_candles} green candles, {min_candle_vol}+ vol")
     st.caption(f"Exit: TP {take_profit}%, SL {stop_loss}%, Trail {trailing_stop}%")
 
+    # Save as Strategy button
+    strategy_name = st.text_input("Strategy Name", placeholder="e.g., My Scalper", key="save_strategy_name")
+
+    if st.button("Save as Strategy", use_container_width=True):
+        if not strategy_name:
+            st.error("Please enter a strategy name")
+        else:
+            from src.strategy_store import get_strategy_store
+            store = get_strategy_store()
+
+            if store.get_strategy_by_name(strategy_name):
+                st.error(f"Strategy '{strategy_name}' already exists")
+            else:
+                strategy_config = StrategyConfig(
+                    channels=channels if channels else [],
+                    directions=directions if directions else [],
+                    price_min=price_min,
+                    price_max=price_max,
+                    sessions=sessions if sessions else ["premarket", "market"],
+                    consec_green_candles=consec_candles,
+                    min_candle_volume=int(min_candle_vol),
+                    take_profit_pct=take_profit,
+                    stop_loss_pct=stop_loss,
+                    stop_loss_from_open=sl_from_open,
+                    trailing_stop_pct=trailing_stop,
+                    timeout_minutes=hold_time,
+                    stake_amount=50.0,  # Default stake
+                )
+                store.save_strategy(strategy_name, strategy_config)
+                st.success(f"Saved strategy '{strategy_name}'")
+
+    st.divider()
+
+    # Trading status summary
+    trading_active = is_live_trading_active()
+
     if trading_active:
         status = get_live_trading_status()
         is_paper_mode = status.get("paper", True) if status else True
+        strategy_count = status.get("strategy_count", 0) if status else 0
 
         if is_paper_mode:
-            st.success("LIVE TRADING ENABLED (Paper)")
+            st.success(f"Trading Active ({strategy_count} strategies)")
         else:
-            st.error("LIVE TRADING ENABLED (REAL MONEY)")
+            st.error(f"LIVE Trading ({strategy_count} strategies)")
 
-        # Show status
+        # Quick stats
         if status:
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3 = st.columns(3)
             col1.metric("Watching", len(status.get("pending_entries", [])))
-            col2.metric("Orders", len(status.get("open_orders", [])))
-            col3.metric("Positions", len(status.get("active_trades", {})))
-            col4.metric("Completed", status.get("completed_trades", 0))
-
-            if status.get("open_orders"):
-                st.subheader("Pending Orders")
-                for order in status["open_orders"]:
-                    st.write(f"**{order['ticker']}**: {order['side'].upper()} {order['shares']} shares ({order['status']})")
-
-            if status.get("active_trades"):
-                st.subheader("Active Positions")
-                for ticker, trade in status["active_trades"].items():
-                    st.write(f"**{ticker}**: Entry ${trade['entry_price']:.2f}, "
-                             f"SL ${trade['stop_loss']:.2f}, TP ${trade['take_profit']:.2f}")
-
-            if status.get("account"):
-                st.caption(f"Account: ${status['account'].get('equity', 0):,.0f} equity, "
-                          f"${status['account'].get('buying_power', 0):,.0f} buying power")
-
-        if st.button("Stop Trading", type="primary", width="stretch"):
-            stop_live_trading()
-            st.rerun()
-
-        # Link to trade history
-        st.markdown("[View Trade History →](trade_history)")
-
+            col2.metric("Positions", len(status.get("active_trades", {})))
+            col3.metric("Completed", status.get("completed_trades", 0))
     else:
-        # Start trading button
-        if st.button(
-            f"Start {'Paper' if is_paper else 'LIVE'} Trading",
-            type="primary" if is_paper else "secondary",
-            width="stretch"
-        ):
-            strategy_config = StrategyConfig(
-                channels=channels if channels else [],
-                directions=directions if directions else [],
-                price_min=price_min,
-                price_max=price_max,
-                sessions=sessions if sessions else ["premarket", "market"],
-                consec_green_candles=consec_candles,
-                min_candle_volume=int(min_candle_vol),
-                take_profit_pct=take_profit,
-                stop_loss_pct=stop_loss,
-                stop_loss_from_open=sl_from_open,
-                trailing_stop_pct=trailing_stop,
-                timeout_minutes=hold_time,
-                stake_amount=stake_amount,
-            )
-            start_live_trading(strategy_config, paper=is_paper)
-            st.rerun()
+        st.info("Trading engine not running")
 
-        if not is_paper:
-            st.warning("LIVE trading uses real money!")
-        else:
-            st.info("Configure strategy above, then click to start")
+    # Links
+    st.markdown("[Manage Strategies →](strategies)")
+    st.markdown("[View Trade History →](trade_history)")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

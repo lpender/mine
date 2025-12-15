@@ -165,12 +165,16 @@ class StrategyEngine:
         on_subscribe: Optional[Callable[[str], None]] = None,
         on_unsubscribe: Optional[Callable[[str], None]] = None,
         paper: bool = True,
+        strategy_id: Optional[str] = None,
+        strategy_name: Optional[str] = None,
     ):
         self.config = config
         self.trader = trader
         self.on_subscribe = on_subscribe  # Called when we need quotes for a ticker
         self.on_unsubscribe = on_unsubscribe  # Called when done with a ticker
         self.paper = paper
+        self.strategy_id = strategy_id
+        self.strategy_name = strategy_name or "default"
 
         self.pending_entries: Dict[str, PendingEntry] = {}
         self.active_trades: Dict[str, ActiveTrade] = {}
@@ -511,12 +515,19 @@ class StrategyEngine:
             "shares": trade.shares,
             "pnl": pnl,
             "strategy_params": self.config.to_dict(),
+            "strategy_id": self.strategy_id,
+            "strategy_name": self.strategy_name,
         }
         self.completed_trades.append(completed)
 
         # Persist to database
         try:
-            self._trade_history.save_trade(completed, paper=self.paper)
+            self._trade_history.save_trade(
+                completed,
+                paper=self.paper,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+            )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to save trade to database: {e}")
 

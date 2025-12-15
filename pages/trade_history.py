@@ -5,6 +5,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 from src.trade_history import get_trade_history_client
+from src.strategy_store import get_strategy_store
 from src.database import init_db
 
 # Initialize database tables
@@ -18,8 +19,9 @@ st.set_page_config(
 
 st.title("Trade History")
 
-# Get trade history client
+# Get clients
 client = get_trade_history_client()
+store = get_strategy_store()
 
 # Sidebar filters
 st.sidebar.header("Filters")
@@ -31,6 +33,16 @@ trade_type = st.sidebar.radio(
     index=1,  # Default to Paper
 )
 paper_filter = None if trade_type == "All" else (trade_type == "Paper")
+
+# Strategy filter
+strategies = store.list_strategies()
+strategy_options = ["All Strategies"] + [s.name for s in strategies]
+selected_strategy = st.sidebar.selectbox(
+    "Strategy",
+    options=strategy_options,
+    index=0,
+)
+strategy_name_filter = None if selected_strategy == "All Strategies" else selected_strategy
 
 # Date range filter
 date_range = st.sidebar.selectbox(
@@ -52,6 +64,11 @@ else:
 ticker_filter = st.sidebar.text_input("Ticker (optional)")
 ticker_filter = ticker_filter.upper() if ticker_filter else None
 
+# Links
+st.sidebar.divider()
+st.sidebar.markdown("[← Back to Backtest](../)")
+st.sidebar.markdown("[Manage Strategies →](strategies)")
+
 # Load trades
 trades = client.get_trades(
     paper=paper_filter,
@@ -59,6 +76,10 @@ trades = client.get_trades(
     start=start_date,
     limit=500,
 )
+
+# Filter by strategy name (client-side since DB query doesn't support it yet)
+if strategy_name_filter:
+    trades = [t for t in trades if t.strategy_name == strategy_name_filter]
 
 # Stats section
 st.header("Performance Summary")
@@ -114,6 +135,7 @@ else:
     for t in trades:
         trade_data.append({
             "ID": t.id,
+            "Strategy": t.strategy_name or "-",
             "Ticker": t.ticker,
             "Entry Time": t.entry_time.strftime("%Y-%m-%d %H:%M"),
             "Entry $": f"${t.entry_price:.2f}",

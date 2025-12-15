@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import create_engine, Column, Integer, Float, String, Boolean, DateTime, Text, Index, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, Float, String, Boolean, DateTime, Text, Index, UniqueConstraint, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
@@ -128,7 +128,11 @@ class TradeHistoryDB(Base):
     # Trading mode
     paper = Column(Boolean, default=True)  # True=paper, False=live
 
-    # Strategy params (JSON)
+    # Strategy reference
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    strategy_name = Column(String(100), nullable=True)  # Denormalized for quick display
+
+    # Strategy params (JSON) - kept for historical record
     strategy_params = Column(Text)  # JSON serialized StrategyConfig
 
     # Metadata
@@ -154,6 +158,23 @@ class RawMessageDB(Base):
 
     __table_args__ = (
         Index('ix_raw_messages_channel_timestamp', 'channel', 'message_timestamp'),
+    )
+
+
+class StrategyDB(Base):
+    """Named trading strategy configuration."""
+    __tablename__ = "strategies"
+
+    id = Column(String(36), primary_key=True)  # UUID
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(Text, nullable=True)
+    config = Column(Text, nullable=False)  # JSON serialized StrategyConfig
+    enabled = Column(Boolean, default=False)  # Live trading on/off
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('ix_strategies_enabled', 'enabled'),
     )
 
 

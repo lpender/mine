@@ -28,6 +28,8 @@ class CompletedTrade:
     pnl: float
     paper: bool
     strategy_params: dict
+    strategy_id: Optional[str] = None
+    strategy_name: Optional[str] = None
     created_at: Optional[datetime] = None
 
 
@@ -37,13 +39,21 @@ class TradeHistoryClient:
     def _get_db(self) -> Session:
         return SessionLocal()
 
-    def save_trade(self, trade: dict, paper: bool = True) -> int:
+    def save_trade(
+        self,
+        trade: dict,
+        paper: bool = True,
+        strategy_id: Optional[str] = None,
+        strategy_name: Optional[str] = None,
+    ) -> int:
         """
         Save a completed trade to the database.
 
         Args:
             trade: Dict with trade details from StrategyEngine
             paper: Whether this was a paper trade
+            strategy_id: Optional strategy ID
+            strategy_name: Optional strategy name
 
         Returns:
             ID of the saved trade
@@ -70,6 +80,8 @@ class TradeHistoryClient:
                 return_pct=trade.get("return_pct", 0),
                 pnl=trade.get("pnl", 0),
                 paper=paper,
+                strategy_id=strategy_id,
+                strategy_name=strategy_name,
                 strategy_params=json.dumps(trade.get("strategy_params", {})),
             )
             db.add(db_trade)
@@ -179,6 +191,8 @@ class TradeHistoryClient:
             pnl=row.pnl,
             paper=row.paper,
             strategy_params=params,
+            strategy_id=row.strategy_id,
+            strategy_name=row.strategy_name,
             created_at=row.created_at,
         )
 

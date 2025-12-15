@@ -5,13 +5,14 @@ import logging
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Callable
+from typing import Optional, Callable, Dict
 
 from .strategy import StrategyConfig, StrategyEngine
 from .trading import get_trading_client, TradingClient
 from .quote_provider import InsightSentryQuoteProvider
 from .parser import parse_message_line
 from .alert_service import set_alert_callback
+from .strategy_store import get_strategy_store, Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +22,13 @@ TRADING_LOCK_FILE = Path(__file__).parent.parent / "data" / ".trading.lock"
 
 class TradingEngine:
     """
-    Trading engine that processes alerts and manages positions.
+    Trading engine that processes alerts and manages multiple strategies.
 
     Does NOT run its own HTTP server - receives alerts via callback from AlertService.
+    Supports multiple concurrent strategies, each with independent position tracking.
     """
 
-    def __init__(
-        self,
-        config: StrategyConfig,
-        paper: bool = True,
-    ):
-        self.config = config
+    def __init__(self, paper: bool = True):
         self.paper = paper
 
         self._running = False
@@ -41,7 +38,13 @@ class TradingEngine:
         # Components initialized in start()
         self.trader: Optional[TradingClient] = None
         self.quote_provider: Optional[InsightSentryQuoteProvider] = None
-        self.engine: Optional[StrategyEngine] = None
+
+        # Multi-strategy support: strategy_id -> StrategyEngine
+        self.strategies: Dict[str, StrategyEngine] = {}
+        self.strategy_names: Dict[str, str] = {}  # strategy_id -> name
+
+        # Track subscriptions per strategy for proper cleanup
+        self._strategy_subscriptions: Dict[str, set] = {}  # strategy_id -> set of tickers
 
         # Callbacks for external status updates
         self.on_status_change: Optional[Callable[[dict], None]] = None
@@ -173,21 +176,84 @@ class TradingEngine:
         self.trader = get_trading_client(paper=self.paper)
         logger.info(f"Trading client: {self.trader.name} (paper={self.paper})")
 
-        # Quote provider
+        # Quote provider (shared across all strategies)
         self.quote_provider = InsightSentryQuoteProvider(
             on_quote=self._on_quote,
         )
 
-        # Strategy engine
-        self.engine = StrategyEngine(
-            config=self.config,
+        # Load enabled strategies from database
+        self._load_enabled_strategies()
+
+    def _load_enabled_strategies(self):
+        """Load all enabled strategies from the database."""
+        store = get_strategy_store()
+        enabled = store.list_strategies(enabled_only=True)
+
+        for strategy in enabled:
+            self._add_strategy_engine(strategy.id, strategy.name, strategy.config)
+
+        logger.info(f"Loaded {len(enabled)} enabled strategies")
+
+    def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig):
+        """Create and add a StrategyEngine for a strategy."""
+        if strategy_id in self.strategies:
+            logger.warning(f"Strategy {strategy_id} already running")
+            return
+
+        engine = StrategyEngine(
+            strategy_id=strategy_id,
+            strategy_name=name,
+            config=config,
             trader=self.trader,
-            on_subscribe=self._on_subscribe,
-            on_unsubscribe=self._on_unsubscribe,
+            on_subscribe=lambda ticker, sid=strategy_id: self._on_subscribe(ticker, sid),
+            on_unsubscribe=lambda ticker, sid=strategy_id: self._on_unsubscribe(ticker, sid),
             paper=self.paper,
         )
 
-        logger.info(f"Strategy config: {self.config.to_dict()}")
+        self.strategies[strategy_id] = engine
+        self.strategy_names[strategy_id] = name
+        self._strategy_subscriptions[strategy_id] = set()
+
+        logger.info(f"Added strategy '{name}' ({strategy_id})")
+
+    def _remove_strategy_engine(self, strategy_id: str):
+        """Remove a StrategyEngine."""
+        if strategy_id not in self.strategies:
+            return
+
+        name = self.strategy_names.get(strategy_id, strategy_id)
+
+        # Unsubscribe from all tickers this strategy was watching
+        for ticker in list(self._strategy_subscriptions.get(strategy_id, [])):
+            self._on_unsubscribe(ticker, strategy_id)
+
+        del self.strategies[strategy_id]
+        del self.strategy_names[strategy_id]
+        if strategy_id in self._strategy_subscriptions:
+            del self._strategy_subscriptions[strategy_id]
+
+        logger.info(f"Removed strategy '{name}' ({strategy_id})")
+
+    def add_strategy(self, strategy_id: str, name: str, config: StrategyConfig):
+        """Add and start tracking a strategy (call from main thread)."""
+        if not self._running:
+            logger.warning("Trading engine not running, cannot add strategy")
+            return
+
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._add_strategy_engine(strategy_id, name, config)
+            )
+
+    def remove_strategy(self, strategy_id: str):
+        """Stop tracking a strategy (call from main thread)."""
+        if not self._running:
+            return
+
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._remove_strategy_engine(strategy_id)
+            )
 
     async def _async_main(self):
         """Async main loop."""
@@ -227,7 +293,7 @@ class TradingEngine:
 
     def _on_alert_received(self, data: dict):
         """Handle alert from AlertService (called from HTTP thread)."""
-        if not self._running or not self.engine:
+        if not self._running or not self.strategies:
             return
 
         # Schedule processing in our event loop
@@ -237,7 +303,7 @@ class TradingEngine:
             )
 
     async def _handle_alert(self, data: dict):
-        """Process an alert from Discord."""
+        """Process an alert from Discord - fan out to all strategies."""
         try:
             content = data.get("content", "")
             channel = data.get("channel", "")
@@ -263,39 +329,68 @@ class TradingEngine:
 
             logger.info(f"Alert received: {announcement.ticker} @ ${announcement.price_threshold}")
 
-            # Pass to strategy engine
-            accepted = self.engine.on_alert(announcement)
+            # Fan out to all strategies - each decides independently
+            accepted_by = []
+            for strategy_id, engine in self.strategies.items():
+                name = self.strategy_names.get(strategy_id, strategy_id)
+                if engine.on_alert(announcement):
+                    accepted_by.append(name)
 
-            if accepted:
-                logger.info(f"Alert accepted, tracking {announcement.ticker}")
+            if accepted_by:
+                logger.info(f"Alert accepted by: {', '.join(accepted_by)}")
 
         except Exception as e:
             logger.error(f"Error handling alert: {e}", exc_info=True)
 
     def _on_quote(self, ticker: str, price: float, volume: int, timestamp: datetime):
-        """Callback for quote updates from InsightSentry."""
-        if self.engine:
-            self.engine.on_quote(ticker, price, volume, timestamp)
+        """Callback for quote updates - fan out to all strategies tracking this ticker."""
+        for strategy_id, engine in self.strategies.items():
+            # Each strategy receives all quotes, filters internally
+            engine.on_quote(ticker, price, volume, timestamp)
 
-    def _on_subscribe(self, ticker: str):
-        """Callback when strategy needs quotes for a ticker."""
-        if self.quote_provider:
-            self.quote_provider.subscribe_sync(ticker)
-            if self._loop and self._loop.is_running():
-                logger.info(f"Scheduling async subscribe for {ticker}")
-                self._loop.call_soon_threadsafe(
-                    lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
-                )
-            else:
-                logger.warning(f"Event loop not running, cannot send subscription for {ticker}")
+    def _on_subscribe(self, ticker: str, strategy_id: str):
+        """Callback when a strategy needs quotes for a ticker."""
+        # Track which strategy subscribed
+        if strategy_id not in self._strategy_subscriptions:
+            self._strategy_subscriptions[strategy_id] = set()
+        self._strategy_subscriptions[strategy_id].add(ticker)
 
-    def _on_unsubscribe(self, ticker: str):
-        """Callback when strategy no longer needs quotes."""
+        # Only subscribe to WebSocket if this is a new ticker (not already subscribed by another strategy)
+        all_subscribed = set()
+        for subs in self._strategy_subscriptions.values():
+            all_subscribed.update(subs)
+
         if self.quote_provider:
+            # Check if already subscribed via quote provider
+            if ticker not in self.quote_provider.subscribed_tickers:
+                self.quote_provider.subscribe_sync(ticker)
+                if self._loop and self._loop.is_running():
+                    logger.info(f"Scheduling async subscribe for {ticker} (requested by strategy {strategy_id})")
+                    self._loop.call_soon_threadsafe(
+                        lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
+                    )
+                else:
+                    logger.warning(f"Event loop not running, cannot send subscription for {ticker}")
+
+    def _on_unsubscribe(self, ticker: str, strategy_id: str):
+        """Callback when a strategy no longer needs quotes for a ticker."""
+        # Remove from this strategy's subscriptions
+        if strategy_id in self._strategy_subscriptions:
+            self._strategy_subscriptions[strategy_id].discard(ticker)
+
+        # Check if any other strategy still needs this ticker
+        still_needed = False
+        for sid, subs in self._strategy_subscriptions.items():
+            if ticker in subs:
+                still_needed = True
+                break
+
+        # Only unsubscribe from WebSocket if no strategy needs it
+        if not still_needed and self.quote_provider:
             self.quote_provider.unsubscribe_sync(ticker)
             if self._loop:
                 self._loop.call_soon_threadsafe(
-                    lambda: asyncio.create_task(self.quote_provider.unsubscribe(ticker))
+                    lambda t=ticker: asyncio.create_task(self.quote_provider.unsubscribe(t))
                 )
 
     def _broadcast_status(self):
@@ -303,21 +398,43 @@ class TradingEngine:
         # Update lock file heartbeat
         self._update_lock()
 
-        if self.on_status_change and self.engine:
+        if self.on_status_change:
             status = self.get_status()
             self.on_status_change(status)
 
     def get_status(self) -> dict:
-        """Get current engine status."""
+        """Get current engine status with per-strategy breakdown."""
         status = {
             "running": self._running,
             "paper": self.paper,
             "quote_connected": self.quote_provider.is_connected if self.quote_provider else False,
             "subscriptions": list(self.quote_provider.subscribed_tickers) if self.quote_provider else [],
+            "strategy_count": len(self.strategies),
         }
 
-        if self.engine:
-            status.update(self.engine.get_status())
+        # Aggregate stats across all strategies
+        total_pending = []
+        total_active = {}
+        total_completed = 0
+
+        # Per-strategy status
+        strategies_status = {}
+        for strategy_id, engine in self.strategies.items():
+            name = self.strategy_names.get(strategy_id, strategy_id)
+            engine_status = engine.get_status()
+            strategies_status[strategy_id] = {
+                "name": name,
+                **engine_status,
+            }
+            # Aggregate
+            total_pending.extend(engine_status.get("pending_entries", []))
+            total_active.update(engine_status.get("active_trades", {}))
+            total_completed += engine_status.get("completed_trades", 0)
+
+        status["strategies"] = strategies_status
+        status["pending_entries"] = total_pending
+        status["active_trades"] = total_active
+        status["completed_trades"] = total_completed
 
         if self.trader:
             try:
@@ -346,6 +463,19 @@ class TradingEngine:
 
         return status
 
+    def get_strategy_status(self, strategy_id: str) -> Optional[dict]:
+        """Get status for a specific strategy."""
+        if strategy_id not in self.strategies:
+            return None
+
+        engine = self.strategies[strategy_id]
+        name = self.strategy_names.get(strategy_id, strategy_id)
+        return {
+            "id": strategy_id,
+            "name": name,
+            **engine.get_status(),
+        }
+
     @property
     def is_running(self) -> bool:
         return self._running
@@ -358,21 +488,21 @@ LiveTradingService = TradingEngine
 _trading_engine: Optional[TradingEngine] = None
 
 
-def start_live_trading(config: StrategyConfig, paper: bool = True) -> Optional[TradingEngine]:
-    """Start the global trading engine."""
+def start_live_trading(paper: bool = True) -> Optional[TradingEngine]:
+    """Start the global trading engine (loads enabled strategies from DB)."""
     global _trading_engine
 
     # Check if already running in this process
     if _trading_engine and _trading_engine.is_running:
-        logger.warning("Trading engine already running, stopping first...")
-        _trading_engine.stop()
+        logger.warning("Trading engine already running")
+        return _trading_engine
 
     # Check if running in another process (or after module reload)
     if is_trading_locked():
         logger.warning("Trading appears to be running (lock file exists). Use force_release_trading_lock() if stuck.")
         return None
 
-    _trading_engine = TradingEngine(config, paper=paper)
+    _trading_engine = TradingEngine(paper=paper)
     _trading_engine.start()
     return _trading_engine
 
@@ -384,6 +514,12 @@ def stop_live_trading():
     if _trading_engine:
         _trading_engine.stop()
         _trading_engine = None
+
+
+def get_trading_engine() -> Optional[TradingEngine]:
+    """Get the global trading engine instance."""
+    global _trading_engine
+    return _trading_engine
 
 
 def get_live_trading_status() -> Optional[dict]:
@@ -434,3 +570,41 @@ def force_release_trading_lock():
             logger.info("Force released trading lock")
     except Exception as e:
         logger.error(f"Error force releasing lock: {e}")
+
+
+def enable_strategy(strategy_id: str) -> bool:
+    """Enable a strategy for live trading."""
+    global _trading_engine
+
+    store = get_strategy_store()
+
+    # Update database
+    if not store.set_enabled(strategy_id, True):
+        logger.error(f"Strategy {strategy_id} not found")
+        return False
+
+    # If engine is running, add the strategy dynamically
+    if _trading_engine and _trading_engine.is_running:
+        strategy = store.get_strategy(strategy_id)
+        if strategy:
+            _trading_engine.add_strategy(strategy.id, strategy.name, strategy.config)
+
+    return True
+
+
+def disable_strategy(strategy_id: str) -> bool:
+    """Disable a strategy from live trading."""
+    global _trading_engine
+
+    store = get_strategy_store()
+
+    # Update database
+    if not store.set_enabled(strategy_id, False):
+        logger.error(f"Strategy {strategy_id} not found")
+        return False
+
+    # If engine is running, remove the strategy dynamically
+    if _trading_engine and _trading_engine.is_running:
+        _trading_engine.remove_strategy(strategy_id)
+
+    return True
