@@ -267,7 +267,7 @@ class TradingEngine:
 
         # Reconciliation counter (run every 30 iterations = 30 seconds)
         reconcile_counter = 0
-        RECONCILE_INTERVAL = 30
+        RECONCILE_INTERVAL = 300  # 5 minutes - Alpaca rate limits are strict
 
         # Wait for shutdown
         try:
@@ -432,10 +432,29 @@ class TradingEngine:
             pass  # Don't fail on status write errors
 
     def _reconcile_all_positions(self):
-        """Reconcile positions across all strategies with broker."""
+        """Reconcile positions across all strategies with broker.
+
+        Fetches positions once and passes to all strategies to avoid rate limits.
+        """
+        if not self.strategies:
+            return
+
+        # Fetch positions once for all strategies
+        try:
+            positions = self.trader.get_positions()
+            broker_positions = {p.ticker: p for p in positions}
+            logger.debug(f"Reconciliation: fetched {len(broker_positions)} positions from broker")
+        except Exception as e:
+            if "429" in str(e):
+                logger.warning("Rate limited by broker - skipping reconciliation")
+            else:
+                logger.error(f"Failed to fetch positions for reconciliation: {e}")
+            return
+
+        # Pass pre-fetched positions to each strategy
         for strategy_id, engine in self.strategies.items():
             try:
-                engine.reconcile_positions()
+                engine.reconcile_positions(broker_positions)
             except Exception as e:
                 logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
 

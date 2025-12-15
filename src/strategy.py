@@ -617,15 +617,20 @@ class StrategyEngine:
             if self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
 
-    def reconcile_positions(self):
+    def reconcile_positions(self, broker_positions: Optional[Dict[str, 'Position']] = None):
         """
         Reconcile our tracked positions with actual broker positions.
 
         Removes active_trades entries for positions that no longer exist
         (e.g., manually closed via broker dashboard).
+
+        Args:
+            broker_positions: Optional pre-fetched positions dict. If not provided,
+                            will fetch from broker (but prefer passing to avoid rate limits).
         """
         try:
-            broker_positions = {p.ticker: p for p in self.trader.get_positions()}
+            if broker_positions is None:
+                broker_positions = {p.ticker: p for p in self.trader.get_positions()}
 
             # Check each active trade
             stale_tickers = []
