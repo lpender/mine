@@ -237,11 +237,16 @@ class TradingEngine:
                 timestamp = datetime.now()
 
             # Parse the message content
-            announcement = parse_message_line(content, channel, author, timestamp)
+            announcement = parse_message_line(content, timestamp)
 
             if not announcement:
                 logger.warning(f"Could not parse alert: {content[:100]}")
                 return
+
+            # Set channel and author from the alert data
+            announcement.channel = channel
+            if author:
+                announcement.author = author
 
             logger.info(f"Alert received: {announcement.ticker} @ ${announcement.price_threshold}")
 
