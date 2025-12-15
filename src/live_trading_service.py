@@ -281,10 +281,13 @@ class TradingEngine:
         """Callback when strategy needs quotes for a ticker."""
         if self.quote_provider:
             self.quote_provider.subscribe_sync(ticker)
-            if self._loop:
+            if self._loop and self._loop.is_running():
+                logger.info(f"Scheduling async subscribe for {ticker}")
                 self._loop.call_soon_threadsafe(
-                    lambda: asyncio.create_task(self.quote_provider.subscribe(ticker))
+                    lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
                 )
+            else:
+                logger.warning(f"Event loop not running, cannot send subscription for {ticker}")
 
     def _on_unsubscribe(self, ticker: str):
         """Callback when strategy no longer needs quotes."""

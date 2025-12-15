@@ -273,13 +273,20 @@ class InsightSentryQuoteProvider:
         """Subscribe to real-time data for a ticker."""
         ticker = ticker.upper()
         if ticker in self._subscriptions:
+            logger.debug(f"Already subscribed to {ticker}")
+            # Still send subscription in case WS reconnected
+            if self._ws and not self._ws.closed:
+                await self._send_subscriptions()
             return
 
         self._subscriptions.add(ticker)
         logger.info(f"Subscribing to {ticker}")
 
         if self._ws and not self._ws.closed:
+            logger.info(f"WebSocket connected, sending subscription for {ticker}")
             await self._send_subscriptions()
+        else:
+            logger.warning(f"WebSocket not connected, subscription for {ticker} queued")
 
     async def unsubscribe(self, ticker: str):
         """Unsubscribe from a ticker."""
