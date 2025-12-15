@@ -215,6 +215,10 @@ class InsightSentryQuoteProvider:
             logger.warning(f"Failed to parse message: {data[:100]}")
             return
 
+        # Log non-heartbeat messages
+        if "server_time" not in msg:
+            logger.info(f"WS message: {str(msg)[:300]}")
+
         # Server heartbeat
         if "server_time" in msg:
             self._last_heartbeat = time.time()
