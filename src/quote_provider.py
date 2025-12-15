@@ -89,7 +89,7 @@ class InsightSentryQuoteProvider:
             self._ws_key = cached_key
             return cached_key
 
-        logger.info("Fetching WS key from InsightSentry API...")
+        logger.info(f"Fetching WS key from {self.KEY_URL}...")
 
         response = requests.get(
             self.KEY_URL,
@@ -98,8 +98,13 @@ class InsightSentryQuoteProvider:
             },
             timeout=10,
         )
-        response.raise_for_status()
+
+        if not response.ok:
+            logger.error(f"API error {response.status_code}: {response.text}")
+            response.raise_for_status()
+
         data = response.json()
+        logger.debug(f"API response: {data}")
 
         self._ws_key = data.get("api_key") or data.get("key")
         if not self._ws_key:
