@@ -61,6 +61,12 @@ with st.sidebar:
 
         st.caption("Stop with Ctrl+C in terminal")
 
+        # Orphaned positions warning
+        orphaned = status.get("orphaned_tickers", [])
+        if orphaned:
+            st.divider()
+            st.error(f"**Orphaned Positions!**\n\n{', '.join(orphaned)}\n\nThese positions exist but their strategy is DISABLED. Stop losses will NOT be enforced!")
+
         # Exit all positions button
         st.divider()
         if st.button("🔴 Exit All Positions", type="secondary", key="exit_all"):

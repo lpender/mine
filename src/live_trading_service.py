@@ -103,6 +103,9 @@ class TradingEngine:
         # CAN hold independent positions in the same ticker.
         self._locked_tickers: Dict[str, str] = {}  # ticker -> strategy_id for alert routing
 
+        # Orphaned tickers (positions in DB but strategy disabled)
+        self._orphaned_tickers: set = set()
+
         # Live bar storage for TradingView visualization
         self._live_bar_store = get_live_bar_store()
 
@@ -300,10 +303,50 @@ class TradingEngine:
         logger.info(f"Loaded {len(enabled)} enabled strategies with {total_active_trades} active trades, {total_pending_entries} pending entries")
         logger.info(f"Position limit: {MAX_OPEN_POSITIONS} (from JWT websocket_symbols)")
 
+        # Check for orphaned trades (trades in DB but strategy is disabled)
+        self._check_orphaned_trades()
+
         # Enforce position limit at startup (close excess positions if any)
         if total_active_trades > MAX_OPEN_POSITIONS > 0:
             logger.warning(f"Startup: {total_active_trades} positions exceed limit of {MAX_OPEN_POSITIONS}")
             self._enforce_position_limit()
+
+    def _check_orphaned_trades(self):
+        """Check for trades in DB whose strategy is disabled (orphaned positions).
+
+        These positions exist at the broker but won't be monitored because their
+        owning strategy isn't enabled. This is dangerous - stop losses won't be enforced.
+        """
+        from src.active_trade_store import get_active_trade_store
+        trade_store = get_active_trade_store()
+        all_trades = trade_store.get_all_trades()
+
+        if not all_trades:
+            return
+
+        # Find trades whose strategy is not currently loaded
+        loaded_strategy_ids = set(self.strategies.keys())
+        orphaned = []
+
+        for trade in all_trades:
+            if trade.strategy_id not in loaded_strategy_ids:
+                orphaned.append(trade)
+
+        if orphaned:
+            logger.warning("=" * 60)
+            logger.warning("ORPHANED POSITIONS DETECTED - NOT BEING MONITORED!")
+            logger.warning("These positions exist but their strategy is DISABLED:")
+            for trade in orphaned:
+                logger.warning(f"  {trade.ticker}: {trade.shares} shares @ ${trade.entry_price:.2f} "
+                              f"(strategy: {trade.strategy_name})")
+            logger.warning("Stop losses will NOT be enforced for these positions!")
+            logger.warning("Enable the strategy or manually close these positions.")
+            logger.warning("=" * 60)
+
+            # Store orphaned tickers for reference
+            self._orphaned_tickers = {t.ticker for t in orphaned}
+        else:
+            self._orphaned_tickers = set()
 
     def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig, priority: int = 0):
         """Create and add a StrategyEngine for a strategy."""
@@ -946,6 +989,7 @@ class TradingEngine:
         status["pending_entries"] = total_pending
         status["active_trades"] = total_active
         status["completed_trades"] = total_completed
+        status["orphaned_tickers"] = list(self._orphaned_tickers)
 
         if self.trader:
             # Use cached values if fresh, otherwise fetch from Alpaca
