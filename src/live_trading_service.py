@@ -1113,3 +1113,50 @@ def disable_strategy(strategy_id: str) -> bool:
         logger.info(f"Hot-reloaded strategy '{strategy_name}' (disabled)")
 
     return True
+
+
+def exit_all_positions(paper: bool = True) -> Dict[str, str]:
+    """
+    Exit all open positions at the broker.
+
+    Args:
+        paper: Use paper trading (default True)
+
+    Returns:
+        Dict mapping ticker to result ("sold", "failed: reason", etc.)
+    """
+    from .trading import get_trading_client
+
+    results = {}
+    trader = get_trading_client(paper=paper)
+
+    # Get all positions from broker
+    positions = trader.get_positions()
+    if not positions:
+        logger.info("No positions to exit")
+        return results
+
+    logger.warning(f"Exiting {len(positions)} positions...")
+
+    # Cancel all open orders first to free up shares
+    try:
+        canceled = trader.cancel_all_orders()
+        logger.info(f"Canceled {canceled} open orders")
+    except Exception as e:
+        logger.error(f"Failed to cancel orders: {e}")
+
+    # Submit sell orders for each position
+    for pos in positions:
+        ticker = pos.ticker
+        shares = pos.shares
+        try:
+            # Use current price estimate for limit order
+            price = pos.current_price if pos.current_price > 0 else pos.avg_entry_price
+            order = trader.sell(ticker, shares, limit_price=price)
+            results[ticker] = f"sell order submitted ({order.status})"
+            logger.info(f"[{ticker}] Submitted sell for {shares} shares @ ${price:.2f}")
+        except Exception as e:
+            results[ticker] = f"failed: {e}"
+            logger.error(f"[{ticker}] Failed to sell: {e}")
+
+    return results

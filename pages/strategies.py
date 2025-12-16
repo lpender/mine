@@ -15,6 +15,7 @@ from src.live_trading_service import (
     is_live_trading_active,
     enable_strategy,
     disable_strategy,
+    exit_all_positions,
 )
 # Initialize database tables
 init_db()
@@ -59,6 +60,20 @@ with st.sidebar:
             st.rerun()
 
         st.caption("Stop with Ctrl+C in terminal")
+
+        # Exit all positions button
+        st.divider()
+        if st.button("🔴 Exit All Positions", type="secondary", key="exit_all"):
+            with st.spinner("Exiting positions..."):
+                results = exit_all_positions(paper=is_paper)
+                if results:
+                    for ticker, result in results.items():
+                        if "failed" in result.lower():
+                            st.error(f"{ticker}: {result}")
+                        else:
+                            st.success(f"{ticker}: {result}")
+                else:
+                    st.info("No positions to exit")
     else:
         st.warning("Engine Not Running")
         st.markdown("""
