@@ -682,17 +682,23 @@ class StrategyEngine:
 
         # Persist to trade history
         try:
-            self._trade_history.record_trade(
-                ticker=ticker,
-                entry_price=pending.entry_price,
-                exit_price=filled_price,
-                entry_time=pending.entry_time or timestamp,
-                exit_time=timestamp,
-                shares=shares,
-                exit_reason="filled",  # Exit reason was tracked when order submitted
+            trade_record = {
+                "ticker": ticker,
+                "entry_price": pending.entry_price,
+                "exit_price": filled_price,
+                "entry_time": pending.entry_time or timestamp,
+                "exit_time": timestamp,
+                "shares": shares,
+                "exit_reason": "filled",
+                "return_pct": completed["return_pct"],
+                "pnl": completed["pnl"],
+                "strategy_params": self.config.to_dict(),
+            }
+            self._trade_history.save_trade(
+                trade=trade_record,
                 paper=self.paper,
+                strategy_id=self.strategy_id,
                 strategy_name=self.strategy_name,
-                strategy_params=self.config.to_dict(),
             )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to record trade: {e}")
@@ -867,17 +873,23 @@ class StrategyEngine:
 
         # Record as a failed/orphaned trade so we have a record
         try:
-            self._trade_history.record_trade(
-                ticker=ticker,
-                entry_price=trade.entry_price,
-                exit_price=trade.entry_price,  # No actual exit, use entry price
-                entry_time=trade.entry_time,
-                exit_time=datetime.now(),
-                shares=trade.shares,
-                exit_reason=reason,
+            trade_record = {
+                "ticker": ticker,
+                "entry_price": trade.entry_price,
+                "exit_price": trade.entry_price,  # No actual exit, use entry price
+                "entry_time": trade.entry_time,
+                "exit_time": datetime.now(),
+                "shares": trade.shares,
+                "exit_reason": reason,
+                "return_pct": 0,
+                "pnl": 0,
+                "strategy_params": self.config.to_dict(),
+            }
+            self._trade_history.save_trade(
+                trade=trade_record,
                 paper=self.paper,
+                strategy_id=self.strategy_id,
                 strategy_name=self.strategy_name,
-                strategy_params=self.config.to_dict(),
             )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to record orphaned trade: {e}")
