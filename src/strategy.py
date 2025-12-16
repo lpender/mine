@@ -10,6 +10,7 @@ from .models import Announcement
 from .trading import TradingClient, Position
 from .trade_history import get_trade_history_client
 from .active_trade_store import get_active_trade_store
+from .order_store import get_order_store
 
 logger = logging.getLogger(__name__)
 # Separate logger for verbose quote/candle logs - writes to logs/quotes.log
@@ -199,6 +200,8 @@ class PendingOrder:
     shares: int
     limit_price: float
     submitted_at: datetime
+    # Database order ID for tracking
+    db_order_id: Optional[int] = None
     # Context for creating ActiveTrade on fill (buy orders)
     announcement: Optional[Announcement] = None
     first_candle_open: Optional[float] = None
@@ -244,6 +247,7 @@ class StrategyEngine:
         # Trade history persistence
         self._trade_history = get_trade_history_client()
         self._active_trade_store = get_active_trade_store()
+        self._order_store = get_order_store()
 
         # Recover any open positions from database and broker
         self._recover_positions()
@@ -605,12 +609,44 @@ class StrategyEngine:
         logger.info(f"{'$'*60}")
         logger.info(f"")
 
+        # Create order record in database before submitting to broker
+        db_order_id = self._order_store.create_order(
+            ticker=ticker,
+            side="buy",
+            order_type="limit",
+            requested_shares=shares,
+            strategy_id=self.strategy_id,
+            strategy_name=self.strategy_name,
+            limit_price=price,
+            paper=self.paper,
+        )
+
         # Execute buy order (limit order at current price + slippage)
         try:
             order = self.trader.buy(ticker, shares, limit_price=price)
             logger.info(f"[{ticker}] ✅ Buy order submitted: {order.order_id} ({order.status})")
+
+            # Update database with broker order ID
+            if db_order_id:
+                self._order_store.update_broker_order_id(db_order_id, order.order_id)
+                self._order_store.record_event(
+                    event_type="submitted",
+                    event_timestamp=timestamp,
+                    order_id=db_order_id,
+                    broker_order_id=order.order_id,
+                )
+
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
+            # Update order status to rejected
+            if db_order_id:
+                self._order_store.update_order_status(order_id=db_order_id, status="rejected")
+                self._order_store.record_event(
+                    event_type="rejected",
+                    event_timestamp=timestamp,
+                    order_id=db_order_id,
+                    raw_data={"error": str(e)},
+                )
             # Unsubscribe since we're no longer tracking this ticker
             if self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
@@ -624,6 +660,7 @@ class StrategyEngine:
             shares=shares,
             limit_price=price,
             submitted_at=timestamp,
+            db_order_id=db_order_id,
             announcement=pending.announcement,
             first_candle_open=pending.first_price or price,
             stop_loss_price=stop_loss_price,
@@ -646,6 +683,24 @@ class StrategyEngine:
             return
 
         logger.info(f"[{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
+
+        # Record fill event and update order status
+        if pending.db_order_id:
+            self._order_store.record_event(
+                event_type="fill",
+                event_timestamp=timestamp,
+                order_id=pending.db_order_id,
+                broker_order_id=order_id,
+                filled_shares=shares,
+                fill_price=filled_price,
+                cumulative_filled=shares,
+            )
+            self._order_store.update_order_status(
+                order_id=pending.db_order_id,
+                status="filled",
+                filled_shares=shares,
+                avg_fill_price=filled_price,
+            )
 
         # Recalculate SL/TP based on actual fill price
         cfg = self.config
@@ -705,6 +760,24 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
 
+        # Record fill event and update order status
+        if pending.db_order_id:
+            self._order_store.record_event(
+                event_type="fill",
+                event_timestamp=timestamp,
+                order_id=pending.db_order_id,
+                broker_order_id=order_id,
+                filled_shares=shares,
+                fill_price=filled_price,
+                cumulative_filled=shares,
+            )
+            self._order_store.update_order_status(
+                order_id=pending.db_order_id,
+                status="filled",
+                filled_shares=shares,
+                avg_fill_price=filled_price,
+            )
+
         # Record completed trade
         completed = {
             "ticker": ticker,
@@ -751,11 +824,26 @@ class StrategyEngine:
         if self.on_unsubscribe:
             self.on_unsubscribe(ticker)
 
-    def on_order_canceled(self, order_id: str, ticker: str, side: str):
+    def on_order_canceled(self, order_id: str, ticker: str, side: str, timestamp: Optional[datetime] = None):
         """Handle order cancellation."""
         pending = self.pending_orders.pop(order_id, None)
         if pending:
             logger.warning(f"[{ticker}] Order {order_id} ({side}) was CANCELED")
+
+            # Record canceled event and update order status
+            if pending.db_order_id:
+                event_time = timestamp or datetime.utcnow()
+                self._order_store.record_event(
+                    event_type="canceled",
+                    event_timestamp=event_time,
+                    order_id=pending.db_order_id,
+                    broker_order_id=order_id,
+                )
+                self._order_store.update_order_status(
+                    order_id=pending.db_order_id,
+                    status="canceled",
+                )
+
             if side == "buy":
                 # Buy canceled - just unsubscribe
                 if self.on_unsubscribe:
@@ -764,11 +852,27 @@ class StrategyEngine:
                 # Sell canceled - need to re-add to active trades or retry
                 logger.warning(f"[{ticker}] Sell order canceled - position still open!")
 
-    def on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str):
+    def on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str, timestamp: Optional[datetime] = None):
         """Handle order rejection."""
         pending = self.pending_orders.pop(order_id, None)
         if pending:
             logger.error(f"[{ticker}] Order {order_id} ({side}) was REJECTED: {reason}")
+
+            # Record rejected event and update order status
+            if pending.db_order_id:
+                event_time = timestamp or datetime.utcnow()
+                self._order_store.record_event(
+                    event_type="rejected",
+                    event_timestamp=event_time,
+                    order_id=pending.db_order_id,
+                    broker_order_id=order_id,
+                    raw_data={"reason": reason},
+                )
+                self._order_store.update_order_status(
+                    order_id=pending.db_order_id,
+                    status="rejected",
+                )
+
             if side == "buy":
                 # Buy rejected - just unsubscribe
                 if self.on_unsubscribe:
@@ -851,13 +955,46 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
+        # Create order record in database before submitting to broker
+        db_order_id = self._order_store.create_order(
+            ticker=ticker,
+            side="sell",
+            order_type="limit",
+            requested_shares=trade.shares,
+            strategy_id=self.strategy_id,
+            strategy_name=self.strategy_name,
+            limit_price=price,
+            paper=self.paper,
+        )
+
         # Execute sell order (limit order at current price - slippage)
         try:
             order = self.trader.sell(ticker, trade.shares, limit_price=price)
             logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
+
+            # Update database with broker order ID
+            if db_order_id:
+                self._order_store.update_broker_order_id(db_order_id, order.order_id)
+                self._order_store.record_event(
+                    event_type="submitted",
+                    event_timestamp=timestamp,
+                    order_id=db_order_id,
+                    broker_order_id=order.order_id,
+                )
+
         except Exception as e:
             error_msg = str(e).lower()
             logger.error(f"[{ticker}] Sell order failed: {e}")
+
+            # Update order status to rejected
+            if db_order_id:
+                self._order_store.update_order_status(order_id=db_order_id, status="rejected")
+                self._order_store.record_event(
+                    event_type="rejected",
+                    event_timestamp=timestamp,
+                    order_id=db_order_id,
+                    raw_data={"error": str(e)},
+                )
 
             # Check if error indicates position doesn't exist at broker
             if "insufficient qty" in error_msg or "position does not exist" in error_msg:
@@ -889,6 +1026,7 @@ class StrategyEngine:
             shares=trade.shares,
             limit_price=price,
             submitted_at=timestamp,
+            db_order_id=db_order_id,
             entry_price=trade.entry_price,
             entry_time=trade.entry_time,
         )
