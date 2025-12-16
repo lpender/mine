@@ -271,7 +271,7 @@ with st.sidebar:
         max_value=100,
         value=0,
         key="_max_mentions",
-        help="Only alerts with fewer mentions (0 = no filter)"
+        help="Only alerts with mentions <= this value (0 = no filter)"
     )
 
     # Author filter
@@ -557,7 +557,7 @@ if scanner_after_lull:
 
 # Max intraday mentions filter
 if max_mentions > 0:
-    filtered = [a for a in filtered if a.mention_count is not None and a.mention_count < max_mentions]
+    filtered = [a for a in filtered if a.mention_count is not None and a.mention_count <= max_mentions]
 
 # Float filter (convert from shares to millions)
 filtered = [a for a in filtered if a.float_shares is None or
