@@ -54,14 +54,40 @@ class TestEffectiveStartTime:
     def client(self):
         return MassiveClient()
 
-    def test_postmarket_friday_returns_monday_open_utc(self, client):
-        """Postmarket Friday 7:40 PM ET should return Monday 9:30 AM ET in UTC.
+    def test_postmarket_friday_returns_announcement_time_utc(self, client):
+        """Postmarket Friday 7:40 PM ET should return the announcement time.
 
-        This is the LCUT bug: announcement at 00:40 UTC (= 19:40 ET Friday)
-        should start from Monday 9:30 AM ET = 14:30 UTC.
+        Alpaca has extended hours data, so we can fetch from postmarket times.
         """
         # Friday Dec 12, 2025 at 7:40 PM ET = Saturday Dec 13 at 00:40 UTC
         utc_naive = datetime(2025, 12, 13, 0, 40, 4)
+
+        effective = client.get_effective_start_time(utc_naive)
+
+        # Should return same time (postmarket has data in Alpaca)
+        assert effective == utc_naive, f"Expected {utc_naive}, got {effective}"
+
+    def test_postmarket_returns_announcement_time_utc(self, client):
+        """Postmarket announcement should return the announcement time.
+
+        This is the AKAN fix: announcement at 23:46 UTC (= 18:46 ET)
+        should start from the announcement time, not next day's market open.
+        """
+        # Thursday Dec 11, 2025 at 6:46 PM ET = 23:46 UTC
+        utc_naive = datetime(2025, 12, 11, 23, 46, 37)
+
+        effective = client.get_effective_start_time(utc_naive)
+
+        # Should return same time (postmarket has data in Alpaca)
+        assert effective == utc_naive, f"Expected {utc_naive}, got {effective}"
+
+    def test_closed_late_night_rolls_to_next_open_utc(self, client):
+        """Closed hours (after 8pm ET) should roll to next market open.
+
+        After postmarket ends at 8pm ET, no trading data is available.
+        """
+        # Friday Dec 12, 2025 at 9:30 PM ET = Saturday Dec 13 at 02:30 UTC
+        utc_naive = datetime(2025, 12, 13, 2, 30, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 

@@ -264,9 +264,10 @@ class MassiveClient:
 
         Returns:
             Naive datetime in UTC representing:
-            - Postmarket/closed: next market open (in UTC)
-            - Premarket: same-day market open (in UTC)
             - Market: announcement time (already UTC)
+            - Premarket: same-day market open (in UTC)
+            - Postmarket: announcement time (Alpaca has extended hours data)
+            - Closed: next market open (in UTC)
         """
         # Convert to Eastern Time for session logic, keep UTC for return
         if announcement_time.tzinfo is None:
@@ -294,15 +295,21 @@ class MassiveClient:
             # Start from market open of the same day (in UTC)
             return _combine_et_to_utc(et_time.date(), MARKET_OPEN)
 
-        # For postmarket and closed times, determine next market open
-        if session in ("postmarket", "closed"):
+        # For postmarket, return announcement time (Alpaca has extended hours data)
+        if session == "postmarket":
+            if announcement_time.tzinfo is None:
+                return announcement_time
+            return announcement_time.astimezone(UTC_TZ).replace(tzinfo=None)
+
+        # For closed times, determine next market open
+        if session == "closed":
             t = et_time.time()
             if t < MARKET_OPEN:
                 # Overnight before the bell: same-day open (in UTC)
                 day = _first_trading_day_on_or_after(et_time.date())
                 return _combine_et_to_utc(day, MARKET_OPEN)
 
-            # After-hours or late evening: next weekday open (in UTC)
+            # Late evening: next weekday open (in UTC)
             next_day = _first_trading_day_after(et_time.date())
             return _combine_et_to_utc(next_day, MARKET_OPEN)
 
