@@ -209,6 +209,9 @@ class PendingOrder:
     first_candle_open: Optional[float] = None
     stop_loss_price: Optional[float] = None
     take_profit_price: Optional[float] = None
+    # Entry trigger details (for logging)
+    entry_trigger: Optional[str] = None  # e.g., "early_entry", "completed_candles", "no_candle_req"
+    sizing_info: Optional[str] = None  # e.g., "1.0% of 50,000 vol = 26 shares ($76)"
     # Context for recording trade on fill (sell orders)
     entry_price: Optional[float] = None
     entry_time: Optional[datetime] = None
@@ -456,7 +459,7 @@ class StrategyEngine:
 
         # If no consecutive candle requirement, enter immediately
         if cfg.consec_green_candles == 0:
-            self._execute_entry(ticker, price, timestamp)
+            self._execute_entry(ticker, price, timestamp, trigger="no_candle_req")
             return
 
         # Build candles from quote updates (minute candles)
@@ -553,7 +556,7 @@ class StrategyEngine:
                     logger.info(f"[{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
                     logger.info(f"{'='*60}")
                     logger.info(f"")
-                    self._execute_entry(ticker, price, timestamp)
+                    self._execute_entry(ticker, price, timestamp, trigger=f"early_entry_{green_count}_green")
                     return
 
         if completed_green_count >= cfg.consec_green_candles:
@@ -563,10 +566,14 @@ class StrategyEngine:
             logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume!")
             logger.info(f"{'='*60}")
             logger.info(f"")
-            self._execute_entry(ticker, price, timestamp)
+            self._execute_entry(ticker, price, timestamp, trigger=f"completed_{completed_green_count}_green")
 
-    def _execute_entry(self, ticker: str, price: float, timestamp: datetime):
-        """Execute entry order."""
+    def _execute_entry(self, ticker: str, price: float, timestamp: datetime, trigger: str = "entry_signal"):
+        """Execute entry order.
+        
+        Args:
+            trigger: Reason for entry, e.g., "early_entry", "completed_candles", "no_candle_req"
+        """
         pending = self.pending_entries.pop(ticker)
         cfg = self.config
 
@@ -684,6 +691,8 @@ class StrategyEngine:
             first_candle_open=pending.first_price or price,
             stop_loss_price=stop_loss_price,
             take_profit_price=take_profit_price,
+            entry_trigger=trigger,
+            sizing_info=sizing_info,
         )
         logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation")
 

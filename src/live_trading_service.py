@@ -602,9 +602,21 @@ class TradingEngine:
         timestamp: datetime,
     ):
         """Handle order fill from Alpaca stream - route to appropriate strategy."""
-        logger.info(f"[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id})")
+        # Find which strategy has this pending order and get context
+        trigger_info = ""
+        sizing_info = ""
+        for strategy_id, engine in self.strategies.items():
+            if order_id in engine.pending_orders:
+                pending = engine.pending_orders[order_id]
+                if pending.entry_trigger:
+                    trigger_info = f" trigger={pending.entry_trigger}"
+                if pending.sizing_info:
+                    sizing_info = f" ({pending.sizing_info})"
+                break
+        
+        logger.info(f"[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}){trigger_info}{sizing_info}")
 
-        # Find which strategy has this pending order
+        # Route to appropriate strategy
         for strategy_id, engine in self.strategies.items():
             if order_id in engine.pending_orders:
                 if side == "buy":
