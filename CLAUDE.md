@@ -24,6 +24,20 @@
 - Convert to ET only in the presentation layer (Streamlit, logs)
 - Use `to_est()` in app.py to convert UTC naive → ET aware for display
 
+## Trading Hours
+
+**We trade during EXTENDED hours: premarket, market, AND postmarket.**
+
+- Alpaca provides extended hours data (4am-8pm ET)
+- For ANY announcement during trading hours (premarket/market/postmarket), fetch OHLCV starting from the announcement time
+- Only roll forward to next market open for announcements during "closed" hours (8pm-4am ET, weekends, holidays)
+
+**get_effective_start_time() logic:**
+- Premarket (4am-9:30am ET): return announcement time (NOT market open)
+- Market (9:30am-4pm ET): return announcement time
+- Postmarket (4pm-8pm ET): return announcement time
+- Closed (8pm-4am ET): return next market open
+
 ## Data Flow
 
 1. Discord plugin captures messages with emoji alt text (flags like `:flag_us:`)

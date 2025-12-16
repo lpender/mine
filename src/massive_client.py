@@ -233,8 +233,10 @@ class MassiveClient:
             return _floor_to_minute(announcement_time.astimezone(UTC_TZ).replace(tzinfo=None))
 
         if session == "premarket":
-            # Start from market open of the same day (in UTC)
-            return _combine_et_to_utc(et_time.date(), MARKET_OPEN)
+            # Alpaca has extended hours data - return announcement time floored to minute
+            if announcement_time.tzinfo is None:
+                return _floor_to_minute(announcement_time)
+            return _floor_to_minute(announcement_time.astimezone(UTC_TZ).replace(tzinfo=None))
 
         # For postmarket, return announcement time floored to minute (Alpaca has extended hours data)
         if session == "postmarket":

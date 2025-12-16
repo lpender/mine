@@ -116,17 +116,21 @@ class TestEffectiveStartTime:
         assert effective.hour == 15, f"Expected 15:30 UTC, got hour {effective.hour}"
         assert effective.minute == 30, f"Expected 15:30 UTC, got minute {effective.minute}"
 
-    def test_premarket_returns_market_open_utc(self, client):
-        """Premarket announcement should return same-day market open in UTC."""
+    def test_premarket_returns_announcement_time_utc(self, client):
+        """Premarket announcement should return announcement time (Alpaca has extended hours).
+
+        We trade during extended hours, so premarket announcements should
+        fetch OHLCV starting from the announcement time, not market open.
+        """
         # Friday Dec 12, 2025 at 7:00 AM ET = 12:00 UTC
         utc_naive = datetime(2025, 12, 12, 12, 0, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should be same day at 9:30 AM ET = 14:30 UTC
+        # Should return same time (announcement time floored to minute)
         assert effective.day == 12
-        assert effective.hour == 14, f"Expected 14:30 UTC (9:30 AM ET), got hour {effective.hour}"
-        assert effective.minute == 30
+        assert effective.hour == 12, f"Expected 12:00 UTC (7:00 AM ET), got hour {effective.hour}"
+        assert effective.minute == 0
 
     def test_weekend_rolls_to_monday_utc(self, client):
         """Weekend timestamp should roll to Monday open in UTC."""
