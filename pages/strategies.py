@@ -16,6 +16,7 @@ from src.live_trading_service import (
     enable_strategy,
     disable_strategy,
     exit_all_positions,
+    _exit_strategy_positions,
 )
 # Initialize database tables
 init_db()
@@ -269,10 +270,14 @@ else:
 
             with col4:
                 if st.button("Delete", type="secondary"):
+                    # If strategy is enabled, disable it first (which exits positions)
                     if strategy.enabled:
-                        st.error("Disable strategy before deleting")
+                        with st.spinner("Disabling strategy and exiting positions..."):
+                            disable_strategy(strategy_id)
+                            st.success(f"Disabled strategy '{strategy.name}' and exited positions")
+                            st.rerun()
                     else:
-                        # Check for active trades in DB
+                        # Check for active trades in DB (should be none after disabling)
                         active_store = get_active_trade_store()
                         active_trades = active_store.get_trades_for_strategy(strategy_id)
                         if active_trades:
@@ -300,12 +305,12 @@ else:
                     if st.button("🔴 Sell Positions & Delete", type="primary", key=f"sell_delete_{strategy_id}"):
                         try:
                             trader = get_trading_client()
-                            for trade in active_trades:
-                                try:
-                                    order = trader.sell(trade.ticker, trade.shares)
-                                    st.info(f"Sold {trade.ticker}: {order.status}")
-                                except Exception as e:
-                                    st.warning(f"Failed to sell {trade.ticker}: {e}")
+                            results = _exit_strategy_positions(active_trades, trader, context="ui")
+                            for ticker, success_msg, error_msg in results:
+                                if success_msg:
+                                    st.info(success_msg)
+                                if error_msg:
+                                    st.warning(error_msg)
                         except Exception as e:
                             st.error(f"Failed to connect to broker: {e}")
                         # Delete the strategy (will clean up trade records)

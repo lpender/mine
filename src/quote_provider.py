@@ -12,6 +12,8 @@ from typing import Callable, Dict, Optional, Set
 import aiohttp
 import requests
 
+from .jwt_utils import get_websocket_symbols_limit
+
 logger = logging.getLogger(__name__)
 limits_logger = logging.getLogger("src.quote_provider.limits")
 
@@ -429,8 +431,12 @@ class InsightSentryQuoteProvider:
                 await self._send_subscriptions()
             return
 
+        # Check subscription limits before adding
+        if not self._can_subscribe(ticker):
+            return
+
         self._subscriptions.add(ticker)
-        logger.info(f"Subscribing to {ticker}")
+        logger.info(f"Subscribing to {ticker} ({len(self._subscriptions)}/{self.max_subscriptions})")
 
         if self._ws and not self._ws.closed:
             logger.info(f"WebSocket connected, sending subscription for {ticker}")
@@ -454,8 +460,16 @@ class InsightSentryQuoteProvider:
     def subscribe_sync(self, ticker: str):
         """Sync wrapper for subscribe (for use from non-async code)."""
         ticker = ticker.upper()
+        if ticker in self._subscriptions:
+            logger.debug(f"Already subscribed to {ticker}")
+            return
+
+        # Check subscription limits before adding
+        if not self._can_subscribe(ticker):
+            return
+
         self._subscriptions.add(ticker)
-        logger.debug(f"Queued subscription for {ticker}")
+        logger.debug(f"Queued subscription for {ticker} ({len(self._subscriptions)}/{self.max_subscriptions})")
 
     def unsubscribe_sync(self, ticker: str):
         """Sync wrapper for unsubscribe (for use from non-async code)."""
@@ -494,3 +508,23 @@ class InsightSentryQuoteProvider:
     def subscribed_tickers(self) -> Set[str]:
         """Get set of currently subscribed tickers."""
         return self._subscriptions.copy()
+
+    @property
+    def max_subscriptions(self) -> int:
+        """Get maximum allowed subscriptions from JWT."""
+        return get_websocket_symbols_limit()
+
+    def _can_subscribe(self, ticker: str) -> bool:
+        """Check if we can subscribe to another ticker without exceeding limits."""
+        if ticker in self._subscriptions:
+            return True  # Already subscribed, no limit increase
+
+        current_count = len(self._subscriptions)
+        max_allowed = self.max_subscriptions
+
+        if current_count >= max_allowed:
+            limits_logger.error(f"SUBSCRIPTION LIMIT: Cannot subscribe to {ticker} - already at {current_count}/{max_allowed} symbols: {list(self._subscriptions)}")
+            logger.error(f"⚠️ SUBSCRIPTION LIMIT: Cannot subscribe to {ticker} - already at {current_count}/{max_allowed} symbols")
+            return False
+
+        return True

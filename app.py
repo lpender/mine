@@ -813,8 +813,8 @@ else:
         bars = bars_dict.get(key, [])
 
         if bars:
-            # Build candlestick data (convert to EST)
-            bar_times = [to_est(b.timestamp) for b in bars]
+            # Build candlestick data (convert to EST, shift +1 min for end-time display like WeBull)
+            bar_times = [to_est(b.timestamp) + timedelta(minutes=1) for b in bars]
             bar_open = [b.open for b in bars]
             bar_high = [b.high for b in bars]
             bar_low = [b.low for b in bars]
@@ -844,21 +844,21 @@ else:
                 hoverinfo="text+x",
             ))
 
-            # Add entry marker (entry at close of first candle)
+            # Add entry marker (entry at close of first candle, +1 min for end-time display)
             if selected_result.entry_price and selected_result.entry_time:
                 fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.entry_time)],
+                    x=[to_est(selected_result.entry_time) + timedelta(minutes=1)],
                     y=[selected_result.entry_price],
                     mode="markers",
                     marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
                     name=f"Entry @ ${selected_result.entry_price:.2f}",
                 ))
 
-            # Add exit marker
+            # Add exit marker (+1 min for end-time display)
             if selected_result.exit_price and selected_result.exit_time:
                 exit_color = "green" if selected_result.return_pct > 0 else "red"
                 fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.exit_time)],
+                    x=[to_est(selected_result.exit_time) + timedelta(minutes=1)],
                     y=[selected_result.exit_price],
                     mode="markers",
                     marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),

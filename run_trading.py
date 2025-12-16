@@ -87,6 +87,20 @@ limits_handler = logging.FileHandler('logs/limits.log')
 limits_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
 limits_logger.addHandler(limits_handler)
 
+# Set up separate file handler for strategy status updates
+# These go to logs/trading.log instead of stdout (tail -f logs/trading.log)
+status_logger = logging.getLogger('src.strategy.status')
+status_logger.setLevel(logging.INFO)
+status_logger.propagate = False  # Don't send to root logger (stdout)
+
+# File handler for status logs (reuse the trading.log file)
+status_handler = logging.FileHandler('logs/trading.log')
+status_handler.setFormatter(logging.Formatter(
+    '%(asctime)s [%(name)s] %(message)s',
+    datefmt='%H:%M:%S'
+))
+status_logger.addHandler(status_handler)
+
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully."""

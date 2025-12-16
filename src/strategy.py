@@ -15,6 +15,8 @@ from .order_store import get_order_store
 logger = logging.getLogger(__name__)
 # Separate logger for verbose quote/candle logs - writes to logs/quotes.log
 quotes_logger = logging.getLogger(__name__ + '.quotes')
+# Separate logger for real-time status updates - writes to logs/trading.log (not stdout)
+status_logger = logging.getLogger(__name__ + '.status')
 
 
 @dataclass
@@ -380,7 +382,7 @@ class StrategyEngine:
             trade.last_price = price
             trade.last_quote_time = timestamp
             pnl_pct = ((price - trade.entry_price) / trade.entry_price) * 100
-            logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f}")
+            status_logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f}")
             self._check_exit(ticker, price, timestamp)
 
     def _passes_filters(self, ann: Announcement) -> bool:

@@ -35,34 +35,8 @@ def _get_max_positions_from_jwt() -> int:
     JWT payload contains: {"websocket_symbols": 5, ...}
     Falls back to 5 if parsing fails.
     """
-    jwt_token = os.getenv("INSIGHT_SENTRY_KEY", "")
-    if not jwt_token:
-        logger.warning("INSIGHT_SENTRY_KEY not set, defaulting to 5 max positions")
-        return 5
-
-    try:
-        # JWT format: header.payload.signature
-        parts = jwt_token.split(".")
-        if len(parts) != 3:
-            logger.warning("Invalid JWT format, defaulting to 5 max positions")
-            return 5
-
-        # Decode payload (middle part) - add padding if needed
-        payload_b64 = parts[1]
-        # JWT uses base64url encoding, add padding
-        padding = 4 - len(payload_b64) % 4
-        if padding != 4:
-            payload_b64 += "=" * padding
-
-        payload_json = base64.urlsafe_b64decode(payload_b64)
-        payload = json.loads(payload_json)
-
-        limit = payload.get("websocket_symbols", 5)
-        logger.info(f"Parsed JWT: websocket_symbols={limit}, plan={payload.get('plan', 'unknown')}")
-        return int(limit)
-    except Exception as e:
-        logger.warning(f"Failed to parse JWT token: {e}, defaulting to 5 max positions")
-        return 5
+    from .jwt_utils import get_websocket_symbols_limit
+    return get_websocket_symbols_limit()
 
 
 # Maximum number of open positions across all strategies (0 = unlimited)
@@ -805,15 +779,21 @@ class TradingEngine:
             # Check if already subscribed via quote provider
             current_ws_subs = self.quote_provider.subscribed_tickers
             if ticker not in current_ws_subs:
-                self.quote_provider.subscribe_sync(ticker)
-                logger.info(f"[{ticker}] Added to WS subscriptions: {self.quote_provider.subscribed_tickers}")
-                if self._loop and self._loop.is_running():
-                    logger.info(f"Scheduling async subscribe for {ticker}")
-                    self._loop.call_soon_threadsafe(
-                        lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
-                    )
+                # Check if this subscription would exceed limits
+                if len(current_ws_subs) >= self.quote_provider.max_subscriptions:
+                    logger.warning(f"[{ticker}] Subscription queued - would exceed limit of {self.quote_provider.max_subscriptions} symbols (current: {current_ws_subs}). Will retry during reconciliation.")
+                    # Keep in strategy subscriptions for later retry during reconciliation
+                    # Don't return - let the strategy keep tracking this ticker
                 else:
-                    logger.warning(f"[{ticker}] Event loop not running - subscription queued (will send on WS connect)")
+                    self.quote_provider.subscribe_sync(ticker)
+                    logger.info(f"[{ticker}] Added to WS subscriptions: {self.quote_provider.subscribed_tickers}")
+                    if self._loop and self._loop.is_running():
+                        logger.info(f"Scheduling async subscribe for {ticker}")
+                        self._loop.call_soon_threadsafe(
+                            lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
+                        )
+                    else:
+                        logger.warning(f"[{ticker}] Event loop not running - subscription queued (will send on WS connect)")
             else:
                 logger.debug(f"[{ticker}] Already in WS subscriptions")
 
@@ -859,6 +839,9 @@ class TradingEngine:
                 # Fallback: at least remove from local tracking
                 logger.warning(f"[{ticker}] Event loop not running - using sync unsubscribe")
                 self.quote_provider.unsubscribe_sync(ticker)
+
+            # Try to fulfill any pending subscriptions now that a slot is freed
+            self._try_fulfill_pending_subscriptions()
 
     def _broadcast_status(self):
         """Broadcast current status to listeners and persist to file."""
@@ -914,47 +897,161 @@ class TradingEngine:
         self._reconcile_subscriptions()
 
     def _reconcile_subscriptions(self):
-        """Ensure WebSocket subscriptions match what we actually need.
+        """Ensure WebSocket subscriptions match what strategies actually need.
 
-        Catches any drift between what we think we're subscribed to vs
-        what tickers are actually needed by active trades/pending entries.
+        Handles oversubscription by prioritizing active trades over pending entries,
+        and fulfilling as many strategy requests as possible within limits.
         """
         if not self.quote_provider:
             return
 
-        # Calculate what we actually need
-        needed_tickers: set = set()
+        # What tickers do strategies want? (from strategy subscriptions)
+        wanted_tickers: set = set()
+        for strategy_subs in self._strategy_subscriptions.values():
+            wanted_tickers.update(strategy_subs)
+
+        # What tickers are actually needed for trading? (active + pending)
+        needed_for_trading: set = set()
+        active_trade_tickers = set()
+        pending_entry_tickers = set()
+
         for strategy_id, engine in self.strategies.items():
-            # Add tickers from pending entries
-            needed_tickers.update(engine.pending_entries.keys())
-            # Add tickers from active trades
-            needed_tickers.update(engine.active_trades.keys())
+            active_trade_tickers.update(engine.active_trades.keys())
+            pending_entry_tickers.update(engine.pending_entries.keys())
+            needed_for_trading.update(engine.active_trades.keys())
+            needed_for_trading.update(engine.pending_entries.keys())
 
         # What does the quote provider think it's subscribed to?
         current_subs = self.quote_provider.subscribed_tickers
 
-        # Find extras (subscribed but not needed)
-        extras = current_subs - needed_tickers
+        # Find extras (subscribed but not wanted by any strategy)
+        extras = current_subs - wanted_tickers
         if extras:
-            logger.warning(f"Subscription drift detected - unsubscribing from: {extras}")
+            logger.warning(f"Subscription cleanup - unsubscribing from unwanted tickers: {extras}")
             for ticker in extras:
                 if self._loop:
                     self._loop.call_soon_threadsafe(
                         lambda t=ticker: asyncio.create_task(self.quote_provider.unsubscribe(t))
                     )
 
-        # Find missing (needed but not subscribed)
-        missing = needed_tickers - current_subs
+        # Find missing (wanted but not subscribed)
+        missing = wanted_tickers - current_subs
         if missing:
-            logger.warning(f"Subscription drift detected - subscribing to: {missing}")
+            current_count = len(current_subs)
+            max_allowed = self.quote_provider.max_subscriptions
+            available_slots = max_allowed - current_count
+
+            if available_slots <= 0:
+                logger.warning(f"At subscription limit ({current_count}/{max_allowed}). {len(missing)} tickers wanted but cannot subscribe: {missing}")
+                return
+
+            # Prioritize subscriptions:
+            # 1. Active trades (highest priority - critical for position management)
+            # 2. Pending entries (medium priority - for new positions)
+            # 3. Other wanted tickers (lowest priority - general monitoring)
+            prioritized_missing = []
+
             for ticker in missing:
+                if ticker in active_trade_tickers:
+                    prioritized_missing.insert(0, ticker)  # Front of list (highest priority)
+                elif ticker in pending_entry_tickers:
+                    # Insert after active trades but before general wanted
+                    insert_pos = 0
+                    while insert_pos < len(prioritized_missing) and prioritized_missing[insert_pos] in active_trade_tickers:
+                        insert_pos += 1
+                    prioritized_missing.insert(insert_pos, ticker)
+                else:
+                    prioritized_missing.append(ticker)  # End of list (lowest priority)
+
+            # Subscribe to as many as we can within the limit
+            to_subscribe = prioritized_missing[:available_slots]
+
+            logger.info(f"Fulfilling {len(to_subscribe)}/{len(missing)} wanted subscriptions (prioritized): {to_subscribe}")
+
+            for ticker in to_subscribe:
                 if self._loop:
                     self._loop.call_soon_threadsafe(
                         lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
                     )
 
+            # Log what we couldn't subscribe to due to limits
+            skipped = len(missing) - len(to_subscribe)
+            if skipped > 0:
+                skipped_tickers = prioritized_missing[available_slots:]
+                active_skipped = [t for t in skipped_tickers if t in active_trade_tickers]
+                pending_skipped = [t for t in skipped_tickers if t in pending_entry_tickers]
+                other_skipped = [t for t in skipped_tickers if t not in active_trade_tickers and t not in pending_entry_tickers]
+
+                logger.warning(f"Oversubscribed - skipped {skipped} subscriptions due to {max_allowed} symbol limit:")
+                if active_skipped:
+                    logger.warning(f"  Active trades skipped: {active_skipped}")
+                if pending_skipped:
+                    logger.warning(f"  Pending entries skipped: {pending_skipped}")
+                if other_skipped:
+                    logger.warning(f"  Other subscriptions skipped: {other_skipped}")
+
         if not extras and not missing:
-            logger.debug(f"Subscriptions OK: {len(current_subs)} tickers")
+            logger.debug(f"Subscriptions OK: {len(current_subs)}/{self.quote_provider.max_subscriptions} tickers")
+
+        # Log oversubscription status
+        wanted_count = len(wanted_tickers)
+        subscribed_count = len(current_subs)
+        if wanted_count > subscribed_count:
+            logger.info(f"Oversubscribed: {wanted_count} tickers wanted, {subscribed_count}/{self.quote_provider.max_subscriptions} subscribed")
+
+    def _try_fulfill_pending_subscriptions(self):
+        """Try to subscribe to any wanted tickers that couldn't be subscribed due to limits.
+
+        Called when subscriptions are freed up (e.g., when strategies complete trades).
+        """
+        if not self.quote_provider:
+            return
+
+        wanted_tickers = set()
+        for strategy_subs in self._strategy_subscriptions.values():
+            wanted_tickers.update(strategy_subs)
+
+        current_subs = self.quote_provider.subscribed_tickers
+        missing = wanted_tickers - current_subs
+
+        if missing:
+            current_count = len(current_subs)
+            max_allowed = self.quote_provider.max_subscriptions
+            available_slots = max_allowed - current_count
+
+            if available_slots > 0:
+                logger.info(f"Trying to fulfill {min(len(missing), available_slots)} pending subscriptions from freed slots")
+
+                # Prioritize same way as reconciliation
+                active_trade_tickers = set()
+                pending_entry_tickers = set()
+
+                for strategy_id, engine in self.strategies.items():
+                    active_trade_tickers.update(engine.active_trades.keys())
+                    pending_entry_tickers.update(engine.pending_entries.keys())
+
+                prioritized_missing = []
+                for ticker in missing:
+                    if ticker in active_trade_tickers:
+                        prioritized_missing.insert(0, ticker)
+                    elif ticker in pending_entry_tickers:
+                        insert_pos = 0
+                        while insert_pos < len(prioritized_missing) and prioritized_missing[insert_pos] in active_trade_tickers:
+                            insert_pos += 1
+                        prioritized_missing.insert(insert_pos, ticker)
+                    else:
+                        prioritized_missing.append(ticker)
+
+                to_subscribe = prioritized_missing[:available_slots]
+
+                for ticker in to_subscribe:
+                    if self._loop:
+                        self._loop.call_soon_threadsafe(
+                            lambda t=ticker: asyncio.create_task(self.quote_provider.subscribe(t))
+                        )
+
+                if to_subscribe:
+                    logger.info(f"Fulfilled {len(to_subscribe)} pending subscriptions: {to_subscribe}")
 
     def get_status(self) -> dict:
         """Get current engine status with per-strategy breakdown."""
@@ -1189,6 +1286,20 @@ def enable_strategy(strategy_id: str) -> bool:
     return True
 
 
+def _exit_strategy_positions(trades, trader, context="log"):
+    """Helper to exit positions for trades. Context can be 'log' or 'ui'."""
+    results = []
+    for trade in trades:
+        try:
+            order = trader.sell(trade.ticker, trade.shares)
+            msg = f"Sold {trade.ticker}: {order.status}"
+            results.append((trade.ticker, msg, None))
+        except Exception as e:
+            msg = f"Failed to sell {trade.ticker}: {e}"
+            results.append((trade.ticker, None, msg))
+    return results
+
+
 def disable_strategy(strategy_id: str) -> bool:
     """Disable a strategy from live trading (hot-reload supported)."""
     global _trading_engine
@@ -1196,6 +1307,24 @@ def disable_strategy(strategy_id: str) -> bool:
     store = get_strategy_store()
     strategy = store.get_strategy(strategy_id)
     strategy_name = strategy.name if strategy else strategy_id
+
+    # Exit all positions for this strategy before disabling
+    if strategy and strategy.enabled:
+        logger.info(f"Exiting positions for strategy '{strategy_name}' before disabling...")
+        from .trading import get_trading_client
+        from .active_trade_store import get_active_trade_store
+
+        trader = get_trading_client(paper=_trading_engine.paper if _trading_engine else True)
+        active_store = get_active_trade_store()
+        active_trades = active_store.get_trades_for_strategy(strategy_id)
+
+        if active_trades:
+            results = _exit_strategy_positions(active_trades, trader, context="log")
+            for ticker, success_msg, error_msg in results:
+                if success_msg:
+                    logger.info(success_msg)
+                if error_msg:
+                    logger.error(error_msg)
 
     # Update database
     if not store.set_enabled(strategy_id, False):
