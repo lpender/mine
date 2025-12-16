@@ -1189,8 +1189,11 @@ def exit_all_positions(paper: bool = True) -> Dict[str, str]:
         ticker = pos.ticker
         shares = pos.shares
         try:
-            # Use current price estimate for limit order
-            price = pos.current_price if pos.current_price > 0 else pos.avg_entry_price
+            # Calculate current price from market_value, fall back to entry price
+            if pos.market_value > 0 and shares > 0:
+                price = pos.market_value / shares
+            else:
+                price = pos.avg_entry_price
             order = trader.sell(ticker, shares, limit_price=price)
             results[ticker] = f"sell order submitted ({order.status})"
             logger.info(f"[{ticker}] Submitted sell for {shares} shares @ ${price:.2f}")
