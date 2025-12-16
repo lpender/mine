@@ -278,7 +278,8 @@ class InsightSentryQuoteProvider:
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
         subs = []
         failed_tickers = []
-        for ticker in self._subscriptions:
+        # Copy to avoid "Set changed size during iteration" error
+        for ticker in list(self._subscriptions):
             # Look up the correct exchange code (e.g., "NASDAQ:AAPL" or "NYSE:GME")
             code = self.lookup_symbol_code(ticker)
             if not code:
