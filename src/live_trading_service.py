@@ -622,8 +622,13 @@ class TradingEngine:
 
             # Skip if there's already a sell order for this ticker
             if ticker in existing_sell_tickers:
-                logger.info(f"[{ticker}] Already has pending sell order, skipping")
+                logger.info(f"[{ticker}] Already has pending sell order, skipping new sell")
                 closed_count += 1  # Count as "being closed"
+                # Remove from active trades and unsubscribe (no need for quotes on pending sells)
+                trade = engine.active_trades.pop(ticker, None)
+                if trade:
+                    logger.info(f"[{ticker}] Removed from active_trades (pending sell at broker)")
+                self._on_unsubscribe(ticker, strategy_id)
                 continue
 
             trade = engine.active_trades.get(ticker)
