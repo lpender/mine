@@ -26,6 +26,7 @@ class StrategyConfig:
     price_min: float = 1.0
     price_max: float = 10.0
     sessions: List[str] = field(default_factory=lambda: ["premarket", "market"])
+    country_blacklist: List[str] = field(default_factory=list)  # e.g., ["CN", "IL"]
 
     # Entry rules
     consec_green_candles: int = 1
@@ -118,6 +119,7 @@ class StrategyConfig:
                 "price_min": self.price_min,
                 "price_max": self.price_max,
                 "sessions": self.sessions,
+                "country_blacklist": self.country_blacklist,
             },
             "entry": {
                 "consec_green_candles": self.consec_green_candles,
@@ -398,6 +400,11 @@ class StrategyEngine:
             if ann.price_threshold <= cfg.price_min or ann.price_threshold > cfg.price_max:
                 logger.debug(f"[{ann.ticker}] Filtered: price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}")
                 return False
+
+        # Country blacklist filter
+        if cfg.country_blacklist and ann.country in cfg.country_blacklist:
+            logger.debug(f"[{ann.ticker}] Filtered: country {ann.country} in blacklist {cfg.country_blacklist}")
+            return False
 
         return True
 
