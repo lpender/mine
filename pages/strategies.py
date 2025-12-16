@@ -120,6 +120,13 @@ with st.expander("Create New Strategy", expanded=False):
         with col2:
             price_max = st.number_input("Max Price ($)", value=10.0, min_value=0.0)
 
+        country_blacklist_str = st.text_input(
+            "Country Blacklist",
+            placeholder="e.g., CN, IL",
+            help="Comma-separated country codes to exclude (parsed from flag emojis)"
+        )
+        country_blacklist = [c.strip().upper() for c in country_blacklist_str.split(",") if c.strip()]
+
         st.subheader("Entry Rules")
         col1, col2 = st.columns(2)
         with col1:
@@ -176,6 +183,7 @@ with st.expander("Create New Strategy", expanded=False):
                     sessions=sessions,
                     price_min=price_min,
                     price_max=price_max,
+                    country_blacklist=country_blacklist,
                     consec_green_candles=consec_candles,
                     min_candle_volume=min_volume,
                     take_profit_pct=take_profit,
@@ -398,6 +406,8 @@ else:
                 st.write(f"Directions: {', '.join(cfg.directions)}")
                 st.write(f"Sessions: {', '.join(cfg.sessions)}")
                 st.write(f"Price: ${cfg.price_min} - ${cfg.price_max}")
+                if cfg.country_blacklist:
+                    st.write(f"Blacklist: {', '.join(cfg.country_blacklist)}")
 
             with col2:
                 st.markdown("**Entry**")
@@ -474,6 +484,7 @@ else:
                             sessions=cfg.sessions,
                             price_min=cfg.price_min,
                             price_max=cfg.price_max,
+                            country_blacklist=cfg.country_blacklist,
                             consec_green_candles=cfg.consec_green_candles,
                             min_candle_volume=cfg.min_candle_volume,
                             take_profit_pct=cfg.take_profit_pct,
