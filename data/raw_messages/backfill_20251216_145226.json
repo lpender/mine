@@ -1,0 +1,906 @@
+{
+  "channel": "\ud83c\udf77-nuntio-std",
+  "messages": [
+    {
+      "id": "1158132609260458166-1450083972552851561",
+      "content": "06:15  \u2191  GLSI  < $19  \u00b7  1  ~  Float: 6.6 M  |  MC: 149 M  |  SI: 24.5%  |  High CTB",
+      "timestamp": "2025-12-15T11:16:00.314Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450084190765846578",
+      "content": "06:16  \u2191  GLSI  < $22  100%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 6.6 M  |  RVol: 25x  |  Vol: 19.2 k  |  SI: 24.5%  |  High CTB  |  PR",
+      "timestamp": "2025-12-15T11:16:52.340Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450084283250245799",
+      "content": "06:17  \u2191  GLSI  < $25  132%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 6.6 M  |  RVol: 45x  |  Vol: 28.0 k  |  SI: 24.5%  |  High CTB  |  PR",
+      "timestamp": "2025-12-15T11:17:14.390Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450087558460604522",
+      "content": "06:30  \u2191  KYTX  < $13  \u00b7  2  ~  Float: 21.9 M  |  MC: 461 M  |  SI: 16.1%",
+      "timestamp": "2025-12-15T11:30:15.261Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450087650617724981",
+      "content": "06:30  \u2191  KYTX  < $15  67%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 21.9 M  |  RVol: 40x  |  Vol: 179 k  |  SI: 16.1%  |  PR",
+      "timestamp": "2025-12-15T11:30:37.233Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450088619560800378",
+      "content": "06:34  \u2191  ALBT  < $2  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 3.8 M  |  RVol: 25x",
+      "timestamp": "2025-12-15T11:34:28.247Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450089345624051802",
+      "content": "06:37  \u2191  KYTX  < $13  38%  \u00b7  4  ~  :flag_us:  |  Float: 21.9 M  |  RVol: 100x  |  Vol: 434 k  |  SI: 16.1%  |  PR+",
+      "timestamp": "2025-12-15T11:37:21.354Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450092037784211680",
+      "content": "06:48  \u2197  IRBT  < $1  \u00b7  1  ~  Float: 29.8 M  |  MC: 24.0 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  -34.0% from 52W-Low",
+      "timestamp": "2025-12-15T11:48:03.215Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095100490154044",
+      "content": "07:00  \u2191  IMCC  < $3  \u00b7  1  NHOD  ~  :flag_il:  |  Float: 1.7 M  |  RVol: 2.9x  |  Theme:  Weed",
+      "timestamp": "2025-12-15T12:00:13.421Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095171365503021",
+      "content": "07:00  \u2191  IMNM  < $23  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 89.2 M  |  RVol: 14x  |  SI: 17.1%  |  PR",
+      "timestamp": "2025-12-15T12:00:30.319Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095276198068336",
+      "content": "07:00  \u2191  RDHL  < $2  \u00b7  1  ~  :flag_il:  |  Float: 4.0 M  |  RVol: 1.3x  |  High CTB  |  +31.1% from 52W-Low  |  PR",
+      "timestamp": "2025-12-15T12:00:55.313Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095292660711446",
+      "content": "07:00  \u2191  IMNM  < $26  31%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 89.2 M  |  RVol: 18x  |  Vol: 50.8 k  |  SI: 17.1%  |  PR",
+      "timestamp": "2025-12-15T12:00:59.238Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095470062862427",
+      "content": "07:01  \u2191  ARBB  < $10  \u00b7  1  NHOD  ~  :flag_sg:  |  Float: 1.3 M  |  RVol: 150x",
+      "timestamp": "2025-12-15T12:01:41.534Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095636882915409",
+      "content": "07:02  \u2191  RADX  < $6  \u00b7  1  |  MC: 39.7 M",
+      "timestamp": "2025-12-15T12:02:21.307Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095699860525150",
+      "content": "07:02  \u2191  OCG  < $.50c  64%  \u00b7  3  after-lull  ~  :flag_hk:  |  Float: 14.1 M  |  RVol: 8,100x  |  Vol: 34.2 M  |  High CTB  |  Theme:  NFT",
+      "timestamp": "2025-12-15T12:02:36.322Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095729069658193",
+      "content": "07:02  \u2191  RADX  < $7  60%  \u00b7  2  NHOD  ~  :flag_au:  |  RVol: 100x  |  Vol: 25.7 k  |  PR",
+      "timestamp": "2025-12-15T12:02:43.286Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450095875551527037",
+      "content": "07:03  \u2191  RADX  < $9  104%  \u00b7  3  NHOD  ~  :flag_au:  |  RVol: 450x  |  Vol: 118 k  |  PR",
+      "timestamp": "2025-12-15T12:03:18.210Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450096492374134898",
+      "content": "07:05  \u2191  RADX  < $11  137%  \u00b7  4  NHOD  ~  :flag_au:  |  RVol: 2,900x  |  Vol: 753 k  |  PR",
+      "timestamp": "2025-12-15T12:05:45.272Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450097579168894986",
+      "content": "07:10  \u2191  RADX  < $12  161%  \u00b7  5  NHOD  ~  :flag_au:  |  RVol: 6,600x  |  Vol: 1.7 M  |  PR",
+      "timestamp": "2025-12-15T12:10:04.384Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450097654582214796",
+      "content": "07:10  \u2191  IMNM  < $29  43%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 89.2 M  |  RVol: 60x  |  Vol: 185 k  |  SI: 17.1%  |  PR+",
+      "timestamp": "2025-12-15T12:10:22.364Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450097729668644875",
+      "content": "07:10  \u2191  RADX  < $14  210%  \u00b7  6  NHOD  ~  :flag_au:  |  RVol: 7,600x  |  Vol: 2.0 M  |  PR",
+      "timestamp": "2025-12-15T12:10:40.266Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450098120049299498",
+      "content": "07:12  \u2191  RADX  < $16  263%  \u00b7  7  NHOD  ~  :flag_au:  |  RVol: 9,500x  |  Vol: 2.5 M  |  PR",
+      "timestamp": "2025-12-15T12:12:13.340Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450098418734076026",
+      "content": "07:13  \u2191  RADX  < $19  322%  \u00b7  8  NHOD  ~  :flag_au:  |  RVol: 11,100x  |  Vol: 2.9 M  |  PR",
+      "timestamp": "2025-12-15T12:13:24.552Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450098602318758021",
+      "content": "07:14  \u2191  RADX  < $22  393%  \u00b7  9  NHOD  ~  :flag_au:  |  RVol: 12,300x  |  Vol: 3.3 M  |  PR",
+      "timestamp": "2025-12-15T12:14:08.322Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450098732132733021",
+      "content": "07:14  \u2191  RADX  < $25  482%  \u00b7  10  NHOD  ~  :flag_au:  |  RVol: 13,200x  |  Vol: 3.5 M  |  PR",
+      "timestamp": "2025-12-15T12:14:39.272Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450099810387623998",
+      "content": "07:18  \u2191  FGEN  < $11  \u00b7  1  ~  Float: 3.7 M  |  MC: 33.9 M",
+      "timestamp": "2025-12-15T12:18:56.348Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450100089052729486",
+      "content": "07:20  \u2197  IRBT  < $2  -72%  \u00b7  2  3 green bars 5m  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 50x  |  Vol: 12.5 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  -12.5% from 52W-Low  |  SEC",
+      "timestamp": "2025-12-15T12:20:02.787Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450100295546703903",
+      "content": "07:20  \u2191  IRBT  < $2  -68%  \u00b7  3  after-lull  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 60x  |  Vol: 13.1 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  -1.4% from 52W-Low  |  SEC",
+      "timestamp": "2025-12-15T12:20:52.019Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450100879402471575",
+      "content": "07:23  \u2191  MIST  < $4  \u00b7  1  NHOD  ~  :flag_ca:  |  Float: 81.0 M  |  RVol: 150x",
+      "timestamp": "2025-12-15T12:23:11.221Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450102645896249344",
+      "content": "07:30  \u2191  PFSA  < $.50c  \u00b7  1  ~  Float: 56.6 M  |  MC: 10.7 M",
+      "timestamp": "2025-12-15T12:30:12.386Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450102650061328496",
+      "content": "07:30  \u2191  QIPT  < $4  \u00b7  1  ~  :flag_us:  |  Float: 36.4 M  |  RVol: 300x  |  PR",
+      "timestamp": "2025-12-15T12:30:13.379Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450102704234827940",
+      "content": "07:30  \u2191  TLSA  < $2  \u00b7  1  NHOD  ~  :flag_gb:  |  Float: 55.3 M  |  RVol: 35x  |  PR",
+      "timestamp": "2025-12-15T12:30:26.295Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450102784291508285",
+      "content": "07:30  \u2191  MASK  < $.50c  \u00b7  1  ~  Float: 3.5 M  |  MC: 3.4 M  |  +37.2% from 52W-Low",
+      "timestamp": "2025-12-15T12:30:45.382Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450103182050070589",
+      "content": "07:32  \u2191  QIPT  < $4  37%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 36.4 M  |  RVol: 5,900x  |  Vol: 196 k  |  PR",
+      "timestamp": "2025-12-15T12:32:20.215Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450103610317738014",
+      "content": "07:34  \u2197  IRBT  < $2  -68%  \u00b7  4  3 green bars 1m  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 60x  |  Vol: 15.7 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  52W Low  |  SEC",
+      "timestamp": "2025-12-15T12:34:02.322Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450103719445397607",
+      "content": "07:34  \u2191  MASK  < $.50c  33%  \u00b7  2  NHOD  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 4.2x  |  Vol: 53.4 k  |  +44.5% from 52W-Low  |  PR",
+      "timestamp": "2025-12-15T12:34:28.340Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450103811632005192",
+      "content": "07:34  \u2191  MASK  < $.50c  57%  \u00b7  3  NHOD  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 11x  |  Vol: 140 k  |  PR",
+      "timestamp": "2025-12-15T12:34:50.319Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450104201572258004",
+      "content": "07:36  \u2191  MASK  < $1  83%  \u00b7  4  NHOD  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 100x  |  Vol: 1.4 M  |  PR",
+      "timestamp": "2025-12-15T12:36:23.288Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450104998238093365",
+      "content": "07:39  \u2191  MASK  < $1  113%  \u00b7  5  NHOD  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 375x  |  Vol: 4.7 M  |  PR",
+      "timestamp": "2025-12-15T12:39:33.228Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450105178509410316",
+      "content": "07:40  \u2191  MASK  < $1  147%  \u00b7  6  NHOD  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 475x  |  Vol: 6.1 M  |  PR",
+      "timestamp": "2025-12-15T12:40:16.208Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450105623478800386",
+      "content": "07:42  \u2197  IRBT  < $2  -62%  \u00b7  5  3 green bars 2m  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 70x  |  Vol: 18.0 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  +16.1% from 52W-Low  |  SEC",
+      "timestamp": "2025-12-15T12:42:02.297Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450107671784194080",
+      "content": "07:50  \u2191  HURA  < $2  \u00b7  1  ~  :flag_us:  |  Float: 36.2 M  |  RVol: 15x  |  +23.5% from 52W-Low",
+      "timestamp": "2025-12-15T12:50:10.651Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450111600504864830",
+      "content": "08:05  \u2191  ARBB  < $10  26%  \u00b7  2  NHOD  ~  :flag_sg:  |  Float: 1.3 M  |  RVol: 250x  |  Vol: 300 k",
+      "timestamp": "2025-12-15T13:05:47.331Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450111847880720469",
+      "content": "08:06  \u2191  ARBB  < $11  51%  \u00b7  3  NHOD  ~  :flag_sg:  |  Float: 1.3 M  |  RVol: 325x  |  Vol: 351 k",
+      "timestamp": "2025-12-15T13:06:46.310Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450113999378317372",
+      "content": "08:15  \u2191  HYPR  < $2  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 76.7 M  |  RVol: 4.3x  |  PR",
+      "timestamp": "2025-12-15T13:15:19.267Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450115192556883968",
+      "content": "08:20  \u2197  RADX  < $17  282%  \u00b7  11  3 green bars 1m  ~  :flag_au:  |  RVol: 23,600x  |  Vol: 12.1 M  |  PR+",
+      "timestamp": "2025-12-15T13:20:03.743Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450115504890052798",
+      "content": "08:21  \u2191  BNKK  < $5  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 139 M  |  RVol: 0.1x  |  PR  ~  1 for 35  R/S  Dec. 11",
+      "timestamp": "2025-12-15T13:21:18.209Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450117744602124329",
+      "content": "08:30  \u2191  OMEX  < $3  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 47.4 M  |  RVol: 0.3x  |  PR",
+      "timestamp": "2025-12-15T13:30:12.198Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450118458464407695",
+      "content": "08:33  \u2197  MASK  < $.50c  64%  \u00b7  7  3 green bars 1m  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 2,400x  |  Vol: 43.6 M  |  PR",
+      "timestamp": "2025-12-15T13:33:02.396Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450118512361214014",
+      "content": "08:33  \u2197  OPTT  < $.50c  \u00b7  1  ~  Float: 173 M  |  MC: 65.4 M  |  +39.2% from 52W-Low",
+      "timestamp": "2025-12-15T13:33:15.246Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450118517016887346",
+      "content": "08:33  \u2191  KYTX  < $13  39%  \u00b7  5  test  ~  :flag_us:  |  Float: 21.9 M  |  RVol: 325x  |  Vol: 2.7 M  |  SI: 16.1%  |  PR+\u25b6 KYTX",
+      "timestamp": "2025-12-15T13:33:16.356Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450118680066130074",
+      "content": "08:33  \u2191  MYSE  < $3  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 4.0 M  |  RVol: 7.4x  |  PR\u25b6 MYSE",
+      "timestamp": "2025-12-15T13:33:55.230Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450118978398584984",
+      "content": "08:35  \u2191  IMG  < $3  \u00b7  1  ~  :flag_hk:  |  Float: 10.9 M  |  RVol: 0.1x  |  +41.6% from 52W-Low  ~  1 for 20  R/S  Dec. 05\u25b6 IMG",
+      "timestamp": "2025-12-15T13:35:06.358Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450119673864519743",
+      "content": "08:37  \u2191  IMG  < $3  67%  \u00b7  2  NHOD  ~  :flag_hk:  |  Float: 10.9 M  |  RVol: 9.5x  |  Vol: 1.2 M  |  PR  ~  1 for 20  R/S  Dec. 05\u25b6 IMG",
+      "timestamp": "2025-12-15T13:37:52.170Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450120282336526346",
+      "content": "08:40  \u2191  VVPR  < $4  \u00b7  1  NHOD  ~  :flag_gb:  |  Float: 7.4 M  |  RVol: 1.4x  |  PR\u25b6 VVPR",
+      "timestamp": "2025-12-15T13:40:17.241Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450120455603355661",
+      "content": "08:40  \u2191  ALBT  < $2  13%  \u00b7  2  test  ~  :flag_us:  |  Float: 3.8 M  |  RVol: 1,300x  |  Vol: 655 k  |  +25.6% from 52W-Low  |  PR\u25b6 ALBT",
+      "timestamp": "2025-12-15T13:40:58.551Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450121171461738609",
+      "content": "08:43  \u2191  IMG  < $3  67%  \u00b7  3  ~  :flag_hk:  |  Float: 10.9 M  |  RVol: 40x  |  Vol: 5.1 M  |  PR  ~  1 for 20  R/S  Dec. 05\u25b6 IMG",
+      "timestamp": "2025-12-15T13:43:49.225Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450123868860842054",
+      "content": "08:54  \u2191  MASK  < $1  80%  \u00b7  8  test  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 2,600x  |  Vol: 49.5 M  |  PR\u25b6 MASK",
+      "timestamp": "2025-12-15T13:54:32.335Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450129355123458118",
+      "content": "09:16  \u2191  ZGM  < $4  \u00b7  1  ~  :flag_us:  |  RVol: 35x\u25b6 ZGM",
+      "timestamp": "2025-12-15T14:16:20.362Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450131271987626035",
+      "content": "09:23  \u2191  CMND  < $4  \u00b7  1  NHOD  ~  :flag_ca:  |  Float: 70.0 k  |  RVol: 0.0x  |  Reg SHO  |  +32.5% from 52W-Low  ~  1 for 40  R/S  Dec. 15\u25b6 CMND",
+      "timestamp": "2025-12-15T14:23:57.378Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450132945758191681",
+      "content": "09:30  \u2191  ARTV  < $5  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 400x\u25b6 ARTV",
+      "timestamp": "2025-12-15T14:30:36.436Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450133037969965168",
+      "content": "09:30  \u2191  URG  < $2  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 357 M  |  RVol: 30x\u25b6 URG",
+      "timestamp": "2025-12-15T14:30:58.421Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450133119771476110",
+      "content": "09:31  \u2191  SLI  < $6  \u00b7  1  NHOD  ~  :flag_ca:  |  Float: 212 M  |  RVol: 40x\u25b6 SLI",
+      "timestamp": "2025-12-15T14:31:17.924Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450133223031181322",
+      "content": "09:31  \u2191  ALM  < $8  \u00b7  1  ~  Float: 160 M  |  MC: 1.6 B\u25b6 ALM",
+      "timestamp": "2025-12-15T14:31:42.543Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450134323209441291",
+      "content": "09:36  \u2197  MASK  < $1  89%  \u00b7  9  3 green bars 3m  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 4,400x  |  Vol: 84.3 M  |  PR\u25b6 MASK",
+      "timestamp": "2025-12-15T14:36:04.846Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450135035964293242",
+      "content": "09:38  \u2197  AXTI  < $17  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 43.1 M  |  RVol: 7.8x\u25b6 AXTI",
+      "timestamp": "2025-12-15T14:38:54.780Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450135829472088177",
+      "content": "09:42  \u2197  IMNM  < $25  26%  \u00b7  4  3 green bars 3m  ~  :flag_us:  |  Float: 89.2 M  |  RVol: 60x  |  Vol: 3.4 M  |  SI: 17.1%  |  PR+\u25b6 IMNM",
+      "timestamp": "2025-12-15T14:42:03.967Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450136486254088274",
+      "content": "09:44  \u2191  ARTV  < $5  51%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 375x  |  Vol: 3.0 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T14:44:40.556Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450136831386587136",
+      "content": "09:46  \u2197  KYTX  < $14  51%  \u00b7  6  3 green bars 2m  ~  :flag_us:  |  Float: 21.9 M  |  RVol: 150x  |  Vol: 8.2 M  |  SI: 16.1%  |  PR+\u25b6 KYTX",
+      "timestamp": "2025-12-15T14:46:02.842Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450137336783568908",
+      "content": "09:48  \u2197  FBIO  < $4  \u00b7  1  4 green bars 3m  ~  :flag_us:  |  Float: 24.8 M  |  RVol: 20x  |  PR+\u25b6 FBIO",
+      "timestamp": "2025-12-15T14:48:03.338Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450137839290286191",
+      "content": "09:50  \u2197  AMCI  < $5  49%  \u00b7  3  3 green bars 10m  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 80x  |  Vol: 11.1 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T14:50:03.145Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450137972090343446",
+      "content": "09:50  \u2191  MASK  < $1  121%  \u00b7  10  NSH  ~  :flag_cn:  |  Float: 3.5 M  |  RVol: 3,600x  |  Vol: 109 M  |  PR\u25b6 MASK",
+      "timestamp": "2025-12-15T14:50:34.807Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450138273925169173",
+      "content": "09:51  \u2191  AMCI  < $5  60%  \u00b7  4  NSH  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 80x  |  Vol: 11.6 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T14:51:46.770Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450138717833531445",
+      "content": "09:53  \u2191  ARTV  < $6  53%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 350x  |  Vol: 4.4 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T14:53:32.606Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450139506610147393",
+      "content": "09:56  \u2191  JFBR  < $2  \u00b7  1  NHOD  ~  :flag_il:  |  Float: 490 k  |  RVol: 60x  |  High CTB  |  +45.9% from 52W-Low  |  PR\u25b6 JFBR",
+      "timestamp": "2025-12-15T14:56:40.665Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450140356007166083",
+      "content": "10:00  \u2197  MIST  < $3  \u00b7  2  ~  Float: 81.0 M  |  MC: 201 M\u25b6 MIST",
+      "timestamp": "2025-12-15T15:00:03.177Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450140881926619246",
+      "content": "10:02  \u2191  AMCI  < $6  104%  \u00b7  5  NSH  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 90x  |  Vol: 12.5 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:02:08.566Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450140974457295014",
+      "content": "10:02  \u2191  AMCI  < $7  132%  \u00b7  6  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 90x  |  Vol: 13.1 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:02:30.627Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450141671026327623",
+      "content": "10:05  \u2191  FEBO  < $2  \u00b7  1  NHOD  ~  :flag_hk:  |  Float: 3.1 M  |  RVol: 90x\u25b6 FEBO",
+      "timestamp": "2025-12-15T15:05:16.702Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450141984802209944",
+      "content": "10:06  \u2191  YCBD  < $2  29%  \u00b7  6  NSH  ~  :flag_us:  |  Float: 7.8 M  |  RVol: 200x  |  Vol: 28.6 M\u25b6 YCBD",
+      "timestamp": "2025-12-15T15:06:31.512Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450142601402384456",
+      "content": "10:08  \u2191  AMCI  < $7  139%  \u00b7  7  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 100x  |  Vol: 15.0 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:08:58.521Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450144003319136308",
+      "content": "10:14  \u2191  AMCI  < $8  174%  \u00b7  8  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 100x  |  Vol: 16.0 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:14:32.764Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450144128087359583",
+      "content": "10:15  \u2197  CGC  < $2  \u00b7  1  3 green bars 5m  ~  :flag_ca:  |  Float: 341 M  |  RVol: 13x  |  Theme:  Weed  |  PR+\u25b6 CGC",
+      "timestamp": "2025-12-15T15:15:02.511Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450144132357160970",
+      "content": "10:15  \u2197  MSOX  < $9  \u00b7  1  3 green bars 5m  ~  :flag_us:  |  RVol: 4.3x\u25b6 MSOX",
+      "timestamp": "2025-12-15T15:15:03.529Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450146560754323507",
+      "content": "10:24  \u2191  AMCI  < $8  189%  \u00b7  9  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 150x  |  Vol: 23.1 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:24:42.504Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450146645764472852",
+      "content": "10:25  \u2197  ARTV  < $5  41%  \u00b7  4  3 green bars 5m  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 275x  |  Vol: 7.5 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T15:25:02.772Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450147785004286084",
+      "content": "10:29  \u2191  NTCL  < $2  \u00b7  1  NHOD  ~  :flag_sg:  |  Float: 9.8 M  |  RVol: 60x\u25b6 NTCL",
+      "timestamp": "2025-12-15T15:29:34.388Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450149651171770398",
+      "content": "10:36  \u2191  VSA  < $.15c  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 39.1 M  |  RVol: 2.0x  |  Reg SHO  |  +26.4% from 52W-Low\u25b6 VSA",
+      "timestamp": "2025-12-15T15:36:59.317Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450149750283178116",
+      "content": "10:37  \u2191  AMCI  < $9  199%  \u00b7  10  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 200x  |  Vol: 31.0 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T15:37:22.947Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450151679788847397",
+      "content": "10:45  \u2197  MIST  < $3  3%  \u00b7  3  3 green bars 5m  ~  :flag_ca:  |  Float: 81.0 M  |  RVol: 60x  |  Vol: 46.1 M  |  SEC\u25b6 MIST",
+      "timestamp": "2025-12-15T15:45:02.977Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450152356368089242",
+      "content": "10:47  \u2191  ASTI  < $5  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 3.5 M  |  RVol: 35x  |  Theme:  Solar\u25b6 ASTI",
+      "timestamp": "2025-12-15T15:47:44.286Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450152936754642975",
+      "content": "10:50  \u2197  CCHH  < $2  \u00b7  1  3 green bars 1m  ~  :flag_my:  |  RVol: 30x  |  High CTB  |  -33.7% from 52W-Low\u25b6 CCHH",
+      "timestamp": "2025-12-15T15:50:02.661Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450153208776228976",
+      "content": "10:51  \u2191  ARTV  < $6  57%  \u00b7  5  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 250x  |  Vol: 10.2 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T15:51:07.516Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450157390468219026",
+      "content": "11:07  \u2191  ARTV  < $6  66%  \u00b7  6  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 275x  |  Vol: 13.9 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T16:07:44.509Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450157970989252709",
+      "content": "11:10  \u2197  LAZR  < $.50c  \u00b7  1  ~  Float: 65.4 M  |  MC: 47.5 M  |  SI: 32.5%  |  -38.7% from 52W-Low\u25b6 LAZR",
+      "timestamp": "2025-12-15T16:10:02.916Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450160487017877546",
+      "content": "11:20  \u2197  LAZR  < $.50c  -48%  \u00b7  2  3 green bars 1m  ~  :flag_us:  |  Float: 65.4 M  |  RVol: 7.1x  |  Vol: 13.5 M  |  SI: 32.5%  |  -40.1% from 52W-Low  |  PR\u25b6 LAZR",
+      "timestamp": "2025-12-15T16:20:02.784Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450163987386994770",
+      "content": "11:33  \u2191  AMCI  < $9  206%  \u00b7  11  test  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 275x  |  Vol: 49.0 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T16:33:57.337Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450164366258212885",
+      "content": "11:35  \u2191  NTCL  < $2  60%  \u00b7  2  ~  :flag_sg:  |  Float: 9.8 M  |  RVol: 175x  |  Vol: 3.8 M\u25b6 NTCL",
+      "timestamp": "2025-12-15T16:35:27.667Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450164855448404000",
+      "content": "11:37  \u2191  AMCI  < $9  218%  \u00b7  12  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 275x  |  Vol: 50.6 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T16:37:24.299Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450165480500232294",
+      "content": "11:39  \u2197  CLYM  < $5  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 62.4 M  |  RVol: 20x\u25b6 CLYM",
+      "timestamp": "2025-12-15T16:39:53.323Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450168140909510666",
+      "content": "11:50  \u2191  AMCI  < $10  238%  \u00b7  13  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 300x  |  Vol: 56.9 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T16:50:27.614Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450172250287505569",
+      "content": "12:06  \u2191  RADX  < $13  191%  \u00b7  12  after-lull  ~  :flag_au:  |  RVol: 1,800x  |  Vol: 28.8 M  |  PR+\u25b6 RADX",
+      "timestamp": "2025-12-15T17:06:47.366Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450173572894031972",
+      "content": "12:12  \u2197  LAZR  < $.50c  -57%  \u00b7  3  3 green bars 2m  ~  :flag_us:  |  Float: 65.4 M  |  RVol: 13x  |  Vol: 35.0 M  |  SI: 32.5%  |  -50.3% from 52W-Low  |  PR\u25b6 LAZR",
+      "timestamp": "2025-12-15T17:12:02.700Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450174758342623242",
+      "content": "12:16  \u2191  BEAT  < $3  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 27.4 M  |  RVol: 4.6x  |  High CTB\u25b6 BEAT",
+      "timestamp": "2025-12-15T17:16:45.333Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450176268908630137",
+      "content": "12:22  \u2191  HCHL  < $5  \u00b7  1  NHOD  ~  :flag_us:  |  RVol: 5.6x\u25b6 HCHL",
+      "timestamp": "2025-12-15T17:22:45.480Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450177447994855494",
+      "content": "12:27  \u2197  LAZR  < $.50c  -53%  \u00b7  4  after-lull  ~  :flag_us:  |  Float: 65.4 M  |  RVol: 13x  |  Vol: 38.8 M  |  SI: 32.5%  |  -45.9% from 52W-Low  |  PR+\u25b6 LAZR",
+      "timestamp": "2025-12-15T17:27:26.596Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450178103597989888",
+      "content": "12:30  \u2197  CLYM  < $5  56%  \u00b7  2  3 green bars 5m  ~  :flag_us:  |  Float: 62.4 M  |  RVol: 40x  |  Vol: 10.1 M\u25b6 CLYM",
+      "timestamp": "2025-12-15T17:30:02.904Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450182954579001405",
+      "content": "12:49  \u2191  BEAT  < $3  19%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 27.4 M  |  RVol: 7.6x  |  Vol: 12.7 M  |  High CTB\u25b6 BEAT",
+      "timestamp": "2025-12-15T17:49:19.468Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450185534361305102",
+      "content": "12:59  \u2191  FBLG  < $.50c  \u00b7  1  NSH  ~  :flag_us:  |  Float: 59.5 M  |  RVol: 5.4x  |  +29.1% from 52W-Low  |  PR\u25b6 FBLG",
+      "timestamp": "2025-12-15T17:59:34.536Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450186826710126796",
+      "content": "13:04  \u2191  KXIN  < $5  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 950 k  |  RVol: 0.1x  |  High CTB  |  Theme:  EV  ~  1 for 30  R/S  Dec. 01\u25b6 KXIN",
+      "timestamp": "2025-12-15T18:04:42.656Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450188293911347231",
+      "content": "13:10  \u2191  KXIN  < $6  69%  \u00b7  2  NHOD  ~  :flag_cn:  |  Float: 950 k  |  RVol: 0.2x  |  Vol: 294 k  |  High CTB  |  Theme:  EV  ~  1 for 30  R/S  Dec. 01\u25b6 KXIN",
+      "timestamp": "2025-12-15T18:10:32.464Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450193202152870078",
+      "content": "13:30  \u2197  AMCI  < $8  190%  \u00b7  14  3 green bars 5m  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 73.4 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T18:30:02.680Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450193206523334777",
+      "content": "13:30  \u2197  ARTV  < $6  78%  \u00b7  7  3 green bars 10m  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 200x  |  Vol: 25.5 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T18:30:03.722Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450195000292806807",
+      "content": "13:37  \u2191  AKAN  < $1  \u00b7  1  ~  :flag_gb:  |  Float: 730 k  |  RVol: 7.1x  |  SI: 16.8%  |  High CTB  |  +5.0% from 52W-Low  |  Theme:  Weed\u25b6 AKAN",
+      "timestamp": "2025-12-15T18:37:11.390Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450195806203285607",
+      "content": "13:40  \u2191  ARTV  < $7  87%  \u00b7  8  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 225x  |  Vol: 27.1 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T18:40:23.534Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450197430015365211",
+      "content": "13:46  \u2191  BEAT  < $3  12%  \u00b7  3  test  ~  :flag_us:  |  Float: 27.4 M  |  RVol: 10x  |  Vol: 21.2 M  |  High CTB\u25b6 BEAT",
+      "timestamp": "2025-12-15T18:46:50.681Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450202382326567025",
+      "content": "14:06  \u2191  KXIN  < $6  53%  \u00b7  3  test  ~  :flag_cn:  |  Float: 950 k  |  RVol: 0.7x  |  Vol: 1.3 M  |  High CTB  |  Theme:  EV  ~  1 for 30  R/S  Dec. 01\u25b6 KXIN",
+      "timestamp": "2025-12-15T19:06:31.404Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450212955634270352",
+      "content": "14:48  \u2191  AIXI  < $1  \u00b7  1  NHOD  ~  :flag_cn:  |  RVol: 2.2x  |  +8.0% from 52W-Low\u25b6 AIXI",
+      "timestamp": "2025-12-15T19:48:32.277Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450214265415012463",
+      "content": "14:53  \u2191  ARTV  < $7  100%  \u00b7  9  NHOD  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 225x  |  Vol: 35.0 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T19:53:44.553Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450219461654085708",
+      "content": "15:14  \u2191  MAAS  < $6  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 25.5 M  |  RVol: 14x\u25b6 MAAS",
+      "timestamp": "2025-12-15T20:14:23.433Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450225853601550458",
+      "content": "15:39  \u2191  MSOX  < $9  5%  \u00b7  2  ~  :flag_us:  |  RVol: 5.4x  |  Vol: 5.5 M\u25b6 MSOX",
+      "timestamp": "2025-12-15T20:39:47.392Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450226768865787945",
+      "content": "15:43  \u2191  MSOX  < $9  12%  \u00b7  3  NSH  ~  :flag_us:  |  RVol: 5.8x  |  Vol: 5.8 M\u25b6 MSOX",
+      "timestamp": "2025-12-15T20:43:25.608Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450228484873125970",
+      "content": "15:50  \u2197  IVP  < $.10c  \u00b7  1  3 green bars 5m  ~  :flag_us:  |  RVol: 2.6x  |  Reg SHO  |  +13.2% from 52W-Low\u25b6 IVP",
+      "timestamp": "2025-12-15T20:50:14.736Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450230762585460779",
+      "content": "15:59  \u2191  AMCI  < $8  176%  \u00b7  15  after-lull  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 89.4 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T20:59:17.785Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450231180749181030",
+      "content": "16:00  \u2191  IVP  < $.10c  20%  \u00b7  2  NHOD  ~  :flag_us:  |  RVol: 90x  |  Vol: 36.6 M  |  Reg SHO  |  +36.6% from 52W-Low\u25b6 IVP",
+      "timestamp": "2025-12-15T21:00:57.483Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450231651044163697",
+      "content": "16:02  \u2191  ARTV  < $7  103%  \u00b7  10  NSH  ~  :flag_us:  |  Float: 12.8 M  |  RVol: 1,700x  |  Vol: 45.4 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T21:02:49.610Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450231816211534036",
+      "content": "16:03  \u2191  SRXH  < $.50c  \u00b7  1  ~  Float: 14.9 M  |  MC: 8.1 M\u25b6 SRXH",
+      "timestamp": "2025-12-15T21:03:28.989Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450231983786430657",
+      "content": "16:04  \u2191  IVP  < $.10c  40%  \u00b7  3  NHOD  ~  :flag_us:  |  RVol: 100x  |  Vol: 39.4 M  |  Reg SHO\u25b6 IVP",
+      "timestamp": "2025-12-15T21:04:08.942Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450232293951012995",
+      "content": "16:05  \u2191  AMCI  < $9  202%  \u00b7  16  NSH  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 90.3 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T21:05:22.891Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450232385965654139",
+      "content": "16:05  \u2191  AMCI  < $11  277%  \u00b7  17  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 90.7 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T21:05:44.829Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450232645488349235",
+      "content": "16:06  \u2191  MEHA  < $.50c  \u00b7  1  ~  Float: 6.1 M  |  MC: 2.0 M  |  -4.0% from 52W-Low\u25b6 MEHA",
+      "timestamp": "2025-12-15T21:06:46.704Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450232691097206915",
+      "content": "16:06  \u2191  AMCI  < $12  334%  \u00b7  18  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 91.5 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T21:06:57.578Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450232782390431795",
+      "content": "16:07  \u2191  AMCI  < $15  417%  \u00b7  19  NHOD  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 91.8 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T21:07:19.344Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450235030113616015",
+      "content": "16:16  \u2197  RILY  < $5  \u00b7  1  ~  Float: 20.5 M  |  MC: 114 M  |  SI: 25.1%\u25b6 RILY",
+      "timestamp": "2025-12-15T21:16:15.243Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450235416384114881",
+      "content": "16:17  \u2191  CCHH  < $2  -50%  \u00b7  2  NSH  ~  :flag_my:  |  RVol: 200x  |  Vol: 5.6 M  |  High CTB  |  -16.5% from 52W-Low\u25b6 CCHH",
+      "timestamp": "2025-12-15T21:17:47.337Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450235898678608056",
+      "content": "16:19  \u2191  ARTV  < $8  \u00b7  11  ~  Float: 12.8 M  |  MC: 154 M\u25b6 ARTV",
+      "timestamp": "2025-12-15T21:19:42.325Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450236632451256412",
+      "content": "16:22  \u2191  HSCS  < $3  \u00b7  1  ~  Float: 2.6 M  |  MC: 6.5 M  |  +43.6% from 52W-Low\u25b6 HSCS",
+      "timestamp": "2025-12-15T21:22:37.270Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450236909518323882",
+      "content": "16:23  \u2191  HSCS  < $3  13%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 2.6 M  |  RVol: 1,000x  |  Vol: 77.8 k  |  +43.9% from 52W-Low  |  PR+\u25b6 HSCS",
+      "timestamp": "2025-12-15T21:23:43.328Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450237300473597964",
+      "content": "16:25  \u2191  ORGO  < $6  \u00b7  1  ~  Float: 58.9 M  |  MC: 609 M  |  SI: 18.4%\u25b6 ORGO",
+      "timestamp": "2025-12-15T21:25:16.539Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450238520193974282",
+      "content": "16:30  \u2197  IRBT  < $2  -76%  \u00b7  6  3 green bars 3m  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 90x  |  Vol: 102 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  -25.0% from 52W-Low  |  SEC\u25b6 IRBT",
+      "timestamp": "2025-12-15T21:30:07.343Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450238906132856873",
+      "content": "16:31  \u2191  ELPW  < $.50c  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 15.0 M  |  RVol: 4.2x  |  +29.4% from 52W-Low\u25b6 ELPW",
+      "timestamp": "2025-12-15T21:31:39.358Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450239837302165566",
+      "content": "16:35  \u2191  VERO  < $3  \u00b7  1  ~  Float: 1.6 M  |  MC: 3.1 M  |  +23.0% from 52W-Low\u25b6 VERO",
+      "timestamp": "2025-12-15T21:35:21.366Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450241381162418269",
+      "content": "16:41  \u2191  VERO  < $3  20%  \u00b7  2  NHOD  ~  :flag_ca:  |  Float: 1.6 M  |  RVol: 950x  |  Vol: 535 k  |  +35.8% from 52W-Low  |  SEC\u25b6 VERO",
+      "timestamp": "2025-12-15T21:41:29.451Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450242462713905253",
+      "content": "16:45  \u2191  IRBT  < $2  -72%  \u00b7  7  ~  :flag_us:  |  Float: 29.8 M  |  RVol: 70x  |  Vol: 103 M  |  Reg SHO  |  SI: 47.4%  |  High CTB  |  -14.3% from 52W-Low  |  SEC\u25b6 IRBT",
+      "timestamp": "2025-12-15T21:45:47.313Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450243171630977095",
+      "content": "16:48  \u2191  VERO  < $3  22%  \u00b7  3  NHOD  ~  :flag_ca:  |  Float: 1.6 M  |  RVol: 1,900x  |  Vol: 1.2 M  |  +38.2% from 52W-Low  |  SEC\u25b6 VERO",
+      "timestamp": "2025-12-15T21:48:36.332Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450244869762056324",
+      "content": "16:55  \u2191  IVP  < $.10c  45%  \u00b7  4  after-lull  ~  :flag_us:  |  RVol: 70x  |  Vol: 68.3 M  |  Reg SHO\u25b6 IVP",
+      "timestamp": "2025-12-15T21:55:21.198Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450245042177442095",
+      "content": "16:56  \u2197  AMCI  < $15  427%  \u00b7  20  3 green bars 2m  ~  :flag_us:  |  Float: 1.4 M  |  RVol: 325x  |  Vol: 98.4 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-15T21:56:02.305Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450246426205360252",
+      "content": "17:01  \u2191  VERO  < $3  25%  \u00b7  4  ~  :flag_ca:  |  Float: 1.6 M  |  RVol: 3,700x  |  Vol: 2.8 M  |  +41.8% from 52W-Low  |  SEC\u25b6 VERO",
+      "timestamp": "2025-12-15T22:01:32.283Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450251392777322671",
+      "content": "17:21  \u2191  RILY  < $6  26%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 20.5 M  |  RVol: 1,100x  |  Vol: 1.9 M  |  SI: 25.1%  |  PR+\u25b6 RILY",
+      "timestamp": "2025-12-15T22:21:16.406Z",
+      "author": "NuntioBotAPP"
+    },
+    {
+      "id": "1158132609260458166-1450251564337074227",
+      "content": "17:21  \u2191  NAMI  < $2  \u00b7  1  |  MC: 56.1 M\u25b6 NAMI",
+      "timestamp": "2025-12-15T22:21:57.309Z",
+      "author": "NuntioBotAPP"
+    }
+  ],
+  "sent_at": "2025-12-16T19:52:26.753Z"
+}

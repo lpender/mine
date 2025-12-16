@@ -127,6 +127,9 @@ class IBProvider(OHLCVDataProvider):
                 bar_time = bar.date
                 if isinstance(bar_time, str):
                     bar_time = datetime.strptime(bar_time, "%Y%m%d  %H:%M:%S")
+                # Strip timezone info for comparison with naive datetimes
+                if hasattr(bar_time, 'tzinfo') and bar_time.tzinfo is not None:
+                    bar_time = bar_time.replace(tzinfo=None)
 
                 if start <= bar_time <= end:
                     result.append(OHLCVBar(
