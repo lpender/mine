@@ -547,7 +547,56 @@ class TradingEngine:
                     engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
                 return
 
-        logger.warning(f"[{ticker}] Fill for unknown order {order_id} - no strategy owns it")
+        # Fallback: for sell fills, try to find the position in the database
+        if side == "sell":
+            logger.warning(f"[{ticker}] Fill for unknown sell order {order_id} - checking database for position")
+            from src.active_trade_store import get_active_trade_store
+            store = get_active_trade_store()
+
+            # Find which strategy had this position
+            for strategy_id, engine in self.strategies.items():
+                trade = store.get_trade(ticker, strategy_id)
+                if trade:
+                    logger.info(f"[{ticker}] Found position in DB for strategy {strategy_id[:8]} - completing trade")
+                    # Create a minimal completed trade record
+                    return_pct = ((filled_price - trade.entry_price) / trade.entry_price) * 100
+                    pnl = (filled_price - trade.entry_price) * trade.shares
+
+                    # Record to trade history
+                    try:
+                        from src.trade_history import get_trade_history_client
+                        trade_record = {
+                            "ticker": ticker,
+                            "entry_price": trade.entry_price,
+                            "exit_price": filled_price,
+                            "entry_time": trade.entry_time,
+                            "exit_time": timestamp,
+                            "shares": trade.shares,
+                            "exit_reason": "filled_after_restart",
+                            "return_pct": return_pct,
+                            "pnl": pnl,
+                            "strategy_params": {},
+                        }
+                        get_trade_history_client().save_trade(
+                            trade=trade_record,
+                            paper=self.paper,
+                            strategy_id=strategy_id,
+                            strategy_name=trade.strategy_name,
+                        )
+                        logger.info(f"[{ticker}] ✅ Trade recorded: {return_pct:+.2f}% (${pnl:+.2f})")
+                    except Exception as e:
+                        logger.error(f"[{ticker}] Failed to record trade: {e}")
+
+                    # Remove from database
+                    store.delete_trade(ticker, strategy_id)
+
+                    # Unsubscribe
+                    self._on_unsubscribe(ticker, strategy_id)
+                    return
+
+            logger.warning(f"[{ticker}] No position found in database for any strategy")
+        else:
+            logger.warning(f"[{ticker}] Fill for unknown order {order_id} - no strategy owns it")
 
     def _on_order_canceled(self, order_id: str, ticker: str, side: str):
         """Handle order cancellation from Alpaca stream."""

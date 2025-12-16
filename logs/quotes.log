@@ -16858,3 +16858,424 @@
 06:30:16 [ASNS] QUOTE: $1.9050 vol=155 | filter: $0.00-$100.00
 06:30:16 [ASNS] CANDLE BUILDING: RED | Vol: 5,121 / 1,000 (512%) | O=1.92 C=1.91
 06:30:16 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:27 [ASNS] QUOTE: $1.9050 vol=155 | filter: $0.00-$100.00
+06:30:27 [ASNS] CANDLE BUILDING: RED | Vol: 5,276 / 1,000 (528%) | O=1.92 C=1.91
+06:30:27 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:27 [ASNS] QUOTE: $1.9100 vol=127 | filter: $0.00-$100.00
+06:30:27 [ASNS] CANDLE BUILDING: RED | Vol: 5,403 / 1,000 (540%) | O=1.92 C=1.91
+06:30:27 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:28 [ASNS] QUOTE: $1.9100 vol=392 | filter: $0.00-$100.00
+06:30:28 [ASNS] CANDLE BUILDING: RED | Vol: 5,795 / 1,000 (580%) | O=1.92 C=1.91
+06:30:28 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:28 [ASNS] QUOTE: $1.9100 vol=392 | filter: $0.00-$100.00
+06:30:28 [ASNS] CANDLE BUILDING: RED | Vol: 6,187 / 1,000 (619%) | O=1.92 C=1.91
+06:30:28 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:28 [ASNS] QUOTE: $1.9100 vol=100 | filter: $0.00-$100.00
+06:30:28 [ASNS] CANDLE BUILDING: RED | Vol: 6,287 / 1,000 (629%) | O=1.92 C=1.91
+06:30:28 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:29 [ASNS] QUOTE: $1.9100 vol=837 | filter: $0.00-$100.00
+06:30:29 [ASNS] CANDLE BUILDING: RED | Vol: 7,124 / 1,000 (712%) | O=1.92 C=1.91
+06:30:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:29 [ASNS] QUOTE: $1.9100 vol=837 | filter: $0.00-$100.00
+06:30:29 [ASNS] CANDLE BUILDING: RED | Vol: 7,961 / 1,000 (796%) | O=1.92 C=1.91
+06:30:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:29 [ASNS] QUOTE: $1.9100 vol=100 | filter: $0.00-$100.00
+06:30:29 [ASNS] CANDLE BUILDING: RED | Vol: 8,061 / 1,000 (806%) | O=1.92 C=1.91
+06:30:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:30 [ASNS] QUOTE: $1.9100 vol=500 | filter: $0.00-$100.00
+06:30:30 [ASNS] CANDLE BUILDING: RED | Vol: 8,561 / 1,000 (856%) | O=1.92 C=1.91
+06:30:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:30 [ASNS] QUOTE: $1.9100 vol=500 | filter: $0.00-$100.00
+06:30:30 [ASNS] CANDLE BUILDING: RED | Vol: 9,061 / 1,000 (906%) | O=1.92 C=1.91
+06:30:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:30 [ASNS] QUOTE: $1.9100 vol=100 | filter: $0.00-$100.00
+06:30:30 [ASNS] CANDLE BUILDING: RED | Vol: 9,161 / 1,000 (916%) | O=1.92 C=1.91
+06:30:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:32 [ASNS] QUOTE: $1.9100 vol=100 | filter: $0.00-$100.00
+06:30:32 [ASNS] CANDLE BUILDING: RED | Vol: 9,261 / 1,000 (926%) | O=1.92 C=1.91
+06:30:32 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:32 [ASNS] QUOTE: $1.9000 vol=862 | filter: $0.00-$100.00
+06:30:32 [ASNS] CANDLE BUILDING: RED | Vol: 10,123 / 1,000 (1012%) | O=1.92 C=1.90
+06:30:32 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:32 [ASNS] QUOTE: $1.9000 vol=862 | filter: $0.00-$100.00
+06:30:32 [ASNS] CANDLE BUILDING: RED | Vol: 10,985 / 1,000 (1098%) | O=1.92 C=1.90
+06:30:32 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:32 [ASNS] QUOTE: $1.9050 vol=173 | filter: $0.00-$100.00
+06:30:32 [ASNS] CANDLE BUILDING: RED | Vol: 11,158 / 1,000 (1116%) | O=1.92 C=1.91
+06:30:32 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:33 [ASNS] QUOTE: $1.9000 vol=1,623 | filter: $0.00-$100.00
+06:30:33 [ASNS] CANDLE BUILDING: RED | Vol: 12,781 / 1,000 (1278%) | O=1.92 C=1.90
+06:30:33 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:33 [ASNS] QUOTE: $1.9000 vol=1,623 | filter: $0.00-$100.00
+06:30:33 [ASNS] CANDLE BUILDING: RED | Vol: 14,404 / 1,000 (1440%) | O=1.92 C=1.90
+06:30:33 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:33 [ASNS] QUOTE: $1.9100 vol=100 | filter: $0.00-$100.00
+06:30:33 [ASNS] CANDLE BUILDING: RED | Vol: 14,504 / 1,000 (1450%) | O=1.92 C=1.91
+06:30:33 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:34 [ASNS] QUOTE: $1.9000 vol=1,300 | filter: $0.00-$100.00
+06:30:34 [ASNS] CANDLE BUILDING: RED | Vol: 15,804 / 1,000 (1580%) | O=1.92 C=1.90
+06:30:34 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:34 [ASNS] QUOTE: $1.9000 vol=2,331 | filter: $0.00-$100.00
+06:30:34 [ASNS] CANDLE BUILDING: RED | Vol: 18,135 / 1,000 (1814%) | O=1.92 C=1.90
+06:30:34 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:34 [ASNS] QUOTE: $1.9000 vol=2,331 | filter: $0.00-$100.00
+06:30:34 [ASNS] CANDLE BUILDING: RED | Vol: 20,466 / 1,000 (2047%) | O=1.92 C=1.90
+06:30:34 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:34 [ASNS] QUOTE: $1.9000 vol=200 | filter: $0.00-$100.00
+06:30:34 [ASNS] CANDLE BUILDING: RED | Vol: 20,666 / 1,000 (2067%) | O=1.92 C=1.90
+06:30:34 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:35 [ASNS] QUOTE: $1.8100 vol=5,238 | filter: $0.00-$100.00
+06:30:35 [ASNS] CANDLE BUILDING: RED | Vol: 25,904 / 1,000 (2590%) | O=1.92 C=1.81
+06:30:35 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:36 [ASNS] QUOTE: $1.8100 vol=5,238 | filter: $0.00-$100.00
+06:30:36 [ASNS] CANDLE BUILDING: RED | Vol: 31,142 / 1,000 (3114%) | O=1.92 C=1.81
+06:30:36 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:36 [ASNS] QUOTE: $1.8050 vol=100 | filter: $0.00-$100.00
+06:30:36 [ASNS] CANDLE BUILDING: RED | Vol: 31,242 / 1,000 (3124%) | O=1.92 C=1.80
+06:30:36 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:37 [ASNS] QUOTE: $1.8100 vol=1,515 | filter: $0.00-$100.00
+06:30:37 [ASNS] CANDLE BUILDING: RED | Vol: 32,757 / 1,000 (3276%) | O=1.92 C=1.81
+06:30:37 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:37 [ASNS] QUOTE: $1.8100 vol=1,515 | filter: $0.00-$100.00
+06:30:37 [ASNS] CANDLE BUILDING: RED | Vol: 34,272 / 1,000 (3427%) | O=1.92 C=1.81
+06:30:37 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:37 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:30:37 [ASNS] CANDLE BUILDING: RED | Vol: 34,372 / 1,000 (3437%) | O=1.92 C=1.81
+06:30:37 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:38 [ASNS] QUOTE: $1.8100 vol=200 | filter: $0.00-$100.00
+06:30:38 [ASNS] CANDLE BUILDING: RED | Vol: 34,572 / 1,000 (3457%) | O=1.92 C=1.81
+06:30:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:38 [ASNS] QUOTE: $1.8100 vol=200 | filter: $0.00-$100.00
+06:30:38 [ASNS] CANDLE BUILDING: RED | Vol: 34,772 / 1,000 (3477%) | O=1.92 C=1.81
+06:30:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:38 [ASNS] QUOTE: $1.8100 vol=250 | filter: $0.00-$100.00
+06:30:38 [ASNS] CANDLE BUILDING: RED | Vol: 35,022 / 1,000 (3502%) | O=1.92 C=1.81
+06:30:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:39 [ASNS] QUOTE: $1.8100 vol=250 | filter: $0.00-$100.00
+06:30:39 [ASNS] CANDLE BUILDING: RED | Vol: 35,272 / 1,000 (3527%) | O=1.92 C=1.81
+06:30:39 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:39 [ASNS] QUOTE: $1.8400 vol=200 | filter: $0.00-$100.00
+06:30:39 [ASNS] CANDLE BUILDING: RED | Vol: 35,472 / 1,000 (3547%) | O=1.92 C=1.84
+06:30:39 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:41 [ASNS] QUOTE: $1.8100 vol=500 | filter: $0.00-$100.00
+06:30:41 [ASNS] CANDLE BUILDING: RED | Vol: 35,972 / 1,000 (3597%) | O=1.92 C=1.81
+06:30:41 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:42 [ASNS] QUOTE: $1.8100 vol=500 | filter: $0.00-$100.00
+06:30:42 [ASNS] CANDLE BUILDING: RED | Vol: 36,472 / 1,000 (3647%) | O=1.92 C=1.81
+06:30:42 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:42 [ASNS] QUOTE: $1.8400 vol=285 | filter: $0.00-$100.00
+06:30:42 [ASNS] CANDLE BUILDING: RED | Vol: 36,757 / 1,000 (3676%) | O=1.92 C=1.84
+06:30:42 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:43 [ASNS] QUOTE: $1.8400 vol=285 | filter: $0.00-$100.00
+06:30:43 [ASNS] CANDLE BUILDING: RED | Vol: 37,042 / 1,000 (3704%) | O=1.92 C=1.84
+06:30:43 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:43 [ASNS] QUOTE: $1.7900 vol=100 | filter: $0.00-$100.00
+06:30:43 [ASNS] CANDLE BUILDING: RED | Vol: 37,142 / 1,000 (3714%) | O=1.92 C=1.79
+06:30:43 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:44 [ASNS] QUOTE: $1.7900 vol=200 | filter: $0.00-$100.00
+06:30:44 [ASNS] CANDLE BUILDING: RED | Vol: 37,342 / 1,000 (3734%) | O=1.92 C=1.79
+06:30:44 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:44 [ASNS] QUOTE: $1.7900 vol=200 | filter: $0.00-$100.00
+06:30:44 [ASNS] CANDLE BUILDING: RED | Vol: 37,542 / 1,000 (3754%) | O=1.92 C=1.79
+06:30:44 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:44 [ASNS] QUOTE: $1.7900 vol=102 | filter: $0.00-$100.00
+06:30:44 [ASNS] CANDLE BUILDING: RED | Vol: 37,644 / 1,000 (3764%) | O=1.92 C=1.79
+06:30:44 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:47 [ASNS] QUOTE: $1.7900 vol=102 | filter: $0.00-$100.00
+06:30:47 [ASNS] CANDLE BUILDING: RED | Vol: 37,746 / 1,000 (3775%) | O=1.92 C=1.79
+06:30:47 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:47 [ASNS] QUOTE: $1.8200 vol=100 | filter: $0.00-$100.00
+06:30:47 [ASNS] CANDLE BUILDING: RED | Vol: 37,846 / 1,000 (3785%) | O=1.92 C=1.82
+06:30:47 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:48 [ASNS] QUOTE: $1.8200 vol=100 | filter: $0.00-$100.00
+06:30:48 [ASNS] CANDLE BUILDING: RED | Vol: 37,946 / 1,000 (3795%) | O=1.92 C=1.82
+06:30:48 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:48 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:30:48 [ASNS] CANDLE BUILDING: RED | Vol: 38,046 / 1,000 (3805%) | O=1.92 C=1.81
+06:30:48 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:49 [ASNS] QUOTE: $1.8000 vol=283 | filter: $0.00-$100.00
+06:30:49 [ASNS] CANDLE BUILDING: RED | Vol: 38,329 / 1,000 (3833%) | O=1.92 C=1.80
+06:30:49 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:50 [ASNS] QUOTE: $1.8000 vol=283 | filter: $0.00-$100.00
+06:30:50 [ASNS] CANDLE BUILDING: RED | Vol: 38,612 / 1,000 (3861%) | O=1.92 C=1.80
+06:30:50 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:50 [ASNS] QUOTE: $1.7900 vol=200 | filter: $0.00-$100.00
+06:30:50 [ASNS] CANDLE BUILDING: RED | Vol: 38,812 / 1,000 (3881%) | O=1.92 C=1.79
+06:30:50 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:51 [ASNS] QUOTE: $1.8000 vol=700 | filter: $0.00-$100.00
+06:30:51 [ASNS] CANDLE BUILDING: RED | Vol: 39,512 / 1,000 (3951%) | O=1.92 C=1.80
+06:30:51 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:54 [ASNS] QUOTE: $1.8000 vol=700 | filter: $0.00-$100.00
+06:30:54 [ASNS] CANDLE BUILDING: RED | Vol: 40,212 / 1,000 (4021%) | O=1.92 C=1.80
+06:30:54 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:30:54 [ASNS] QUOTE: $1.8000 vol=100 | filter: $0.00-$100.00
+06:30:54 [ASNS] CANDLE BUILDING: RED | Vol: 40,312 / 1,000 (4031%) | O=1.92 C=1.80
+06:30:54 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:00 [ASNS] QUOTE: $1.8000 vol=100 | filter: $0.00-$100.00
+06:31:00 [ASNS] CANDLE BUILDING: RED | Vol: 40,412 / 1,000 (4041%) | O=1.92 C=1.80
+06:31:00 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 18,340 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:00 [ASNS] QUOTE: $1.8200 vol=203 | filter: $0.00-$100.00
+06:31:00 
+06:31:00 [ASNS] ━━━ CANDLE CLOSED ━━━
+06:31:00 [ASNS] RED candle | O=1.92 H=1.92 L=1.79 C=1.80
+06:31:00 [ASNS] Volume: 40,412 >=✓ 1,000 threshold
+06:31:00 [ASNS] Qualifies for entry: NO ✗
+06:31:00 
+06:31:00 [ASNS] CANDLE BUILDING: RED | Vol: 203 / 1,000 (20%) | O=1.82 C=1.82
+06:31:00 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:02 [ASNS] QUOTE: $1.8400 vol=403 | filter: $0.00-$100.00
+06:31:02 [ASNS] CANDLE BUILDING: GREEN | Vol: 606 / 1,000 (61%) | O=1.82 C=1.84
+06:31:02 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:05 [ASNS] QUOTE: $1.8400 vol=403 | filter: $0.00-$100.00
+06:31:05 [ASNS] CANDLE BUILDING: GREEN | Vol: 1,009 / 1,000 (101%) | O=1.82 C=1.84
+06:31:05 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:05 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:31:05 [ASNS] CANDLE BUILDING: RED | Vol: 1,109 / 1,000 (111%) | O=1.82 C=1.81
+06:31:05 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:12 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:31:12 [ASNS] CANDLE BUILDING: RED | Vol: 1,209 / 1,000 (121%) | O=1.82 C=1.81
+06:31:12 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:12 [ASNS] QUOTE: $1.8100 vol=102 | filter: $0.00-$100.00
+06:31:12 [ASNS] CANDLE BUILDING: RED | Vol: 1,311 / 1,000 (131%) | O=1.82 C=1.81
+06:31:12 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:15 [ASNS] QUOTE: $1.8100 vol=102 | filter: $0.00-$100.00
+06:31:15 [ASNS] CANDLE BUILDING: RED | Vol: 1,413 / 1,000 (141%) | O=1.82 C=1.81
+06:31:15 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:15 [ASNS] QUOTE: $1.8300 vol=100 | filter: $0.00-$100.00
+06:31:15 [ASNS] CANDLE BUILDING: GREEN | Vol: 1,513 / 1,000 (151%) | O=1.82 C=1.83
+06:31:15 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:16 [ASNS] QUOTE: $1.8700 vol=416 | filter: $0.00-$100.00
+06:31:16 [ASNS] CANDLE BUILDING: GREEN | Vol: 1,929 / 1,000 (193%) | O=1.82 C=1.87
+06:31:16 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:22 [ASNS] QUOTE: $1.8700 vol=416 | filter: $0.00-$100.00
+06:31:22 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,345 / 1,000 (235%) | O=1.82 C=1.87
+06:31:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:22 [ASNS] QUOTE: $1.8300 vol=340 | filter: $0.00-$100.00
+06:31:22 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,685 / 1,000 (268%) | O=1.82 C=1.83
+06:31:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:25 [ASNS] QUOTE: $1.8300 vol=340 | filter: $0.00-$100.00
+06:31:25 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,025 / 1,000 (302%) | O=1.82 C=1.83
+06:31:25 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:25 [ASNS] QUOTE: $1.8250 vol=100 | filter: $0.00-$100.00
+06:31:25 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,125 / 1,000 (312%) | O=1.82 C=1.82
+06:31:25 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:26 [ASNS] QUOTE: $1.8300 vol=200 | filter: $0.00-$100.00
+06:31:26 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,325 / 1,000 (332%) | O=1.82 C=1.83
+06:31:26 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:28 [ASNS] QUOTE: $1.8300 vol=200 | filter: $0.00-$100.00
+06:31:28 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,525 / 1,000 (352%) | O=1.82 C=1.83
+06:31:28 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:28 [ASNS] QUOTE: $1.8250 vol=100 | filter: $0.00-$100.00
+06:31:28 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,625 / 1,000 (362%) | O=1.82 C=1.82
+06:31:28 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:33 [ASNS] QUOTE: $1.8250 vol=100 | filter: $0.00-$100.00
+06:31:33 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,725 / 1,000 (372%) | O=1.82 C=1.82
+06:31:33 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:33 [ASNS] QUOTE: $1.8300 vol=100 | filter: $0.00-$100.00
+06:31:33 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,825 / 1,000 (382%) | O=1.82 C=1.83
+06:31:33 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:36 [ASNS] QUOTE: $1.8300 vol=100 | filter: $0.00-$100.00
+06:31:36 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,925 / 1,000 (392%) | O=1.82 C=1.83
+06:31:36 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:36 [ASNS] QUOTE: $1.8300 vol=102 | filter: $0.00-$100.00
+06:31:36 [ASNS] CANDLE BUILDING: GREEN | Vol: 4,027 / 1,000 (403%) | O=1.82 C=1.83
+06:31:36 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:41 [ASNS] QUOTE: $1.8300 vol=102 | filter: $0.00-$100.00
+06:31:41 [ASNS] CANDLE BUILDING: GREEN | Vol: 4,129 / 1,000 (413%) | O=1.82 C=1.83
+06:31:41 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:41 [ASNS] QUOTE: $1.8400 vol=120 | filter: $0.00-$100.00
+06:31:41 [ASNS] CANDLE BUILDING: GREEN | Vol: 4,249 / 1,000 (425%) | O=1.82 C=1.84
+06:31:41 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:42 [ASNS] QUOTE: $1.8400 vol=220 | filter: $0.00-$100.00
+06:31:42 [ASNS] CANDLE BUILDING: GREEN | Vol: 4,469 / 1,000 (447%) | O=1.82 C=1.84
+06:31:42 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:47 [ASNS] QUOTE: $1.8400 vol=220 | filter: $0.00-$100.00
+06:31:47 [ASNS] CANDLE BUILDING: GREEN | Vol: 4,689 / 1,000 (469%) | O=1.82 C=1.84
+06:31:47 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:47 [ASNS] QUOTE: $1.8200 vol=104 | filter: $0.00-$100.00
+06:31:47 [ASNS] CANDLE BUILDING: RED | Vol: 4,793 / 1,000 (479%) | O=1.82 C=1.82
+06:31:47 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:51 [ASNS] QUOTE: $1.8200 vol=104 | filter: $0.00-$100.00
+06:31:51 [ASNS] CANDLE BUILDING: RED | Vol: 4,897 / 1,000 (490%) | O=1.82 C=1.82
+06:31:51 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:51 [ASNS] QUOTE: $1.8200 vol=1,000 | filter: $0.00-$100.00
+06:31:51 [ASNS] CANDLE BUILDING: RED | Vol: 5,897 / 1,000 (590%) | O=1.82 C=1.82
+06:31:51 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:53 [ASNS] QUOTE: $1.8200 vol=1,000 | filter: $0.00-$100.00
+06:31:53 [ASNS] CANDLE BUILDING: RED | Vol: 6,897 / 1,000 (690%) | O=1.82 C=1.82
+06:31:53 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:53 [ASNS] QUOTE: $1.8000 vol=559 | filter: $0.00-$100.00
+06:31:53 [ASNS] CANDLE BUILDING: RED | Vol: 7,456 / 1,000 (746%) | O=1.82 C=1.80
+06:31:53 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:55 [ASNS] QUOTE: $1.7900 vol=659 | filter: $0.00-$100.00
+06:31:55 [ASNS] CANDLE BUILDING: RED | Vol: 8,115 / 1,000 (812%) | O=1.82 C=1.79
+06:31:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:55 [ASNS] QUOTE: $1.7900 vol=659 | filter: $0.00-$100.00
+06:31:55 [ASNS] CANDLE BUILDING: RED | Vol: 8,774 / 1,000 (877%) | O=1.82 C=1.79
+06:31:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:55 [ASNS] QUOTE: $1.7900 vol=100 | filter: $0.00-$100.00
+06:31:55 [ASNS] CANDLE BUILDING: RED | Vol: 8,874 / 1,000 (887%) | O=1.82 C=1.79
+06:31:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:31:55 [ASNS] QUOTE: $1.7900 vol=1,200 | filter: $0.00-$100.00
+06:31:55 [ASNS] CANDLE BUILDING: RED | Vol: 10,074 / 1,000 (1007%) | O=1.82 C=1.79
+06:31:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:01 [ASNS] QUOTE: $1.7900 vol=1,200 | filter: $0.00-$100.00
+06:32:01 [ASNS] CANDLE BUILDING: RED | Vol: 11,274 / 1,000 (1127%) | O=1.82 C=1.79
+06:32:01 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 40,412 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:01 [ASNS] QUOTE: $1.8000 vol=108 | filter: $0.00-$100.00
+06:32:01 
+06:32:01 [ASNS] ━━━ CANDLE CLOSED ━━━
+06:32:01 [ASNS] RED candle | O=1.82 H=1.87 L=1.79 C=1.79
+06:32:01 [ASNS] Volume: 11,274 >=✓ 1,000 threshold
+06:32:01 [ASNS] Qualifies for entry: NO ✗
+06:32:01 
+06:32:01 [ASNS] CANDLE BUILDING: RED | Vol: 108 / 1,000 (11%) | O=1.80 C=1.80
+06:32:01 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:13 [ASNS] QUOTE: $1.8000 vol=108 | filter: $0.00-$100.00
+06:32:13 [ASNS] CANDLE BUILDING: RED | Vol: 216 / 1,000 (22%) | O=1.80 C=1.80
+06:32:13 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:13 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:32:13 [ASNS] CANDLE BUILDING: GREEN | Vol: 316 / 1,000 (32%) | O=1.80 C=1.81
+06:32:13 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:19 [ASNS] QUOTE: $1.8100 vol=100 | filter: $0.00-$100.00
+06:32:19 [ASNS] CANDLE BUILDING: GREEN | Vol: 416 / 1,000 (42%) | O=1.80 C=1.81
+06:32:19 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:19 [ASNS] QUOTE: $1.8000 vol=100 | filter: $0.00-$100.00
+06:32:19 [ASNS] CANDLE BUILDING: RED | Vol: 516 / 1,000 (52%) | O=1.80 C=1.80
+06:32:19 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:21 [ASNS] QUOTE: $1.7800 vol=671 | filter: $0.00-$100.00
+06:32:21 [ASNS] CANDLE BUILDING: RED | Vol: 1,187 / 1,000 (119%) | O=1.80 C=1.78
+06:32:21 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:22 [ASNS] QUOTE: $1.7800 vol=671 | filter: $0.00-$100.00
+06:32:22 [ASNS] CANDLE BUILDING: RED | Vol: 1,858 / 1,000 (186%) | O=1.80 C=1.78
+06:32:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:22 [ASNS] QUOTE: $1.8300 vol=450 | filter: $0.00-$100.00
+06:32:22 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,308 / 1,000 (231%) | O=1.80 C=1.83
+06:32:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:22 [ASNS] QUOTE: $1.8300 vol=450 | filter: $0.00-$100.00
+06:32:22 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,758 / 1,000 (276%) | O=1.80 C=1.83
+06:32:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:22 [ASNS] QUOTE: $1.7600 vol=200 | filter: $0.00-$100.00
+06:32:22 [ASNS] CANDLE BUILDING: RED | Vol: 2,958 / 1,000 (296%) | O=1.80 C=1.76
+06:32:22 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:23 [ASNS] QUOTE: $1.7600 vol=200 | filter: $0.00-$100.00
+06:32:23 [ASNS] CANDLE BUILDING: RED | Vol: 3,158 / 1,000 (316%) | O=1.80 C=1.76
+06:32:23 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:23 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:32:23 [ASNS] CANDLE BUILDING: RED | Vol: 3,258 / 1,000 (326%) | O=1.80 C=1.78
+06:32:23 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:29 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:32:29 [ASNS] CANDLE BUILDING: RED | Vol: 3,358 / 1,000 (336%) | O=1.80 C=1.78
+06:32:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:29 [ASNS] QUOTE: $1.7200 vol=143 | filter: $0.00-$100.00
+06:32:29 [ASNS] CANDLE BUILDING: RED | Vol: 3,501 / 1,000 (350%) | O=1.80 C=1.72
+06:32:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:30 [ASNS] QUOTE: $1.7200 vol=630 | filter: $0.00-$100.00
+06:32:30 [ASNS] CANDLE BUILDING: RED | Vol: 4,131 / 1,000 (413%) | O=1.80 C=1.72
+06:32:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:38 [ASNS] QUOTE: $1.7200 vol=630 | filter: $0.00-$100.00
+06:32:38 [ASNS] CANDLE BUILDING: RED | Vol: 4,761 / 1,000 (476%) | O=1.80 C=1.72
+06:32:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:38 [ASNS] QUOTE: $1.7400 vol=100 | filter: $0.00-$100.00
+06:32:38 [ASNS] CANDLE BUILDING: RED | Vol: 4,861 / 1,000 (486%) | O=1.80 C=1.74
+06:32:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:42 [ASNS] QUOTE: $1.7400 vol=100 | filter: $0.00-$100.00
+06:32:42 [ASNS] CANDLE BUILDING: RED | Vol: 4,961 / 1,000 (496%) | O=1.80 C=1.74
+06:32:42 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:42 [ASNS] QUOTE: $1.7200 vol=108 | filter: $0.00-$100.00
+06:32:42 [ASNS] CANDLE BUILDING: RED | Vol: 5,069 / 1,000 (507%) | O=1.80 C=1.72
+06:32:42 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:44 [ASNS] QUOTE: $1.7200 vol=108 | filter: $0.00-$100.00
+06:32:44 [ASNS] CANDLE BUILDING: RED | Vol: 5,177 / 1,000 (518%) | O=1.80 C=1.72
+06:32:44 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:44 [ASNS] QUOTE: $1.7200 vol=349 | filter: $0.00-$100.00
+06:32:44 [ASNS] CANDLE BUILDING: RED | Vol: 5,526 / 1,000 (553%) | O=1.80 C=1.72
+06:32:44 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:45 [ASNS] QUOTE: $1.7100 vol=849 | filter: $0.00-$100.00
+06:32:45 [ASNS] CANDLE BUILDING: RED | Vol: 6,375 / 1,000 (638%) | O=1.80 C=1.71
+06:32:45 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:45 [ASNS] QUOTE: $1.7100 vol=849 | filter: $0.00-$100.00
+06:32:45 [ASNS] CANDLE BUILDING: RED | Vol: 7,224 / 1,000 (722%) | O=1.80 C=1.71
+06:32:45 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:45 [ASNS] QUOTE: $1.7400 vol=218 | filter: $0.00-$100.00
+06:32:45 [ASNS] CANDLE BUILDING: RED | Vol: 7,442 / 1,000 (744%) | O=1.80 C=1.74
+06:32:45 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:51 [ASNS] QUOTE: $1.7400 vol=218 | filter: $0.00-$100.00
+06:32:51 [ASNS] CANDLE BUILDING: RED | Vol: 7,660 / 1,000 (766%) | O=1.80 C=1.74
+06:32:51 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:51 [ASNS] QUOTE: $1.7500 vol=145 | filter: $0.00-$100.00
+06:32:51 [ASNS] CANDLE BUILDING: RED | Vol: 7,805 / 1,000 (780%) | O=1.80 C=1.75
+06:32:51 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:55 [ASNS] QUOTE: $1.7500 vol=145 | filter: $0.00-$100.00
+06:32:55 [ASNS] CANDLE BUILDING: RED | Vol: 7,950 / 1,000 (795%) | O=1.80 C=1.75
+06:32:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:55 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:32:55 [ASNS] CANDLE BUILDING: RED | Vol: 8,050 / 1,000 (805%) | O=1.80 C=1.78
+06:32:55 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:32:56 [ASNS] QUOTE: $1.7200 vol=1,141 | filter: $0.00-$100.00
+06:32:56 [ASNS] CANDLE BUILDING: RED | Vol: 9,191 / 1,000 (919%) | O=1.80 C=1.72
+06:32:56 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:05 [ASNS] QUOTE: $1.7200 vol=1,141 | filter: $0.00-$100.00
+06:33:05 [ASNS] CANDLE BUILDING: RED | Vol: 10,332 / 1,000 (1033%) | O=1.80 C=1.72
+06:33:05 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 11,274 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:05 [ASNS] QUOTE: $1.7500 vol=100 | filter: $0.00-$100.00
+06:33:05 
+06:33:05 [ASNS] ━━━ CANDLE CLOSED ━━━
+06:33:05 [ASNS] RED candle | O=1.80 H=1.83 L=1.71 C=1.72
+06:33:05 [ASNS] Volume: 10,332 >=✓ 1,000 threshold
+06:33:05 [ASNS] Qualifies for entry: NO ✗
+06:33:05 
+06:33:05 [ASNS] CANDLE BUILDING: RED | Vol: 100 / 1,000 (10%) | O=1.75 C=1.75
+06:33:05 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:14 [ASNS] QUOTE: $1.7500 vol=100 | filter: $0.00-$100.00
+06:33:14 [ASNS] CANDLE BUILDING: RED | Vol: 200 / 1,000 (20%) | O=1.75 C=1.75
+06:33:14 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:14 [ASNS] QUOTE: $1.7300 vol=248 | filter: $0.00-$100.00
+06:33:14 [ASNS] CANDLE BUILDING: RED | Vol: 448 / 1,000 (45%) | O=1.75 C=1.73
+06:33:14 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:29 [ASNS] QUOTE: $1.7300 vol=248 | filter: $0.00-$100.00
+06:33:29 [ASNS] CANDLE BUILDING: RED | Vol: 696 / 1,000 (70%) | O=1.75 C=1.73
+06:33:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:29 [ASNS] QUOTE: $1.7650 vol=258 | filter: $0.00-$100.00
+06:33:29 [ASNS] CANDLE BUILDING: GREEN | Vol: 954 / 1,000 (95%) | O=1.75 C=1.76
+06:33:29 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:30 [ASNS] QUOTE: $1.7700 vol=572 | filter: $0.00-$100.00
+06:33:30 [ASNS] CANDLE BUILDING: GREEN | Vol: 1,526 / 1,000 (153%) | O=1.75 C=1.77
+06:33:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:30 [ASNS] QUOTE: $1.7700 vol=572 | filter: $0.00-$100.00
+06:33:30 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,098 / 1,000 (210%) | O=1.75 C=1.77
+06:33:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:30 [ASNS] QUOTE: $1.7700 vol=100 | filter: $0.00-$100.00
+06:33:30 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,198 / 1,000 (220%) | O=1.75 C=1.77
+06:33:30 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:38 [ASNS] QUOTE: $1.7700 vol=100 | filter: $0.00-$100.00
+06:33:38 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,298 / 1,000 (230%) | O=1.75 C=1.77
+06:33:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:38 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:33:38 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,398 / 1,000 (240%) | O=1.75 C=1.78
+06:33:38 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:41 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:33:41 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,498 / 1,000 (250%) | O=1.75 C=1.78
+06:33:41 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:41 [ASNS] QUOTE: $1.7900 vol=100 | filter: $0.00-$100.00
+06:33:41 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,598 / 1,000 (260%) | O=1.75 C=1.79
+06:33:41 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:48 [ASNS] QUOTE: $1.7900 vol=100 | filter: $0.00-$100.00
+06:33:48 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,698 / 1,000 (270%) | O=1.75 C=1.79
+06:33:48 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:48 [ASNS] QUOTE: $1.7800 vol=100 | filter: $0.00-$100.00
+06:33:48 [ASNS] CANDLE BUILDING: GREEN | Vol: 2,798 / 1,000 (280%) | O=1.75 C=1.78
+06:33:48 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:49 [ASNS] QUOTE: $1.7800 vol=300 | filter: $0.00-$100.00
+06:33:49 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,098 / 1,000 (310%) | O=1.75 C=1.78
+06:33:49 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:54 [ASNS] QUOTE: $1.7800 vol=300 | filter: $0.00-$100.00
+06:33:54 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,398 / 1,000 (340%) | O=1.75 C=1.78
+06:33:54 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:33:54 [ASNS] QUOTE: $1.7900 vol=247 | filter: $0.00-$100.00
+06:33:54 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,645 / 1,000 (364%) | O=1.75 C=1.79
+06:33:54 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:34:43 [ASNS] QUOTE: $1.7900 vol=247 | filter: $0.00-$100.00
+06:34:43 [ASNS] CANDLE BUILDING: GREEN | Vol: 3,892 / 1,000 (389%) | O=1.75 C=1.79
+06:34:43 [ASNS] LAST COMPLETED CANDLE: RED | Vol: 10,332 >=✓ 1,000 | Green candles with vol: 0/1 needed
+06:34:43 [ASNS] QUOTE: $1.7500 vol=160 | filter: $0.00-$100.00
