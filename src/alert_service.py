@@ -61,23 +61,30 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
+        logger.info(f"[HTTP POST] Received POST request to {self.path}")
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8")
+        logger.info(f"[HTTP POST] Body length: {content_length}, path: {self.path}")
 
         try:
             data = json.loads(body)
+            logger.info(f"[HTTP POST] Successfully parsed JSON with keys: {list(data.keys())}")
         except json.JSONDecodeError:
             logger.warning(f"Invalid JSON: {body[:100]}")
             self._send_error(400, "Invalid JSON")
             return
 
         if self.path == "/alert":
+            logger.info("[HTTP POST] Calling _handle_alert()")
             self._handle_alert(data)
+            logger.info("[HTTP POST] _handle_alert() completed, sending OK response")
             self._send_ok()
         elif self.path == "/backfill":
+            logger.info("[HTTP POST] Calling _handle_backfill()")
             result = self._handle_backfill(data)
             self._send_ok(result)
         else:
+            logger.warning(f"[HTTP POST] Unknown path: {self.path}")
             self._send_error(404, "Not found")
 
     def _send_ok(self, data=None):
@@ -99,48 +106,54 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
 
     def _handle_alert(self, data):
         """Handle real-time alert from Discord plugin."""
-        ticker = data.get("ticker", "UNKNOWN")
-        price_info = data.get("price_info", "")
-        channel = data.get("channel", "")
-        content = data.get("content", "")
-        author = data.get("author")
-        timestamp = data.get("timestamp", datetime.now().isoformat())
+        try:
+            logger.info(f"[ALERT RECEIVED] Raw data: {data}")
 
-        # Dedupe by ticker + minute
-        alert_key = f"{ticker}:{timestamp[:16]}"
-        if alert_key in UnifiedAlertHandler.seen_alerts:
-            return
-        UnifiedAlertHandler.seen_alerts.add(alert_key)
+            ticker = data.get("ticker", "UNKNOWN")
+            price_info = data.get("price_info", "")
+            channel = data.get("channel", "")
+            content = data.get("content", "")
+            author = data.get("author")
+            timestamp = data.get("timestamp", datetime.now().isoformat())
 
-        # Limit seen alerts size
-        if len(UnifiedAlertHandler.seen_alerts) > 500:
-            UnifiedAlertHandler.seen_alerts = set(list(UnifiedAlertHandler.seen_alerts)[-250:])
+            # Dedupe by ticker + minute
+            alert_key = f"{ticker}:{timestamp[:16]}"
+            if alert_key in UnifiedAlertHandler.seen_alerts:
+                logger.info(f"[ALERT DEDUPE] Skipping duplicate alert: {alert_key}")
+                return
+            UnifiedAlertHandler.seen_alerts.add(alert_key)
 
-        # Parse price from the alert
-        price_match = re.search(r'\$([0-9.]+)', price_info)
-        price = float(price_match.group(1)) if price_match else None
+            # Limit seen alerts size
+            if len(UnifiedAlertHandler.seen_alerts) > 500:
+                UnifiedAlertHandler.seen_alerts = set(list(UnifiedAlertHandler.seen_alerts)[-250:])
 
-        # Extract just the ticker symbol
-        ticker_match = re.match(r'([A-Z]{2,5})', ticker)
-        ticker_symbol = ticker_match.group(1) if ticker_match else ticker
+            # Parse price from the alert
+            price_match = re.search(r'\$([0-9.]+)', price_info)
+            price = float(price_match.group(1)) if price_match else None
 
-        # Log the alert
-        now = datetime.now().strftime("%H:%M:%S")
-        price_str = f"${price:.2f}" if price else "$?"
-        msg = f"ALERT @ {now}: {ticker_symbol} {price_str} #{channel}"
-        print(f"[AlertService] {msg}")  # Direct print for Streamlit
-        logger.info(msg)
+            # Extract just the ticker symbol
+            ticker_match = re.match(r'([A-Z]{2,5})', ticker)
+            ticker_symbol = ticker_match.group(1) if ticker_match else ticker
 
-        # Forward to trading engine if callback is set
-        if UnifiedAlertHandler.alert_callback and content:
-            logger.debug(f"Forwarding alert to trading engine callback")
-            try:
-                UnifiedAlertHandler.alert_callback(data)
-                logger.debug(f"Alert callback completed")
-            except Exception as e:
-                logger.error(f"Error in alert callback: {e}")
-        elif not UnifiedAlertHandler.alert_callback:
-            logger.warning(f"Alert received but no callback registered - trading engine may not be running")
+            # Log the alert
+            now = datetime.now().strftime("%H:%M:%S")
+            price_str = f"${price:.2f}" if price else "$?"
+            msg = f"ALERT @ {now}: {ticker_symbol} {price_str} #{channel}"
+            print(f"[AlertService] {msg}")  # Direct print for Streamlit
+            logger.info(msg)
+
+            # Forward to trading engine if callback is set
+            if UnifiedAlertHandler.alert_callback and content:
+                logger.info(f"Forwarding alert to trading engine callback")
+                try:
+                    UnifiedAlertHandler.alert_callback(data)
+                    logger.info(f"Alert callback completed")
+                except Exception as e:
+                    logger.error(f"Error in alert callback: {e}")
+            elif not UnifiedAlertHandler.alert_callback:
+                logger.warning(f"Alert received but no callback registered - trading engine may not be running")
+        except Exception as e:
+            logger.error(f"[ALERT ERROR] Exception in _handle_alert: {e}", exc_info=True)
 
     def _handle_backfill(self, data):
         """Handle backfill data from the Discord plugin."""

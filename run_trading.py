@@ -87,14 +87,14 @@ limits_handler = logging.FileHandler('logs/limits.log')
 limits_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
 limits_logger.addHandler(limits_handler)
 
-# Set up separate file handler for strategy status updates
-# These go to logs/trading.log instead of stdout (tail -f logs/trading.log)
+# Set up separate file handler for strategy status updates (price monitoring)
+# These go to logs/price_monitor.log instead of stdout (tail -f logs/price_monitor.log)
 status_logger = logging.getLogger('src.strategy.status')
 status_logger.setLevel(logging.INFO)
 status_logger.propagate = False  # Don't send to root logger (stdout)
 
-# File handler for status logs (reuse the trading.log file)
-status_handler = logging.FileHandler('logs/trading.log')
+# File handler for price monitoring logs
+status_handler = logging.FileHandler('logs/price_monitor.log')
 status_handler.setFormatter(logging.Formatter(
     '%(asctime)s [%(name)s] %(message)s',
     datefmt='%H:%M:%S'
