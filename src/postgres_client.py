@@ -178,8 +178,11 @@ class PostgresClient:
     def has_ohlcv_data(self, ticker: str, start: datetime, end: datetime, max_gap_minutes: int = 5) -> bool:
         """Check if we have complete OHLCV data for a ticker in a time range.
 
-        Returns True only if we have a bar within max_gap_minutes of the start time.
-        This prevents false positives when we have partial data with gaps.
+        Returns True only if:
+        1. We have a bar within max_gap_minutes of the start time
+        2. We have a bar within max_gap_minutes of the end time
+
+        This prevents gaps when overlapping announcement windows have different end times.
         """
         db = self._get_db()
         try:
@@ -196,8 +199,22 @@ class PostgresClient:
                 return False
 
             # Check if first bar is within max_gap_minutes of start
-            gap_seconds = (first_bar.timestamp - start).total_seconds()
-            return gap_seconds <= max_gap_minutes * 60
+            start_gap = (first_bar.timestamp - start).total_seconds()
+            if start_gap > max_gap_minutes * 60:
+                return False
+
+            # Find the last bar in the range
+            last_bar = db.query(OHLCVBarDB).filter(
+                and_(
+                    OHLCVBarDB.ticker == ticker,
+                    OHLCVBarDB.timestamp >= start,
+                    OHLCVBarDB.timestamp <= end
+                )
+            ).order_by(OHLCVBarDB.timestamp.desc()).first()
+
+            # Check if last bar is within max_gap_minutes of end
+            end_gap = (end - last_bar.timestamp).total_seconds()
+            return end_gap <= max_gap_minutes * 60
         finally:
             db.close()
 
