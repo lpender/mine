@@ -667,6 +667,8 @@ st.header("Trade Results")
 rows = []
 for r in summary.results:
     a = r.announcement
+    # Prefer source_message (full Discord message), fall back to headline
+    msg = a.source_message or a.headline or ""
     rows.append({
         "Time": to_est(a.timestamp),
         "Ticker": a.ticker,
@@ -674,9 +676,10 @@ for r in summary.results:
         "Country": a.country,
         "Channel": a.channel or "",
         "Author": a.author or "",
+        "Mentions": a.mention_count,
         "Float (M)": a.float_shares / 1e6 if a.float_shares else None,
         "MC (M)": a.market_cap / 1e6 if a.market_cap else None,
-        "Headline": a.headline[:60] + "..." if len(a.headline) > 60 else a.headline,
+        "Message": msg[:80] + "..." if len(msg) > 80 else msg,
         "Entry": r.entry_price,
         "Exit": r.exit_price,
         "Return %": r.return_pct,
@@ -686,7 +689,7 @@ for r in summary.results:
 df = pd.DataFrame(rows)
 
 # Sort controls (persisted to URL)
-sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Float (M)", "MC (M)", "Return %", "Exit Type"]
+sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Mentions", "Float (M)", "MC (M)", "Return %", "Exit Type"]
 default_sort_col = get_param("sort", "Time")
 default_sort_asc = get_param("asc", "0") == "1"
 
@@ -711,6 +714,7 @@ if sort_column in df.columns:
 # Configure column display
 column_config = {
     "Time": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm"),
+    "Mentions": st.column_config.NumberColumn("Mentions", format="%d"),
     "Float (M)": st.column_config.NumberColumn("Float (M)", format="%.1f"),
     "MC (M)": st.column_config.NumberColumn("MC (M)", format="%.1f"),
     "Entry": st.column_config.NumberColumn("Entry", format="$%.2f"),

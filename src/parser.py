@@ -559,11 +559,8 @@ def parse_discord_html_with_stats(
         # Get text content
         message_text = content_div.get_text(separator=' ', strip=True)
 
-        # Capture the raw HTML for this message
-        source_html = str(msg)
-
-        # Try to parse as announcement
-        announcement = parse_message_line(message_text, timestamp, source_message=source_html)
+        # Try to parse as announcement (store clean text, not raw HTML)
+        announcement = parse_message_line(message_text, timestamp, source_message=message_text)
         if announcement:
             announcement.author = extract_author_from_msg(msg)
             announcements.append(announcement)
