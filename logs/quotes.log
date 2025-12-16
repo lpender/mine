@@ -20789,3 +20789,126 @@
 07:17:20 [JZXN] QUOTE: $2.6400 vol=517 | filter: $1.00-$20.00
 07:17:20 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,330 / 100,000 (1%) | O=2.56 C=2.64
 07:17:20 [JZXN] LAST COMPLETED CANDLE: RED | Vol: 7,237 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:17:29 [JZXN] QUOTE: $2.6400 vol=517 | filter: $1.00-$20.00
+07:17:29 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,847 / 100,000 (2%) | O=2.56 C=2.64
+07:17:29 [JZXN] LAST COMPLETED CANDLE: RED | Vol: 7,237 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:17:29 [JZXN] QUOTE: $2.6000 vol=189 | filter: $1.00-$20.00
+07:17:29 [JZXN] CANDLE BUILDING: GREEN | Vol: 2,036 / 100,000 (2%) | O=2.56 C=2.60
+07:17:29 [JZXN] LAST COMPLETED CANDLE: RED | Vol: 7,237 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:30 [JZXN] QUOTE: $2.6000 vol=189 | filter: $1.00-$20.00
+07:18:30 [JZXN] CANDLE BUILDING: GREEN | Vol: 2,225 / 100,000 (2%) | O=2.56 C=2.60
+07:18:30 [JZXN] LAST COMPLETED CANDLE: RED | Vol: 7,237 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:45 [JZXN] QUOTE: $2.6200 vol=100 | filter: $1.00-$20.00
+07:18:45 
+07:18:45 [JZXN] ━━━ CANDLE CLOSED ━━━
+07:18:45 [JZXN] GREEN candle | O=2.56 H=2.65 L=2.56 C=2.60
+07:18:45 [JZXN] Volume: 2,225 <✗ 100,000 threshold
+07:18:45 [JZXN] Qualifies for entry: NO ✗
+07:18:45 
+07:18:45 [JZXN] CANDLE BUILDING: RED | Vol: 100 / 100,000 (0%) | O=2.62 C=2.62
+07:18:45 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:52 [JZXN] QUOTE: $2.6200 vol=100 | filter: $1.00-$20.00
+07:18:52 [JZXN] CANDLE BUILDING: RED | Vol: 200 / 100,000 (0%) | O=2.62 C=2.62
+07:18:52 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:52 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:52 [JZXN] CANDLE BUILDING: GREEN | Vol: 300 / 100,000 (0%) | O=2.62 C=2.63
+07:18:52 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:52 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:52 [JZXN] CANDLE BUILDING: GREEN | Vol: 400 / 100,000 (0%) | O=2.62 C=2.63
+07:18:52 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:52 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:52 [JZXN] CANDLE BUILDING: GREEN | Vol: 500 / 100,000 (0%) | O=2.62 C=2.63
+07:18:52 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:54 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:54 [JZXN] CANDLE BUILDING: GREEN | Vol: 600 / 100,000 (1%) | O=2.62 C=2.63
+07:18:54 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:54 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:54 [JZXN] CANDLE BUILDING: GREEN | Vol: 700 / 100,000 (1%) | O=2.62 C=2.63
+07:18:54 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:54 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:54 [JZXN] CANDLE BUILDING: GREEN | Vol: 800 / 100,000 (1%) | O=2.62 C=2.63
+07:18:54 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:54 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:54 [JZXN] CANDLE BUILDING: GREEN | Vol: 900 / 100,000 (1%) | O=2.62 C=2.63
+07:18:54 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:55 [JZXN] QUOTE: $2.6300 vol=300 | filter: $1.00-$20.00
+07:18:55 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,200 / 100,000 (1%) | O=2.62 C=2.63
+07:18:55 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:59 [JZXN] QUOTE: $2.6300 vol=300 | filter: $1.00-$20.00
+07:18:59 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,500 / 100,000 (2%) | O=2.62 C=2.63
+07:18:59 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:18:59 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:18:59 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,600 / 100,000 (2%) | O=2.62 C=2.63
+07:18:59 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:07 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:07 [JZXN] CANDLE BUILDING: GREEN | Vol: 1,700 / 100,000 (2%) | O=2.62 C=2.63
+07:19:07 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 2,225 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:07 [JZXN] QUOTE: $2.6300 vol=300 | filter: $1.00-$20.00
+07:19:07 
+07:19:07 [JZXN] ━━━ CANDLE CLOSED ━━━
+07:19:07 [JZXN] GREEN candle | O=2.62 H=2.63 L=2.62 C=2.63
+07:19:07 [JZXN] Volume: 1,700 <✗ 100,000 threshold
+07:19:07 [JZXN] Qualifies for entry: NO ✗
+07:19:07 
+07:19:07 [JZXN] CANDLE BUILDING: RED | Vol: 300 / 100,000 (0%) | O=2.63 C=2.63
+07:19:07 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:21 [JZXN] QUOTE: $2.6300 vol=300 | filter: $1.00-$20.00
+07:19:21 [JZXN] CANDLE BUILDING: RED | Vol: 600 / 100,000 (1%) | O=2.63 C=2.63
+07:19:21 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:21 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:21 [JZXN] CANDLE BUILDING: RED | Vol: 700 / 100,000 (1%) | O=2.63 C=2.63
+07:19:22 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:28 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:28 [JZXN] CANDLE BUILDING: RED | Vol: 800 / 100,000 (1%) | O=2.63 C=2.63
+07:19:28 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:28 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:28 [JZXN] CANDLE BUILDING: RED | Vol: 900 / 100,000 (1%) | O=2.63 C=2.63
+07:19:28 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:31 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:31 [JZXN] CANDLE BUILDING: RED | Vol: 1,000 / 100,000 (1%) | O=2.63 C=2.63
+07:19:31 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:31 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:31 [JZXN] CANDLE BUILDING: RED | Vol: 1,100 / 100,000 (1%) | O=2.63 C=2.63
+07:19:31 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:32 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:32 [JZXN] CANDLE BUILDING: RED | Vol: 1,200 / 100,000 (1%) | O=2.63 C=2.63
+07:19:32 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:32 [JZXN] QUOTE: $2.6300 vol=100 | filter: $1.00-$20.00
+07:19:32 [JZXN] CANDLE BUILDING: RED | Vol: 1,300 / 100,000 (1%) | O=2.63 C=2.63
+07:19:32 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:33 [JZXN] QUOTE: $2.6400 vol=1,567 | filter: $1.00-$20.00
+07:19:33 [JZXN] CANDLE BUILDING: GREEN | Vol: 2,867 / 100,000 (3%) | O=2.63 C=2.64
+07:19:33 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:36 [JZXN] QUOTE: $2.6400 vol=1,567 | filter: $1.00-$20.00
+07:19:36 [JZXN] CANDLE BUILDING: GREEN | Vol: 4,434 / 100,000 (4%) | O=2.63 C=2.64
+07:19:36 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:36 [JZXN] QUOTE: $2.6400 vol=100 | filter: $1.00-$20.00
+07:19:36 [JZXN] CANDLE BUILDING: GREEN | Vol: 4,534 / 100,000 (5%) | O=2.63 C=2.64
+07:19:36 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:19:36 [JZXN] QUOTE: $2.6400 vol=200 | filter: $1.00-$20.00
+07:19:36 [JZXN] CANDLE BUILDING: GREEN | Vol: 4,734 / 100,000 (5%) | O=2.63 C=2.64
+07:19:36 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:20 [JZXN] QUOTE: $2.6400 vol=200 | filter: $1.00-$20.00
+07:20:20 [JZXN] CANDLE BUILDING: GREEN | Vol: 4,934 / 100,000 (5%) | O=2.63 C=2.64
+07:20:20 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 1,700 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:20 [JZXN] QUOTE: $2.6600 vol=500 | filter: $1.00-$20.00
+07:20:20 
+07:20:20 [JZXN] ━━━ CANDLE CLOSED ━━━
+07:20:20 [JZXN] GREEN candle | O=2.63 H=2.64 L=2.63 C=2.64
+07:20:20 [JZXN] Volume: 4,934 <✗ 100,000 threshold
+07:20:20 [JZXN] Qualifies for entry: NO ✗
+07:20:20 
+07:20:20 [JZXN] CANDLE BUILDING: RED | Vol: 500 / 100,000 (0%) | O=2.66 C=2.66
+07:20:20 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 4,934 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:26 [JZXN] QUOTE: $2.6600 vol=500 | filter: $1.00-$20.00
+07:20:26 [JZXN] CANDLE BUILDING: RED | Vol: 1,000 / 100,000 (1%) | O=2.66 C=2.66
+07:20:26 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 4,934 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:26 [JZXN] QUOTE: $2.6400 vol=100 | filter: $1.00-$20.00
+07:20:26 [JZXN] CANDLE BUILDING: RED | Vol: 1,100 / 100,000 (1%) | O=2.66 C=2.64
+07:20:26 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 4,934 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:43 [JZXN] QUOTE: $2.6400 vol=100 | filter: $1.00-$20.00
+07:20:43 [JZXN] CANDLE BUILDING: RED | Vol: 1,200 / 100,000 (1%) | O=2.66 C=2.64
+07:20:43 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 4,934 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:20:43 [JZXN] QUOTE: $2.6200 vol=100 | filter: $1.00-$20.00
+07:20:43 [JZXN] CANDLE BUILDING: RED | Vol: 1,300 / 100,000 (1%) | O=2.66 C=2.62
+07:20:43 [JZXN] LAST COMPLETED CANDLE: GREEN | Vol: 4,934 <✗ 100,000 | Green candles with vol: 0/1 needed

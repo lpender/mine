@@ -503,11 +503,11 @@ class StrategyEngine:
                 f"O={curr_open:.2f} C={curr_close:.2f}"
             )
 
-        # Check for consecutive green candles with volume
-        green_count = 0
+        # Check for consecutive green candles with volume (from completed candles)
+        completed_green_count = 0
         for candle in reversed(pending.candles):
             if candle.is_green and candle.volume >= cfg.min_candle_volume:
-                green_count += 1
+                completed_green_count += 1
             else:
                 break
 
@@ -518,13 +518,36 @@ class StrategyEngine:
             quotes_logger.info(
                 f"[{ticker}] LAST COMPLETED CANDLE: {'GREEN' if last_candle.is_green else 'RED'} | "
                 f"Vol: {last_candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} | "
-                f"Green candles with vol: {green_count}/{cfg.consec_green_candles} needed"
+                f"Completed green candles with vol: {completed_green_count}/{cfg.consec_green_candles} needed"
             )
 
-        if green_count >= cfg.consec_green_candles:
+        # EARLY ENTRY: If current building candle is green and hits volume threshold,
+        # count it toward the green candle requirement and enter immediately
+        green_count = completed_green_count
+        if pending.current_candle_data:
+            curr_vol = pending.current_candle_data["volume"]
+            curr_open = pending.current_candle_data["open"]
+            curr_close = pending.current_candle_data["close"]
+            curr_is_green = curr_close > curr_open
+            curr_meets_vol = curr_vol >= cfg.min_candle_volume
+
+            if curr_is_green and curr_meets_vol:
+                green_count += 1  # Count building candle toward requirement
+                if green_count >= cfg.consec_green_candles:
+                    logger.info(f"")
+                    logger.info(f"{'='*60}")
+                    logger.info(f"[{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN!")
+                    logger.info(f"[{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
+                    logger.info(f"{'='*60}")
+                    logger.info(f"")
+                    self._execute_entry(ticker, price, timestamp)
+                    return
+
+        if completed_green_count >= cfg.consec_green_candles:
+            # Fallback: enter on completed candles if early entry didn't trigger
             logger.info(f"")
             logger.info(f"{'='*60}")
-            logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {green_count} consecutive green candles with volume!")
+            logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume!")
             logger.info(f"{'='*60}")
             logger.info(f"")
             self._execute_entry(ticker, price, timestamp)
