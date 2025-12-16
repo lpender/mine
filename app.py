@@ -777,10 +777,12 @@ else:
         selected_result = summary.results[result_idx]
         ann = selected_result.announcement
 
-        # Show full headline
+        # Show full headline and message
         st.subheader(f"{ann.ticker} - {to_est(ann.timestamp).strftime('%Y-%m-%d %H:%M')} EST")
         if ann.headline:
             st.markdown(f"**Headline:** {ann.headline}")
+        if ann.source_message:
+            st.markdown(f"**Full Message:** {ann.source_message}")
 
         # Get the bars for this announcement
         key = (ann.ticker, ann.timestamp)
