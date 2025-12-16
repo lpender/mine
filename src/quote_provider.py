@@ -264,6 +264,12 @@ class InsightSentryQuoteProvider:
         if "server_time" not in msg:
             logger.debug(f"WS message: {str(msg)[:300]}")
 
+        # Subscription limit error (InsightSentry plan limit)
+        if "message" in msg and "exceeds the number of symbols" in msg.get("message", ""):
+            logger.error(f"⚠️ SUBSCRIPTION LIMIT: {msg['message']}")
+            logger.error(f"   Currently tracking {len(self._subscriptions)} symbols: {list(self._subscriptions)}")
+            return
+
         # Server heartbeat
         if "server_time" in msg:
             self._last_heartbeat = time.time()
