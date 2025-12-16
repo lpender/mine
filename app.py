@@ -555,6 +555,10 @@ if scanner_test:
 if scanner_after_lull:
     filtered = [a for a in filtered if a.scanner_after_lull]
 
+# Max intraday mentions filter
+if max_mentions > 0:
+    filtered = [a for a in filtered if a.mention_count is not None and a.mention_count < max_mentions]
+
 # Float filter (convert from shares to millions)
 filtered = [a for a in filtered if a.float_shares is None or
             (float_min * 1e6 <= a.float_shares <= float_max * 1e6)]
