@@ -86,15 +86,28 @@ def load_announcements():
 
 @st.cache_data(ttl=300)
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
-    """Load OHLCV bars for a set of announcements."""
+    """Load OHLCV bars for a set of announcements.
+
+    Note: Announcements are stored in UTC, but OHLCV bars from Alpaca are stored in ET.
+    We convert the announcement timestamp to ET before querying for bars.
+    """
     client = PostgresClient()
     bars_by_announcement = {}
 
     for ticker, timestamp_str in announcement_keys:
         timestamp = pd.to_datetime(timestamp_str)
-        start = timestamp
-        end = timestamp + timedelta(minutes=window_minutes)
-        bars = client.get_ohlcv_bars(ticker, start, end)
+        # Convert from UTC to ET (announcements stored in UTC, OHLCV in ET)
+        if timestamp.tzinfo is None:
+            timestamp_utc = timestamp.replace(tzinfo=UTC)
+        else:
+            timestamp_utc = timestamp
+        timestamp_et = timestamp_utc.astimezone(EST).replace(tzinfo=None)
+
+        # Round down to start of minute to capture the full minute bar
+        start = timestamp_et.replace(second=0, microsecond=0)
+        end = start + timedelta(minutes=window_minutes)
+        # Use fetch_ohlcv which fetches from API if not cached
+        bars = client.fetch_ohlcv(ticker, start, end) or []
         bars_by_announcement[(ticker, timestamp)] = bars
 
     return bars_by_announcement
