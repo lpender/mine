@@ -248,6 +248,78 @@ class ActiveTradeDB(Base):
     )
 
 
+class OrderDB(Base):
+    """Order record - tracks every order submitted to the broker."""
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Broker reference
+    broker_order_id = Column(String(50), unique=True, nullable=True, index=True)
+
+    # Order details
+    ticker = Column(String(10), nullable=False, index=True)
+    side = Column(String(10), nullable=False)  # 'buy' or 'sell'
+    order_type = Column(String(20), nullable=False)  # 'market', 'limit'
+    limit_price = Column(Float, nullable=True)
+    requested_shares = Column(Integer, nullable=False)
+
+    # Fill tracking
+    filled_shares = Column(Integer, default=0)
+    avg_fill_price = Column(Float, nullable=True)
+
+    # Status: 'pending', 'partial', 'filled', 'cancelled', 'rejected', 'expired'
+    status = Column(String(20), nullable=False, default='pending', index=True)
+
+    # Strategy association
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    strategy_name = Column(String(100), nullable=True)
+
+    # Link sell orders to the position they're closing
+    active_trade_id = Column(Integer, ForeignKey('active_trades.id'), nullable=True)
+
+    # Trading mode
+    paper = Column(Boolean, default=True, index=True)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index('ix_orders_ticker_status', 'ticker', 'status'),
+        Index('ix_orders_created', 'created_at'),
+    )
+
+
+class OrderEventDB(Base):
+    """Order event - every event from the broker (fill, partial_fill, cancelled, etc)."""
+    __tablename__ = "order_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # References
+    order_id = Column(Integer, ForeignKey('orders.id'), nullable=True, index=True)
+    broker_order_id = Column(String(50), nullable=True, index=True)
+
+    # Event details
+    event_type = Column(String(20), nullable=False)  # 'new', 'partial_fill', 'fill', 'cancelled', 'rejected', 'expired'
+    filled_shares = Column(Integer, nullable=True)  # shares filled in this event
+    fill_price = Column(Float, nullable=True)  # price for this fill
+    cumulative_filled = Column(Integer, nullable=True)  # total filled so far
+
+    # Raw data for debugging
+    raw_data = Column(Text, nullable=True)
+
+    # Timestamps
+    event_timestamp = Column(DateTime, nullable=False)  # when the event occurred at broker
+    created_at = Column(DateTime, default=datetime.utcnow)  # when we recorded it
+
+    __table_args__ = (
+        Index('ix_order_events_order', 'order_id'),
+        Index('ix_order_events_timestamp', 'event_timestamp'),
+    )
+
+
 def init_db():
     """Create all tables and run migrations."""
     Base.metadata.create_all(bind=engine)
