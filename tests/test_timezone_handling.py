@@ -55,31 +55,35 @@ class TestEffectiveStartTime:
         return MassiveClient()
 
     def test_postmarket_friday_returns_announcement_time_utc(self, client):
-        """Postmarket Friday 7:40 PM ET should return the announcement time.
+        """Postmarket Friday 7:40 PM ET should return the announcement time floored to minute.
 
         Alpaca has extended hours data, so we can fetch from postmarket times.
+        Effective start is floored to the minute start for Alpaca API compatibility.
         """
         # Friday Dec 12, 2025 at 7:40 PM ET = Saturday Dec 13 at 00:40 UTC
         utc_naive = datetime(2025, 12, 13, 0, 40, 4)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should return same time (postmarket has data in Alpaca)
-        assert effective == utc_naive, f"Expected {utc_naive}, got {effective}"
+        # Should return same minute, floored to :00 seconds (for Alpaca API)
+        expected = datetime(2025, 12, 13, 0, 40, 0)
+        assert effective == expected, f"Expected {expected}, got {effective}"
 
     def test_postmarket_returns_announcement_time_utc(self, client):
-        """Postmarket announcement should return the announcement time.
+        """Postmarket announcement should return the announcement time floored to minute.
 
         This is the AKAN fix: announcement at 23:46 UTC (= 18:46 ET)
         should start from the announcement time, not next day's market open.
+        Effective start is floored to the minute start for Alpaca API compatibility.
         """
         # Thursday Dec 11, 2025 at 6:46 PM ET = 23:46 UTC
         utc_naive = datetime(2025, 12, 11, 23, 46, 37)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should return same time (postmarket has data in Alpaca)
-        assert effective == utc_naive, f"Expected {utc_naive}, got {effective}"
+        # Should return same minute, floored to :00 seconds (for Alpaca API)
+        expected = datetime(2025, 12, 11, 23, 46, 0)
+        assert effective == expected, f"Expected {expected}, got {effective}"
 
     def test_closed_late_night_rolls_to_next_open_utc(self, client):
         """Closed hours (after 8pm ET) should roll to next market open.

@@ -175,18 +175,29 @@ class PostgresClient:
         finally:
             db.close()
 
-    def has_ohlcv_data(self, ticker: str, start: datetime, end: datetime) -> bool:
-        """Check if we have OHLCV data for a ticker in a time range."""
+    def has_ohlcv_data(self, ticker: str, start: datetime, end: datetime, max_gap_minutes: int = 5) -> bool:
+        """Check if we have complete OHLCV data for a ticker in a time range.
+
+        Returns True only if we have a bar within max_gap_minutes of the start time.
+        This prevents false positives when we have partial data with gaps.
+        """
         db = self._get_db()
         try:
-            count = db.query(OHLCVBarDB).filter(
+            # Find the first bar in the range
+            first_bar = db.query(OHLCVBarDB).filter(
                 and_(
                     OHLCVBarDB.ticker == ticker,
                     OHLCVBarDB.timestamp >= start,
                     OHLCVBarDB.timestamp <= end
                 )
-            ).count()
-            return count > 0
+            ).order_by(OHLCVBarDB.timestamp).first()
+
+            if not first_bar:
+                return False
+
+            # Check if first bar is within max_gap_minutes of start
+            gap_seconds = (first_bar.timestamp - start).total_seconds()
+            return gap_seconds <= max_gap_minutes * 60
         finally:
             db.close()
 

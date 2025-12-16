@@ -71,6 +71,11 @@ def _combine_et_to_utc(d: date_type, t: time_type) -> datetime:
     return dt.astimezone(UTC_TZ).replace(tzinfo=None)
 
 
+def _floor_to_minute(dt: datetime) -> datetime:
+    """Round datetime down to the start of the minute."""
+    return dt.replace(second=0, microsecond=0)
+
+
 class MassiveClient:
     """Client for fetching OHLCV data with market session logic.
 
@@ -222,20 +227,20 @@ class MassiveClient:
         session = get_market_session(announcement_time)
 
         if session == "market":
-            # Return the UTC time (naive)
+            # Return the UTC time (naive), floored to minute start for Alpaca API
             if announcement_time.tzinfo is None:
-                return announcement_time
-            return announcement_time.astimezone(UTC_TZ).replace(tzinfo=None)
+                return _floor_to_minute(announcement_time)
+            return _floor_to_minute(announcement_time.astimezone(UTC_TZ).replace(tzinfo=None))
 
         if session == "premarket":
             # Start from market open of the same day (in UTC)
             return _combine_et_to_utc(et_time.date(), MARKET_OPEN)
 
-        # For postmarket, return announcement time (Alpaca has extended hours data)
+        # For postmarket, return announcement time floored to minute (Alpaca has extended hours data)
         if session == "postmarket":
             if announcement_time.tzinfo is None:
-                return announcement_time
-            return announcement_time.astimezone(UTC_TZ).replace(tzinfo=None)
+                return _floor_to_minute(announcement_time)
+            return _floor_to_minute(announcement_time.astimezone(UTC_TZ).replace(tzinfo=None))
 
         # For closed times, determine next market open
         if session == "closed":
