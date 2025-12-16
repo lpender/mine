@@ -24,7 +24,10 @@ _FIN_TAGS: List[Tuple[str, str]] = [
     ("shelf", r"\b(shelf registration|prospectus)\b"),
     ("sec_filing", r"\b(S-1|F-1|S-3|424B|8-K)\b"),
     ("equity_line", r"\b(equity line|purchase agreement|committed equity)\b"),
-    ("reverse_split", r"\b(reverse (stock )?split|1-for-\d+|\d+-for-1)\b"),
+    # Reverse split patterns: "reverse split", "1-for-20", "1 for 20", "R/S"
+    ("reverse_split", r"\b(reverse (stock )?split)\b"),
+    ("reverse_split", r"\b\d+[- ]for[- ]\d+\b"),  # "1-for-20" or "1 for 20"
+    ("reverse_split", r"\bR/S\b"),  # R/S abbreviation
     ("compliance", r"\b(nasdaq|nyse)\b.*\b(compliance|deficienc(y|ies)|minimum bid|continued listing)\b"),
 ]
 

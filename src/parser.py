@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
 from .models import Announcement
+from .features import classify_headline
 
 ET_TZ = ZoneInfo("America/New_York")
 
@@ -294,6 +295,11 @@ def parse_message_line(
     # News messages have "- Link" with headline, scanner-only don't
     has_news = bool(headline) or 'PR' in line or 'SEC' in line or 'AR' in line
 
+    # Classify headline for financing/dilution risk
+    # Use the full source_message if available, otherwise the parsed line
+    text_to_classify = source_message or line
+    headline_flags = classify_headline(text_to_classify)
+
     return Announcement(
         ticker=ticker,
         timestamp=timestamp,
@@ -307,6 +313,9 @@ def parse_message_line(
         high_ctb=high_ctb,
         short_interest=short_interest,
         direction=direction,
+        headline_is_financing=headline_flags.is_financing,
+        headline_financing_type=headline_flags.financing_type,
+        headline_financing_tags=",".join(headline_flags.tags) if headline_flags.tags else None,
         scanner_gain_pct=scanner_gain_pct,
         is_nhod=is_nhod,
         is_nsh=is_nsh,
