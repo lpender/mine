@@ -74,6 +74,35 @@ with st.sidebar:
                             st.success(f"{ticker}: {result}")
                 else:
                     st.info("No positions to exit")
+
+        # See open positions button
+        if st.button("📊 See Open Positions", key="see_positions"):
+            try:
+                trader = get_trading_client(paper=is_paper)
+                positions = trader.get_positions()
+
+                # Build strategy lookup from status
+                strategy_lookup = {}  # ticker -> strategy name
+                strategies_info = status.get("strategies", {})
+                for sid, sinfo in strategies_info.items():
+                    active_trades = sinfo.get("active_trades", {})
+                    for ticker in active_trades.keys():
+                        strategy_lookup[ticker] = sinfo.get("name", sid)
+
+                if positions:
+                    st.markdown("**Broker Positions:**")
+                    for pos in positions:
+                        strategy_name = strategy_lookup.get(pos.ticker, "Unknown")
+                        pnl_color = "green" if pos.unrealized_pl >= 0 else "red"
+                        st.markdown(
+                            f"• **{pos.ticker}**: {pos.shares} shares @ ${pos.avg_entry_price:.2f} "
+                            f"| P/L: :{pnl_color}[${pos.unrealized_pl:.2f} ({pos.unrealized_pl_pct:.1f}%)] "
+                            f"| Strategy: *{strategy_name}*"
+                        )
+                else:
+                    st.info("No open positions at broker")
+            except Exception as e:
+                st.error(f"Error fetching positions: {e}")
     else:
         st.warning("Engine Not Running")
         st.markdown("""
