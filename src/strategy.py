@@ -381,29 +381,29 @@ class StrategyEngine:
 
         # Channel filter
         if cfg.channels and ann.channel not in cfg.channels:
-            logger.debug(f"[{ann.ticker}] Filtered: channel {ann.channel} not in {cfg.channels}")
+            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': channel '{ann.channel}' not in {cfg.channels}")
             return False
 
         # Direction filter
         if cfg.directions and ann.direction not in cfg.directions:
-            logger.debug(f"[{ann.ticker}] Filtered: direction {ann.direction} not in {cfg.directions}")
+            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': direction '{ann.direction}' not in {cfg.directions}")
             return False
 
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
-            logger.debug(f"[{ann.ticker}] Filtered: session {ann.market_session} not in {cfg.sessions}")
+            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': session '{ann.market_session}' not in {cfg.sessions}")
             return False
 
         # Price filter (using price_threshold from announcement as proxy)
         # Note: Real price check happens at entry time
         if ann.price_threshold:
             if ann.price_threshold <= cfg.price_min or ann.price_threshold > cfg.price_max:
-                logger.debug(f"[{ann.ticker}] Filtered: price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}")
+                logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}")
                 return False
 
         # Country blacklist filter
         if cfg.country_blacklist and ann.country in cfg.country_blacklist:
-            logger.debug(f"[{ann.ticker}] Filtered: country {ann.country} in blacklist {cfg.country_blacklist}")
+            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': country '{ann.country}' in blacklist")
             return False
 
         return True

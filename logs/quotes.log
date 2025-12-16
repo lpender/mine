@@ -17817,3 +17817,516 @@
 06:51:03 
 06:51:03 [ASNS] CANDLE BUILDING: RED | Vol: 100 / 100,000 (0%) | O=2.05 C=2.05
 06:51:03 [ASNS] LAST COMPLETED CANDLE: GREEN | Vol: 133,827 >=✓ 100,000 | Green candles with vol: 1/1 needed
+07:00:28 [CYN] QUOTE: $3.8100 vol=337 | filter: $1.00-$20.00
+07:00:28 [CYN] CANDLE BUILDING: RED | Vol: 337 / 100,000 (0%) | O=3.81 C=3.81
+07:00:34 [CYN] QUOTE: $3.8100 vol=337 | filter: $1.00-$20.00
+07:00:34 [CYN] CANDLE BUILDING: RED | Vol: 674 / 100,000 (1%) | O=3.81 C=3.81
+07:00:34 [CYN] QUOTE: $3.8500 vol=333 | filter: $1.00-$20.00
+07:00:34 [CYN] CANDLE BUILDING: GREEN | Vol: 1,007 / 100,000 (1%) | O=3.81 C=3.85
+07:00:34 [RADX] QUOTE: $6.8000 vol=249 | filter: $1.00-$20.00
+07:00:34 [RADX] CANDLE BUILDING: RED | Vol: 249 / 100,000 (0%) | O=6.80 C=6.80
+07:00:34 [CYN] QUOTE: $3.8500 vol=333 | filter: $1.00-$20.00
+07:00:34 [CYN] CANDLE BUILDING: GREEN | Vol: 1,340 / 100,000 (1%) | O=3.81 C=3.85
+07:00:36 [CYN] QUOTE: $3.8500 vol=333 | filter: $1.00-$20.00
+07:00:36 [CYN] CANDLE BUILDING: GREEN | Vol: 1,673 / 100,000 (2%) | O=3.81 C=3.85
+07:00:36 [CYN] QUOTE: $3.9000 vol=292 | filter: $1.00-$20.00
+07:00:36 [CYN] CANDLE BUILDING: GREEN | Vol: 1,965 / 100,000 (2%) | O=3.81 C=3.90
+07:00:37 [CYN] QUOTE: $3.9000 vol=392 | filter: $1.00-$20.00
+07:00:37 [CYN] CANDLE BUILDING: GREEN | Vol: 2,357 / 100,000 (2%) | O=3.81 C=3.90
+07:00:38 [CYN] QUOTE: $3.9000 vol=392 | filter: $1.00-$20.00
+07:00:38 [CYN] CANDLE BUILDING: GREEN | Vol: 2,749 / 100,000 (3%) | O=3.81 C=3.90
+07:00:38 [CYN] QUOTE: $3.8600 vol=100 | filter: $1.00-$20.00
+07:00:38 [CYN] CANDLE BUILDING: GREEN | Vol: 2,849 / 100,000 (3%) | O=3.81 C=3.86
+07:00:39 [CYN] QUOTE: $3.9300 vol=300 | filter: $1.00-$20.00
+07:00:39 [CYN] CANDLE BUILDING: GREEN | Vol: 3,149 / 100,000 (3%) | O=3.81 C=3.93
+07:00:39 [CYN] QUOTE: $3.9300 vol=300 | filter: $1.00-$20.00
+07:00:39 [CYN] CANDLE BUILDING: GREEN | Vol: 3,449 / 100,000 (3%) | O=3.81 C=3.93
+07:00:39 [CYN] QUOTE: $3.8300 vol=100 | filter: $1.00-$20.00
+07:00:39 [CYN] CANDLE BUILDING: GREEN | Vol: 3,549 / 100,000 (4%) | O=3.81 C=3.83
+07:00:39 [RADX] QUOTE: $6.8000 vol=249 | filter: $1.00-$20.00
+07:00:39 [RADX] CANDLE BUILDING: RED | Vol: 498 / 100,000 (0%) | O=6.80 C=6.80
+07:00:39 [RADX] QUOTE: $6.8800 vol=128 | filter: $1.00-$20.00
+07:00:39 [RADX] CANDLE BUILDING: GREEN | Vol: 626 / 100,000 (1%) | O=6.80 C=6.88
+07:00:40 [RADX] QUOTE: $6.9200 vol=256 | filter: $1.00-$20.00
+07:00:40 [RADX] CANDLE BUILDING: GREEN | Vol: 882 / 100,000 (1%) | O=6.80 C=6.92
+07:00:40 [RADX] QUOTE: $6.9200 vol=256 | filter: $1.00-$20.00
+07:00:40 [RADX] CANDLE BUILDING: GREEN | Vol: 1,138 / 100,000 (1%) | O=6.80 C=6.92
+07:00:40 [RADX] QUOTE: $6.9200 vol=300 | filter: $1.00-$20.00
+07:00:40 [RADX] CANDLE BUILDING: GREEN | Vol: 1,438 / 100,000 (1%) | O=6.80 C=6.92
+07:00:40 [CYN] QUOTE: $3.8300 vol=200 | filter: $1.00-$20.00
+07:00:40 [CYN] CANDLE BUILDING: GREEN | Vol: 3,749 / 100,000 (4%) | O=3.81 C=3.83
+07:00:41 [RADX] QUOTE: $6.9200 vol=300 | filter: $1.00-$20.00
+07:00:41 [RADX] CANDLE BUILDING: GREEN | Vol: 1,738 / 100,000 (2%) | O=6.80 C=6.92
+07:00:41 [RADX] QUOTE: $6.9200 vol=100 | filter: $1.00-$20.00
+07:00:41 [RADX] CANDLE BUILDING: GREEN | Vol: 1,838 / 100,000 (2%) | O=6.80 C=6.92
+07:00:42 [CYN] QUOTE: $3.8300 vol=200 | filter: $1.00-$20.00
+07:00:42 [CYN] CANDLE BUILDING: GREEN | Vol: 3,949 / 100,000 (4%) | O=3.81 C=3.83
+07:00:42 [CYN] QUOTE: $3.8100 vol=100 | filter: $1.00-$20.00
+07:00:42 [CYN] CANDLE BUILDING: RED | Vol: 4,049 / 100,000 (4%) | O=3.81 C=3.81
+07:00:43 [RADX] QUOTE: $6.9500 vol=447 | filter: $1.00-$20.00
+07:00:43 [RADX] CANDLE BUILDING: GREEN | Vol: 2,285 / 100,000 (2%) | O=6.80 C=6.95
+07:00:43 [CYN] QUOTE: $3.8100 vol=100 | filter: $1.00-$20.00
+07:00:43 [CYN] CANDLE BUILDING: RED | Vol: 4,149 / 100,000 (4%) | O=3.81 C=3.81
+07:00:43 [CYN] QUOTE: $3.4200 vol=100 | filter: $1.00-$20.00
+07:00:43 [CYN] CANDLE BUILDING: RED | Vol: 4,249 / 100,000 (4%) | O=3.81 C=3.42
+07:00:44 [CYN] QUOTE: $3.5200 vol=200 | filter: $1.00-$20.00
+07:00:44 [CYN] CANDLE BUILDING: RED | Vol: 4,449 / 100,000 (4%) | O=3.81 C=3.52
+07:00:44 [RADX] QUOTE: $6.9500 vol=447 | filter: $1.00-$20.00
+07:00:44 [RADX] CANDLE BUILDING: GREEN | Vol: 2,732 / 100,000 (3%) | O=6.80 C=6.95
+07:00:44 [RADX] QUOTE: $6.9200 vol=100 | filter: $1.00-$20.00
+07:00:44 [RADX] CANDLE BUILDING: GREEN | Vol: 2,832 / 100,000 (3%) | O=6.80 C=6.92
+07:00:45 [CYN] QUOTE: $3.5200 vol=200 | filter: $1.00-$20.00
+07:00:45 [CYN] CANDLE BUILDING: RED | Vol: 4,649 / 100,000 (5%) | O=3.81 C=3.52
+07:00:45 [CYN] QUOTE: $3.8400 vol=100 | filter: $1.00-$20.00
+07:00:45 [CYN] CANDLE BUILDING: GREEN | Vol: 4,749 / 100,000 (5%) | O=3.81 C=3.84
+07:00:46 [RADX] QUOTE: $6.9200 vol=2,778 | filter: $1.00-$20.00
+07:00:46 [RADX] CANDLE BUILDING: GREEN | Vol: 5,610 / 100,000 (6%) | O=6.80 C=6.92
+07:00:48 [RADX] QUOTE: $6.9200 vol=2,778 | filter: $1.00-$20.00
+07:00:48 [RADX] CANDLE BUILDING: GREEN | Vol: 8,388 / 100,000 (8%) | O=6.80 C=6.92
+07:00:48 [RADX] QUOTE: $6.9100 vol=200 | filter: $1.00-$20.00
+07:00:48 [RADX] CANDLE BUILDING: GREEN | Vol: 8,588 / 100,000 (9%) | O=6.80 C=6.91
+07:00:51 [RADX] QUOTE: $6.9100 vol=200 | filter: $1.00-$20.00
+07:00:51 [RADX] CANDLE BUILDING: GREEN | Vol: 8,788 / 100,000 (9%) | O=6.80 C=6.91
+07:00:51 [RADX] QUOTE: $6.7300 vol=100 | filter: $1.00-$20.00
+07:00:51 [RADX] CANDLE BUILDING: RED | Vol: 8,888 / 100,000 (9%) | O=6.80 C=6.73
+07:00:52 [CYN] QUOTE: $3.8400 vol=100 | filter: $1.00-$20.00
+07:00:52 [CYN] CANDLE BUILDING: GREEN | Vol: 4,849 / 100,000 (5%) | O=3.81 C=3.84
+07:00:52 [CYN] QUOTE: $3.5900 vol=200 | filter: $1.00-$20.00
+07:00:52 [CYN] CANDLE BUILDING: RED | Vol: 5,049 / 100,000 (5%) | O=3.81 C=3.59
+07:00:52 [CYN] QUOTE: $3.5900 vol=200 | filter: $1.00-$20.00
+07:00:52 [CYN] CANDLE BUILDING: RED | Vol: 5,249 / 100,000 (5%) | O=3.81 C=3.59
+07:00:52 [CYN] QUOTE: $3.5900 vol=182 | filter: $1.00-$20.00
+07:00:52 [CYN] CANDLE BUILDING: RED | Vol: 5,431 / 100,000 (5%) | O=3.81 C=3.59
+07:00:53 [CYN] QUOTE: $3.5900 vol=182 | filter: $1.00-$20.00
+07:00:53 [CYN] CANDLE BUILDING: RED | Vol: 5,613 / 100,000 (6%) | O=3.81 C=3.59
+07:00:53 [CYN] QUOTE: $3.5900 vol=195 | filter: $1.00-$20.00
+07:00:53 [CYN] CANDLE BUILDING: RED | Vol: 5,808 / 100,000 (6%) | O=3.81 C=3.59
+07:00:55 [CYN] QUOTE: $3.5900 vol=195 | filter: $1.00-$20.00
+07:00:55 [CYN] CANDLE BUILDING: RED | Vol: 6,003 / 100,000 (6%) | O=3.81 C=3.59
+07:00:55 [CYN] QUOTE: $3.7300 vol=101 | filter: $1.00-$20.00
+07:00:55 [CYN] CANDLE BUILDING: RED | Vol: 6,104 / 100,000 (6%) | O=3.81 C=3.73
+07:00:55 [RADX] QUOTE: $6.7300 vol=100 | filter: $1.00-$20.00
+07:00:55 [RADX] CANDLE BUILDING: RED | Vol: 8,988 / 100,000 (9%) | O=6.80 C=6.73
+07:00:55 [RADX] QUOTE: $6.7600 vol=174 | filter: $1.00-$20.00
+07:00:55 [RADX] CANDLE BUILDING: RED | Vol: 9,162 / 100,000 (9%) | O=6.80 C=6.76
+07:00:56 [CYN] QUOTE: $3.7300 vol=101 | filter: $1.00-$20.00
+07:00:56 [CYN] CANDLE BUILDING: RED | Vol: 6,205 / 100,000 (6%) | O=3.81 C=3.73
+07:00:56 [CYN] QUOTE: $3.7700 vol=100 | filter: $1.00-$20.00
+07:00:56 [CYN] CANDLE BUILDING: RED | Vol: 6,305 / 100,000 (6%) | O=3.81 C=3.77
+07:00:59 [CYN] QUOTE: $3.7700 vol=100 | filter: $1.00-$20.00
+07:00:59 [CYN] CANDLE BUILDING: RED | Vol: 6,405 / 100,000 (6%) | O=3.81 C=3.77
+07:00:59 [CYN] QUOTE: $3.8000 vol=100 | filter: $1.00-$20.00
+07:00:59 [CYN] CANDLE BUILDING: RED | Vol: 6,505 / 100,000 (7%) | O=3.81 C=3.80
+07:00:59 [CYN] QUOTE: $3.8000 vol=100 | filter: $1.00-$20.00
+07:00:59 [CYN] CANDLE BUILDING: RED | Vol: 6,605 / 100,000 (7%) | O=3.81 C=3.80
+07:00:59 [CYN] QUOTE: $3.7800 vol=100 | filter: $1.00-$20.00
+07:00:59 [CYN] CANDLE BUILDING: RED | Vol: 6,705 / 100,000 (7%) | O=3.81 C=3.78
+07:01:00 [CYN] QUOTE: $3.7800 vol=100 | filter: $1.00-$20.00
+07:01:00 [CYN] CANDLE BUILDING: RED | Vol: 6,805 / 100,000 (7%) | O=3.81 C=3.78
+07:01:00 [CYN] QUOTE: $3.8200 vol=100 | filter: $1.00-$20.00
+07:01:00 
+07:01:00 [CYN] ━━━ CANDLE CLOSED ━━━
+07:01:00 [CYN] RED candle | O=3.81 H=3.93 L=3.42 C=3.78
+07:01:00 [CYN] Volume: 6,805 <✗ 100,000 threshold
+07:01:00 [CYN] Qualifies for entry: NO ✗
+07:01:00 
+07:01:00 [CYN] CANDLE BUILDING: RED | Vol: 100 / 100,000 (0%) | O=3.82 C=3.82
+07:01:00 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:01 [CYN] QUOTE: $3.8200 vol=100 | filter: $1.00-$20.00
+07:01:01 [CYN] CANDLE BUILDING: RED | Vol: 200 / 100,000 (0%) | O=3.82 C=3.82
+07:01:01 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:01 [CYN] QUOTE: $3.7800 vol=100 | filter: $1.00-$20.00
+07:01:01 [CYN] CANDLE BUILDING: RED | Vol: 300 / 100,000 (0%) | O=3.82 C=3.78
+07:01:01 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:03 [CYN] QUOTE: $3.7800 vol=100 | filter: $1.00-$20.00
+07:01:03 [CYN] CANDLE BUILDING: RED | Vol: 400 / 100,000 (0%) | O=3.82 C=3.78
+07:01:03 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:03 [CYN] QUOTE: $3.7300 vol=298 | filter: $1.00-$20.00
+07:01:03 [CYN] CANDLE BUILDING: RED | Vol: 698 / 100,000 (1%) | O=3.82 C=3.73
+07:01:03 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:03 [RADX] QUOTE: $6.7600 vol=174 | filter: $1.00-$20.00
+07:01:03 [RADX] CANDLE BUILDING: RED | Vol: 9,336 / 100,000 (9%) | O=6.80 C=6.76
+07:01:03 [RADX] QUOTE: $6.7000 vol=137 | filter: $1.00-$20.00
+07:01:03 
+07:01:03 [RADX] ━━━ CANDLE CLOSED ━━━
+07:01:03 [RADX] RED candle | O=6.80 H=6.95 L=6.73 C=6.76
+07:01:03 [RADX] Volume: 9,336 <✗ 100,000 threshold
+07:01:03 [RADX] Qualifies for entry: NO ✗
+07:01:03 
+07:01:03 [RADX] CANDLE BUILDING: RED | Vol: 137 / 100,000 (0%) | O=6.70 C=6.70
+07:01:03 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:06 [RADX] QUOTE: $6.7000 vol=137 | filter: $1.00-$20.00
+07:01:06 [RADX] CANDLE BUILDING: RED | Vol: 274 / 100,000 (0%) | O=6.70 C=6.70
+07:01:06 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:06 [RADX] QUOTE: $6.7400 vol=180 | filter: $1.00-$20.00
+07:01:06 [RADX] CANDLE BUILDING: GREEN | Vol: 454 / 100,000 (0%) | O=6.70 C=6.74
+07:01:06 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7400 vol=180 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 634 / 100,000 (1%) | O=6.70 C=6.74
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7800 vol=452 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 1,086 / 100,000 (1%) | O=6.70 C=6.78
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7800 vol=452 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 1,538 / 100,000 (2%) | O=6.70 C=6.78
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7500 vol=100 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 1,638 / 100,000 (2%) | O=6.70 C=6.75
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7400 vol=375 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 2,013 / 100,000 (2%) | O=6.70 C=6.74
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7400 vol=375 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 2,388 / 100,000 (2%) | O=6.70 C=6.74
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [RADX] QUOTE: $6.7400 vol=100 | filter: $1.00-$20.00
+07:01:13 [RADX] CANDLE BUILDING: GREEN | Vol: 2,488 / 100,000 (2%) | O=6.70 C=6.74
+07:01:13 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [CYN] QUOTE: $3.7300 vol=298 | filter: $1.00-$20.00
+07:01:13 [CYN] CANDLE BUILDING: RED | Vol: 996 / 100,000 (1%) | O=3.82 C=3.73
+07:01:13 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:13 [CYN] QUOTE: $3.6650 vol=100 | filter: $1.00-$20.00
+07:01:13 [CYN] CANDLE BUILDING: RED | Vol: 1,096 / 100,000 (1%) | O=3.82 C=3.67
+07:01:13 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:15 [CYN] QUOTE: $3.7100 vol=1,146 | filter: $1.00-$20.00
+07:01:15 [CYN] CANDLE BUILDING: RED | Vol: 2,242 / 100,000 (2%) | O=3.82 C=3.71
+07:01:15 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:17 [CYN] QUOTE: $3.7100 vol=1,146 | filter: $1.00-$20.00
+07:01:17 [CYN] CANDLE BUILDING: RED | Vol: 3,388 / 100,000 (3%) | O=3.82 C=3.71
+07:01:17 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:17 [CYN] QUOTE: $3.6100 vol=100 | filter: $1.00-$20.00
+07:01:17 [CYN] CANDLE BUILDING: RED | Vol: 3,488 / 100,000 (3%) | O=3.82 C=3.61
+07:01:17 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:17 [CYN] QUOTE: $3.6000 vol=200 | filter: $1.00-$20.00
+07:01:17 [CYN] CANDLE BUILDING: RED | Vol: 3,688 / 100,000 (4%) | O=3.82 C=3.60
+07:01:17 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:18 [CYN] QUOTE: $3.6000 vol=200 | filter: $1.00-$20.00
+07:01:18 [CYN] CANDLE BUILDING: RED | Vol: 3,888 / 100,000 (4%) | O=3.82 C=3.60
+07:01:18 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:18 [CYN] QUOTE: $3.6100 vol=100 | filter: $1.00-$20.00
+07:01:18 [CYN] CANDLE BUILDING: RED | Vol: 3,988 / 100,000 (4%) | O=3.82 C=3.61
+07:01:18 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:19 [CYN] QUOTE: $3.6700 vol=800 | filter: $1.00-$20.00
+07:01:19 [CYN] CANDLE BUILDING: RED | Vol: 4,788 / 100,000 (5%) | O=3.82 C=3.67
+07:01:19 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:22 [CYN] QUOTE: $3.6700 vol=800 | filter: $1.00-$20.00
+07:01:22 [CYN] CANDLE BUILDING: RED | Vol: 5,588 / 100,000 (6%) | O=3.82 C=3.67
+07:01:22 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:23 [CYN] QUOTE: $3.6800 vol=100 | filter: $1.00-$20.00
+07:01:23 [CYN] CANDLE BUILDING: RED | Vol: 5,688 / 100,000 (6%) | O=3.82 C=3.68
+07:01:23 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:24 [CYN] QUOTE: $3.6800 vol=100 | filter: $1.00-$20.00
+07:01:24 [CYN] CANDLE BUILDING: RED | Vol: 5,788 / 100,000 (6%) | O=3.82 C=3.68
+07:01:24 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:24 [CYN] QUOTE: $3.6800 vol=100 | filter: $1.00-$20.00
+07:01:24 [CYN] CANDLE BUILDING: RED | Vol: 5,888 / 100,000 (6%) | O=3.82 C=3.68
+07:01:24 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:25 [CYN] QUOTE: $3.6800 vol=100 | filter: $1.00-$20.00
+07:01:25 [CYN] CANDLE BUILDING: RED | Vol: 5,988 / 100,000 (6%) | O=3.82 C=3.68
+07:01:25 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:25 [CYN] QUOTE: $3.6800 vol=101 | filter: $1.00-$20.00
+07:01:25 [CYN] CANDLE BUILDING: RED | Vol: 6,089 / 100,000 (6%) | O=3.82 C=3.68
+07:01:25 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:27 [CYN] QUOTE: $3.7200 vol=1,420 | filter: $1.00-$20.00
+07:01:27 [CYN] CANDLE BUILDING: RED | Vol: 7,509 / 100,000 (8%) | O=3.82 C=3.72
+07:01:27 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:27 [CYN] QUOTE: $3.7200 vol=1,420 | filter: $1.00-$20.00
+07:01:27 [CYN] CANDLE BUILDING: RED | Vol: 8,929 / 100,000 (9%) | O=3.82 C=3.72
+07:01:27 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:27 [CYN] QUOTE: $3.6900 vol=143 | filter: $1.00-$20.00
+07:01:27 [CYN] CANDLE BUILDING: RED | Vol: 9,072 / 100,000 (9%) | O=3.82 C=3.69
+07:01:27 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:28 [CYN] QUOTE: $3.6900 vol=143 | filter: $1.00-$20.00
+07:01:28 [CYN] CANDLE BUILDING: RED | Vol: 9,215 / 100,000 (9%) | O=3.82 C=3.69
+07:01:28 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:28 [CYN] QUOTE: $3.6900 vol=156 | filter: $1.00-$20.00
+07:01:28 [CYN] CANDLE BUILDING: RED | Vol: 9,371 / 100,000 (9%) | O=3.82 C=3.69
+07:01:28 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:29 [CYN] QUOTE: $3.7500 vol=4,957 | filter: $1.00-$20.00
+07:01:29 [CYN] CANDLE BUILDING: RED | Vol: 14,328 / 100,000 (14%) | O=3.82 C=3.75
+07:01:29 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:29 [CYN] QUOTE: $3.7500 vol=4,957 | filter: $1.00-$20.00
+07:01:29 [CYN] CANDLE BUILDING: RED | Vol: 19,285 / 100,000 (19%) | O=3.82 C=3.75
+07:01:29 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:29 [CYN] QUOTE: $3.7600 vol=300 | filter: $1.00-$20.00
+07:01:29 [CYN] CANDLE BUILDING: RED | Vol: 19,585 / 100,000 (20%) | O=3.82 C=3.76
+07:01:29 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [RADX] QUOTE: $6.7400 vol=100 | filter: $1.00-$20.00
+07:01:31 [RADX] CANDLE BUILDING: GREEN | Vol: 2,588 / 100,000 (3%) | O=6.70 C=6.74
+07:01:31 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [CYN] QUOTE: $3.7600 vol=300 | filter: $1.00-$20.00
+07:01:31 [CYN] CANDLE BUILDING: RED | Vol: 19,885 / 100,000 (20%) | O=3.82 C=3.76
+07:01:31 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [CYN] QUOTE: $3.8200 vol=2,322 | filter: $1.00-$20.00
+07:01:31 [CYN] CANDLE BUILDING: RED | Vol: 22,207 / 100,000 (22%) | O=3.82 C=3.82
+07:01:31 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [CYN] QUOTE: $3.8200 vol=2,322 | filter: $1.00-$20.00
+07:01:31 [CYN] CANDLE BUILDING: RED | Vol: 24,529 / 100,000 (25%) | O=3.82 C=3.82
+07:01:31 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [CYN] QUOTE: $3.8300 vol=100 | filter: $1.00-$20.00
+07:01:31 [CYN] CANDLE BUILDING: GREEN | Vol: 24,629 / 100,000 (25%) | O=3.82 C=3.83
+07:01:31 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:31 [CYN] QUOTE: $3.8300 vol=501 | filter: $1.00-$20.00
+07:01:31 [CYN] CANDLE BUILDING: GREEN | Vol: 25,130 / 100,000 (25%) | O=3.82 C=3.83
+07:01:31 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:32 [CYN] QUOTE: $3.8300 vol=1,562 | filter: $1.00-$20.00
+07:01:32 [CYN] CANDLE BUILDING: GREEN | Vol: 26,692 / 100,000 (27%) | O=3.82 C=3.83
+07:01:32 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:32 [CYN] QUOTE: $3.8300 vol=1,562 | filter: $1.00-$20.00
+07:01:32 [CYN] CANDLE BUILDING: GREEN | Vol: 28,254 / 100,000 (28%) | O=3.82 C=3.83
+07:01:32 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:32 [CYN] QUOTE: $3.8300 vol=100 | filter: $1.00-$20.00
+07:01:32 [CYN] CANDLE BUILDING: GREEN | Vol: 28,354 / 100,000 (28%) | O=3.82 C=3.83
+07:01:32 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:32 [CYN] QUOTE: $3.8300 vol=100 | filter: $1.00-$20.00
+07:01:32 [CYN] CANDLE BUILDING: GREEN | Vol: 28,454 / 100,000 (28%) | O=3.82 C=3.83
+07:01:32 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:32 [CYN] QUOTE: $3.8600 vol=100 | filter: $1.00-$20.00
+07:01:32 [CYN] CANDLE BUILDING: GREEN | Vol: 28,554 / 100,000 (29%) | O=3.82 C=3.86
+07:01:33 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:33 [CYN] QUOTE: $3.8600 vol=100 | filter: $1.00-$20.00
+07:01:33 [CYN] CANDLE BUILDING: GREEN | Vol: 28,654 / 100,000 (29%) | O=3.82 C=3.86
+07:01:33 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:33 [CYN] QUOTE: $3.8700 vol=250 | filter: $1.00-$20.00
+07:01:33 [CYN] CANDLE BUILDING: GREEN | Vol: 28,904 / 100,000 (29%) | O=3.82 C=3.87
+07:01:33 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:34 [CYN] QUOTE: $3.9200 vol=510 | filter: $1.00-$20.00
+07:01:34 [CYN] CANDLE BUILDING: GREEN | Vol: 29,414 / 100,000 (29%) | O=3.82 C=3.92
+07:01:34 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:34 [CYN] QUOTE: $3.9200 vol=510 | filter: $1.00-$20.00
+07:01:34 [CYN] CANDLE BUILDING: GREEN | Vol: 29,924 / 100,000 (30%) | O=3.82 C=3.92
+07:01:34 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:34 [CYN] QUOTE: $3.9300 vol=100 | filter: $1.00-$20.00
+07:01:34 [CYN] CANDLE BUILDING: GREEN | Vol: 30,024 / 100,000 (30%) | O=3.82 C=3.93
+07:01:34 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:35 [CYN] QUOTE: $3.9800 vol=951 | filter: $1.00-$20.00
+07:01:35 [CYN] CANDLE BUILDING: GREEN | Vol: 30,975 / 100,000 (31%) | O=3.82 C=3.98
+07:01:35 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:35 [CYN] QUOTE: $3.9800 vol=951 | filter: $1.00-$20.00
+07:01:35 [CYN] CANDLE BUILDING: GREEN | Vol: 31,926 / 100,000 (32%) | O=3.82 C=3.98
+07:01:35 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:35 [CYN] QUOTE: $3.9800 vol=267 | filter: $1.00-$20.00
+07:01:35 [CYN] CANDLE BUILDING: GREEN | Vol: 32,193 / 100,000 (32%) | O=3.82 C=3.98
+07:01:35 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:36 [RADX] QUOTE: $6.7400 vol=100 | filter: $1.00-$20.00
+07:01:36 [RADX] CANDLE BUILDING: GREEN | Vol: 2,688 / 100,000 (3%) | O=6.70 C=6.74
+07:01:36 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:36 [RADX] QUOTE: $6.6400 vol=100 | filter: $1.00-$20.00
+07:01:36 [RADX] CANDLE BUILDING: RED | Vol: 2,788 / 100,000 (3%) | O=6.70 C=6.64
+07:01:36 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:36 [CYN] QUOTE: $3.9600 vol=1,442 | filter: $1.00-$20.00
+07:01:36 [CYN] CANDLE BUILDING: GREEN | Vol: 33,635 / 100,000 (34%) | O=3.82 C=3.96
+07:01:36 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:36 [CYN] QUOTE: $3.9600 vol=1,442 | filter: $1.00-$20.00
+07:01:36 [CYN] CANDLE BUILDING: GREEN | Vol: 35,077 / 100,000 (35%) | O=3.82 C=3.96
+07:01:36 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:36 [CYN] QUOTE: $4.0000 vol=250 | filter: $1.00-$20.00
+07:01:36 [CYN] CANDLE BUILDING: GREEN | Vol: 35,327 / 100,000 (35%) | O=3.82 C=4.00
+07:01:36 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:37 [CYN] QUOTE: $4.0100 vol=1,204 | filter: $1.00-$20.00
+07:01:37 [CYN] CANDLE BUILDING: GREEN | Vol: 36,531 / 100,000 (37%) | O=3.82 C=4.01
+07:01:37 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:37 [CYN] QUOTE: $4.0100 vol=1,204 | filter: $1.00-$20.00
+07:01:37 [CYN] CANDLE BUILDING: GREEN | Vol: 37,735 / 100,000 (38%) | O=3.82 C=4.01
+07:01:37 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:37 [CYN] QUOTE: $4.0000 vol=101 | filter: $1.00-$20.00
+07:01:37 [CYN] CANDLE BUILDING: GREEN | Vol: 37,836 / 100,000 (38%) | O=3.82 C=4.00
+07:01:37 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:38 [CYN] QUOTE: $4.1000 vol=3,556 | filter: $1.00-$20.00
+07:01:38 [CYN] CANDLE BUILDING: GREEN | Vol: 41,392 / 100,000 (41%) | O=3.82 C=4.10
+07:01:38 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:38 [CYN] QUOTE: $4.1000 vol=3,556 | filter: $1.00-$20.00
+07:01:38 [CYN] CANDLE BUILDING: GREEN | Vol: 44,948 / 100,000 (45%) | O=3.82 C=4.10
+07:01:38 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:38 [CYN] QUOTE: $4.0400 vol=638 | filter: $1.00-$20.00
+07:01:38 [CYN] CANDLE BUILDING: GREEN | Vol: 45,586 / 100,000 (46%) | O=3.82 C=4.04
+07:01:38 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:39 [CYN] QUOTE: $4.0900 vol=2,013 | filter: $1.00-$20.00
+07:01:39 [CYN] CANDLE BUILDING: GREEN | Vol: 47,599 / 100,000 (48%) | O=3.82 C=4.09
+07:01:39 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:39 [CYN] QUOTE: $4.0900 vol=2,013 | filter: $1.00-$20.00
+07:01:39 [CYN] CANDLE BUILDING: GREEN | Vol: 49,612 / 100,000 (50%) | O=3.82 C=4.09
+07:01:39 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:39 [CYN] QUOTE: $4.0600 vol=100 | filter: $1.00-$20.00
+07:01:39 [CYN] CANDLE BUILDING: GREEN | Vol: 49,712 / 100,000 (50%) | O=3.82 C=4.06
+07:01:39 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:40 [CYN] QUOTE: $4.0600 vol=400 | filter: $1.00-$20.00
+07:01:40 [CYN] CANDLE BUILDING: GREEN | Vol: 50,112 / 100,000 (50%) | O=3.82 C=4.06
+07:01:40 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:40 [CYN] QUOTE: $4.0600 vol=400 | filter: $1.00-$20.00
+07:01:40 [CYN] CANDLE BUILDING: GREEN | Vol: 50,512 / 100,000 (51%) | O=3.82 C=4.06
+07:01:40 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:40 [CYN] QUOTE: $4.0700 vol=153 | filter: $1.00-$20.00
+07:01:40 [CYN] CANDLE BUILDING: GREEN | Vol: 50,665 / 100,000 (51%) | O=3.82 C=4.07
+07:01:40 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:41 [CYN] QUOTE: $4.0700 vol=2,167 | filter: $1.00-$20.00
+07:01:41 [CYN] CANDLE BUILDING: GREEN | Vol: 52,832 / 100,000 (53%) | O=3.82 C=4.07
+07:01:41 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:41 [CYN] QUOTE: $4.0700 vol=2,167 | filter: $1.00-$20.00
+07:01:41 [CYN] CANDLE BUILDING: GREEN | Vol: 54,999 / 100,000 (55%) | O=3.82 C=4.07
+07:01:41 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:41 [CYN] QUOTE: $4.0600 vol=111 | filter: $1.00-$20.00
+07:01:41 [CYN] CANDLE BUILDING: GREEN | Vol: 55,110 / 100,000 (55%) | O=3.82 C=4.06
+07:01:41 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:42 [CYN] QUOTE: $4.0600 vol=111 | filter: $1.00-$20.00
+07:01:42 [CYN] CANDLE BUILDING: GREEN | Vol: 55,221 / 100,000 (55%) | O=3.82 C=4.06
+07:01:42 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:42 [CYN] QUOTE: $4.0100 vol=100 | filter: $1.00-$20.00
+07:01:42 [CYN] CANDLE BUILDING: GREEN | Vol: 55,321 / 100,000 (55%) | O=3.82 C=4.01
+07:01:42 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:43 [RADX] QUOTE: $6.6400 vol=100 | filter: $1.00-$20.00
+07:01:43 [RADX] CANDLE BUILDING: RED | Vol: 2,888 / 100,000 (3%) | O=6.70 C=6.64
+07:01:43 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:43 [RADX] QUOTE: $6.7300 vol=100 | filter: $1.00-$20.00
+07:01:43 [RADX] CANDLE BUILDING: GREEN | Vol: 2,988 / 100,000 (3%) | O=6.70 C=6.73
+07:01:43 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:43 [CYN] QUOTE: $4.0100 vol=726 | filter: $1.00-$20.00
+07:01:43 [CYN] CANDLE BUILDING: GREEN | Vol: 56,047 / 100,000 (56%) | O=3.82 C=4.01
+07:01:43 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:43 [CYN] QUOTE: $4.0100 vol=726 | filter: $1.00-$20.00
+07:01:43 [CYN] CANDLE BUILDING: GREEN | Vol: 56,773 / 100,000 (57%) | O=3.82 C=4.01
+07:01:43 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:43 [CYN] QUOTE: $4.0200 vol=300 | filter: $1.00-$20.00
+07:01:43 [CYN] CANDLE BUILDING: GREEN | Vol: 57,073 / 100,000 (57%) | O=3.82 C=4.02
+07:01:43 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:44 [CYN] QUOTE: $3.9600 vol=3,753 | filter: $1.00-$20.00
+07:01:44 [CYN] CANDLE BUILDING: GREEN | Vol: 60,826 / 100,000 (61%) | O=3.82 C=3.96
+07:01:44 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:44 [CYN] QUOTE: $3.9600 vol=3,753 | filter: $1.00-$20.00
+07:01:44 [CYN] CANDLE BUILDING: GREEN | Vol: 64,579 / 100,000 (65%) | O=3.82 C=3.96
+07:01:44 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:44 [CYN] QUOTE: $3.9700 vol=100 | filter: $1.00-$20.00
+07:01:44 [CYN] CANDLE BUILDING: GREEN | Vol: 64,679 / 100,000 (65%) | O=3.82 C=3.97
+07:01:44 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:45 [CYN] QUOTE: $3.9300 vol=1,035 | filter: $1.00-$20.00
+07:01:45 [CYN] CANDLE BUILDING: GREEN | Vol: 65,714 / 100,000 (66%) | O=3.82 C=3.93
+07:01:45 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:45 [CYN] QUOTE: $3.9300 vol=1,035 | filter: $1.00-$20.00
+07:01:45 [CYN] CANDLE BUILDING: GREEN | Vol: 66,749 / 100,000 (67%) | O=3.82 C=3.93
+07:01:45 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:45 [CYN] QUOTE: $3.9100 vol=200 | filter: $1.00-$20.00
+07:01:45 [CYN] CANDLE BUILDING: GREEN | Vol: 66,949 / 100,000 (67%) | O=3.82 C=3.91
+07:01:45 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:45 [CYN] QUOTE: $3.9100 vol=1,532 | filter: $1.00-$20.00
+07:01:45 [CYN] CANDLE BUILDING: GREEN | Vol: 68,481 / 100,000 (68%) | O=3.82 C=3.91
+07:01:45 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:46 [CYN] QUOTE: $3.9100 vol=1,843 | filter: $1.00-$20.00
+07:01:46 [CYN] CANDLE BUILDING: GREEN | Vol: 70,324 / 100,000 (70%) | O=3.82 C=3.91
+07:01:46 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:46 [CYN] QUOTE: $3.9100 vol=1,843 | filter: $1.00-$20.00
+07:01:46 [CYN] CANDLE BUILDING: GREEN | Vol: 72,167 / 100,000 (72%) | O=3.82 C=3.91
+07:01:46 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:46 [CYN] QUOTE: $3.9100 vol=280 | filter: $1.00-$20.00
+07:01:46 [CYN] CANDLE BUILDING: GREEN | Vol: 72,447 / 100,000 (72%) | O=3.82 C=3.91
+07:01:46 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:47 [CYN] QUOTE: $3.9100 vol=510 | filter: $1.00-$20.00
+07:01:47 [CYN] CANDLE BUILDING: GREEN | Vol: 72,957 / 100,000 (73%) | O=3.82 C=3.91
+07:01:47 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:47 [CYN] QUOTE: $3.9100 vol=510 | filter: $1.00-$20.00
+07:01:47 [CYN] CANDLE BUILDING: GREEN | Vol: 73,467 / 100,000 (73%) | O=3.82 C=3.91
+07:01:47 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:47 [CYN] QUOTE: $3.9100 vol=100 | filter: $1.00-$20.00
+07:01:47 [CYN] CANDLE BUILDING: GREEN | Vol: 73,567 / 100,000 (74%) | O=3.82 C=3.91
+07:01:47 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:48 [CYN] QUOTE: $3.9100 vol=1,007 | filter: $1.00-$20.00
+07:01:48 [CYN] CANDLE BUILDING: GREEN | Vol: 74,574 / 100,000 (75%) | O=3.82 C=3.91
+07:01:48 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [CYN] QUOTE: $3.9100 vol=1,007 | filter: $1.00-$20.00
+07:01:49 [CYN] CANDLE BUILDING: GREEN | Vol: 75,581 / 100,000 (76%) | O=3.82 C=3.91
+07:01:49 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [CYN] QUOTE: $3.8600 vol=283 | filter: $1.00-$20.00
+07:01:49 [CYN] CANDLE BUILDING: GREEN | Vol: 75,864 / 100,000 (76%) | O=3.82 C=3.86
+07:01:49 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [CYN] QUOTE: $3.8600 vol=283 | filter: $1.00-$20.00
+07:01:49 [CYN] CANDLE BUILDING: GREEN | Vol: 76,147 / 100,000 (76%) | O=3.82 C=3.86
+07:01:49 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [CYN] QUOTE: $3.8900 vol=100 | filter: $1.00-$20.00
+07:01:49 [CYN] CANDLE BUILDING: GREEN | Vol: 76,247 / 100,000 (76%) | O=3.82 C=3.89
+07:01:49 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [RADX] QUOTE: $6.7300 vol=100 | filter: $1.00-$20.00
+07:01:49 [RADX] CANDLE BUILDING: GREEN | Vol: 3,088 / 100,000 (3%) | O=6.70 C=6.73
+07:01:49 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:49 [RADX] QUOTE: $6.6500 vol=150 | filter: $1.00-$20.00
+07:01:49 [RADX] CANDLE BUILDING: RED | Vol: 3,238 / 100,000 (3%) | O=6.70 C=6.65
+07:01:49 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:50 [CYN] QUOTE: $3.8900 vol=200 | filter: $1.00-$20.00
+07:01:50 [CYN] CANDLE BUILDING: GREEN | Vol: 76,447 / 100,000 (76%) | O=3.82 C=3.89
+07:01:50 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:50 [CYN] QUOTE: $3.8900 vol=200 | filter: $1.00-$20.00
+07:01:50 [CYN] CANDLE BUILDING: GREEN | Vol: 76,647 / 100,000 (77%) | O=3.82 C=3.89
+07:01:50 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:50 [CYN] QUOTE: $3.8600 vol=100 | filter: $1.00-$20.00
+07:01:50 [CYN] CANDLE BUILDING: GREEN | Vol: 76,747 / 100,000 (77%) | O=3.82 C=3.86
+07:01:50 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:51 [RADX] QUOTE: $6.6400 vol=731 | filter: $1.00-$20.00
+07:01:51 [RADX] CANDLE BUILDING: RED | Vol: 3,969 / 100,000 (4%) | O=6.70 C=6.64
+07:01:51 [RADX] LAST COMPLETED CANDLE: RED | Vol: 9,336 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:51 [CYN] QUOTE: $3.8400 vol=367 | filter: $1.00-$20.00
+07:01:51 [CYN] CANDLE BUILDING: GREEN | Vol: 77,114 / 100,000 (77%) | O=3.82 C=3.84
+07:01:51 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:52 [CYN] QUOTE: $3.8400 vol=367 | filter: $1.00-$20.00
+07:01:52 [CYN] CANDLE BUILDING: GREEN | Vol: 77,481 / 100,000 (77%) | O=3.82 C=3.84
+07:01:52 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:52 [CYN] QUOTE: $3.8200 vol=100 | filter: $1.00-$20.00
+07:01:52 [CYN] CANDLE BUILDING: RED | Vol: 77,581 / 100,000 (78%) | O=3.82 C=3.82
+07:01:52 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:52 [CYN] QUOTE: $3.8200 vol=1,000 | filter: $1.00-$20.00
+07:01:52 [CYN] CANDLE BUILDING: RED | Vol: 78,581 / 100,000 (79%) | O=3.82 C=3.82
+07:01:52 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:52 [CYN] QUOTE: $3.8200 vol=1,000 | filter: $1.00-$20.00
+07:01:52 [CYN] CANDLE BUILDING: RED | Vol: 79,581 / 100,000 (80%) | O=3.82 C=3.82
+07:01:52 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:52 [CYN] QUOTE: $3.8100 vol=100 | filter: $1.00-$20.00
+07:01:52 [CYN] CANDLE BUILDING: RED | Vol: 79,681 / 100,000 (80%) | O=3.82 C=3.81
+07:01:52 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:53 [CYN] QUOTE: $3.8200 vol=429 | filter: $1.00-$20.00
+07:01:53 [CYN] CANDLE BUILDING: RED | Vol: 80,110 / 100,000 (80%) | O=3.82 C=3.82
+07:01:53 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:53 [CYN] QUOTE: $3.8200 vol=429 | filter: $1.00-$20.00
+07:01:53 [CYN] CANDLE BUILDING: RED | Vol: 80,539 / 100,000 (81%) | O=3.82 C=3.82
+07:01:53 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:53 [CYN] QUOTE: $3.8500 vol=100 | filter: $1.00-$20.00
+07:01:53 [CYN] CANDLE BUILDING: GREEN | Vol: 80,639 / 100,000 (81%) | O=3.82 C=3.85
+07:01:53 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:54 [CYN] QUOTE: $3.8500 vol=1,698 | filter: $1.00-$20.00
+07:01:54 [CYN] CANDLE BUILDING: GREEN | Vol: 82,337 / 100,000 (82%) | O=3.82 C=3.85
+07:01:54 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:54 [CYN] QUOTE: $3.8300 vol=1,827 | filter: $1.00-$20.00
+07:01:54 [CYN] CANDLE BUILDING: GREEN | Vol: 84,164 / 100,000 (84%) | O=3.82 C=3.83
+07:01:54 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:54 [CYN] QUOTE: $3.8300 vol=1,827 | filter: $1.00-$20.00
+07:01:54 [CYN] CANDLE BUILDING: GREEN | Vol: 85,991 / 100,000 (86%) | O=3.82 C=3.83
+07:01:54 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:54 [CYN] QUOTE: $3.8300 vol=100 | filter: $1.00-$20.00
+07:01:54 [CYN] CANDLE BUILDING: GREEN | Vol: 86,091 / 100,000 (86%) | O=3.82 C=3.83
+07:01:54 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:55 [CYN] QUOTE: $3.8100 vol=2,674 | filter: $1.00-$20.00
+07:01:55 [CYN] CANDLE BUILDING: RED | Vol: 88,765 / 100,000 (89%) | O=3.82 C=3.81
+07:01:55 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:55 [CYN] QUOTE: $3.7700 vol=2,774 | filter: $1.00-$20.00
+07:01:55 [CYN] CANDLE BUILDING: RED | Vol: 91,539 / 100,000 (92%) | O=3.82 C=3.77
+07:01:55 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:55 [CYN] QUOTE: $3.7700 vol=2,774 | filter: $1.00-$20.00
+07:01:55 [CYN] CANDLE BUILDING: RED | Vol: 94,313 / 100,000 (94%) | O=3.82 C=3.77
+07:01:55 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:55 [CYN] QUOTE: $3.7700 vol=100 | filter: $1.00-$20.00
+07:01:55 [CYN] CANDLE BUILDING: RED | Vol: 94,413 / 100,000 (94%) | O=3.82 C=3.77
+07:01:55 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:56 [CYN] QUOTE: $3.7700 vol=498 | filter: $1.00-$20.00
+07:01:56 [CYN] CANDLE BUILDING: RED | Vol: 94,911 / 100,000 (95%) | O=3.82 C=3.77
+07:01:56 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:56 [CYN] QUOTE: $3.7700 vol=498 | filter: $1.00-$20.00
+07:01:56 [CYN] CANDLE BUILDING: RED | Vol: 95,409 / 100,000 (95%) | O=3.82 C=3.77
+07:01:56 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:56 [CYN] QUOTE: $3.7700 vol=100 | filter: $1.00-$20.00
+07:01:56 [CYN] CANDLE BUILDING: RED | Vol: 95,509 / 100,000 (96%) | O=3.82 C=3.77
+07:01:56 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:57 [CYN] QUOTE: $3.7800 vol=1,780 | filter: $1.00-$20.00
+07:01:57 [CYN] CANDLE BUILDING: RED | Vol: 97,289 / 100,000 (97%) | O=3.82 C=3.78
+07:01:57 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:57 [CYN] QUOTE: $3.7800 vol=1,780 | filter: $1.00-$20.00
+07:01:57 [CYN] CANDLE BUILDING: RED | Vol: 99,069 / 100,000 (99%) | O=3.82 C=3.78
+07:01:57 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed
+07:01:57 [CYN] QUOTE: $3.7700 vol=100 | filter: $1.00-$20.00
+07:01:57 [CYN] CANDLE BUILDING: RED | Vol: 99,169 / 100,000 (99%) | O=3.82 C=3.77
+07:01:57 [CYN] LAST COMPLETED CANDLE: RED | Vol: 6,805 <✗ 100,000 | Green candles with vol: 0/1 needed

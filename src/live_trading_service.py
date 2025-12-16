@@ -489,7 +489,7 @@ class TradingEngine:
                     logger.info(f"[{ticker}] Alert accepted by '{name}' (locked)")
                     return
 
-            logger.debug(f"[{ticker}] No strategy accepted the alert")
+            logger.info(f"[{ticker}] No strategy accepted the alert (filtered by all {len(sorted_strategies)} strategies)")
 
         except Exception as e:
             logger.error(f"Error handling alert: {e}", exc_info=True)
