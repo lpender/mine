@@ -27,6 +27,7 @@ class StrategyConfig:
     price_max: float = 10.0
     sessions: List[str] = field(default_factory=lambda: ["premarket", "market"])
     country_blacklist: List[str] = field(default_factory=list)  # e.g., ["CN", "IL"]
+    max_intraday_mentions: Optional[int] = None  # Max intraday mentions (e.g., 2 = only if < 2 mentions)
 
     # Entry rules
     consec_green_candles: int = 1
@@ -120,6 +121,7 @@ class StrategyConfig:
                 "price_max": self.price_max,
                 "sessions": self.sessions,
                 "country_blacklist": self.country_blacklist,
+                "max_intraday_mentions": self.max_intraday_mentions,
             },
             "entry": {
                 "consec_green_candles": self.consec_green_candles,
@@ -405,6 +407,12 @@ class StrategyEngine:
         if cfg.country_blacklist and ann.country in cfg.country_blacklist:
             logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': country '{ann.country}' in blacklist")
             return False
+
+        # Intraday mentions filter (must be less than max)
+        if cfg.max_intraday_mentions is not None and ann.mention_count is not None:
+            if ann.mention_count >= cfg.max_intraday_mentions:
+                logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': {ann.mention_count} mentions >= max {cfg.max_intraday_mentions}")
+                return False
 
         return True
 

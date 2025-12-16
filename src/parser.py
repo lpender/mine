@@ -270,8 +270,9 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
     rvol_match = re.search(r'\*{0,2}RVol\*{0,2}\s*:\s*([\d.]+)', line)
     rvol = float(rvol_match.group(1)) if rvol_match else None
 
-    # Extract mention count (• 3 pattern)
-    mention_match = re.search(r'•\s*(\d+)', line)
+    # Extract mention count / intraday mentions (• 3 or · 3 pattern)
+    # Handles both bullet point (•) and middle dot (·)
+    mention_match = re.search(r'[•·]\s*(\d+)', line)
     mention_count = int(mention_match.group(1)) if mention_match else None
 
     # Extract green bars pattern (e.g., "3 green bars 2m")

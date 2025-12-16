@@ -264,6 +264,16 @@ with st.sidebar:
         help="Exclude these countries"
     )
 
+    # Max intraday mentions filter
+    max_mentions = st.number_input(
+        "Max Intraday Mentions",
+        min_value=0,
+        max_value=100,
+        value=0,
+        key="_max_mentions",
+        help="Only alerts with fewer mentions (0 = no filter)"
+    )
+
     # Author filter
     authors = st.multiselect(
         "Author",
@@ -446,6 +456,7 @@ with st.sidebar:
                     price_max=price_max,
                     sessions=sessions if sessions else ["premarket", "market"],
                     country_blacklist=country_blacklist if country_blacklist else [],
+                    max_intraday_mentions=max_mentions if max_mentions > 0 else None,
                     consec_green_candles=consec_candles,
                     min_candle_volume=int(min_candle_vol),
                     take_profit_pct=take_profit,

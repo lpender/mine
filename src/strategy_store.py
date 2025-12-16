@@ -301,6 +301,7 @@ def _config_from_dict(data: dict) -> StrategyConfig:
         price_max=filters.get("price_max", 10.0),
         sessions=filters.get("sessions", ["premarket", "market"]),
         country_blacklist=filters.get("country_blacklist", []),
+        max_intraday_mentions=filters.get("max_intraday_mentions"),
         consec_green_candles=entry.get("consec_green_candles", 1),
         min_candle_volume=entry.get("min_candle_volume", 5000),
         take_profit_pct=exit_rules.get("take_profit_pct", 10.0),

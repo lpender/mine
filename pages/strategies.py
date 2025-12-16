@@ -331,6 +331,8 @@ else:
                 st.write(f"Price: ${cfg.price_min} - ${cfg.price_max}")
                 if cfg.country_blacklist:
                     st.write(f"Blacklist: {', '.join(cfg.country_blacklist)}")
+                if cfg.max_intraday_mentions:
+                    st.write(f"Max Mentions: {cfg.max_intraday_mentions}")
 
             with col2:
                 st.markdown("**Entry**")
@@ -408,6 +410,7 @@ else:
                             price_min=cfg.price_min,
                             price_max=cfg.price_max,
                             country_blacklist=cfg.country_blacklist,
+                            max_intraday_mentions=cfg.max_intraday_mentions,
                             consec_green_candles=cfg.consec_green_candles,
                             min_candle_volume=cfg.min_candle_volume,
                             take_profit_pct=cfg.take_profit_pct,
