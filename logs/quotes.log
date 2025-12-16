@@ -22029,3 +22029,22 @@
 08:15:12 [RZLV] CANDLE BUILDING: GREEN | Vol: 97,476 / 100,000 (97%) | O=2.64 C=2.68
 08:15:13 [RZLV] QUOTE: $2.6799 vol=4,409 | filter: $1.00-$20.00
 08:15:13 [RZLV] CANDLE BUILDING: GREEN | Vol: 101,885 / 100,000 (102%) | O=2.64 C=2.68
+08:40:00 [KXIN] QUOTE: $5.0600 vol=200 | filter: $1.00-$20.00
+08:40:00 [KXIN] CANDLE BUILDING: RED | Vol: 200 / 100,000 (0%) | O=5.06 C=5.06
+08:40:14 [KXIN] QUOTE: $5.0600 vol=200 | filter: $1.00-$20.00
+08:40:14 [KXIN] CANDLE BUILDING: RED | Vol: 400 / 100,000 (0%) | O=5.06 C=5.06
+08:40:14 [KXIN] QUOTE: $5.0500 vol=177 | filter: $1.00-$20.00
+08:40:14 
+08:40:14 [KXIN] ━━━ CANDLE CLOSED ━━━
+08:40:14 [KXIN] RED candle | O=5.06 H=5.06 L=5.06 C=5.06
+08:40:14 [KXIN] Volume: 400 <✗ 100,000 threshold
+08:40:14 [KXIN] Qualifies for entry: NO ✗
+08:40:14 
+08:40:14 [KXIN] CANDLE BUILDING: RED | Vol: 177 / 100,000 (0%) | O=5.05 C=5.05
+08:40:14 [KXIN] LAST COMPLETED CANDLE: RED | Vol: 400 <✗ 100,000 | Completed green candles with vol: 0/1 needed
+08:40:50 [KXIN] QUOTE: $5.0500 vol=177 | filter: $1.00-$20.00
+08:40:50 [KXIN] CANDLE BUILDING: RED | Vol: 354 / 100,000 (0%) | O=5.05 C=5.05
+08:40:50 [KXIN] LAST COMPLETED CANDLE: RED | Vol: 400 <✗ 100,000 | Completed green candles with vol: 0/1 needed
+08:40:51 [KXIN] QUOTE: $4.9200 vol=100 | filter: $1.00-$20.00
+08:40:51 [KXIN] CANDLE BUILDING: RED | Vol: 454 / 100,000 (0%) | O=5.05 C=4.92
+08:40:51 [KXIN] LAST COMPLETED CANDLE: RED | Vol: 400 <✗ 100,000 | Completed green candles with vol: 0/1 needed

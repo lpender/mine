@@ -10,6 +10,7 @@ from .models import (
     get_market_session,
     MARKET_OPEN,
     ET_TZ,
+    UTC_TZ,
 )
 from .data_providers import get_provider, OHLCVDataProvider
 
@@ -248,45 +249,57 @@ class MassiveClient:
         """
         Compute the effective OHLCV start time for an announcement.
 
-        - Postmarket: next market open
-        - Premarket: same-day market open
-        - Market: announcement time
+        Returns naive datetime in ET (to match OHLCV storage format).
+
+        Args:
+            announcement_time: Naive datetime assumed to be UTC (from database),
+                              or timezone-aware datetime.
+
+        Returns:
+            Naive datetime in ET representing:
+            - Postmarket/closed: next market open
+            - Premarket: same-day market open
+            - Market: announcement time converted to ET
         """
-        # Convert to Eastern Time if needed (and remember whether input was naive)
-        naive_input = announcement_time.tzinfo is None
-        et_time = announcement_time if naive_input else announcement_time.astimezone(ET_TZ)
+        # Convert to Eastern Time - naive inputs are UTC from database
+        if announcement_time.tzinfo is None:
+            # Naive timestamps from DB are stored in UTC
+            utc_time = announcement_time.replace(tzinfo=UTC_TZ)
+            et_time = utc_time.astimezone(ET_TZ).replace(tzinfo=None)
+        else:
+            et_time = announcement_time.astimezone(ET_TZ).replace(tzinfo=None)
 
         # If the calendar day isn't a trading day (weekend/holiday), roll forward to next session open.
-        # If pandas_market_calendars is installed, this handles NYSE holidays; otherwise weekends only.
         trading_day = _first_trading_day_on_or_after(et_time.date())
         if trading_day != et_time.date():
-            return _combine_et(trading_day, MARKET_OPEN, naive_input)
+            return _combine_et(trading_day, MARKET_OPEN, True)
 
-        session = get_market_session(et_time)
+        # Use the original timestamp for session check (handles UTC correctly)
+        session = get_market_session(announcement_time)
 
         if session == "market":
-            return announcement_time
+            # Return the ET time (not the original UTC)
+            return et_time
 
         if session == "premarket":
-            # Start from market open of the same day (may still be in the future; fetch will skip)
-            return _combine_et(et_time.date(), MARKET_OPEN, naive_input)
+            # Start from market open of the same day
+            return _combine_et(et_time.date(), MARKET_OPEN, True)
 
-        # For postmarket, and for "closed" (overnight) times, start from the next market open.
-        # - "closed" includes 20:00-04:00; before 09:30 we want same-day open, after 16:00 we want next day open.
+        # For postmarket and closed times, determine next market open
         if session in ("postmarket", "closed"):
             t = et_time.time()
             if t < MARKET_OPEN:
                 # Overnight before the bell: same-day open
                 day = _first_trading_day_on_or_after(et_time.date())
-                return _combine_et(day, MARKET_OPEN, naive_input)
+                return _combine_et(day, MARKET_OPEN, True)
 
             # After-hours or late evening: next weekday open
             next_day = _first_trading_day_after(et_time.date())
-            return _combine_et(next_day, MARKET_OPEN, naive_input)
+            return _combine_et(next_day, MARKET_OPEN, True)
 
-        # Fallback: treat unknown session as "next open"
+        # Fallback: next market open
         next_day = _first_trading_day_after(et_time.date())
-        return _combine_et(next_day, MARKET_OPEN, naive_input)
+        return _combine_et(next_day, MARKET_OPEN, True)
 
     def _get_announcements_path(self) -> Path:
         """Get path to the announcements JSON file."""

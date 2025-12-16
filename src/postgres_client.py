@@ -214,28 +214,24 @@ class PostgresClient:
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
                                   use_cache: bool = True) -> Optional[List[OHLCVBar]]:
-        """Fetch OHLCV data starting from announcement time."""
+        """Fetch OHLCV data starting from announcement time.
+
+        Args:
+            ticker: Stock ticker
+            announcement_time: Naive datetime in UTC (from database)
+            window_minutes: How many minutes of data to fetch
+            use_cache: Whether to use cached data
+
+        Returns:
+            List of OHLCV bars (timestamps in ET) or empty list
+        """
         from datetime import date
+        from .massive_client import MassiveClient
 
-        # Determine effective start time based on market session
-        session = get_market_session(announcement_time)
-
-        if session == "closed":
-            # Start at next market open (9:30 AM next trading day)
-            effective_start = announcement_time.replace(hour=9, minute=30, second=0, microsecond=0)
-            if announcement_time.hour >= 20:
-                effective_start += timedelta(days=1)
-            # Skip weekends
-            while effective_start.weekday() >= 5:
-                effective_start += timedelta(days=1)
-        elif session == "postmarket":
-            # Start at next market open
-            effective_start = announcement_time.replace(hour=9, minute=30, second=0, microsecond=0)
-            effective_start += timedelta(days=1)
-            while effective_start.weekday() >= 5:
-                effective_start += timedelta(days=1)
-        else:
-            effective_start = announcement_time
+        # Use MassiveClient's timezone-aware effective start calculation
+        # This properly converts UTC announcement time to ET for OHLCV queries
+        massive_client = MassiveClient()
+        effective_start = massive_client.get_effective_start_time(announcement_time)
 
         # Skip fetching if effective trading window is today (data not yet available)
         if effective_start.date() >= date.today():
