@@ -7,6 +7,7 @@ from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from src.postgres_client import PostgresClient
+from src.massive_client import MassiveClient
 
 # Timezone for display
 EST = ZoneInfo("America/New_York")
@@ -86,16 +87,25 @@ def load_announcements():
 
 @st.cache_data(ttl=300)
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
-    """Load OHLCV bars for a set of announcements."""
+    """Load OHLCV bars for a set of announcements.
+
+    Uses get_effective_start_time to handle postmarket/premarket announcements:
+    - Postmarket: starts from next market open
+    - Premarket: starts from same-day market open
+    - Market hours: starts from announcement time
+    """
     client = PostgresClient()
+    massive_client = MassiveClient()
     bars_by_announcement = {}
 
     for ticker, timestamp_str in announcement_keys:
-        timestamp = pd.to_datetime(timestamp_str)
-        start = timestamp
-        end = timestamp + timedelta(minutes=window_minutes)
-        bars = client.get_ohlcv_bars(ticker, start, end)
-        bars_by_announcement[(ticker, timestamp)] = bars
+        timestamp = pd.to_datetime(timestamp_str).to_pydatetime()
+        # Use effective start time to handle postmarket/premarket properly
+        start = massive_client.get_effective_start_time(timestamp)
+        end = start + timedelta(minutes=window_minutes)
+        # Use fetch_ohlcv which queries cache and fetches from API if needed
+        bars = client.fetch_ohlcv(ticker, start, end) or []
+        bars_by_announcement[(ticker, timestamp_str)] = bars
 
     return bars_by_announcement
 
