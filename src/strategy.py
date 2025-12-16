@@ -844,23 +844,9 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
-        # Verify broker position matches our tracking before selling
-        shares_to_sell = trade.shares
-        try:
-            broker_position = self.trader.get_position(ticker)
-            if broker_position and broker_position.shares != trade.shares:
-                logger.warning(
-                    f"[{ticker}] Position mismatch: tracked {trade.shares} shares, "
-                    f"broker has {broker_position.shares} - using broker's count"
-                )
-                shares_to_sell = broker_position.shares
-                trade.shares = broker_position.shares  # Update our tracking
-        except Exception as e:
-            logger.warning(f"[{ticker}] Could not verify broker position: {e}")
-
         # Execute sell order (limit order at current price - slippage)
         try:
-            order = self.trader.sell(ticker, shares_to_sell, limit_price=price)
+            order = self.trader.sell(ticker, trade.shares, limit_price=price)
             logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
         except Exception as e:
             error_msg = str(e).lower()
@@ -893,7 +879,7 @@ class StrategyEngine:
             order_id=order.order_id,
             ticker=ticker,
             side="sell",
-            shares=shares_to_sell,
+            shares=trade.shares,
             limit_price=price,
             submitted_at=timestamp,
             entry_price=trade.entry_price,

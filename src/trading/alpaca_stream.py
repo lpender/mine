@@ -183,11 +183,20 @@ class AlpacaTradeStream:
 
         # Dispatch to callbacks
         if event == "fill" and self.on_fill:
+            # Use qty (order quantity) instead of filled_qty if they differ
+            # A "fill" event means the order is complete, so qty is the true amount
+            shares = filled_qty
+            if filled_qty != qty:
+                logger.warning(
+                    f"[{ticker}] Fill event has filled_qty={filled_qty} != qty={qty}, "
+                    f"using qty={qty} as the fill amount"
+                )
+                shares = qty
             self.on_fill(
                 order_id=order_id,
                 ticker=ticker,
                 side=side,
-                shares=filled_qty,
+                shares=shares,
                 filled_price=filled_avg_price,
                 timestamp=timestamp,
             )
