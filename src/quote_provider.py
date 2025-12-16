@@ -54,6 +54,7 @@ class InsightSentryQuoteProvider:
         self._ws: Optional[aiohttp.ClientWebSocketResponse] = None
         self._session: Optional[aiohttp.ClientSession] = None
         self._subscriptions: Set[str] = set()
+        self._symbol_codes: Dict[str, str] = {}  # ticker -> "EXCHANGE:TICKER" cache
         self._running = False
         self._reconnect_delay = 1.0
         self._last_heartbeat = 0.0
@@ -95,6 +96,62 @@ class InsightSentryQuoteProvider:
         self._ws_key = self.api_key
         logger.info("Using INSIGHT_SENTRY_KEY as WebSocket key (native subscriber)")
         return self._ws_key
+
+    def lookup_symbol_code(self, ticker: str) -> Optional[str]:
+        """
+        Look up the InsightSentry symbol code for a ticker.
+
+        Uses the search API to find the correct exchange (NASDAQ, NYSE, etc.).
+        Returns code like "NASDAQ:AAPL" or "NYSE:GME".
+        Caches results to avoid repeated API calls.
+        """
+        ticker = ticker.upper()
+
+        # Check cache first
+        if ticker in self._symbol_codes:
+            return self._symbol_codes[ticker]
+
+        if not self.api_key:
+            logger.warning(f"[{ticker}] Cannot lookup symbol - no API key")
+            return None
+
+        try:
+            url = "https://api.insightsentry.com/v3/symbols/search"
+            params = {
+                "query": ticker,
+                "type": "none",
+                "country": "US",
+                "page": 1,
+            }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            }
+
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            if response.status_code != 200:
+                logger.warning(f"[{ticker}] Symbol search failed: {response.status_code}")
+                return None
+
+            data = response.json()
+            symbols = data.get("symbols", [])
+
+            # Find exact match for STOCK type
+            for sym in symbols:
+                if sym.get("name") == ticker and sym.get("type") == "STOCK":
+                    code = sym.get("code")
+                    if code:
+                        self._symbol_codes[ticker] = code
+                        logger.info(f"[{ticker}] Resolved to {code}")
+                        return code
+
+            # No exact stock match found
+            logger.warning(f"[{ticker}] No STOCK match found in search results")
+            return None
+
+        except Exception as e:
+            logger.warning(f"[{ticker}] Symbol lookup error: {e}")
+            return None
 
     async def _cleanup_existing_connections(self):
         """Close any existing WebSocket/session before creating new ones."""
@@ -220,10 +277,17 @@ class InsightSentryQuoteProvider:
         # Build subscription message
         # InsightSentry expects: {"api_key": "xxx", "subscriptions": [...]}
         subs = []
+        failed_tickers = []
         for ticker in self._subscriptions:
-            # Convert ticker to InsightSentry format (e.g., "NASDAQ:AAPL")
-            # For now, assume all are NASDAQ - could add exchange detection
-            code = f"NASDAQ:{ticker}"
+            # Look up the correct exchange code (e.g., "NASDAQ:AAPL" or "NYSE:GME")
+            code = self.lookup_symbol_code(ticker)
+            if not code:
+                # Couldn't resolve symbol - notify error callback and skip
+                failed_tickers.append(ticker)
+                if self.on_symbol_error:
+                    self.on_symbol_error(ticker, "symbol_not_found", f"Could not resolve exchange for {ticker}")
+                continue
+
             subs.append({
                 "code": code,
                 "type": "series",
@@ -232,6 +296,15 @@ class InsightSentryQuoteProvider:
                 "extended": True,
                 "recent_bars": False,
             })
+
+        # Remove failed tickers from subscriptions
+        for ticker in failed_tickers:
+            self._subscriptions.discard(ticker)
+
+        # If all lookups failed, we have nothing to subscribe to
+        if not subs:
+            logger.warning("All symbol lookups failed - no subscriptions to send")
+            return
 
         message = {
             "api_key": self._ws_key,
