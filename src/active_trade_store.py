@@ -133,6 +133,20 @@ class ActiveTradeStore:
         finally:
             session.close()
 
+    def get_trade(self, ticker: str, strategy_id: Optional[str]) -> Optional[ActiveTradeDB]:
+        """Get a specific active trade by ticker and strategy."""
+        session = SessionLocal()
+        try:
+            trade = session.query(ActiveTradeDB).filter(
+                ActiveTradeDB.ticker == ticker,
+                ActiveTradeDB.strategy_id == strategy_id,
+            ).first()
+            if trade:
+                session.expunge(trade)
+            return trade
+        finally:
+            session.close()
+
     def get_trades_for_strategy(self, strategy_id: str) -> List[ActiveTradeDB]:
         """Get all active trades for a strategy."""
         session = SessionLocal()
