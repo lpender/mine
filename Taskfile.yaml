@@ -151,6 +151,11 @@ tasks:
     cmds:
       - tail -f logs/quotes.log 2>/dev/null || echo "No quotes log found - run 'task trade' first"
 
+  logs:limits:
+    desc: Tail the subscription limit errors log
+    cmds:
+      - tail -f logs/limits.log 2>/dev/null || echo "No limits log found - run 'task trade' first"
+
   clean:
     desc: Clean up cache files
     cmds:

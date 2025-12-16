@@ -13,6 +13,7 @@ import aiohttp
 import requests
 
 logger = logging.getLogger(__name__)
+limits_logger = logging.getLogger("src.quote_provider.limits")
 
 # Cache file for WS key (survives restarts)
 WS_KEY_CACHE_FILE = Path(__file__).parent.parent / "data" / ".ws_key_cache.json"
@@ -266,8 +267,9 @@ class InsightSentryQuoteProvider:
 
         # Subscription limit error (InsightSentry plan limit)
         if "message" in msg and "exceeds the number of symbols" in msg.get("message", ""):
-            logger.error(f"⚠️ SUBSCRIPTION LIMIT: {msg['message']}")
-            logger.error(f"   Currently tracking {len(self._subscriptions)} symbols: {list(self._subscriptions)}")
+            limit_msg = f"SUBSCRIPTION LIMIT: {msg['message']} | tracking {len(self._subscriptions)} symbols: {list(self._subscriptions)}"
+            logger.error(f"⚠️ {limit_msg}")
+            limits_logger.error(limit_msg)
             return
 
         # Server heartbeat

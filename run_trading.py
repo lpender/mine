@@ -68,6 +68,17 @@ quotes_handler = logging.FileHandler('logs/quotes.log')
 quotes_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%H:%M:%S'))
 quotes_logger.addHandler(quotes_handler)
 
+# Set up separate file handler for subscription limit errors
+# These go to logs/limits.log (tail -f logs/limits.log)
+limits_logger = logging.getLogger('src.quote_provider.limits')
+limits_logger.setLevel(logging.INFO)
+limits_logger.propagate = False  # Don't send to root logger (stdout)
+
+# File handler for limits logs
+limits_handler = logging.FileHandler('logs/limits.log')
+limits_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+limits_logger.addHandler(limits_handler)
+
 
 def signal_handler(signum, frame):
     """Handle shutdown signals gracefully."""
