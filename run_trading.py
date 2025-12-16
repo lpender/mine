@@ -41,13 +41,25 @@ from src.live_trading_service import (
     get_live_trading_status,
 )
 
-# Configure logging
+# Create logs directory if needed
+import os
+os.makedirs('logs', exist_ok=True)
+
+# Configure logging - both stdout and file
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(name)s] %(message)s',
     datefmt='%H:%M:%S',
 )
 logger = logging.getLogger(__name__)
+
+# Add file handler for all trading logs (tail -f logs/trading.log)
+trading_handler = logging.FileHandler('logs/trading.log')
+trading_handler.setFormatter(logging.Formatter(
+    '%(asctime)s [%(name)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+))
+logging.getLogger().addHandler(trading_handler)
 
 # Reduce noise from some loggers
 logging.getLogger('urllib3').setLevel(logging.WARNING)
@@ -58,10 +70,6 @@ logging.getLogger('aiohttp').setLevel(logging.WARNING)
 quotes_logger = logging.getLogger('src.strategy.quotes')
 quotes_logger.setLevel(logging.INFO)
 quotes_logger.propagate = False  # Don't send to root logger (stdout)
-
-# Create logs directory if needed
-import os
-os.makedirs('logs', exist_ok=True)
 
 # File handler for quote logs
 quotes_handler = logging.FileHandler('logs/quotes.log')
