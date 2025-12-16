@@ -3,11 +3,12 @@
 import asyncio
 import json
 import logging
+import os
 import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Callable, Dict
+from typing import Optional, Callable, Dict, List, Tuple
 
 from .strategy import StrategyConfig, StrategyEngine
 from .trading import get_trading_client, TradingClient
@@ -24,6 +25,10 @@ logger = logging.getLogger(__name__)
 TRADING_LOCK_FILE = Path(__file__).parent.parent / "data" / ".trading.lock"
 # Status file for cross-process status sharing
 TRADING_STATUS_FILE = Path(__file__).parent.parent / "data" / ".trading_status.json"
+
+# Maximum number of open positions across all strategies (0 = unlimited)
+# If exceeded, most recently entered positions are closed first (LIFO)
+MAX_OPEN_POSITIONS = int(os.getenv("MAX_OPEN_POSITIONS", "5"))
 
 
 class TradingEngine:
@@ -254,6 +259,12 @@ class TradingEngine:
                 logger.info(f"Strategy '{name}' recovered {pending_count} pending entries: {list(engine.pending_entries.keys())}")
 
         logger.info(f"Loaded {len(enabled)} enabled strategies with {total_active_trades} active trades, {total_pending_entries} pending entries")
+        logger.info(f"Position limit: MAX_OPEN_POSITIONS={MAX_OPEN_POSITIONS}")
+
+        # Enforce position limit at startup (close excess positions if any)
+        if total_active_trades > MAX_OPEN_POSITIONS > 0:
+            logger.warning(f"Startup: {total_active_trades} positions exceed limit of {MAX_OPEN_POSITIONS}")
+            self._enforce_position_limit()
 
     def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig, priority: int = 0):
         """Create and add a StrategyEngine for a strategy."""
@@ -530,6 +541,8 @@ class TradingEngine:
             if order_id in engine.pending_orders:
                 if side == "buy":
                     engine.on_buy_fill(order_id, ticker, shares, filled_price, timestamp)
+                    # After new position opens, enforce the position limit
+                    self._enforce_position_limit()
                 else:
                     engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
                 return
@@ -553,6 +566,56 @@ class TradingEngine:
             if order_id in engine.pending_orders:
                 engine.on_order_rejected(order_id, ticker, side, reason)
                 return
+
+    def _enforce_position_limit(self):
+        """
+        Enforce MAX_OPEN_POSITIONS limit by closing most recently entered positions.
+
+        When we have more positions than allowed, close the newest ones first (LIFO).
+        This helps stay within quote subscription limits (e.g., InsightSentry's 5-symbol limit).
+        """
+        if MAX_OPEN_POSITIONS <= 0:
+            return  # Unlimited positions
+
+        # Collect all active trades across all strategies with their entry times
+        # Format: [(strategy_id, ticker, entry_time), ...]
+        all_positions: List[Tuple[str, str, datetime]] = []
+
+        for strategy_id, engine in self.strategies.items():
+            for ticker, trade in engine.active_trades.items():
+                all_positions.append((strategy_id, ticker, trade.entry_time))
+
+        total_positions = len(all_positions)
+        if total_positions <= MAX_OPEN_POSITIONS:
+            return  # Within limit
+
+        # Sort by entry_time descending (newest first)
+        all_positions.sort(key=lambda x: x[2], reverse=True)
+
+        # Close the newest positions until we're at the limit
+        positions_to_close = total_positions - MAX_OPEN_POSITIONS
+        logger.warning(
+            f"Position limit exceeded: {total_positions}/{MAX_OPEN_POSITIONS} - "
+            f"closing {positions_to_close} most recent position(s)"
+        )
+
+        for i in range(positions_to_close):
+            strategy_id, ticker, entry_time = all_positions[i]
+            engine = self.strategies[strategy_id]
+            strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
+
+            trade = engine.active_trades.get(ticker)
+            if trade:
+                # Get current price for exit (use entry price as fallback)
+                current_price = trade.last_price if trade.last_price > 0 else trade.entry_price
+
+                logger.warning(
+                    f"[{ticker}] Closing position (LIFO limit) from strategy '{strategy_name}' - "
+                    f"entered at {entry_time.strftime('%H:%M:%S')}"
+                )
+
+                # Trigger exit via the strategy engine
+                engine._execute_exit(ticker, current_price, "position_limit", datetime.now())
 
     def _on_subscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy needs quotes for a ticker."""
