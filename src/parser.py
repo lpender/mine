@@ -167,7 +167,12 @@ def extract_scanner_gain_pct(line: str) -> Optional[float]:
     return None
 
 
-def parse_message_line(line: str, timestamp: datetime, source_message: Optional[str] = None) -> Optional[Announcement]:
+def parse_message_line(
+    line: str,
+    timestamp: datetime,
+    source_message: Optional[str] = None,
+    source_html: Optional[str] = None,
+) -> Optional[Announcement]:
     """
     Parse a single announcement line like:
     'BNKK  < $.50c  - Bonk, Inc. Provides 2026 Guidance... - Link  ~  :flag_us:  |  Float: 139 M  |  IO: 6.04%  |  MC: 26.8 M'
@@ -181,7 +186,8 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
     Args:
         line: The message line to parse
         timestamp: Timestamp for the announcement
-        source_message: Optional raw source message/HTML that generated this
+        source_message: Clean text of the Discord message
+        source_html: Raw HTML of the Discord message (for re-parsing)
     """
     line = line.strip()
     if not line:
@@ -312,6 +318,7 @@ def parse_message_line(line: str, timestamp: datetime, source_message: Optional[
         scanner_test=scanner_test,
         scanner_after_lull=scanner_after_lull,
         source_message=source_message or line,  # Default to the parsed line if no source provided
+        source_html=source_html,
     )
 
 
@@ -559,8 +566,13 @@ def parse_discord_html_with_stats(
         # Get text content
         message_text = content_div.get_text(separator=' ', strip=True)
 
-        # Try to parse as announcement (store clean text, not raw HTML)
-        announcement = parse_message_line(message_text, timestamp, source_message=message_text)
+        # Capture raw HTML for re-parsing
+        raw_html = str(msg)
+
+        # Try to parse as announcement (store both clean text and raw HTML)
+        announcement = parse_message_line(
+            message_text, timestamp, source_message=message_text, source_html=raw_html
+        )
         if announcement:
             announcement.author = extract_author_from_msg(msg)
             announcements.append(announcement)

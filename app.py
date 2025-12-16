@@ -667,8 +667,8 @@ st.header("Trade Results")
 rows = []
 for r in summary.results:
     a = r.announcement
-    # Prefer source_message (full Discord message), fall back to headline
-    msg = a.source_message or a.headline or ""
+    msg = a.source_message or ""
+    headline = a.headline or ""
     rows.append({
         "Time": to_est(a.timestamp),
         "Ticker": a.ticker,
@@ -679,6 +679,7 @@ for r in summary.results:
         "Mentions": a.mention_count,
         "Float (M)": a.float_shares / 1e6 if a.float_shares else None,
         "MC (M)": a.market_cap / 1e6 if a.market_cap else None,
+        "Headline": headline[:60] + "..." if len(headline) > 60 else headline,
         "Message": msg[:80] + "..." if len(msg) > 80 else msg,
         "Entry": r.entry_price,
         "Exit": r.exit_price,

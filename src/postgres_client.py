@@ -343,6 +343,7 @@ class PostgresClient:
             "scanner_test": ann.scanner_test,
             "scanner_after_lull": ann.scanner_after_lull,
             "source_message": ann.source_message,
+            "source_html": ann.source_html,
         }
 
     def _db_to_announcement(self, row: AnnouncementDB) -> Announcement:
@@ -381,4 +382,5 @@ class PostgresClient:
             scanner_test=row.scanner_test or False,
             scanner_after_lull=row.scanner_after_lull or False,
             source_message=row.source_message,
+            source_html=row.source_html,
         )

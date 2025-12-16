@@ -86,7 +86,8 @@ class Announcement:
     scanner_after_lull: bool = False  # Detected by "after-lull" scanner
 
     # Source data
-    source_message: Optional[str] = None  # Raw Discord message that generated this
+    source_message: Optional[str] = None  # Clean text of Discord message
+    source_html: Optional[str] = None  # Raw HTML of Discord message (for re-parsing)
 
     @property
     def market_session(self) -> str:

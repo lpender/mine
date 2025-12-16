@@ -71,7 +71,8 @@ class AnnouncementDB(Base):
     scanner_after_lull = Column(Boolean, default=False)
 
     # Source data
-    source_message = Column(Text)  # Raw Discord message that generated this announcement
+    source_message = Column(Text)  # Clean text of Discord message
+    source_html = Column(Text)  # Raw HTML of Discord message (for re-parsing)
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -251,9 +252,10 @@ def init_db():
     """Create all tables and run migrations."""
     Base.metadata.create_all(bind=engine)
 
-    # Migration: Add priority column to strategies if missing
     from sqlalchemy import inspect, text
     inspector = inspect(engine)
+
+    # Migration: Add priority column to strategies if missing
     if 'strategies' in inspector.get_table_names():
         columns = [c['name'] for c in inspector.get_columns('strategies')]
         if 'priority' not in columns:
@@ -266,6 +268,14 @@ def init_db():
                         WHERE s2.created_at < strategies.created_at
                     )
                 """))
+                conn.commit()
+
+    # Migration: Add source_html column to announcements if missing
+    if 'announcements' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('announcements')]
+        if 'source_html' not in columns:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE announcements ADD COLUMN source_html TEXT"))
                 conn.commit()
 
 
