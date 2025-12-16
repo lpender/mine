@@ -28,6 +28,7 @@ class StrategyConfig:
     sessions: List[str] = field(default_factory=lambda: ["premarket", "market"])
     country_blacklist: List[str] = field(default_factory=list)  # e.g., ["CN", "IL"]
     max_intraday_mentions: Optional[int] = None  # Max intraday mentions (e.g., 2 = only if < 2 mentions)
+    exclude_financing_headlines: bool = False  # Exclude offerings, reverse splits, etc.
 
     # Entry rules
     consec_green_candles: int = 1
@@ -122,6 +123,7 @@ class StrategyConfig:
                 "sessions": self.sessions,
                 "country_blacklist": self.country_blacklist,
                 "max_intraday_mentions": self.max_intraday_mentions,
+                "exclude_financing_headlines": self.exclude_financing_headlines,
             },
             "entry": {
                 "consec_green_candles": self.consec_green_candles,
@@ -413,6 +415,11 @@ class StrategyEngine:
             if ann.mention_count >= cfg.max_intraday_mentions:
                 logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': {ann.mention_count} mentions >= max {cfg.max_intraday_mentions}")
                 return False
+
+        # Financing headline filter (offerings, reverse splits, etc.)
+        if cfg.exclude_financing_headlines and ann.headline_is_financing:
+            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': financing headline ({ann.headline_financing_type})")
+            return False
 
         return True
 

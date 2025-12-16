@@ -242,6 +242,8 @@ else:
                     "stake": str(cfg.stake_amount),
                     "vol_pct": str(cfg.volume_pct),
                     "max_stake": str(cfg.max_stake),
+                    "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "0",
+                    "exclude_headlines": "1" if cfg.exclude_financing_headlines else "0",
                 }
                 query_string = "&".join(f"{k}={v}" for k, v in params.items())
                 # Use markdown link styled as button - opens in same tab
@@ -333,6 +335,8 @@ else:
                     st.write(f"Blacklist: {', '.join(cfg.country_blacklist)}")
                 if cfg.max_intraday_mentions:
                     st.write(f"Max Mentions: {cfg.max_intraday_mentions}")
+                if cfg.exclude_financing_headlines:
+                    st.write("Exclude Financing: Yes")
 
             with col2:
                 st.markdown("**Entry**")
