@@ -581,13 +581,17 @@ class StrategyEngine:
 
         take_profit_price = price * (1 + cfg.take_profit_pct / 100)
 
-        # Get previous candle volume for volume-based sizing
-        prev_candle_volume = None
+        # Get candle volume for volume-based sizing
+        # Use last completed candle, or current building candle for early entry
+        candle_volume = None
         if pending.candles:
-            prev_candle_volume = pending.candles[-1].volume
+            candle_volume = pending.candles[-1].volume
+        elif pending.current_candle_data:
+            # Early entry on first candle - use current candle's volume
+            candle_volume = pending.current_candle_data["volume"]
 
         # Calculate shares based on position sizing mode
-        shares = cfg.get_shares(price, prev_candle_volume)
+        shares = cfg.get_shares(price, candle_volume)
         if shares <= 0:
             logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f}")
             # Unsubscribe since we're no longer tracking this ticker
@@ -597,8 +601,8 @@ class StrategyEngine:
 
         # Log entry with sizing details
         position_cost = shares * price
-        if cfg.stake_mode == "volume_pct" and prev_candle_volume:
-            sizing_info = f"{cfg.volume_pct}% of {prev_candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
+        if cfg.stake_mode == "volume_pct" and candle_volume:
+            sizing_info = f"{cfg.volume_pct}% of {candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
         else:
             sizing_info = f"${cfg.stake_amount:.0f} stake = {shares} shares"
 
