@@ -582,13 +582,23 @@ class StrategyEngine:
         take_profit_price = price * (1 + cfg.take_profit_pct / 100)
 
         # Get candle volume for volume-based sizing
-        # Use last completed candle, or current building candle for early entry
+        # Use last completed candle, or extrapolate current candle for early entry
         candle_volume = None
+        extrapolated = False
+        actual_vol = None
+        elapsed_secs = None
         if pending.candles:
             candle_volume = pending.candles[-1].volume
-        elif pending.current_candle_data:
-            # Early entry on first candle - use current candle's volume
-            candle_volume = pending.current_candle_data["volume"]
+        elif pending.current_candle_data and pending.current_candle_start:
+            # Early entry on first candle - extrapolate to full minute
+            actual_vol = pending.current_candle_data["volume"]
+            elapsed_secs = (timestamp - pending.current_candle_start).total_seconds()
+            if elapsed_secs > 0:
+                # Project what the full minute's volume would be
+                candle_volume = int(actual_vol * (60.0 / elapsed_secs))
+                extrapolated = True
+            else:
+                candle_volume = actual_vol
 
         # Calculate shares based on position sizing mode
         shares = cfg.get_shares(price, candle_volume)
@@ -602,7 +612,10 @@ class StrategyEngine:
         # Log entry with sizing details
         position_cost = shares * price
         if cfg.stake_mode == "volume_pct" and candle_volume:
-            sizing_info = f"{cfg.volume_pct}% of {candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
+            if extrapolated and actual_vol is not None and elapsed_secs is not None:
+                sizing_info = f"{cfg.volume_pct}% of {candle_volume:,} vol (extrapolated from {actual_vol:,} in {elapsed_secs:.0f}s) = {shares} shares (${position_cost:.0f})"
+            else:
+                sizing_info = f"{cfg.volume_pct}% of {candle_volume:,} vol = {shares} shares (${position_cost:.0f})"
         else:
             sizing_info = f"${cfg.stake_amount:.0f} stake = {shares} shares"
 
