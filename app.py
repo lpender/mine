@@ -2,9 +2,9 @@
 
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 from datetime import timedelta
 from zoneinfo import ZoneInfo
+from streamlit_lightweight_charts import renderLightweightCharts
 
 from src.postgres_client import PostgresClient
 
@@ -808,91 +808,115 @@ else:
         bars = bars_dict.get(key, [])
 
         if bars:
-            # Build candlestick data (convert to EST)
-            bar_times = [to_est(b.timestamp) for b in bars]
-            bar_open = [b.open for b in bars]
-            bar_high = [b.high for b in bars]
-            bar_low = [b.low for b in bars]
-            bar_close = [b.close for b in bars]
-            bar_volume = [b.volume for b in bars]
-
-            # Create candlestick chart
-            fig = go.Figure()
-
-            # Build hover text with volume (vertical layout)
-            hover_text = [
-                f"Open: ${o:.2f}<br>High: ${h:.2f}<br>Low: ${l:.2f}<br>Close: ${c:.2f}<br>Volume: {v:,.0f}"
-                for o, h, l, c, v in zip(bar_open, bar_high, bar_low, bar_close, bar_volume)
+            # Convert bars to lightweight-charts format (Unix timestamps in seconds)
+            candles = [
+                {
+                    "time": int(to_est(b.timestamp).timestamp()),
+                    "open": b.open,
+                    "high": b.high,
+                    "low": b.low,
+                    "close": b.close,
+                }
+                for b in bars
             ]
 
-            # Add candlestick
-            fig.add_trace(go.Candlestick(
-                x=bar_times,
-                open=bar_open,
-                high=bar_high,
-                low=bar_low,
-                close=bar_close,
-                name="Price",
-                increasing_line_color="green",
-                decreasing_line_color="red",
-                text=hover_text,
-                hoverinfo="text+x",
-            ))
+            # Build volume data for histogram overlay
+            volume_data = [
+                {
+                    "time": int(to_est(b.timestamp).timestamp()),
+                    "value": b.volume,
+                    "color": "rgba(38,166,154,0.5)" if b.close >= b.open else "rgba(239,83,80,0.5)",
+                }
+                for b in bars
+            ]
 
-            # Add entry marker (entry at close of first candle)
+            # Create markers for entry/exit points
+            markers = []
             if selected_result.entry_price and selected_result.entry_time:
-                fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.entry_time)],
-                    y=[selected_result.entry_price],
-                    mode="markers",
-                    marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
-                    name=f"Entry @ ${selected_result.entry_price:.2f}",
-                ))
+                markers.append({
+                    "time": int(to_est(selected_result.entry_time).timestamp()),
+                    "position": "belowBar",
+                    "color": "blue",
+                    "shape": "arrowUp",
+                    "text": f"Entry ${selected_result.entry_price:.2f}",
+                })
 
-            # Add exit marker
             if selected_result.exit_price and selected_result.exit_time:
-                exit_color = "green" if selected_result.return_pct > 0 else "red"
-                fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.exit_time)],
-                    y=[selected_result.exit_price],
-                    mode="markers",
-                    marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
-                    name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
-                ))
+                exit_color = "#26a69a" if selected_result.return_pct and selected_result.return_pct > 0 else "#ef5350"
+                markers.append({
+                    "time": int(to_est(selected_result.exit_time).timestamp()),
+                    "position": "aboveBar",
+                    "color": exit_color,
+                    "shape": "arrowDown",
+                    "text": f"Exit ${selected_result.exit_price:.2f}",
+                })
 
-            # Add horizontal lines for entry, TP, SL
-            if selected_result.entry_price:
-                entry = selected_result.entry_price
-                first_open = bars[0].open if bars else entry
-                tp_price = entry * (1 + take_profit / 100)
-                # SL from first candle open or entry price
-                if sl_from_open:
-                    sl_price = first_open * (1 - stop_loss / 100)
-                else:
-                    sl_price = entry * (1 - stop_loss / 100)
+            # Chart configuration
+            chart_options = {
+                "height": 500,
+                "layout": {
+                    "background": {"type": "solid", "color": "white"},
+                    "textColor": "black",
+                },
+                "timeScale": {
+                    "timeVisible": True,
+                    "secondsVisible": False,
+                },
+                "crosshair": {
+                    "mode": 0,
+                },
+                "grid": {
+                    "vertLines": {"color": "rgba(197, 203, 206, 0.5)"},
+                    "horzLines": {"color": "rgba(197, 203, 206, 0.5)"},
+                },
+            }
 
-                fig.add_hline(y=entry, line_dash="solid", line_color="blue", opacity=0.5,
-                              annotation_text=f"Entry ${entry:.2f}")
-                fig.add_hline(y=tp_price, line_dash="dash", line_color="green", opacity=0.5,
-                              annotation_text=f"TP ${tp_price:.2f}")
-                fig.add_hline(y=sl_price, line_dash="dash", line_color="red", opacity=0.5,
-                              annotation_text=f"SL ${sl_price:.2f}")
+            # Define series
+            series = [
+                {
+                    "type": "Candlestick",
+                    "data": candles,
+                    "options": {
+                        "upColor": "#26a69a",
+                        "downColor": "#ef5350",
+                        "borderVisible": False,
+                        "wickUpColor": "#26a69a",
+                        "wickDownColor": "#ef5350",
+                    },
+                    "markers": markers,
+                },
+                {
+                    "type": "Histogram",
+                    "data": volume_data,
+                    "options": {
+                        "priceFormat": {"type": "volume"},
+                        "priceScaleId": "",
+                    },
+                    "priceScale": {
+                        "scaleMargins": {"top": 0.8, "bottom": 0},
+                    },
+                },
+            ]
 
-            # Layout
-            fig.update_layout(
-                xaxis_title="Time (EST)",
-                yaxis_title="Price",
-                xaxis_rangeslider_visible=False,
-                height=500,
+            # Render chart
+            renderLightweightCharts(
+                [{"chart": chart_options, "series": series}],
+                key=f"chart_{ann.ticker}_{ann.timestamp.isoformat()}",
             )
 
-            st.plotly_chart(fig, width="stretch")
-
-            # Show trade details
+            # Show trade details with TP/SL levels
             col1, col2, col3, col4 = st.columns(4)
             col1.metric("Entry Price", f"${selected_result.entry_price:.2f}" if selected_result.entry_price else "N/A")
             col2.metric("Exit Price", f"${selected_result.exit_price:.2f}" if selected_result.exit_price else "N/A")
             col3.metric("Return", f"{selected_result.return_pct:+.2f}%" if selected_result.return_pct else "N/A")
             col4.metric("Exit Type", selected_result.trigger_type)
+
+            # Show TP/SL price levels as text (since lightweight-charts doesn't support price lines easily)
+            if selected_result.entry_price:
+                entry = selected_result.entry_price
+                first_open = bars[0].open if bars else entry
+                tp_price = entry * (1 + take_profit / 100)
+                sl_price = (first_open if sl_from_open else entry) * (1 - stop_loss / 100)
+                st.caption(f"TP: ${tp_price:.2f} (+{take_profit}%) | SL: ${sl_price:.2f} (-{stop_loss}%)")
         else:
             st.warning(f"No OHLCV data available for {ann.ticker}")
