@@ -775,11 +775,25 @@ class StrategyEngine:
         if trade.needs_manual_exit:
             return
 
-        # Check if we already have a pending sell order for this ticker
+        # Check if we already have a pending sell order for this ticker (in-memory)
         for pending in self.pending_orders.values():
             if pending.ticker == ticker and pending.side == "sell":
                 logger.debug(f"[{ticker}] Already have pending sell order, skipping")
                 return
+
+        # Check broker for existing sell orders (may exist from before restart)
+        try:
+            broker_orders = self.trader.get_open_orders()
+            for order in broker_orders:
+                if order.ticker == ticker and order.side == "sell":
+                    logger.info(f"[{ticker}] Found existing sell order at broker ({order.shares} shares), skipping")
+                    # Remove from active trades since we're already exiting
+                    self.active_trades.pop(ticker, None)
+                    if self.on_unsubscribe:
+                        self.on_unsubscribe(ticker)
+                    return
+        except Exception as e:
+            logger.warning(f"[{ticker}] Could not check broker orders: {e}")
 
         return_pct = ((price - trade.entry_price) / trade.entry_price) * 100
 
