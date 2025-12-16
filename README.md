@@ -5,7 +5,7 @@ Tools for analyzing stock price movements following press release announcements.
 ## Features
 
 - **Discord Message Parser**: Extracts ticker symbols, timestamps, price thresholds, and metadata (float, IO%, market cap) from pasted Discord messages
-- **OHLCV Data Fetching**: Retrieves minute-level price data via Massive.com API with parquet file caching
+- **OHLCV Data Fetching**: Retrieves minute-level price data via Alpaca API with PostgreSQL caching
 - **Backtesting Engine**: Simulates entry/exit trades with configurable triggers:
   - Entry trigger (% move from open)
   - Take profit target
@@ -108,11 +108,10 @@ python trade.py --live buy AAPL
 ├── src/
 │   ├── models.py          # Data classes
 │   ├── parser.py          # Discord message parser
-│   ├── massive_client.py  # OHLCV API client with caching
+│   ├── massive_client.py  # OHLCV API client
+│   ├── postgres_client.py # PostgreSQL client with caching
 │   ├── backtest.py        # Backtesting engine
 │   └── ib_trader.py       # Interactive Brokers trading client
-├── data/
-│   └── ohlcv/             # Cached OHLCV parquet files
 └── tests/
     └── test_backtest.py   # Unit tests
 ```

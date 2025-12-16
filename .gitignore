@@ -14,7 +14,6 @@ dist/
 *.egg-info/
 
 # Data
-data/ohlcv/*.parquet
 data/messages.txt
 data/.trading.lock
 data/.trading_status.json
