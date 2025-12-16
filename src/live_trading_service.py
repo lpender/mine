@@ -248,7 +248,7 @@ class TradingEngine:
         self.trade_stream = AlpacaTradeStream(
             paper=self.paper,
             on_fill=self._on_order_fill,
-            on_partial_fill=self._on_order_fill,  # Treat same as fill for now
+            on_partial_fill=self._on_partial_fill,  # Log only, wait for final fill
             on_canceled=self._on_order_canceled,
             on_rejected=self._on_order_rejected,
         )
@@ -562,6 +562,18 @@ class TradingEngine:
         # Also unsubscribe from this ticker
         if self.quote_provider:
             self.quote_provider.unsubscribe_sync(ticker)
+
+    def _on_partial_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        side: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
+        """Handle partial fill - just log, wait for final fill event."""
+        logger.info(f"[{ticker}] Partial fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}) - waiting for full fill")
 
     def _on_order_fill(
         self,
