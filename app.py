@@ -89,8 +89,12 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
     Note: Both announcements and OHLCV bars are stored in UTC (naive).
+    Uses get_effective_start_time() to match the time range used when data was fetched.
     """
+    from src.massive_client import MassiveClient
+
     client = PostgresClient()
+    massive = MassiveClient()
     bars_by_announcement = {}
 
     for ticker, timestamp_str in announcement_keys:
@@ -99,11 +103,12 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
         if timestamp.tzinfo is not None:
             timestamp = timestamp.replace(tzinfo=None)
 
-        # Round down to start of minute to capture the full minute bar
-        start = timestamp.replace(second=0, microsecond=0)
+        # Use the same effective start time calculation as the data fetcher
+        # This ensures we query the correct time range for premarket/postmarket/closed
+        start = massive.get_effective_start_time(timestamp)
         end = start + timedelta(minutes=window_minutes)
-        # Use fetch_ohlcv which fetches from API if not cached
-        bars = client.fetch_ohlcv(ticker, start, end) or []
+        # Use get_ohlcv_bars to read from cache only (don't trigger API fetches)
+        bars = client.get_ohlcv_bars(ticker, start, end) or []
         bars_by_announcement[(ticker, timestamp)] = bars
 
     return bars_by_announcement
