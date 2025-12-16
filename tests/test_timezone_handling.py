@@ -1,9 +1,10 @@
 """Tests for timezone handling across the codebase.
 
 Key invariants:
-1. Announcements are stored in UTC (naive timestamps)
-2. OHLCV bars from Alpaca are stored in ET (naive timestamps)
-3. All conversions must account for this difference
+1. All timestamps in the database are stored in UTC (naive timestamps)
+2. Announcements are stored in UTC
+3. OHLCV bars from Alpaca are stored in UTC
+4. Convert to ET only in the presentation layer
 """
 
 import pytest
@@ -47,107 +48,104 @@ class TestGetMarketSession:
 
 
 class TestEffectiveStartTime:
-    """Test that get_effective_start_time correctly handles UTC naive timestamps."""
+    """Test that get_effective_start_time returns UTC naive timestamps."""
 
     @pytest.fixture
     def client(self):
         return MassiveClient()
 
-    def test_postmarket_friday_returns_monday_open(self, client):
-        """Postmarket Friday 7:40 PM ET should return Monday 9:30 AM ET.
+    def test_postmarket_friday_returns_monday_open_utc(self, client):
+        """Postmarket Friday 7:40 PM ET should return Monday 9:30 AM ET in UTC.
 
         This is the LCUT bug: announcement at 00:40 UTC (= 19:40 ET Friday)
-        should start from Monday 9:30 AM ET (not Saturday 9:30 AM).
+        should start from Monday 9:30 AM ET = 14:30 UTC.
         """
         # Friday Dec 12, 2025 at 7:40 PM ET = Saturday Dec 13 at 00:40 UTC
         utc_naive = datetime(2025, 12, 13, 0, 40, 4)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should be Monday Dec 15, 2025 at 9:30 AM ET
-        # In ET naive: datetime(2025, 12, 15, 9, 30, 0)
+        # Should be Monday Dec 15, 2025 at 9:30 AM ET = 14:30 UTC
         assert effective.year == 2025
         assert effective.month == 12
         assert effective.day == 15, f"Expected Monday 15th, got day {effective.day}"
-        assert effective.hour == 9, f"Expected 9:30 AM, got hour {effective.hour}"
-        assert effective.minute == 30, f"Expected 9:30 AM, got minute {effective.minute}"
+        assert effective.hour == 14, f"Expected 14:30 UTC (9:30 AM ET), got hour {effective.hour}"
+        assert effective.minute == 30, f"Expected 14:30 UTC, got minute {effective.minute}"
 
-    def test_market_hours_returns_et_time(self, client):
-        """Market hours announcement (UTC) should return equivalent ET time.
+    def test_market_hours_returns_utc_time(self, client):
+        """Market hours announcement (UTC) should return same UTC time.
 
-        BUG: Previously returned UTC time, but OHLCV bars are stored in ET.
+        Since bars are now stored in UTC, no conversion needed.
         """
         # Friday Dec 12, 2025 at 10:30 AM ET = 15:30 UTC
         utc_naive = datetime(2025, 12, 12, 15, 30, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should return 10:30 AM ET (not 15:30 UTC)
-        # The effective time should be usable to query OHLCV bars stored in ET
-        assert effective.hour == 10, f"Expected 10:30 AM ET, got hour {effective.hour}"
-        assert effective.minute == 30, f"Expected 10:30 AM ET, got minute {effective.minute}"
+        # Should return 15:30 UTC (same as input)
+        assert effective.hour == 15, f"Expected 15:30 UTC, got hour {effective.hour}"
+        assert effective.minute == 30, f"Expected 15:30 UTC, got minute {effective.minute}"
 
-    def test_premarket_returns_market_open(self, client):
-        """Premarket announcement should return same-day market open."""
+    def test_premarket_returns_market_open_utc(self, client):
+        """Premarket announcement should return same-day market open in UTC."""
         # Friday Dec 12, 2025 at 7:00 AM ET = 12:00 UTC
         utc_naive = datetime(2025, 12, 12, 12, 0, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should be same day at 9:30 AM ET
-        # The function returns ET naive, so: datetime(2025, 12, 12, 9, 30, 0)
+        # Should be same day at 9:30 AM ET = 14:30 UTC
         assert effective.day == 12
-        assert effective.hour == 9
+        assert effective.hour == 14, f"Expected 14:30 UTC (9:30 AM ET), got hour {effective.hour}"
         assert effective.minute == 30
 
-    def test_weekend_rolls_to_monday(self, client):
-        """Weekend timestamp should roll to Monday open."""
+    def test_weekend_rolls_to_monday_utc(self, client):
+        """Weekend timestamp should roll to Monday open in UTC."""
         # Saturday Dec 13, 2025 at 10:00 AM ET = 15:00 UTC
         utc_naive = datetime(2025, 12, 13, 15, 0, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should be Monday Dec 15 at 9:30 AM
+        # Should be Monday Dec 15 at 9:30 AM ET = 14:30 UTC
         assert effective.weekday() == 0, f"Expected Monday (0), got {effective.weekday()}"
         assert effective.day == 15
+        assert effective.hour == 14, f"Expected 14:30 UTC, got hour {effective.hour}"
 
-    def test_closed_early_morning_returns_same_day_open(self, client):
-        """Early morning (before premarket) should return same-day market open."""
+    def test_closed_early_morning_returns_same_day_open_utc(self, client):
+        """Early morning (before premarket) should return same-day market open in UTC."""
         # Friday Dec 12, 2025 at 3:00 AM ET = 08:00 UTC
         utc_naive = datetime(2025, 12, 12, 8, 0, 0)
 
         effective = client.get_effective_start_time(utc_naive)
 
-        # Should be same day at 9:30 AM ET
+        # Should be same day at 9:30 AM ET = 14:30 UTC
         assert effective.day == 12
-        assert effective.hour == 9
+        assert effective.hour == 14, f"Expected 14:30 UTC (9:30 AM ET), got hour {effective.hour}"
         assert effective.minute == 30
 
 
-class TestOHLCVTimezoneAlignment:
-    """Test that OHLCV queries use correct timezone for bars stored in ET."""
+class TestUTCStorage:
+    """Test that all timestamps are stored and queried in UTC."""
 
-    def test_announcement_utc_to_ohlcv_et_conversion(self):
-        """Verify the conversion from UTC announcement to ET OHLCV query."""
-        # Announcement stored in UTC
-        announcement_utc = datetime(2025, 12, 13, 0, 40, 4)  # 00:40 UTC = 19:40 ET Friday
+    def test_utc_to_et_display_conversion(self):
+        """Verify UTC to ET conversion for display."""
+        # 15:30 UTC = 10:30 AM ET (during EST, Dec is winter)
+        utc_naive = datetime(2025, 12, 12, 15, 30, 0)
 
-        # Convert to ET for OHLCV query (this is what app.py now does)
-        timestamp_utc = announcement_utc.replace(tzinfo=UTC_TZ)
-        timestamp_et = timestamp_utc.astimezone(ET_TZ).replace(tzinfo=None)
+        # This is how app.py converts for display
+        utc_aware = utc_naive.replace(tzinfo=UTC_TZ)
+        et_aware = utc_aware.astimezone(ET_TZ)
 
-        # Should be Friday 19:40 ET
-        assert timestamp_et.day == 12, f"Expected Friday 12th, got day {timestamp_et.day}"
-        assert timestamp_et.hour == 19, f"Expected 19:40, got hour {timestamp_et.hour}"
-        assert timestamp_et.minute == 40, f"Expected 19:40, got minute {timestamp_et.minute}"
+        assert et_aware.hour == 10, f"Expected 10:30 AM ET, got hour {et_aware.hour}"
+        assert et_aware.minute == 30
 
     def test_minute_floor_captures_bar(self):
         """Verify minute floor captures the correct bar."""
-        # Announcement at 19:40:04 should query from 19:40:00 to capture the bar
-        timestamp_et = datetime(2025, 12, 12, 19, 40, 4)
+        # Announcement at 15:30:04 UTC should query from 15:30:00 to capture the bar
+        timestamp_utc = datetime(2025, 12, 12, 15, 30, 4)
 
-        start = timestamp_et.replace(second=0, microsecond=0)
+        start = timestamp_utc.replace(second=0, microsecond=0)
 
         assert start.second == 0
         assert start.microsecond == 0
-        assert start.minute == 40
+        assert start.minute == 30
+        assert start.hour == 15

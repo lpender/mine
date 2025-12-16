@@ -14,10 +14,10 @@ UTC = ZoneInfo("UTC")
 
 
 def to_est(dt):
-    """Convert a datetime to EST for display."""
+    """Convert a datetime to EST for display. Assumes naive datetimes are UTC."""
     if dt is None:
         return None
-    # Assume naive datetimes are UTC
+    # Assume naive datetimes are UTC (all DB timestamps are stored in UTC)
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=UTC)
     return dt.astimezone(EST)
@@ -88,23 +88,19 @@ def load_announcements():
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
-    Note: Announcements are stored in UTC, but OHLCV bars from Alpaca are stored in ET.
-    We convert the announcement timestamp to ET before querying for bars.
+    Note: Both announcements and OHLCV bars are stored in UTC (naive).
     """
     client = PostgresClient()
     bars_by_announcement = {}
 
     for ticker, timestamp_str in announcement_keys:
         timestamp = pd.to_datetime(timestamp_str)
-        # Convert from UTC to ET (announcements stored in UTC, OHLCV in ET)
-        if timestamp.tzinfo is None:
-            timestamp_utc = timestamp.replace(tzinfo=UTC)
-        else:
-            timestamp_utc = timestamp
-        timestamp_et = timestamp_utc.astimezone(EST).replace(tzinfo=None)
+        # Both are UTC - just ensure naive
+        if timestamp.tzinfo is not None:
+            timestamp = timestamp.replace(tzinfo=None)
 
         # Round down to start of minute to capture the full minute bar
-        start = timestamp_et.replace(second=0, microsecond=0)
+        start = timestamp.replace(second=0, microsecond=0)
         end = start + timedelta(minutes=window_minutes)
         # Use fetch_ohlcv which fetches from API if not cached
         bars = client.fetch_ohlcv(ticker, start, end) or []

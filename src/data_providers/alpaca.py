@@ -4,12 +4,8 @@ import random
 import requests
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
-from zoneinfo import ZoneInfo
 from ..models import OHLCVBar
 from .base import OHLCVDataProvider
-
-# Assume naive timestamps are Eastern Time
-ET_TZ = ZoneInfo("America/New_York")
 
 
 class AlpacaProvider(OHLCVDataProvider):
@@ -78,14 +74,14 @@ class AlpacaProvider(OHLCVDataProvider):
         }
         timeframe = timeframe_map.get(timespan, "1Min")
 
-        # Convert naive timestamps (assumed ET) to UTC for Alpaca API
+        # Convert to UTC for Alpaca API (naive timestamps are assumed UTC)
         if start.tzinfo is None:
-            start_utc = start.replace(tzinfo=ET_TZ).astimezone(timezone.utc)
+            start_utc = start.replace(tzinfo=timezone.utc)
         else:
             start_utc = start.astimezone(timezone.utc)
 
         if end.tzinfo is None:
-            end_utc = end.replace(tzinfo=ET_TZ).astimezone(timezone.utc)
+            end_utc = end.replace(tzinfo=timezone.utc)
         else:
             end_utc = end.astimezone(timezone.utc)
 
@@ -159,9 +155,9 @@ class AlpacaProvider(OHLCVDataProvider):
                     else:
                         ts = datetime.fromisoformat(ts_str)
 
-                    # Convert from UTC to ET, then strip timezone for consistency
+                    # Store as naive UTC (strip timezone info but keep UTC time)
                     if ts.tzinfo is not None:
-                        ts = ts.astimezone(ET_TZ).replace(tzinfo=None)
+                        ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
 
                     all_bars.append(OHLCVBar(
                         timestamp=ts,

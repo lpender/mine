@@ -13,6 +13,7 @@ from .base import TradingClient, Position, Order, Quote
 
 logger = logging.getLogger("src.trading.alpaca")
 ET_TZ = ZoneInfo("America/New_York")
+UTC_TZ = ZoneInfo("UTC")
 
 # Slippage for limit orders (default 1%)
 # Buy limit = price * (1 + slippage), Sell limit = price * (1 - slippage)
@@ -193,9 +194,10 @@ class AlpacaTradingClient(TradingClient):
                 ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
             else:
                 ts = datetime.fromisoformat(ts_str)
-            ts = ts.astimezone(ET_TZ).replace(tzinfo=None)
+            # Store as naive UTC
+            ts = ts.astimezone(UTC_TZ).replace(tzinfo=None)
         else:
-            ts = datetime.now()
+            ts = datetime.utcnow()
 
         return Quote(
             ticker=ticker,
@@ -301,7 +303,8 @@ class AlpacaTradingClient(TradingClient):
                 filled_at = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
             else:
                 filled_at = datetime.fromisoformat(ts_str)
-            filled_at = filled_at.astimezone(ET_TZ).replace(tzinfo=None)
+            # Store as naive UTC
+            filled_at = filled_at.astimezone(UTC_TZ).replace(tzinfo=None)
 
         return Order(
             order_id=data.get("id", ""),

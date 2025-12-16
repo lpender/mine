@@ -15,6 +15,15 @@
 - No same-day minute data on free tier
 - Some tickers may require paid plans (403 errors)
 
+## Timezone Rules
+
+**Always store in UTC, convert to ET only for display.**
+
+- All timestamps in the database (announcements, OHLCV bars) are stored as naive UTC
+- Alpaca returns UTC timestamps - store them as-is (naive UTC)
+- Convert to ET only in the presentation layer (Streamlit, logs)
+- Use `to_est()` in app.py to convert UTC naive → ET aware for display
+
 ## Data Flow
 
 1. Discord plugin captures messages with emoji alt text (flags like `:flag_us:`)

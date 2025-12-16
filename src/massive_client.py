@@ -65,8 +65,15 @@ def _first_trading_day_after(d: date_type) -> date_type:
 
 
 def _combine_et(d: date_type, t: time_type, naive_input: bool) -> datetime:
+    """Combine date and time in ET, return as naive ET or aware."""
     dt = datetime.combine(d, t, tzinfo=ET_TZ)
     return dt.replace(tzinfo=None) if naive_input else dt
+
+
+def _combine_et_to_utc(d: date_type, t: time_type) -> datetime:
+    """Combine date and time in ET, convert to naive UTC."""
+    dt = datetime.combine(d, t, tzinfo=ET_TZ)
+    return dt.astimezone(UTC_TZ).replace(tzinfo=None)
 
 
 class MassiveClient:
@@ -249,57 +256,59 @@ class MassiveClient:
         """
         Compute the effective OHLCV start time for an announcement.
 
-        Returns naive datetime in ET (to match OHLCV storage format).
+        Returns naive datetime in UTC (to match OHLCV storage format).
 
         Args:
             announcement_time: Naive datetime assumed to be UTC (from database),
                               or timezone-aware datetime.
 
         Returns:
-            Naive datetime in ET representing:
-            - Postmarket/closed: next market open
-            - Premarket: same-day market open
-            - Market: announcement time converted to ET
+            Naive datetime in UTC representing:
+            - Postmarket/closed: next market open (in UTC)
+            - Premarket: same-day market open (in UTC)
+            - Market: announcement time (already UTC)
         """
-        # Convert to Eastern Time - naive inputs are UTC from database
+        # Convert to Eastern Time for session logic, keep UTC for return
         if announcement_time.tzinfo is None:
-            # Naive timestamps from DB are stored in UTC
             utc_time = announcement_time.replace(tzinfo=UTC_TZ)
             et_time = utc_time.astimezone(ET_TZ).replace(tzinfo=None)
         else:
+            utc_time = announcement_time.astimezone(UTC_TZ)
             et_time = announcement_time.astimezone(ET_TZ).replace(tzinfo=None)
 
-        # If the calendar day isn't a trading day (weekend/holiday), roll forward to next session open.
+        # If the calendar day (in ET) isn't a trading day, roll forward to next session open.
         trading_day = _first_trading_day_on_or_after(et_time.date())
         if trading_day != et_time.date():
-            return _combine_et(trading_day, MARKET_OPEN, True)
+            return _combine_et_to_utc(trading_day, MARKET_OPEN)
 
         # Use the original timestamp for session check (handles UTC correctly)
         session = get_market_session(announcement_time)
 
         if session == "market":
-            # Return the ET time (not the original UTC)
-            return et_time
+            # Return the UTC time (naive)
+            if announcement_time.tzinfo is None:
+                return announcement_time
+            return announcement_time.astimezone(UTC_TZ).replace(tzinfo=None)
 
         if session == "premarket":
-            # Start from market open of the same day
-            return _combine_et(et_time.date(), MARKET_OPEN, True)
+            # Start from market open of the same day (in UTC)
+            return _combine_et_to_utc(et_time.date(), MARKET_OPEN)
 
         # For postmarket and closed times, determine next market open
         if session in ("postmarket", "closed"):
             t = et_time.time()
             if t < MARKET_OPEN:
-                # Overnight before the bell: same-day open
+                # Overnight before the bell: same-day open (in UTC)
                 day = _first_trading_day_on_or_after(et_time.date())
-                return _combine_et(day, MARKET_OPEN, True)
+                return _combine_et_to_utc(day, MARKET_OPEN)
 
-            # After-hours or late evening: next weekday open
+            # After-hours or late evening: next weekday open (in UTC)
             next_day = _first_trading_day_after(et_time.date())
-            return _combine_et(next_day, MARKET_OPEN, True)
+            return _combine_et_to_utc(next_day, MARKET_OPEN)
 
-        # Fallback: next market open
+        # Fallback: next market open (in UTC)
         next_day = _first_trading_day_after(et_time.date())
-        return _combine_et(next_day, MARKET_OPEN, True)
+        return _combine_et_to_utc(next_day, MARKET_OPEN)
 
     def _get_announcements_path(self) -> Path:
         """Get path to the announcements JSON file."""

@@ -13,6 +13,7 @@ import websockets
 
 logger = logging.getLogger("src.trading.alpaca_stream")
 ET_TZ = ZoneInfo("America/New_York")
+UTC_TZ = ZoneInfo("UTC")
 
 
 class AlpacaTradeStream:
@@ -169,7 +170,7 @@ class AlpacaTradeStream:
         filled_qty = int(order.get("filled_qty", 0))
         filled_avg_price = float(order.get("filled_avg_price")) if order.get("filled_avg_price") else None
 
-        # Parse timestamp
+        # Parse timestamp - store as naive UTC
         timestamp = None
         if order.get("filled_at"):
             ts_str = order["filled_at"]
@@ -177,7 +178,7 @@ class AlpacaTradeStream:
                 timestamp = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
             else:
                 timestamp = datetime.fromisoformat(ts_str)
-            timestamp = timestamp.astimezone(ET_TZ).replace(tzinfo=None)
+            timestamp = timestamp.astimezone(UTC_TZ).replace(tzinfo=None)
 
         logger.info(f"[{ticker}] Trade update: {event} - {side} {filled_qty}/{qty} @ ${filled_avg_price or 'N/A'}")
 
