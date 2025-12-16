@@ -500,6 +500,12 @@ with st.sidebar:
     st.markdown("[Manage Strategies →](strategies)")
     st.markdown("[View Trade History →](trade_history)")
 
+    # Cache control
+    st.divider()
+    if st.button("Clear Cache"):
+        st.cache_data.clear()
+        st.rerun()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Filter Announcements

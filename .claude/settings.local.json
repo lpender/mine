@@ -45,7 +45,8 @@
       "Bash(task plugin:diff:*)",
       "Bash(task test)",
       "Bash(pkill:*)",
-      "Bash(pgrep:*)"
+      "Bash(pgrep:*)",
+      "Bash(psql backtest:*)"
     ]
   }
 }
