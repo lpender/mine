@@ -589,6 +589,18 @@ class TradingEngine:
         if total_positions <= MAX_OPEN_POSITIONS:
             return  # Within limit
 
+        # Get existing sell orders from broker to avoid duplicates
+        existing_sell_tickers = set()
+        try:
+            open_orders = self.trader.get_open_orders()
+            for order in open_orders:
+                if order.side == "sell":
+                    existing_sell_tickers.add(order.ticker)
+            if existing_sell_tickers:
+                logger.info(f"Found existing sell orders for: {existing_sell_tickers}")
+        except Exception as e:
+            logger.warning(f"Could not check existing orders: {e}")
+
         # Sort by entry_time descending (newest first)
         all_positions.sort(key=lambda x: x[2], reverse=True)
 
@@ -599,10 +611,20 @@ class TradingEngine:
             f"closing {positions_to_close} most recent position(s)"
         )
 
-        for i in range(positions_to_close):
+        closed_count = 0
+        for i in range(len(all_positions)):
+            if closed_count >= positions_to_close:
+                break
+
             strategy_id, ticker, entry_time = all_positions[i]
             engine = self.strategies[strategy_id]
             strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
+
+            # Skip if there's already a sell order for this ticker
+            if ticker in existing_sell_tickers:
+                logger.info(f"[{ticker}] Already has pending sell order, skipping")
+                closed_count += 1  # Count as "being closed"
+                continue
 
             trade = engine.active_trades.get(ticker)
             if trade:
@@ -616,6 +638,7 @@ class TradingEngine:
 
                 # Trigger exit via the strategy engine
                 engine._execute_exit(ticker, current_price, "position_limit", datetime.now())
+                closed_count += 1
 
     def _on_subscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy needs quotes for a ticker."""

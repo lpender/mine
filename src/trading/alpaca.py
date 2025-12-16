@@ -221,6 +221,16 @@ class AlpacaTradingClient(TradingClient):
             ))
         return orders
 
+    def cancel_order(self, order_id: str) -> bool:
+        """Cancel a specific order by ID."""
+        try:
+            self._request("DELETE", f"/v2/orders/{order_id}")
+            logger.info(f"Canceled order {order_id}")
+            return True
+        except requests.HTTPError as e:
+            logger.error(f"Failed to cancel order {order_id}: {e}")
+            return False
+
     def cancel_all_orders(self, ticker: Optional[str] = None) -> int:
         """Cancel all open orders."""
         if ticker:
