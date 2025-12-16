@@ -256,6 +256,14 @@ with st.sidebar:
         help="Leave empty for all countries"
     )
 
+    # Country blacklist
+    country_blacklist = st.multiselect(
+        "Country Blacklist",
+        options=all_countries,
+        key="_country_blacklist",
+        help="Exclude these countries"
+    )
+
     # Author filter
     authors = st.multiselect(
         "Author",
@@ -437,6 +445,7 @@ with st.sidebar:
                     price_min=price_min,
                     price_max=price_max,
                     sessions=sessions if sessions else ["premarket", "market"],
+                    country_blacklist=country_blacklist if country_blacklist else [],
                     consec_green_candles=consec_candles,
                     min_candle_volume=int(min_candle_vol),
                     take_profit_pct=take_profit,
@@ -494,6 +503,10 @@ if sessions:
 # Country filter
 if countries:
     filtered = [a for a in filtered if a.country in countries]
+
+# Country blacklist filter
+if country_blacklist:
+    filtered = [a for a in filtered if a.country not in country_blacklist]
 
 # Author filter
 if authors:
