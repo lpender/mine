@@ -9,7 +9,7 @@ from urllib.parse import urlparse, parse_qs
 
 from .models import Announcement
 from .trading import TradingClient, Position
-from .trade_history import get_trade_history_client
+from .trade_store import get_trade_store
 from .active_trade_store import get_active_trade_store
 from .pending_entry_store import get_pending_entry_store
 from .order_store import get_order_store
@@ -268,7 +268,7 @@ class StrategyEngine:
         self._ticker_candle_start: Dict[str, datetime] = {}  # ticker -> start time of building candle
 
         # Trade history persistence
-        self._trade_history = get_trade_history_client()
+        self._trade_store = get_trade_store()
         self._active_trade_store = get_active_trade_store()
         self._order_store = get_order_store()
 
@@ -1116,7 +1116,7 @@ class StrategyEngine:
                 "pnl": completed["pnl"],
                 "strategy_params": self.config.to_dict(),
             }
-            self._trade_history.save_trade(
+            self._trade_store.save_trade(
                 trade=trade_record,
                 paper=self.paper,
                 strategy_id=self.strategy_id,
@@ -1449,7 +1449,7 @@ class StrategyEngine:
                 "pnl": 0,
                 "strategy_params": self.config.to_dict(),
             }
-            self._trade_history.save_trade(
+            self._trade_store.save_trade(
                 trade=trade_record,
                 paper=self.paper,
                 strategy_id=self.strategy_id,

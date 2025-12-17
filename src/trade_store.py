@@ -1,4 +1,4 @@
-"""Trade history persistence for live/paper trading."""
+"""Trade persistence for live/paper trading."""
 
 import json
 import logging
@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from .database import SessionLocal, TradeHistoryDB
+from .database import SessionLocal, TradeDB
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +33,8 @@ class CompletedTrade:
     created_at: Optional[datetime] = None
 
 
-class TradeHistoryClient:
-    """Client for saving/loading trade history."""
+class TradeStore:
+    """Store for saving/loading completed trades."""
 
     def _get_db(self) -> Session:
         return SessionLocal()
@@ -69,7 +69,7 @@ class TradeHistoryClient:
             if isinstance(exit_time, str):
                 exit_time = datetime.fromisoformat(exit_time)
 
-            db_trade = TradeHistoryDB(
+            db_trade = TradeDB(
                 ticker=trade["ticker"],
                 entry_price=trade["entry_price"],
                 entry_time=entry_time,
@@ -101,7 +101,7 @@ class TradeHistoryClient:
         limit: int = 100,
     ) -> List[CompletedTrade]:
         """
-        Load trade history with optional filters.
+        Load trades with optional filters.
 
         Args:
             paper: Filter by paper/live trading
@@ -112,18 +112,18 @@ class TradeHistoryClient:
         """
         db = self._get_db()
         try:
-            query = db.query(TradeHistoryDB)
+            query = db.query(TradeDB)
 
             if paper is not None:
-                query = query.filter(TradeHistoryDB.paper == paper)
+                query = query.filter(TradeDB.paper == paper)
             if ticker:
-                query = query.filter(TradeHistoryDB.ticker == ticker)
+                query = query.filter(TradeDB.ticker == ticker)
             if start:
-                query = query.filter(TradeHistoryDB.entry_time >= start)
+                query = query.filter(TradeDB.entry_time >= start)
             if end:
-                query = query.filter(TradeHistoryDB.entry_time <= end)
+                query = query.filter(TradeDB.entry_time <= end)
 
-            rows = query.order_by(TradeHistoryDB.entry_time.desc()).limit(limit).all()
+            rows = query.order_by(TradeDB.entry_time.desc()).limit(limit).all()
 
             return [self._db_to_trade(row) for row in rows]
         finally:
@@ -133,9 +133,9 @@ class TradeHistoryClient:
         """Get aggregate statistics for trades."""
         db = self._get_db()
         try:
-            query = db.query(TradeHistoryDB)
+            query = db.query(TradeDB)
             if paper is not None:
-                query = query.filter(TradeHistoryDB.paper == paper)
+                query = query.filter(TradeDB.paper == paper)
 
             trades = query.all()
 
@@ -169,7 +169,7 @@ class TradeHistoryClient:
         finally:
             db.close()
 
-    def _db_to_trade(self, row: TradeHistoryDB) -> CompletedTrade:
+    def _db_to_trade(self, row: TradeDB) -> CompletedTrade:
         """Convert database row to CompletedTrade."""
         params = {}
         if row.strategy_params:
@@ -198,12 +198,12 @@ class TradeHistoryClient:
 
 
 # Global instance for convenience
-_trade_history_client: Optional[TradeHistoryClient] = None
+_trade_store: Optional[TradeStore] = None
 
 
-def get_trade_history_client() -> TradeHistoryClient:
-    """Get the global trade history client."""
-    global _trade_history_client
-    if _trade_history_client is None:
-        _trade_history_client = TradeHistoryClient()
-    return _trade_history_client
+def get_trade_store() -> TradeStore:
+    """Get the global trade store."""
+    global _trade_store
+    if _trade_store is None:
+        _trade_store = TradeStore()
+    return _trade_store

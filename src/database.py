@@ -109,9 +109,9 @@ class OHLCVBarDB(Base):
     )
 
 
-class TradeHistoryDB(Base):
+class TradeDB(Base):
     """Completed trade record for live/paper trading."""
-    __tablename__ = "trade_history"
+    __tablename__ = "trades"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
@@ -140,8 +140,8 @@ class TradeHistoryDB(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (
-        Index('ix_trade_history_entry_time', 'entry_time'),
-        Index('ix_trade_history_paper', 'paper'),
+        Index('ix_trades_entry_time', 'entry_time'),
+        Index('ix_trades_paper', 'paper'),
     )
 
 

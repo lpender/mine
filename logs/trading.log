@@ -35025,3 +35025,4 @@ task: <Task pending name='Task-12' coro=<Connection.keepalive() done, defined at
 2025-12-17 13:30:52 [src.quote_provider] WebSocket connected
 2025-12-17 13:30:52 [src.quote_provider] No subscriptions to send on connect - server starts with clean state
 2025-12-17 13:30:52 [src.quote_provider] Starting WebSocket message loop...
+2025-12-17 13:35:54 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra

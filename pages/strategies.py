@@ -5,7 +5,7 @@ import pandas as pd
 import time
 from datetime import datetime
 
-from src.database import init_db, SessionLocal, TradeHistoryDB
+from src.database import init_db, SessionLocal, TradeDB
 from src.strategy import StrategyConfig
 from src.strategy_store import get_strategy_store, Strategy
 from src.active_trade_store import get_active_trade_store
@@ -164,9 +164,9 @@ def get_completed_today_count(strategy_id: str) -> int:
     session = SessionLocal()
     try:
         today_start = datetime.combine(date.today(), datetime.min.time())
-        count = session.query(TradeHistoryDB).filter(
-            TradeHistoryDB.strategy_id == strategy_id,
-            TradeHistoryDB.exit_time >= today_start,
+        count = session.query(TradeDB).filter(
+            TradeDB.strategy_id == strategy_id,
+            TradeDB.exit_time >= today_start,
         ).count()
         return count
     finally:

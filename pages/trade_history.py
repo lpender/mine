@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-from src.trade_history import get_trade_history_client
+from src.trade_store import get_trade_store
 from src.strategy_store import get_strategy_store
 from src.live_bar_store import get_live_bar_store
 from src.database import init_db, SessionLocal, OrderDB, OrderEventDB
@@ -130,7 +130,7 @@ st.set_page_config(
 st.title("Trade History")
 
 # Get clients
-client = get_trade_history_client()
+client = get_trade_store()
 store = get_strategy_store()
 bar_store = get_live_bar_store()
 

@@ -709,7 +709,7 @@ class TradingEngine:
 
                     # Record to trade history
                     try:
-                        from src.trade_history import get_trade_history_client
+                        from src.trade_store import get_trade_store
                         trade_record = {
                             "ticker": ticker,
                             "entry_price": trade.entry_price,
@@ -722,7 +722,7 @@ class TradingEngine:
                             "pnl": pnl,
                             "strategy_params": {},
                         }
-                        get_trade_history_client().save_trade(
+                        get_trade_store().save_trade(
                             trade=trade_record,
                             paper=self.paper,
                             strategy_id=strategy_id,
