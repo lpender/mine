@@ -715,58 +715,129 @@ class TradingEngine:
                     engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
                 return
 
-        # Fallback: for sell fills, try to find the position in the database
+        # Fallback: for sell fills, look up order in database by broker_order_id
         if side == "sell":
-            logger.warning(f"[{ticker}] Fill for unknown sell order {order_id} - checking database for position")
+            logger.warning(f"[{ticker}] Fill for unknown sell order {order_id} - checking database")
+            from src.order_store import get_order_store
             from src.active_trade_store import get_active_trade_store
-            store = get_active_trade_store()
+            from src.strategy import PendingOrder
 
-            # Find which strategy had this position
-            for strategy_id, engine in self.strategies.items():
-                trades = store.get_trades_for_strategy(strategy_id)
-                trade = next((t for t in trades if t.ticker == ticker), None)
-                if trade:
-                    logger.info(f"[{ticker}] Found position in DB for strategy {strategy_id[:8]} - completing trade")
-                    # Create a minimal completed trade record
-                    return_pct = ((filled_price - trade.entry_price) / trade.entry_price) * 100
-                    pnl = (filled_price - trade.entry_price) * trade.shares
+            order_store = get_order_store()
+            trade_store = get_active_trade_store()
+            db_order = order_store.get_order(broker_order_id=order_id)
 
-                    # Record to trade history
-                    try:
-                        from src.trade_store import get_trade_store
-                        trade_record = {
-                            "ticker": ticker,
-                            "entry_price": trade.entry_price,
-                            "exit_price": filled_price,
-                            "entry_time": trade.entry_time,
-                            "exit_time": timestamp,
-                            "shares": trade.shares,
-                            "exit_reason": "filled_after_restart",
-                            "return_pct": return_pct,
-                            "pnl": pnl,
-                            "strategy_params": {},
-                        }
-                        get_trade_store().save_trade(
-                            trade=trade_record,
-                            paper=self.paper,
-                            strategy_id=strategy_id,
-                            strategy_name=trade.strategy_name,
+            if db_order and db_order.trade_id and db_order.strategy_id:
+                logger.info(f"[{ticker}] Found sell order in DB: trade_id={db_order.trade_id[:8]}, strategy={db_order.strategy_id[:8]}")
+
+                # Find the strategy engine and active trade
+                engine = self.strategies.get(db_order.strategy_id)
+                if engine:
+                    # Look up ActiveTrade by trade_id (more precise than ticker)
+                    active_trade = engine.active_trades.get(db_order.trade_id)
+
+                    if not active_trade:
+                        # Also check database in case it's not in memory
+                        db_trade = trade_store.get_trade(db_order.trade_id)
+                        if db_trade:
+                            logger.info(f"[{ticker}] Found trade in DB (not in memory)")
+                            # Create synthetic PendingOrder with data from DB trade
+                            synthetic_pending = PendingOrder(
+                                order_id=order_id,
+                                ticker=ticker,
+                                side="sell",
+                                shares=shares,
+                                limit_price=db_order.limit_price or filled_price,
+                                submitted_at=db_order.created_at or timestamp,
+                                trade_id=db_order.trade_id,
+                                db_order_id=db_order.id,
+                                entry_price=db_trade.entry_price,
+                                entry_time=db_trade.entry_time,
+                                exit_reason="filled_from_fallback",
+                            )
+                            engine.pending_orders[order_id] = synthetic_pending
+                            engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
+                            self._on_unsubscribe(ticker, db_order.strategy_id)
+                            return
+                        else:
+                            # This was likely an orphan liquidation - no position to clean up
+                            logger.info(f"[{ticker}] Sell order confirmed as ours but no position found (likely orphan liquidation)")
+                            # Still update order status in DB
+                            order_store.update_order_status(
+                                broker_order_id=order_id,
+                                status="filled",
+                                filled_shares=shares,
+                                avg_fill_price=filled_price,
+                            )
+                            return
+                    else:
+                        # Found ActiveTrade in memory - create synthetic PendingOrder
+                        logger.info(f"[{ticker}] Found trade in memory - completing via on_sell_fill")
+                        synthetic_pending = PendingOrder(
+                            order_id=order_id,
+                            ticker=ticker,
+                            side="sell",
+                            shares=shares,
+                            limit_price=db_order.limit_price or filled_price,
+                            submitted_at=db_order.created_at or timestamp,
+                            trade_id=db_order.trade_id,
+                            db_order_id=db_order.id,
+                            entry_price=active_trade.entry_price,
+                            entry_time=active_trade.entry_time,
+                            exit_reason=getattr(active_trade, 'pending_exit_reason', None) or "filled_from_fallback",
+                            trace_id=active_trade.trace_id,
                         )
-                        logger.info(f"[{ticker}] ✅ Trade recorded: {return_pct:+.2f}% (${pnl:+.2f})")
-                    except Exception as e:
-                        logger.error(f"[{ticker}] Failed to record trade: {e}")
+                        engine.pending_orders[order_id] = synthetic_pending
+                        engine.on_sell_fill(order_id, ticker, shares, filled_price, timestamp)
+                        self._on_unsubscribe(ticker, db_order.strategy_id)
+                        return
+                else:
+                    logger.warning(f"[{ticker}] Strategy {db_order.strategy_id[:8]} not found in active strategies")
+            else:
+                # Order not in DB - try legacy ticker-based lookup
+                logger.warning(f"[{ticker}] Sell order {order_id} not found in order_store - trying ticker lookup")
+                for strategy_id, engine in self.strategies.items():
+                    trades = trade_store.get_trades_for_strategy(strategy_id)
+                    trade = next((t for t in trades if t.ticker == ticker), None)
+                    if trade:
+                        logger.info(f"[{ticker}] Found position by ticker for strategy {strategy_id[:8]} - completing trade")
+                        return_pct = ((filled_price - trade.entry_price) / trade.entry_price) * 100
+                        pnl = (filled_price - trade.entry_price) * trade.shares
 
-                    # Remove from database and in-memory tracking
-                    store.delete_trade(trade.trade_id)
-                    if trade.trade_id in engine.active_trades:
-                        engine.active_trades.pop(trade.trade_id, None)
-                        logger.info(f"[{ticker}] Removed from active trades (trade_id={trade.trade_id[:8]})")
+                        # Record to trade history
+                        try:
+                            from src.trade_store import get_trade_store
+                            trade_record = {
+                                "ticker": ticker,
+                                "entry_price": trade.entry_price,
+                                "exit_price": filled_price,
+                                "entry_time": trade.entry_time,
+                                "exit_time": timestamp,
+                                "shares": trade.shares,
+                                "exit_reason": "filled_after_restart",
+                                "return_pct": return_pct,
+                                "pnl": pnl,
+                                "strategy_params": {},
+                            }
+                            get_trade_store().save_trade(
+                                trade=trade_record,
+                                paper=self.paper,
+                                strategy_id=strategy_id,
+                                strategy_name=trade.strategy_name,
+                            )
+                            logger.info(f"[{ticker}] ✅ Trade recorded: {return_pct:+.2f}% (${pnl:+.2f})")
+                        except Exception as e:
+                            logger.error(f"[{ticker}] Failed to record trade: {e}")
 
-                    # Unsubscribe
-                    self._on_unsubscribe(ticker, strategy_id)
-                    return
+                        # Remove from database and in-memory tracking
+                        trade_store.delete_trade(trade.trade_id)
+                        if trade.trade_id in engine.active_trades:
+                            engine.active_trades.pop(trade.trade_id, None)
+                            logger.info(f"[{ticker}] Removed from active trades (trade_id={trade.trade_id[:8]})")
 
-            logger.warning(f"[{ticker}] No position found in database for any strategy")
+                        self._on_unsubscribe(ticker, strategy_id)
+                        return
+
+                logger.warning(f"[{ticker}] No position found in database for any strategy")
         else:
             # Fallback for buy fills: look up order in database by broker_order_id
             logger.warning(f"[{ticker}] Fill for unknown buy order {order_id} - checking database")
