@@ -53,8 +53,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add file handler for all trading logs (tail -f logs/trading.log)
-trading_handler = logging.FileHandler('logs/trading.log')
+# Add file handler for all trading logs (tail -f logs/dev.log)
+trading_handler = logging.FileHandler('logs/dev.log')
 trading_handler.setFormatter(logging.Formatter(
     '%(asctime)s [%(name)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
@@ -65,14 +65,14 @@ logging.getLogger().addHandler(trading_handler)
 logging.getLogger('urllib3').setLevel(logging.WARNING)
 logging.getLogger('aiohttp').setLevel(logging.WARNING)
 
-# Set up separate file handler for quote/candle logs
-# These go to logs/quotes.log instead of stdout (tail -f logs/quotes.log)
+# Set up separate file handler for volume/candle logs
+# These go to logs/volume.log instead of stdout (tail -f logs/volume.log)
 quotes_logger = logging.getLogger('src.strategy.quotes')
 quotes_logger.setLevel(logging.INFO)
 quotes_logger.propagate = False  # Don't send to root logger (stdout)
 
-# File handler for quote logs
-quotes_handler = logging.FileHandler('logs/quotes.log')
+# File handler for volume logs
+quotes_handler = logging.FileHandler('logs/volume.log')
 quotes_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt='%H:%M:%S'))
 quotes_logger.addHandler(quotes_handler)
 
@@ -88,13 +88,13 @@ limits_handler.setFormatter(logging.Formatter('%(asctime)s %(message)s', datefmt
 limits_logger.addHandler(limits_handler)
 
 # Set up separate file handler for strategy status updates (price monitoring)
-# These go to logs/price_monitor.log instead of stdout (tail -f logs/price_monitor.log)
+# These go to logs/prices.log instead of stdout (tail -f logs/prices.log)
 status_logger = logging.getLogger('src.strategy.status')
 status_logger.setLevel(logging.INFO)
 status_logger.propagate = False  # Don't send to root logger (stdout)
 
 # File handler for price monitoring logs
-status_handler = logging.FileHandler('logs/price_monitor.log')
+status_handler = logging.FileHandler('logs/prices.log')
 status_handler.setFormatter(logging.Formatter(
     '%(asctime)s [%(name)s] %(message)s',
     datefmt='%H:%M:%S'

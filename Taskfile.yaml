@@ -142,14 +142,19 @@ tasks:
   # ─────────────────────────────────────────────────────────────────────────────
 
   logs:
-    desc: Tail the trading logs
+    desc: Tail all dev logs (main trading output)
     cmds:
-      - tail -f logs/trading.log 2>/dev/null || echo "No log file found"
+      - tail -f logs/dev.log 2>/dev/null || echo "No log file found - run 'task trade' first"
+
+  logs:dev:
+    desc: Tail the dev logs (alias for logs)
+    cmds:
+      - tail -f logs/dev.log 2>/dev/null || echo "No log file found - run 'task trade' first"
 
   logs:volume:
-    desc: Tail the quote/candle volume logs
+    desc: Tail the volume/candle logs
     cmds:
-      - tail -f logs/quotes.log 2>/dev/null || echo "No quotes log found - run 'task trade' first"
+      - tail -f logs/volume.log 2>/dev/null || echo "No volume log found - run 'task trade' first"
 
   logs:limits:
     desc: Tail the subscription limit errors log
@@ -159,7 +164,7 @@ tasks:
   logs:prices:
     desc: Tail the price monitoring logs (position status updates)
     cmds:
-      - tail -f logs/price_monitor.log 2>/dev/null || echo "No price monitor log found - run 'task trade' first"
+      - tail -f logs/prices.log 2>/dev/null || echo "No prices log found - run 'task trade' first"
 
   logs:trades:
     desc: Tail the trade execution log (buys and sells)

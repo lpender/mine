@@ -19,6 +19,9 @@ data/.trading.lock
 data/.trading_status.json
 data/.ws_key_cache.json
 
+# Logs
+logs/
+
 # IDE
 .idea/
 .vscode/

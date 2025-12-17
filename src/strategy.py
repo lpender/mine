@@ -17,9 +17,9 @@ from .trade_logger import log_buy_fill, log_sell_fill
 from .postgres_client import PostgresClient
 
 logger = logging.getLogger(__name__)
-# Separate logger for verbose quote/candle logs - writes to logs/quotes.log
+# Separate logger for verbose volume/candle logs - writes to logs/volume.log
 quotes_logger = logging.getLogger(__name__ + '.quotes')
-# Separate logger for real-time status updates - writes to logs/trading.log (not stdout)
+# Separate logger for real-time status updates - writes to logs/prices.log (not stdout)
 status_logger = logging.getLogger(__name__ + '.status')
 
 
@@ -610,7 +610,7 @@ class StrategyEngine:
         """
         cfg = self.config
 
-        # Log every quote for debugging (to quotes.log)
+        # Log every quote for debugging (to volume.log)
         quotes_logger.info(f"[{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
 
         # Price filter at actual price
@@ -640,7 +640,7 @@ class StrategyEngine:
                 candles.append(candle)
                 self._ticker_candles[ticker] = candles
 
-                # Detailed candle close logging (to quotes.log file)
+                # Detailed candle close logging (to volume.log file)
                 color = "GREEN" if candle.is_green else "RED"
                 meets_vol = candle.volume >= cfg.min_candle_volume
                 qualifies = candle.is_green and meets_vol
@@ -669,7 +669,7 @@ class StrategyEngine:
                 building_candle["close"] = price
                 building_candle["volume"] += volume  # Sum volume from all 1-second bars
 
-        # Log current candle volume progress (to quotes.log file)
+        # Log current candle volume progress (to volume.log file)
         if building_candle:
             curr_vol = building_candle["volume"]
             curr_open = building_candle["open"]
@@ -690,7 +690,7 @@ class StrategyEngine:
             else:
                 break
 
-        # Log completed candles status (to quotes.log file)
+        # Log completed candles status (to volume.log file)
         if candles:
             last_candle = candles[-1]
             meets_vol = last_candle.volume >= cfg.min_candle_volume
@@ -859,7 +859,7 @@ class StrategyEngine:
                 self._order_store.update_broker_order_id(db_order_id, order.order_id)
                 self._order_store.record_event(
                     event_type="submitted",
-                    event_timestamp=timestamp,
+                    event_timestamp=datetime.utcnow(),  # Use actual submission time, not quote time
                     order_id=db_order_id,
                     broker_order_id=order.order_id,
                 )
@@ -1031,7 +1031,7 @@ class StrategyEngine:
                     self._order_store.update_broker_order_id(db_order_id, order.order_id)
                     self._order_store.record_event(
                         event_type="submitted",
-                        event_timestamp=timestamp,
+                        event_timestamp=datetime.utcnow(),  # Use actual submission time, not quote time
                         order_id=db_order_id,
                         broker_order_id=order.order_id,
                     )
@@ -1300,7 +1300,7 @@ class StrategyEngine:
                 self._order_store.update_broker_order_id(db_order_id, order.order_id)
                 self._order_store.record_event(
                     event_type="submitted",
-                    event_timestamp=timestamp,
+                    event_timestamp=datetime.utcnow(),  # Use actual submission time, not quote time
                     order_id=db_order_id,
                     broker_order_id=order.order_id,
                 )
