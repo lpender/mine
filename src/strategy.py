@@ -11,8 +11,10 @@ from .models import Announcement
 from .trading import TradingClient, Position
 from .trade_history import get_trade_history_client
 from .active_trade_store import get_active_trade_store
+from .pending_entry_store import get_pending_entry_store
 from .order_store import get_order_store
 from .trade_logger import log_buy_fill, log_sell_fill
+from .postgres_client import PostgresClient
 
 logger = logging.getLogger(__name__)
 # Separate logger for verbose quote/candle logs - writes to logs/quotes.log
@@ -311,6 +313,65 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"Failed to load from database: {e}", exc_info=True)
 
+        # Recover pending entries from database
+        logger.info(f"Loading pending entries from database for strategy {self.strategy_id}...")
+        try:
+            pending_store = get_pending_entry_store()
+            db_entries = pending_store.get_entries_for_strategy(self.strategy_id)
+            logger.info(f"Database returned {len(db_entries)} pending entries")
+
+            postgres_client = PostgresClient()
+            cfg = self.config
+            recovered_count = 0
+            expired_count = 0
+
+            for e in db_entries:
+                # Check if entry window has expired
+                time_since_alert = (datetime.now() - e.alert_time).total_seconds() / 60
+                if time_since_alert > cfg.entry_window_minutes:
+                    logger.info(f"[{e.ticker}] Pending entry expired during restart ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m window) - removing")
+                    pending_store.delete_entry(e.trade_id)
+                    expired_count += 1
+                    continue
+
+                # Reconstruct announcement from database
+                announcement = postgres_client.get_announcement(e.announcement_ticker, e.announcement_timestamp)
+                if not announcement:
+                    logger.warning(f"[{e.ticker}] Could not find announcement for pending entry - creating minimal announcement")
+                    # Create minimal announcement for recovery
+                    announcement = Announcement(
+                        ticker=e.announcement_ticker,
+                        timestamp=e.announcement_timestamp,
+                        price_threshold=0.0,
+                        headline="Recovered from restart",
+                        country="US",
+                        channel=None,
+                        direction=None,
+                    )
+
+                self.pending_entries[e.trade_id] = PendingEntry(
+                    trade_id=e.trade_id,
+                    ticker=e.ticker,
+                    announcement=announcement,
+                    alert_time=e.alert_time,
+                    first_price=e.first_price,
+                )
+                recovered_count += 1
+                remaining_window = cfg.entry_window_minutes - time_since_alert
+                logger.info(f"[{e.ticker}] Recovered pending entry (trade_id={e.trade_id[:8]}, {remaining_window:.1f}m remaining in entry window)")
+
+                # Subscribe to quotes (if not already subscribed via active trades)
+                if not self._get_trades_for_ticker(e.ticker) and self.on_subscribe:
+                    subscribed = self.on_subscribe(e.ticker)
+                    if not subscribed:
+                        logger.warning(f"[{e.ticker}] Could not subscribe for quotes (at limit) - pending entry recovered but won't get live updates")
+
+            if expired_count > 0:
+                logger.info(f"Removed {expired_count} expired pending entries")
+
+        except Exception as e:
+            logger.error(f"Failed to load pending entries from database: {e}", exc_info=True)
+
         # Verify our positions still exist at broker (positions may have been manually closed)
         # NOTE: We do NOT auto-claim broker positions. A strategy only owns positions that
         # were explicitly created through its entry flow (on_alert -> on_buy_fill).
@@ -409,11 +470,25 @@ class StrategyEngine:
         # Start tracking for entry (keyed by trade_id, not ticker)
         existing_count = len(self._get_pending_for_ticker(ticker)) + len(self._get_trades_for_ticker(ticker))
         logger.info(f"[{ticker}] Starting to track for entry (trade_id={trade_id[:8]}, existing positions: {existing_count})")
+        alert_time = datetime.now()
         self.pending_entries[trade_id] = PendingEntry(
             trade_id=trade_id,
             ticker=ticker,
             announcement=announcement,
-            alert_time=datetime.now(),
+            alert_time=alert_time,
+        )
+
+        # Persist pending entry to database for recovery on restart
+        store = get_pending_entry_store()
+        store.save_entry(
+            trade_id=trade_id,
+            ticker=ticker,
+            strategy_id=self.strategy_id,
+            strategy_name=self.strategy_name,
+            alert_time=alert_time,
+            first_price=None,
+            announcement_ticker=announcement.ticker,
+            announcement_timestamp=announcement.timestamp,
         )
 
         return True
@@ -655,6 +730,9 @@ class StrategyEngine:
         """
         pending = self.pending_entries.pop(trade_id)
         ticker = pending.ticker
+
+        # Remove from database (entry is being executed)
+        get_pending_entry_store().delete_entry(trade_id)
         cfg = self.config
 
         # Calculate stop loss price
@@ -1201,6 +1279,8 @@ class StrategyEngine:
         if pending:
             ticker = pending.ticker
             logger.info(f"[{ticker}] Abandoned pending entry (trade_id={trade_id[:8]})")
+            # Remove from database
+            get_pending_entry_store().delete_entry(trade_id)
             # Only unsubscribe if no more pending entries or active trades for this ticker
             if not self._has_pending_or_trade(ticker):
                 # Also clear shared candle data for this ticker

@@ -249,6 +249,35 @@ class ActiveTradeDB(Base):
     )
 
 
+class PendingEntryDB(Base):
+    """Pending entry - persisted for recovery across restarts."""
+    __tablename__ = "pending_entries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Entry identification
+    trade_id = Column(String(36), nullable=False, unique=True, index=True)  # UUID
+    ticker = Column(String(10), nullable=False, index=True)
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    strategy_name = Column(String(100), nullable=True)
+
+    # Alert details
+    alert_time = Column(DateTime, nullable=False)
+    first_price = Column(Float, nullable=True)
+
+    # Announcement reference (for recovery)
+    announcement_ticker = Column(String(10), nullable=False)
+    announcement_timestamp = Column(DateTime, nullable=False)
+
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index('ix_pending_entries_strategy', 'strategy_id'),
+        Index('ix_pending_entries_ticker', 'ticker'),
+    )
+
+
 class OrderDB(Base):
     """Order record - tracks every order submitted to the broker."""
     __tablename__ = "orders"
