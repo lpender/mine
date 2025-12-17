@@ -93,20 +93,24 @@ with st.sidebar:
                         st.info("No positions to exit")
 
         with col_exit_orphaned:
-            # Check for orphaned positions
-            orphaned = get_orphaned_positions(paper=is_paper)
-            btn_label = f"🧹 Exit Orphans ({len(orphaned)})" if orphaned else "🧹 Exit Orphans"
-            if st.button(btn_label, type="secondary" if orphaned else "secondary", key="exit_orphaned", disabled=not orphaned):
-                with st.spinner("Exiting orphaned positions..."):
-                    results = exit_orphaned_positions(paper=is_paper)
-                    if results:
-                        for ticker, result in results.items():
-                            if "failed" in result.lower():
-                                st.error(f"{ticker}: {result}")
-                            else:
-                                st.success(f"{ticker}: {result}")
-                    else:
-                        st.info("No orphaned positions")
+            if st.button("🧹 Exit Orphans", type="secondary", key="exit_orphaned"):
+                with st.spinner("Checking for orphaned positions..."):
+                    try:
+                        orphaned = get_orphaned_positions(paper=is_paper)
+                        if orphaned:
+                            st.write(f"Found {len(orphaned)} orphaned position(s):")
+                            for ticker, shares, price in orphaned:
+                                st.write(f"  • {ticker}: {shares} shares @ ${price:.2f}")
+                            results = exit_orphaned_positions(paper=is_paper)
+                            for ticker, result in results.items():
+                                if "failed" in result.lower():
+                                    st.error(f"{ticker}: {result}")
+                                else:
+                                    st.success(f"{ticker}: {result}")
+                        else:
+                            st.info("No orphaned positions found")
+                    except Exception as e:
+                        st.error(f"Error checking orphans: {e}")
 
         # See open positions button
         if st.button("📊 See Open Positions", key="see_positions"):
