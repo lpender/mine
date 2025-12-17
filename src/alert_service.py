@@ -11,6 +11,7 @@ import json
 import logging
 import re
 import threading
+import uuid
 from datetime import date, datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -19,6 +20,7 @@ from typing import Callable, Optional
 
 from .parser import parse_message_line
 from .postgres_client import PostgresClient
+from .trace_store import get_trace_store
 
 # Configure logging - use module logger only, don't add extra handlers
 logger = logging.getLogger(__name__)
@@ -114,12 +116,29 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             channel = data.get("channel", "")
             content = data.get("content", "")
             author = data.get("author")
-            timestamp = data.get("timestamp", datetime.now().isoformat())
+            timestamp_str = data.get("timestamp", datetime.now().isoformat())
+
+            # Parse timestamp
+            try:
+                alert_timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                alert_timestamp = alert_timestamp.replace(tzinfo=None)
+            except (ValueError, AttributeError):
+                alert_timestamp = datetime.utcnow()
 
             # Dedupe by ticker + minute
-            alert_key = f"{ticker}:{timestamp[:16]}"
+            alert_key = f"{ticker}:{timestamp_str[:16]}"
+            trace_store = get_trace_store()
+
             if alert_key in UnifiedAlertHandler.seen_alerts:
                 logger.info(f"[ALERT DEDUPE] Skipping duplicate alert: {alert_key}")
+                # Record deduplication event on existing trace
+                existing_trace = trace_store.get_trace_by_alert_key(alert_key)
+                if existing_trace:
+                    trace_store.add_event(
+                        trace_id=existing_trace.trace_id,
+                        event_type='alert_deduplicated',
+                        event_timestamp=datetime.utcnow(),
+                    )
                 return
             UnifiedAlertHandler.seen_alerts.add(alert_key)
 
@@ -135,6 +154,9 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             ticker_match = re.match(r'([A-Z]{2,5})', ticker)
             ticker_symbol = ticker_match.group(1) if ticker_match else ticker
 
+            # Infer author if not provided
+            inferred_author = _infer_author(channel, author)
+
             # Log the alert
             now = datetime.now().strftime("%H:%M:%S")
             price_str = f"${price:.2f}" if price else "$?"
@@ -142,10 +164,51 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             print(f"[AlertService] {msg}")  # Direct print for Streamlit
             logger.info(msg)
 
+            # Parse full announcement using the same parser as backfill
+            announcement = None
+            announcement_id = None
+            if content:
+                announcement = parse_message_line(content, alert_timestamp)
+                if announcement:
+                    announcement.channel = channel
+                    announcement.author = inferred_author or announcement.author
+
+                    # Save to announcements table with source='live'
+                    try:
+                        client = PostgresClient()
+                        announcement_id = client.save_announcement(announcement, source='live')
+                        logger.info(f"[{ticker_symbol}] Saved live announcement to database (id={announcement_id})")
+                    except Exception as e:
+                        logger.error(f"[{ticker_symbol}] Failed to save announcement: {e}")
+
+            # Create trace record
+            trace_id = str(uuid.uuid4())
+            trace_store.create_trace(
+                trace_id=trace_id,
+                ticker=ticker_symbol,
+                alert_timestamp=alert_timestamp,
+                alert_key=alert_key,
+                channel=channel,
+                author=inferred_author,
+                price_threshold=price,
+                headline=announcement.headline if announcement else None,
+                raw_content=content,
+                announcement_id=announcement_id,
+            )
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='alert_received',
+                event_timestamp=alert_timestamp,
+            )
+
             # Forward to trading engine if callback is set
             if UnifiedAlertHandler.alert_callback and content:
                 logger.info(f"Forwarding alert to trading engine callback")
                 try:
+                    # Add trace_id and parsed announcement to callback data
+                    data['trace_id'] = trace_id
+                    if announcement:
+                        data['announcement'] = announcement
                     UnifiedAlertHandler.alert_callback(data)
                     logger.info(f"Alert callback completed")
                 except Exception as e:

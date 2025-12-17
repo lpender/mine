@@ -19,6 +19,7 @@ from .parser import parse_message_line
 from .alert_service import set_alert_callback
 from .strategy_store import get_strategy_store, Strategy
 from .live_bar_store import get_live_bar_store
+from .trace_store import get_trace_store
 
 logger = logging.getLogger(__name__)
 
@@ -528,16 +529,19 @@ class TradingEngine:
             channel = data.get("channel", "")
             author = data.get("author")
             timestamp_str = data.get("timestamp")
+            trace_id = data.get("trace_id")  # From alert_service
 
             if timestamp_str:
-                # Parse UTC timestamp and convert to local time (naive datetime)
+                # Parse UTC timestamp and keep as naive UTC
                 timestamp_utc = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
-                timestamp = timestamp_utc.astimezone().replace(tzinfo=None)
+                timestamp = timestamp_utc.replace(tzinfo=None)  # Naive UTC
             else:
-                timestamp = datetime.utcnow()  # Store as naive UTC per project rules
+                timestamp = datetime.utcnow()  # Naive UTC
 
-            # Parse the message content
-            announcement = parse_message_line(content, timestamp)
+            # Use pre-parsed announcement from alert_service if available, otherwise parse
+            announcement = data.get("announcement")
+            if not announcement:
+                announcement = parse_message_line(content, timestamp)
 
             if not announcement:
                 logger.warning(f"Could not parse alert: {content[:100]}")
@@ -561,9 +565,16 @@ class TradingEngine:
             accepted_by = []
             for strategy_id, engine in sorted_strategies:
                 name = self.strategy_names.get(strategy_id, strategy_id)
-                if engine.on_alert(announcement):
+                if engine.on_alert(announcement, trace_id=trace_id):
                     accepted_by.append(name)
                     logger.info(f"[{ticker}] Alert accepted by '{name}'")
+
+            # Update trace status based on outcome
+            if trace_id:
+                trace_store = get_trace_store()
+                if not accepted_by:
+                    # All strategies rejected - update trace to filtered status
+                    trace_store.update_trace_status(trace_id, status='filtered')
 
             if accepted_by:
                 logger.info(f"[{ticker}] Alert accepted by {len(accepted_by)} strategies: {', '.join(accepted_by)}")

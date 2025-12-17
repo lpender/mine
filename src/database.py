@@ -73,6 +73,7 @@ class AnnouncementDB(Base):
     # Source data
     source_message = Column(Text)  # Clean text of Discord message
     source_html = Column(Text)  # Raw HTML of Discord message (for re-parsing)
+    source = Column(String(20), default='backfill')  # 'backfill' | 'live'
 
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -350,6 +351,84 @@ class OrderEventDB(Base):
     )
 
 
+class TraceDB(Base):
+    """Trace record - tracks alert lifecycle from receipt through completion."""
+    __tablename__ = "traces"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    trace_id = Column(String(36), nullable=False, unique=True, index=True)  # UUID
+
+    # Alert identification
+    ticker = Column(String(10), nullable=False, index=True)
+    alert_timestamp = Column(DateTime, nullable=False)
+    alert_key = Column(String(50), nullable=True, index=True)  # Dedupe key: "ticker:timestamp[:16]"
+
+    # Source info
+    channel = Column(String(100), nullable=True)
+    author = Column(String(100), nullable=True)
+    price_threshold = Column(Float, nullable=True)
+    headline = Column(Text, nullable=True)
+    raw_content = Column(Text, nullable=True)
+
+    # Outcome status
+    # received | deduplicated | filtered | pending_entry | entry_timeout |
+    # buy_submitted | active_trade | exit_triggered | completed | error
+    status = Column(String(30), nullable=False, default='received')
+
+    # Links to other tables
+    announcement_id = Column(Integer, ForeignKey('announcements.id'), nullable=True)
+    pending_entry_trade_id = Column(String(36), nullable=True)
+    active_trade_id = Column(String(36), nullable=True)
+    completed_trade_id = Column(Integer, nullable=True)
+
+    # Final outcome
+    exit_reason = Column(String(50), nullable=True)
+    pnl = Column(Float, nullable=True)
+    return_pct = Column(Float, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+    __table_args__ = (
+        Index('ix_traces_ticker_timestamp', 'ticker', 'alert_timestamp'),
+        Index('ix_traces_status', 'status'),
+        Index('ix_traces_created', 'created_at'),
+    )
+
+
+class TraceEventDB(Base):
+    """Trace event - one per lifecycle step."""
+    __tablename__ = "trace_events"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    # Parent trace reference
+    trace_id = Column(String(36), ForeignKey('traces.trace_id'), nullable=False, index=True)
+
+    # Event details
+    event_type = Column(String(50), nullable=False, index=True)
+
+    # Strategy context (for filter/entry/exit events)
+    strategy_id = Column(String(36), nullable=True, index=True)
+    strategy_name = Column(String(100), nullable=True)
+
+    # Event-specific data
+    reason = Column(Text, nullable=True)  # Filter rejection reason, exit reason, etc.
+    details = Column(Text, nullable=True)  # JSON-encoded extra data
+
+    # Timestamps
+    event_timestamp = Column(DateTime, nullable=False)  # When event occurred
+    created_at = Column(DateTime, default=datetime.utcnow)  # When recorded
+
+    __table_args__ = (
+        Index('ix_trace_events_trace', 'trace_id'),
+        Index('ix_trace_events_type', 'event_type'),
+        Index('ix_trace_events_timestamp', 'event_timestamp'),
+        Index('ix_trace_events_strategy', 'strategy_id'),
+    )
+
+
 def init_db():
     """Create all tables and run migrations."""
     Base.metadata.create_all(bind=engine)
@@ -378,6 +457,14 @@ def init_db():
         if 'source_html' not in columns:
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE announcements ADD COLUMN source_html TEXT"))
+                conn.commit()
+
+    # Migration: Add source column to announcements if missing
+    if 'announcements' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('announcements')]
+        if 'source' not in columns:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE announcements ADD COLUMN source VARCHAR(20) DEFAULT 'backfill'"))
                 conn.commit()
 
     # Migration: Add trade_id column to active_trades if missing

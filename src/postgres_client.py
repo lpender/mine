@@ -32,8 +32,8 @@ class PostgresClient:
     # Announcements
     # ─────────────────────────────────────────────────────────────────────────────
 
-    def save_announcement(self, ann: Announcement) -> None:
-        """Save a single announcement to the database."""
+    def save_announcement(self, ann: Announcement, source: str = 'backfill') -> Optional[int]:
+        """Save a single announcement to the database. Returns the announcement ID."""
         db = self._get_db()
         try:
             existing = db.query(AnnouncementDB).filter(
@@ -45,19 +45,21 @@ class PostgresClient:
 
             if existing:
                 # Update existing
-                for key, value in self._announcement_to_dict(ann).items():
+                for key, value in self._announcement_to_dict(ann, source=source).items():
                     if key not in ('id', 'created_at'):
                         setattr(existing, key, value)
+                db.commit()
+                return existing.id
             else:
                 # Insert new
-                db_ann = AnnouncementDB(**self._announcement_to_dict(ann))
+                db_ann = AnnouncementDB(**self._announcement_to_dict(ann, source=source))
                 db.add(db_ann)
-
-            db.commit()
+                db.commit()
+                return db_ann.id
         finally:
             db.close()
 
-    def save_announcements(self, announcements: List[Announcement]) -> int:
+    def save_announcements(self, announcements: List[Announcement], source: str = 'backfill') -> int:
         """Save multiple announcements with upsert. Returns count of new records."""
         db = self._get_db()
         new_count = 0
@@ -72,11 +74,11 @@ class PostgresClient:
 
                 if existing:
                     # Update existing record's fields
-                    for key, value in self._announcement_to_dict(ann).items():
+                    for key, value in self._announcement_to_dict(ann, source=source).items():
                         if key not in ('id', 'created_at'):
                             setattr(existing, key, value)
                 else:
-                    db_ann = AnnouncementDB(**self._announcement_to_dict(ann))
+                    db_ann = AnnouncementDB(**self._announcement_to_dict(ann, source=source))
                     db.add(db_ann)
                     new_count += 1
 
@@ -85,11 +87,19 @@ class PostgresClient:
         finally:
             db.close()
 
-    def load_announcements(self) -> List[Announcement]:
-        """Load all announcements from the database."""
+    def load_announcements(self, source: Optional[str] = 'backfill') -> List[Announcement]:
+        """Load announcements from the database.
+
+        Args:
+            source: Filter by source ('backfill', 'live', or None for all).
+                    Defaults to 'backfill' to exclude live alerts from backtest data.
+        """
         db = self._get_db()
         try:
-            rows = db.query(AnnouncementDB).order_by(AnnouncementDB.timestamp.desc()).all()
+            query = db.query(AnnouncementDB)
+            if source:
+                query = query.filter(AnnouncementDB.source == source)
+            rows = query.order_by(AnnouncementDB.timestamp.desc()).all()
             return [self._db_to_announcement(row) for row in rows]
         finally:
             db.close()
@@ -331,7 +341,7 @@ class PostgresClient:
     # Helpers
     # ─────────────────────────────────────────────────────────────────────────────
 
-    def _announcement_to_dict(self, ann: Announcement) -> dict:
+    def _announcement_to_dict(self, ann: Announcement, source: str = 'backfill') -> dict:
         """Convert Announcement dataclass to dict for database."""
         return {
             "ticker": ann.ticker,
@@ -368,6 +378,7 @@ class PostgresClient:
             "scanner_after_lull": ann.scanner_after_lull,
             "source_message": ann.source_message,
             "source_html": ann.source_html,
+            "source": source,
         }
 
     def _db_to_announcement(self, row: AnnouncementDB) -> Announcement:

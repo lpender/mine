@@ -15,6 +15,7 @@ from .pending_entry_store import get_pending_entry_store
 from .order_store import get_order_store
 from .trade_logger import log_buy_fill, log_sell_fill
 from .postgres_client import PostgresClient
+from .trace_store import get_trace_store
 
 logger = logging.getLogger(__name__)
 # Separate logger for verbose volume/candle logs - writes to logs/volume.log
@@ -180,6 +181,7 @@ class PendingEntry:
     first_price: Optional[float] = None
     current_candle_start: Optional[datetime] = None
     current_candle_data: Optional[dict] = None  # Building current candle
+    trace_id: Optional[str] = None  # Link to trace for event logging
 
 
 @dataclass
@@ -199,6 +201,7 @@ class ActiveTrade:
     last_quote_time: Optional[datetime] = None
     sell_attempts: int = 0  # Track failed sell attempts
     needs_manual_exit: bool = False  # True after 3 failed sell attempts
+    trace_id: Optional[str] = None  # Link to trace for event logging
 
 
 @dataclass
@@ -220,6 +223,8 @@ class PendingOrder:
     take_profit_price: Optional[float] = None
     # Entry trigger details (for logging)
     entry_trigger: Optional[str] = None  # e.g., "early_entry", "completed_candles", "no_candle_req"
+    # Trace tracking
+    trace_id: Optional[str] = None  # Link to trace for event logging
     sizing_info: Optional[str] = None  # e.g., "1.0% of 50,000 vol = 26 shares ($76)"
     # Context for recording trade on fill (sell orders)
     entry_price: Optional[float] = None
@@ -437,23 +442,58 @@ class StrategyEngine:
         """Clear shared candle data when no longer tracking ticker."""
         self._ticker_candles.pop(ticker, None)
 
-    def on_alert(self, announcement: Announcement) -> bool:
+    def on_alert(self, announcement: Announcement, trace_id: Optional[str] = None) -> bool:
         """
         Handle new alert from Discord.
 
         Returns True if alert passes filters and is being tracked.
         Multiple alerts for the same ticker create independent pending entries.
+
+        Args:
+            announcement: The parsed announcement data
+            trace_id: Optional trace ID for lifecycle tracking
         """
         ticker = announcement.ticker
+        trace_store = get_trace_store() if trace_id else None
 
-        # Check filters
-        if not self._passes_filters(announcement):
+        # Check filters with reason tracking
+        passes, rejection_reason = self._passes_filters_with_reason(announcement)
+        if not passes:
+            logger.info(f"[{ticker}] Filtered by '{self.strategy_name}': {rejection_reason}")
+            if trace_store and trace_id:
+                trace_store.add_event(
+                    trace_id=trace_id,
+                    event_type='filter_rejected',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    reason=rejection_reason,
+                )
             return False
+
+        # Record filter accepted
+        if trace_store and trace_id:
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='filter_accepted',
+                event_timestamp=datetime.utcnow(),
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+            )
 
         # Check if tradeable on broker before tracking
         tradeable, reason = self.trader.is_tradeable(ticker)
         if not tradeable:
             logger.warning(f"[{ticker}] Not tradeable: {reason}")
+            if trace_store and trace_id:
+                trace_store.add_event(
+                    trace_id=trace_id,
+                    event_type='not_tradeable',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    reason=reason,
+                )
             return False
 
         logger.info(f"[{ticker}] Alert passed filters, checking subscription availability")
@@ -464,6 +504,15 @@ class StrategyEngine:
             subscribed = self.on_subscribe(ticker)
             if not subscribed:
                 logger.warning(f"[{ticker}] Cannot subscribe for quotes (at websocket limit) - rejecting alert")
+                if trace_store and trace_id:
+                    trace_store.add_event(
+                        trace_id=trace_id,
+                        event_type='subscription_failed',
+                        event_timestamp=datetime.utcnow(),
+                        strategy_id=self.strategy_id,
+                        strategy_name=self.strategy_name,
+                        reason='at websocket subscription limit',
+                    )
                 return False
 
         # Generate unique trade ID for this entry
@@ -472,12 +521,13 @@ class StrategyEngine:
         # Start tracking for entry (keyed by trade_id, not ticker)
         existing_count = len(self._get_pending_for_ticker(ticker)) + len(self._get_trades_for_ticker(ticker))
         logger.info(f"[{ticker}] Starting to track for entry (trade_id={trade_id[:8]}, existing positions: {existing_count})")
-        alert_time = datetime.now()
+        alert_time = datetime.utcnow()  # Use UTC to match quote timestamps
         self.pending_entries[trade_id] = PendingEntry(
             trade_id=trade_id,
             ticker=ticker,
             announcement=announcement,
             alert_time=alert_time,
+            trace_id=trace_id,
         )
 
         # Persist pending entry to database for recovery on restart
@@ -492,6 +542,22 @@ class StrategyEngine:
             announcement_ticker=announcement.ticker,
             announcement_timestamp=announcement.timestamp,
         )
+
+        # Record pending entry created event
+        if trace_store and trace_id:
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='pending_entry_created',
+                event_timestamp=alert_time,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                details={'trade_id': trade_id},
+            )
+            trace_store.update_trace_status(
+                trace_id=trace_id,
+                status='pending_entry',
+                pending_entry_trade_id=trade_id,
+            )
 
         return True
 
@@ -509,7 +575,7 @@ class StrategyEngine:
         if not candle_data:
             return
 
-        # Calculate the candle start time (floor to minute)
+        # Calculate the candle start time (floor to minute) in UTC
         candle_ts = candle_data.get("timestamp", 0)
         if candle_ts:
             candle_start = datetime.utcfromtimestamp(candle_ts)
@@ -601,6 +667,47 @@ class StrategyEngine:
             return False
 
         return True
+
+    def _passes_filters_with_reason(self, ann: Announcement) -> tuple:
+        """Check if announcement passes all filters, returning rejection reason if not.
+
+        Returns:
+            (True, None) if passes all filters
+            (False, reason) if rejected
+        """
+        cfg = self.config
+
+        # Channel filter
+        if cfg.channels and ann.channel not in cfg.channels:
+            return False, f"channel '{ann.channel}' not in {cfg.channels}"
+
+        # Direction filter
+        if cfg.directions and ann.direction not in cfg.directions:
+            return False, f"direction '{ann.direction}' not in {cfg.directions}"
+
+        # Session filter
+        if cfg.sessions and ann.market_session not in cfg.sessions:
+            return False, f"session '{ann.market_session}' not in {cfg.sessions}"
+
+        # Price filter (using price_threshold from announcement as proxy)
+        if ann.price_threshold:
+            if ann.price_threshold <= cfg.price_min or ann.price_threshold > cfg.price_max:
+                return False, f"price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}"
+
+        # Country blacklist filter
+        if cfg.country_blacklist and ann.country in cfg.country_blacklist:
+            return False, f"country '{ann.country}' in blacklist"
+
+        # Intraday mentions filter (must be less than max)
+        if cfg.max_intraday_mentions is not None and ann.mention_count is not None:
+            if ann.mention_count >= cfg.max_intraday_mentions:
+                return False, f"{ann.mention_count} mentions >= max {cfg.max_intraday_mentions}"
+
+        # Financing headline filter (offerings, reverse splits, etc.)
+        if cfg.exclude_financing_headlines and ann.headline_is_financing:
+            return False, f"financing headline ({ann.headline_financing_type})"
+
+        return True, None
 
     def _check_entry(self, ticker: str, price: float, volume: int, timestamp: datetime):
         """Check if entry conditions are met for any pending entries for this ticker.
@@ -705,6 +812,7 @@ class StrategyEngine:
         for pending in pending_entries:
             # Check entry window timeout for this specific pending entry
             time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
+            logger.debug(f"[{ticker}] Timeout check: quote_ts={timestamp}, alert_time={pending.alert_time}, diff={time_since_alert:.1f}m")
             if time_since_alert > cfg.entry_window_minutes:
                 logger.info(f"[{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
                 self._abandon_pending(pending.trade_id)
@@ -770,6 +878,20 @@ class StrategyEngine:
         """
         pending = self.pending_entries.pop(trade_id)
         ticker = pending.ticker
+        trace_id = pending.trace_id
+
+        # Record entry_condition_met event
+        if trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='entry_condition_met',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                reason=trigger,
+                details={'trade_id': trade_id, 'price': price},
+            )
 
         # Remove from database (entry is being executed)
         get_pending_entry_store().delete_entry(trade_id)
@@ -859,10 +981,28 @@ class StrategyEngine:
                 self._order_store.update_broker_order_id(db_order_id, order.order_id)
                 self._order_store.record_event(
                     event_type="submitted",
-                    event_timestamp=datetime.utcnow(),  # Use actual submission time, not quote time
+                    event_timestamp=datetime.utcnow(),  # Use UTC for database storage
                     order_id=db_order_id,
                     broker_order_id=order.order_id,
                 )
+
+            # Record buy_order_submitted trace event
+            if trace_id:
+                trace_store = get_trace_store()
+                trace_store.add_event(
+                    trace_id=trace_id,
+                    event_type='buy_order_submitted',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    details={
+                        'trade_id': trade_id,
+                        'order_id': order.order_id,
+                        'shares': shares,
+                        'price': price,
+                    },
+                )
+                trace_store.update_trace_status(trace_id, status='buy_submitted')
 
         except Exception as e:
             logger.error(f"[{ticker}] Buy order failed: {e}")
@@ -875,6 +1015,18 @@ class StrategyEngine:
                     order_id=db_order_id,
                     raw_data={"error": str(e)},
                 )
+            # Record buy_order_rejected trace event
+            if trace_id:
+                trace_store = get_trace_store()
+                trace_store.add_event(
+                    trace_id=trace_id,
+                    event_type='buy_order_rejected',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    reason=str(e),
+                )
+                trace_store.update_trace_status(trace_id, status='error')
             # Only unsubscribe if no more pending entries or active trades for this ticker
             if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
@@ -896,6 +1048,7 @@ class StrategyEngine:
             take_profit_price=take_profit_price,
             entry_trigger=trigger,
             sizing_info=sizing_info,
+            trace_id=trace_id,
         )
         logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
@@ -914,6 +1067,24 @@ class StrategyEngine:
             return
 
         logger.info(f"[{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
+        trace_id = pending.trace_id
+
+        # Record buy_order_filled event
+        if trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='buy_order_filled',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                details={
+                    'trade_id': pending.trade_id,
+                    'order_id': order_id,
+                    'fill_price': filled_price,
+                    'shares': shares,
+                },
+            )
 
         # Log to dedicated trades file
         log_buy_fill(
@@ -971,9 +1142,27 @@ class StrategyEngine:
             highest_since_entry=filled_price,
             stop_loss_price=stop_loss_price,
             take_profit_price=take_profit_price,
+            trace_id=trace_id,
         )
 
         logger.info(f"[{ticker}] Created active trade (trade_id={trade_id[:8]})")
+
+        # Record active_trade_created event
+        if trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=trace_id,
+                event_type='active_trade_created',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                details={'trade_id': trade_id},
+            )
+            trace_store.update_trace_status(
+                trace_id=trace_id,
+                status='active_trade',
+                active_trade_id=trade_id,
+            )
 
         # Persist to database
         save_success = self._active_trade_store.save_trade(
@@ -1059,6 +1248,25 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
 
+        # Record sell_order_filled trace event
+        if pending.trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=pending.trace_id,
+                event_type='sell_order_filled',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                details={
+                    'trade_id': pending.trade_id,
+                    'broker_order_id': order_id,
+                    'shares': shares,
+                    'fill_price': filled_price,
+                    'pnl': pnl,
+                    'return_pct': return_pct,
+                },
+            )
+
         # Log to dedicated trades file
         log_sell_fill(
             ticker=ticker,
@@ -1138,6 +1346,31 @@ class StrategyEngine:
         # Only unsubscribe if no more pending entries or active trades for this ticker
         if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
             self.on_unsubscribe(ticker)
+
+        # Record trade_completed trace event and update final status
+        if pending.trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=pending.trace_id,
+                event_type='trade_completed',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                details={
+                    'trade_id': pending.trade_id,
+                    'exit_reason': pending.exit_reason,
+                    'pnl': pnl,
+                    'return_pct': return_pct,
+                },
+            )
+            trace_store.update_trace_status(
+                trace_id=pending.trace_id,
+                status='completed',
+                exit_reason=pending.exit_reason,
+                pnl=pnl,
+                return_pct=return_pct,
+                completed_at=timestamp,
+            )
 
     def on_order_canceled(self, order_id: str, ticker: str, side: str, timestamp: Optional[datetime] = None):
         """Handle order cancellation."""
@@ -1278,6 +1511,25 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
+        # Record exit_condition_triggered event
+        if trade.trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=trade.trace_id,
+                event_type='exit_condition_triggered',
+                event_timestamp=timestamp,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                reason=reason,
+                details={
+                    'trade_id': trade_id,
+                    'exit_price': price,
+                    'entry_price': trade.entry_price,
+                    'return_pct': return_pct,
+                },
+            )
+            trace_store.update_trace_status(trade.trace_id, status='exit_triggered')
+
         # Create order record in database before submitting to broker
         db_order_id = self._order_store.create_order(
             ticker=ticker,
@@ -1300,9 +1552,27 @@ class StrategyEngine:
                 self._order_store.update_broker_order_id(db_order_id, order.order_id)
                 self._order_store.record_event(
                     event_type="submitted",
-                    event_timestamp=datetime.utcnow(),  # Use actual submission time, not quote time
+                    event_timestamp=datetime.utcnow(),  # Use UTC for database storage
                     order_id=db_order_id,
                     broker_order_id=order.order_id,
+                )
+
+            # Record sell_order_submitted trace event
+            if trade.trace_id:
+                trace_store = get_trace_store()
+                trace_store.add_event(
+                    trace_id=trade.trace_id,
+                    event_type='sell_order_submitted',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    details={
+                        'trade_id': trade_id,
+                        'broker_order_id': order.order_id,
+                        'shares': trade.shares,
+                        'limit_price': price,
+                        'exit_reason': reason,
+                    },
                 )
 
         except Exception as e:
@@ -1375,6 +1645,7 @@ class StrategyEngine:
                             entry_price=trade.entry_price,
                             entry_time=trade.entry_time,
                             exit_reason=reason,
+                            trace_id=trade.trace_id,
                         )
                         return  # Success on retry
                     except Exception as retry_err:
@@ -1402,6 +1673,7 @@ class StrategyEngine:
             entry_price=trade.entry_price,
             entry_time=trade.entry_time,
             exit_reason=reason,
+            trace_id=trade.trace_id,
         )
         logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
@@ -1414,6 +1686,26 @@ class StrategyEngine:
         if pending:
             ticker = pending.ticker
             logger.info(f"[{ticker}] Abandoned pending entry (trade_id={trade_id[:8]})")
+
+            # Record entry_timeout event
+            if pending.trace_id:
+                trace_store = get_trace_store()
+                trace_store.add_event(
+                    trace_id=pending.trace_id,
+                    event_type='entry_timeout',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    details={
+                        'trade_id': trade_id,
+                        'window_minutes': self.config.entry_window_minutes,
+                    },
+                )
+                trace_store.update_trace_status(
+                    pending.trace_id,
+                    status='entry_timeout',
+                )
+
             # Remove from database
             get_pending_entry_store().delete_entry(trade_id)
             # Only unsubscribe if no more pending entries or active trades for this ticker
