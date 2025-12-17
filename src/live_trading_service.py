@@ -1504,6 +1504,7 @@ def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
         Dict mapping ticker to result ("sold", "failed: reason", etc.)
     """
     from .trading import get_trading_client
+    from .quote_provider import InsightSentryQuoteProvider
 
     results = {}
     orphaned = get_orphaned_positions(paper=paper)
@@ -1515,11 +1516,24 @@ def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
     logger.warning(f"Exiting {len(orphaned)} orphaned positions...")
     trader = get_trading_client(paper=paper)
 
+    # Create quote provider to fetch current prices
+    quote_provider = InsightSentryQuoteProvider()
+
     for ticker, shares, entry_price in orphaned:
         try:
-            order = trader.sell(ticker, shares)
-            results[ticker] = f"sell order submitted ({order.status}) - {shares} shares"
-            logger.info(f"[{ticker}] Submitted sell for {shares} orphaned shares")
+            # Fetch current price from InsightSentry REST API
+            current_price = entry_price  # fallback
+            try:
+                candle = quote_provider.fetch_current_minute_candle(ticker)
+                if candle and "close" in candle:
+                    current_price = candle["close"]
+                    logger.info(f"[{ticker}] Fetched current price: ${current_price:.4f}")
+            except Exception as e:
+                logger.warning(f"[{ticker}] Could not fetch current price, using entry: {e}")
+
+            order = trader.sell(ticker, shares, limit_price=current_price)
+            results[ticker] = f"sell order submitted ({order.status}) - {shares} shares @ ${current_price:.4f}"
+            logger.info(f"[{ticker}] Submitted sell for {shares} orphaned shares @ ${current_price:.4f}")
         except Exception as e:
             results[ticker] = f"failed: {e}"
             logger.error(f"[{ticker}] Failed to sell orphaned position: {e}")
