@@ -380,7 +380,15 @@ else:
                     hoverinfo="name",
                 ))
 
-                # Add stop loss line if available in params
+                # Calculate price range for Y-axis scaling
+                price_min = min(ohlcv["low"].min(), selected_trade.entry_price, selected_trade.exit_price)
+                price_max = max(ohlcv["high"].max(), selected_trade.entry_price, selected_trade.exit_price)
+                price_range = price_max - price_min
+                # Add 10% padding
+                y_min = price_min - price_range * 0.1
+                y_max = price_max + price_range * 0.1
+
+                # Add stop loss line if available in params (only if within visible range)
                 params = selected_trade.strategy_params
                 if params and "exit" in params:
                     stop_loss_pct = params["exit"].get("stop_loss_pct", 0)
@@ -393,30 +401,37 @@ else:
                         else:
                             sl_price = selected_trade.entry_price * (1 - stop_loss_pct / 100)
 
-                        fig.add_hline(
-                            y=sl_price,
-                            line_dash="dash",
-                            line_color="red",
-                            annotation_text=f"SL @ {format_price(sl_price)}",
-                            annotation_position="right",
-                        )
+                        # Only show line if within reasonable range (extends y-axis by at most 30%)
+                        if sl_price >= y_min - price_range * 0.3:
+                            fig.add_hline(
+                                y=sl_price,
+                                line_dash="dash",
+                                line_color="red",
+                                annotation_text=f"SL @ {format_price(sl_price)}",
+                                annotation_position="right",
+                            )
+                            y_min = min(y_min, sl_price - price_range * 0.05)
 
-                    # Add take profit line
+                    # Add take profit line (only if within visible range)
                     take_profit_pct = params["exit"].get("take_profit_pct", 0)
                     if take_profit_pct > 0:
                         tp_price = selected_trade.entry_price * (1 + take_profit_pct / 100)
-                        fig.add_hline(
-                            y=tp_price,
-                            line_dash="dash",
-                            line_color="green",
-                            annotation_text=f"TP @ {format_price(tp_price)}",
-                            annotation_position="right",
-                        )
+                        # Only show line if within reasonable range
+                        if tp_price <= y_max + price_range * 0.3:
+                            fig.add_hline(
+                                y=tp_price,
+                                line_dash="dash",
+                                line_color="green",
+                                annotation_text=f"TP @ {format_price(tp_price)}",
+                                annotation_position="right",
+                            )
+                            y_max = max(y_max, tp_price + price_range * 0.05)
 
                 fig.update_layout(
                     title=f"{selected_trade.ticker} - Trade #{selected_trade.id}",
                     xaxis_title="Time",
                     yaxis_title="Price",
+                    yaxis_range=[y_min, y_max],
                     xaxis_rangeslider_visible=False,
                     showlegend=True,
                     legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
