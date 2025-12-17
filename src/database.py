@@ -394,6 +394,16 @@ def init_db():
                 """))
                 conn.commit()
 
+    # Migration: Drop old unique constraint on (ticker, strategy_id) if it exists
+    # A strategy can have multiple active trades on the same ticker
+    if 'active_trades' in inspector.get_table_names():
+        constraints = inspector.get_unique_constraints('active_trades')
+        constraint_names = [c['name'] for c in constraints]
+        if 'uq_active_trade_ticker_strategy' in constraint_names:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE active_trades DROP CONSTRAINT uq_active_trade_ticker_strategy"))
+                conn.commit()
+
 
 def get_db():
     """Get database session."""
