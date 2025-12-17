@@ -501,6 +501,20 @@ else:
                 # Create candlestick chart
                 fig = go.Figure()
 
+                # Create custom hover text with volume
+                hover_text = [
+                    f"Time: {t.strftime('%H:%M')}<br>"
+                    f"Open: ${o:.2f}<br>"
+                    f"High: ${h:.2f}<br>"
+                    f"Low: ${l:.2f}<br>"
+                    f"Close: ${c:.2f}<br>"
+                    f"Volume: {v:,}"
+                    for t, o, h, l, c, v in zip(
+                        ohlcv.index, ohlcv["open"], ohlcv["high"],
+                        ohlcv["low"], ohlcv["close"], ohlcv["volume"]
+                    )
+                ]
+
                 # Add candlestick
                 fig.add_trace(go.Candlestick(
                     x=ohlcv.index,
@@ -509,6 +523,8 @@ else:
                     low=ohlcv["low"],
                     close=ohlcv["close"],
                     name="Price",
+                    text=hover_text,
+                    hoverinfo="text",
                 ))
 
                 # Add entry marker - round to minute to align with resampled bars
