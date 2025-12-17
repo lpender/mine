@@ -623,6 +623,7 @@ config = BacktestConfig(
     stop_loss_pct=stop_loss,
     stop_loss_from_open=sl_from_open,
     window_minutes=hold_time,
+    entry_window_minutes=entry_window,
     entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
     entry_after_consecutive_candles=consec_candles,
     min_candle_volume=int(min_candle_vol),

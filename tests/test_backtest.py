@@ -1167,3 +1167,162 @@ class TestStopLossEdgeCases:
         assert result.trigger_type == "stop_loss"
         # Normal stop (no gap): fill at stop price
         assert result.exit_price == pytest.approx(9.50, rel=0.01)
+
+
+class TestEntryWindowMinutes:
+    """Tests for entry_window_minutes - limiting how long to look for entry."""
+
+    def test_entry_window_limits_search_for_consecutive_candles(self):
+        """Entry window limits how long we search for consecutive green candles."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        # 3 red candles, then 2 green candles at minute 4 and 5
+        # But entry window is 3 minutes, so we never see the green candles
+        bars = [
+            # Red candles (minutes 0-2)
+            make_bar(base_time, open_=10.00, high=10.10, low=9.80, close=9.90, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=9.90, high=10.00, low=9.70, close=9.80, volume=100_000),
+            make_bar(base_time + timedelta(minutes=2), open_=9.80, high=9.90, low=9.60, close=9.70, volume=100_000),
+            # Green candles (minutes 3-4) - outside 3 minute entry window
+            make_bar(base_time + timedelta(minutes=3), open_=9.70, high=10.00, low=9.65, close=9.90, volume=100_000),
+            make_bar(base_time + timedelta(minutes=4), open_=9.90, high=10.20, low=9.85, close=10.10, volume=100_000),
+            # Entry would be here (minute 5)
+            make_bar(base_time + timedelta(minutes=5), open_=10.10, high=10.50, low=10.00, close=10.40, volume=100_000),
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=60,
+            entry_window_minutes=3,  # Only look for entry in first 3 minutes
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        # Should NOT enter because entry window expired before green candles
+        assert not result.entered
+        assert result.trigger_type == "no_entry"
+
+    def test_entry_window_allows_entry_within_window(self):
+        """Entry succeeds when conditions are met within entry window."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        # 2 green candles in first 2 minutes
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.30, low=9.95, close=10.20, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.20, high=10.50, low=10.15, close=10.40, volume=100_000),
+            # Entry bar
+            make_bar(base_time + timedelta(minutes=2), open_=10.40, high=10.80, low=10.30, close=10.60, volume=100_000),
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=60,
+            entry_window_minutes=5,  # Entry window is 5 minutes
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        # Should enter because conditions met within entry window
+        assert result.entered
+        assert result.entry_price == 10.40  # Open of bar after signal
+
+    def test_entry_window_limits_volume_trigger_mode(self):
+        """Entry window limits search in volume/price trigger mode."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        # First 3 bars have low volume, 4th bar has enough volume
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.50, low=9.90, close=10.30, volume=30_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.30, high=10.60, low=10.20, close=10.50, volume=30_000),
+            make_bar(base_time + timedelta(minutes=2), open_=10.50, high=10.80, low=10.40, close=10.70, volume=30_000),
+            # This bar has enough volume but is outside entry window
+            make_bar(base_time + timedelta(minutes=3), open_=10.70, high=11.00, low=10.60, close=10.90, volume=100_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=5.0,  # Need +5% from $10 = $10.50
+            volume_threshold=75_000,  # Only met on bar at minute 3
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=60,
+            entry_window_minutes=3,  # Only look for entry in first 3 minutes
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        # Should NOT enter - volume condition only met after entry window
+        assert not result.entered
+        assert result.trigger_type == "no_entry"
+
+    def test_entry_window_zero_uses_full_window(self):
+        """Entry window of 0 should use full window_minutes."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        # Green candles appear at minute 10
+        bars = [make_bar(base_time + timedelta(minutes=i),
+                        open_=10.0 - i*0.1, high=10.0 - i*0.1 + 0.1,
+                        low=10.0 - i*0.1 - 0.1, close=10.0 - i*0.1 - 0.05,
+                        volume=100_000) for i in range(10)]
+        # Add green candles
+        bars.append(make_bar(base_time + timedelta(minutes=10), open_=9.0, high=9.3, low=8.95, close=9.2, volume=100_000))
+        bars.append(make_bar(base_time + timedelta(minutes=11), open_=9.2, high=9.5, low=9.15, close=9.4, volume=100_000))
+        bars.append(make_bar(base_time + timedelta(minutes=12), open_=9.4, high=9.7, low=9.35, close=9.6, volume=100_000))
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=60,
+            entry_window_minutes=0,  # 0 means use full window
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        # Should enter because entry_window_minutes=0 means full window
+        assert result.entered
+        assert result.entry_price == 9.4  # Open of bar after 2 green candles
+
+    def test_entry_window_separate_from_hold_window(self):
+        """Entry window and hold window (window_minutes) are independent."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        # Entry within first 2 minutes, but hold for 60 minutes
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.30, low=9.95, close=10.20, volume=100_000),
+            make_bar(base_time + timedelta(minutes=1), open_=10.20, high=10.50, low=10.15, close=10.40, volume=100_000),
+            # Entry bar
+            make_bar(base_time + timedelta(minutes=2), open_=10.40, high=10.60, low=10.30, close=10.50, volume=100_000),
+        ]
+        # Add more bars for the hold period
+        for i in range(3, 60):
+            bars.append(make_bar(base_time + timedelta(minutes=i),
+                                open_=10.50, high=10.60, low=10.40, close=10.50, volume=50_000))
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=2,
+            min_candle_volume=50_000,
+            take_profit_pct=50.0,  # Won't hit
+            stop_loss_pct=20.0,  # Won't hit
+            window_minutes=60,  # Hold for 60 minutes
+            entry_window_minutes=5,  # Only look for entry in first 5 minutes
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_time == base_time + timedelta(minutes=2)
+        assert result.trigger_type == "timeout"
+        # Exit should be at the end of window_minutes (60 min), not entry_window_minutes
+        assert result.exit_time == base_time + timedelta(minutes=59)

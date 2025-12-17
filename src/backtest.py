@@ -39,6 +39,10 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
+    # Calculate entry window end time (how long to look for entry)
+    entry_window = config.entry_window_minutes if config.entry_window_minutes > 0 else config.window_minutes
+    entry_window_end = first_bar_time + timedelta(minutes=entry_window)
+
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
 
@@ -52,6 +56,10 @@ def run_single_backtest(
         min_vol = config.min_candle_volume
 
         for i, bar in enumerate(bars):
+            # Stop looking for entry after entry window expires
+            if bar.timestamp >= entry_window_end:
+                break
+
             # Check: green candle (close > open) AND volume meets minimum
             if bar.close > bar.open and bar.volume >= min_vol:
                 consecutive_count += 1
@@ -128,6 +136,10 @@ def run_single_backtest(
 
         # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
         for i, bar in enumerate(bars):
+            # Stop looking for entry after entry window expires
+            if bar.timestamp >= entry_window_end:
+                break
+
             # Check if price moved up enough to trigger entry (bar.high reaches trigger level)
             price_change_pct = ((bar.high - reference_price) / reference_price) * 100
             price_triggered = price_change_pct >= config.entry_trigger_pct
