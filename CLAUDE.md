@@ -44,3 +44,17 @@
 2. alert_server.py parses and saves to PostgreSQL
 3. OHLCV data fetched separately for historical announcements only
 4. Backtest runs against cached historical data
+
+## Position Terminology
+
+**Orphaned Position**: At broker but NOT in database
+- Cause: Buy order filled but `save_trade()` failed (e.g., DB constraint violation)
+- Danger: No stop-loss protection since we're not tracking it
+- Fix: Sell immediately using current price from REST API
+
+**Ghost Position**: In database but NOT at broker
+- Cause: Sell filled but we missed the fill notification, or manually closed at broker
+- Danger: UI shows position that doesn't exist, may try to sell non-existent shares
+- Fix: Delete from database and in-memory tracking
+
+Both are cleaned up automatically every 60 seconds by `_cleanup_orphaned_positions()`.
