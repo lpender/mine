@@ -16,7 +16,7 @@ from .pending_entry_store import get_pending_entry_store
 from .order_store import get_order_store
 from .orphaned_order_store import get_orphaned_order_store
 from .trade_logger import log_buy_fill, log_sell_fill
-from .postgres_client import PostgresClient
+from .postgres_client import get_postgres_client
 from .trace_store import get_trace_store
 
 logger = logging.getLogger(__name__)
@@ -331,7 +331,7 @@ class StrategyEngine:
             db_entries = pending_store.get_entries_for_strategy(self.strategy_id)
             logger.info(f"[{self.strategy_name}] Database returned {len(db_entries)} pending entries")
 
-            postgres_client = PostgresClient()
+            postgres_client = get_postgres_client()
             cfg = self.config
             recovered_count = 0
             expired_count = 0

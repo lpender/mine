@@ -19,7 +19,7 @@ from queue import Queue
 from typing import Callable, Optional
 
 from .parser import parse_message_line
-from .postgres_client import PostgresClient
+from .postgres_client import get_postgres_client
 from .trace_store import get_trace_store
 
 # Configure logging - use module logger only, don't add extra handlers
@@ -63,26 +63,27 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        logger.info(f"[HTTP POST] Received POST request to {self.path}")
+        # Keep HTTP request logging at debug to avoid slowing down the app under high volume.
+        logger.debug(f"[HTTP POST] Received POST request to {self.path}")
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8")
-        logger.info(f"[HTTP POST] Body length: {content_length}, path: {self.path}")
+        logger.debug(f"[HTTP POST] Body length: {content_length}, path: {self.path}")
 
         try:
             data = json.loads(body)
-            logger.info(f"[HTTP POST] Successfully parsed JSON with keys: {list(data.keys())}")
+            logger.debug(f"[HTTP POST] Successfully parsed JSON with keys: {list(data.keys())}")
         except json.JSONDecodeError:
             logger.warning(f"Invalid JSON: {body[:100]}")
             self._send_error(400, "Invalid JSON")
             return
 
         if self.path == "/alert":
-            logger.info("[HTTP POST] Calling _handle_alert()")
+            logger.debug("[HTTP POST] Calling _handle_alert()")
             self._handle_alert(data)
-            logger.info("[HTTP POST] _handle_alert() completed, sending OK response")
+            logger.debug("[HTTP POST] _handle_alert() completed, sending OK response")
             self._send_ok()
         elif self.path == "/backfill":
-            logger.info("[HTTP POST] Calling _handle_backfill()")
+            logger.debug("[HTTP POST] Calling _handle_backfill()")
             result = self._handle_backfill(data)
             self._send_ok(result)
         else:
@@ -109,7 +110,8 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
     def _handle_alert(self, data):
         """Handle real-time alert from Discord plugin."""
         try:
-            logger.info(f"[ALERT RECEIVED] Raw data: {data}")
+            # Raw payloads can be large/noisy; keep at debug.
+            logger.debug(f"[ALERT RECEIVED] Raw data: {data}")
 
             ticker = data.get("ticker", "UNKNOWN")
             price_info = data.get("price_info", "")
@@ -175,7 +177,7 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
 
                     # Save to announcements table with source='live'
                     try:
-                        client = PostgresClient()
+                        client = get_postgres_client()
                         announcement_id = client.save_announcement(announcement, source='live')
                         logger.info(f"[{ticker_symbol}] Saved live announcement to database (id={announcement_id})")
                     except Exception as e:
@@ -279,7 +281,7 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
 
         # Save to PostgreSQL
         try:
-            client = PostgresClient()
+            client = get_postgres_client()
 
             # Save raw messages
             for msg in messages:

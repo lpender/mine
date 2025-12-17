@@ -113,6 +113,7 @@ def main():
     parser = argparse.ArgumentParser(description='Run the trading engine')
     parser.add_argument('--live', action='store_true', help='Run in live trading mode')
     parser.add_argument('--force', action='store_true', help='Force start even if locked')
+    parser.add_argument('--no-alert-service', action='store_true', help='Do not start the alert HTTP service (no inbound alerts/backfills)')
     args = parser.parse_args()
 
     paper_mode = not args.live
@@ -137,15 +138,19 @@ def main():
     init_db()
 
     # Start alert service (this process must own it for callbacks to work)
-    logger.info("Starting alert service...")
-    try:
-        start_alert_service(port=8765)
-    except OSError as e:
-        if "Address already in use" in str(e):
-            logger.error("Port 8765 already in use! Stop any other processes using it (e.g., Streamlit).")
-            logger.error("The trading engine must own the alert service for callbacks to work.")
-            sys.exit(1)
-        raise
+    disable_alert_service = args.no_alert_service or os.getenv("DISABLE_ALERT_SERVICE", "0") == "1"
+    if disable_alert_service:
+        logger.warning("Alert service is DISABLED (no inbound alerts/backfills will be received).")
+    else:
+        logger.info("Starting alert service...")
+        try:
+            start_alert_service(port=8765)
+        except OSError as e:
+            if "Address already in use" in str(e):
+                logger.error("Port 8765 already in use! Stop any other processes using it (e.g., Streamlit).")
+                logger.error("The trading engine must own the alert service for callbacks to work.")
+                sys.exit(1)
+            raise
 
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)

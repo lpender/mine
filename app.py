@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
-from src.postgres_client import PostgresClient
+from src.postgres_client import get_postgres_client
 
 # Timezone for display
 EST = ZoneInfo("America/New_York")
@@ -123,7 +123,7 @@ def set_param(key: str, value):
 @st.cache_data(ttl=300)
 def load_announcements():
     """Load announcements from PostgreSQL."""
-    client = PostgresClient()
+    client = get_postgres_client()
     return client.load_announcements()
 
 
@@ -135,7 +135,7 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     Uses bulk query via announcement_ticker/announcement_timestamp columns
     for much faster loading (single query instead of N queries).
     """
-    client = PostgresClient()
+    client = get_postgres_client()
 
     # Convert string timestamps to datetime for bulk query
     keys_with_dt = []

@@ -1,7 +1,9 @@
 """PostgreSQL-based data client for announcements and OHLCV data."""
 
+import logging
 import os
 from datetime import datetime, timedelta
+from functools import lru_cache
 from typing import List, Optional
 from dotenv import load_dotenv
 
@@ -14,6 +16,8 @@ from .data_providers import get_provider, OHLCVDataProvider
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 
 class PostgresClient:
     """Client for storing/retrieving announcements and OHLCV data in PostgreSQL.
@@ -23,7 +27,13 @@ class PostgresClient:
 
     def __init__(self, backend: Optional[str] = None, provider: Optional[OHLCVDataProvider] = None):
         self._provider = provider or get_provider(backend)
-        print(f"[PostgresClient] Using {self._provider.name} backend")
+        # Avoid noisy stdout prints (Streamlit reruns can instantiate this often).
+        # Use debug by default; enable info-level logging with POSTGRESCLIENT_LOG_BACKEND=1.
+        msg = f"Using {self._provider.name} backend"
+        if os.getenv("POSTGRESCLIENT_LOG_BACKEND", "0") == "1":
+            logger.info(msg)
+        else:
+            logger.debug(msg)
 
     def _get_db(self) -> Session:
         return SessionLocal()
@@ -368,7 +378,7 @@ class PostgresClient:
 
         # Skip fetching if effective trading window is today (data not yet available)
         if effective_start.date() >= date.today():
-            print(f"Skipping {ticker}: trading window is today/future ({effective_start.date()})")
+            logger.debug(f"Skipping {ticker}: trading window is today/future ({effective_start.date()})")
             return []
 
         end_time = effective_start + timedelta(minutes=window_minutes)
@@ -396,6 +406,17 @@ class PostgresClient:
             if update_status:
                 self.update_ohlcv_status(ticker, announcement_time, 'error')
             raise
+
+
+@lru_cache(maxsize=8)
+def get_postgres_client(backend: Optional[str] = None) -> PostgresClient:
+    """
+    Get a cached PostgresClient instance.
+
+    This avoids repeated provider initialization and log spam (especially in Streamlit reruns).
+    Safe because DB sessions are created per call via SessionLocal().
+    """
+    return PostgresClient(backend=backend)
 
     # ─────────────────────────────────────────────────────────────────────────────
     # Raw Messages
