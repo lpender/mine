@@ -499,7 +499,7 @@ with st.sidebar:
         "Sample Size %",
         min_value=1,
         max_value=100,
-        value=int(get_param("sample_pct", 100)),
+        value=int(get_param("sample_pct", 100) or 100),
         step=1,
         key="_sample_pct",
         help="Test on random subset for faster iteration (100% = all data)"
@@ -507,7 +507,7 @@ with st.sidebar:
 
     sample_seed = st.number_input(
         "Random Seed",
-        value=int(get_param("sample_seed", 0)),
+        value=int(get_param("sample_seed", 0) or 0),
         min_value=0,
         step=1,
         key="_sample_seed",
