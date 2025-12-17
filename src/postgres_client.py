@@ -312,13 +312,16 @@ class PostgresClient:
             bars = self.fetch_ohlcv(ticker, effective_start, end_time, use_cache=use_cache)
 
             # Update status based on result
+            # Provider returns: List with bars = data, [] = confirmed no data, None = error
             if update_status:
-                if bars:
+                if bars is None:
+                    self.update_ohlcv_status(ticker, announcement_time, 'error')
+                elif bars:
                     self.update_ohlcv_status(ticker, announcement_time, 'fetched')
-                else:
+                else:  # empty list []
                     self.update_ohlcv_status(ticker, announcement_time, 'no_data')
 
-            return bars
+            return bars if bars is not None else []
         except Exception as e:
             if update_status:
                 self.update_ohlcv_status(ticker, announcement_time, 'error')
