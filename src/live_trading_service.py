@@ -462,9 +462,11 @@ class TradingEngine:
             timestamp_str = data.get("timestamp")
 
             if timestamp_str:
-                timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                # Parse UTC timestamp and convert to local time (naive datetime)
+                timestamp_utc = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                timestamp = timestamp_utc.astimezone().replace(tzinfo=None)
             else:
-                timestamp = datetime.now()
+                timestamp = datetime.utcnow()  # Store as naive UTC per project rules
 
             # Parse the message content
             announcement = parse_message_line(content, timestamp)
@@ -767,7 +769,7 @@ class TradingEngine:
                 )
 
                 # Trigger exit via the strategy engine
-                engine._execute_exit(trade_id, current_price, "position_limit", datetime.now())
+                engine._execute_exit(trade_id, current_price, "position_limit", datetime.utcnow())
                 closed_count += 1
 
     def _on_subscribe(self, ticker: str, strategy_id: str) -> bool:
@@ -799,6 +801,12 @@ class TradingEngine:
                     self._strategy_subscriptions[strategy_id].discard(ticker)
                     return False
                 else:
+                    # Fetch current minute candle BEFORE subscribing to WebSocket
+                    # This ensures we have the candle data that already occurred this minute
+                    current_candle = self.quote_provider.fetch_current_minute_candle(ticker)
+                    if current_candle and strategy_id in self.strategies:
+                        self.strategies[strategy_id].initialize_building_candle(ticker, current_candle)
+
                     self.quote_provider.subscribe_sync(ticker)
                     logger.info(f"[{ticker}] Added to WS subscriptions: {self.quote_provider.subscribed_tickers}")
                     if self._loop and self._loop.is_running():

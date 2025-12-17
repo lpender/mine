@@ -493,6 +493,44 @@ class StrategyEngine:
 
         return True
 
+    def initialize_building_candle(self, ticker: str, candle_data: dict):
+        """
+        Initialize the building candle with data from REST API.
+
+        This is called when subscribing to a ticker mid-minute, so we know
+        the OHLCV that already occurred before we subscribed.
+
+        Args:
+            ticker: Stock symbol
+            candle_data: dict with keys: open, high, low, close, volume, timestamp
+        """
+        if not candle_data:
+            return
+
+        # Calculate the candle start time (floor to minute)
+        candle_ts = candle_data.get("timestamp", 0)
+        if candle_ts:
+            candle_start = datetime.utcfromtimestamp(candle_ts)
+        else:
+            candle_start = datetime.utcnow().replace(second=0, microsecond=0)
+
+        # Initialize building candle with REST data
+        self._ticker_candle_start[ticker] = candle_start
+        self._ticker_building_candle[ticker] = {
+            "open": candle_data.get("open", 0),
+            "high": candle_data.get("high", 0),
+            "low": candle_data.get("low", 0),
+            "close": candle_data.get("close", 0),
+            "volume": candle_data.get("volume", 0),
+        }
+
+        vol = candle_data.get("volume", 0)
+        logger.info(
+            f"[{ticker}] Initialized building candle from REST: {candle_start.strftime('%H:%M')} | "
+            f"O={candle_data.get('open', 0):.2f} H={candle_data.get('high', 0):.2f} "
+            f"L={candle_data.get('low', 0):.2f} C={candle_data.get('close', 0):.2f} V={vol:,}"
+        )
+
     def on_quote(self, ticker: str, price: float, volume: int, timestamp: datetime):
         """
         Handle price update from InsightSentry.

@@ -156,6 +156,68 @@ class InsightSentryQuoteProvider:
             logger.warning(f"[{ticker}] Symbol lookup error: {e}")
             return None
 
+    def fetch_current_minute_candle(self, ticker: str) -> Optional[dict]:
+        """
+        Fetch the current building minute candle from REST API.
+
+        This is used to initialize the building candle when subscribing mid-minute,
+        so we know the volume/OHLC that already occurred before we subscribed.
+
+        Returns:
+            dict with keys: open, high, low, close, volume, timestamp
+            or None if unavailable
+        """
+        code = self.lookup_symbol_code(ticker)
+        if not code:
+            logger.warning(f"[{ticker}] Cannot fetch candle - no symbol code")
+            return None
+
+        try:
+            url = f"https://api.insightsentry.com/v3/symbols/{code}/series"
+            params = {
+                "bar_type": "minute",
+                "bar_interval": "1",
+                "limit": "1",  # Just get the most recent (current) minute
+            }
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+            }
+
+            response = requests.get(url, params=params, headers=headers, timeout=5)
+            if response.status_code != 200:
+                logger.warning(f"[{ticker}] Failed to fetch current candle: {response.status_code}")
+                return None
+
+            data = response.json()
+            series = data.get("series", [])
+
+            if not series:
+                logger.warning(f"[{ticker}] No candle data returned")
+                return None
+
+            # Get the most recent bar (last in the array)
+            bar = series[-1]
+            candle = {
+                "open": bar.get("open", 0),
+                "high": bar.get("high", 0),
+                "low": bar.get("low", 0),
+                "close": bar.get("close", 0),
+                "volume": int(bar.get("volume", 0)),
+                "timestamp": bar.get("time", 0),
+            }
+
+            candle_time = datetime.utcfromtimestamp(candle["timestamp"])
+            logger.info(
+                f"[{ticker}] Fetched current minute candle: {candle_time.strftime('%H:%M')} | "
+                f"O={candle['open']:.2f} H={candle['high']:.2f} L={candle['low']:.2f} "
+                f"C={candle['close']:.2f} V={candle['volume']:,}"
+            )
+            return candle
+
+        except Exception as e:
+            logger.warning(f"[{ticker}] Error fetching current candle: {e}")
+            return None
+
     async def _cleanup_existing_connections(self):
         """Close any existing WebSocket/session before creating new ones."""
         if self._ws and not self._ws.closed:
