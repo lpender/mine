@@ -1,6 +1,7 @@
 """Strategy engine for live trading."""
 
 import logging
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Callable
@@ -170,11 +171,11 @@ class CandleBar:
 @dataclass
 class PendingEntry:
     """Tracks a potential entry waiting for conditions."""
+    trade_id: str  # Unique identifier (UUID)
     ticker: str
     announcement: Announcement
     alert_time: datetime
     first_price: Optional[float] = None
-    candles: List[CandleBar] = field(default_factory=list)
     current_candle_start: Optional[datetime] = None
     current_candle_data: Optional[dict] = None  # Building current candle
 
@@ -182,6 +183,7 @@ class PendingEntry:
 @dataclass
 class ActiveTrade:
     """Tracks an active trade position."""
+    trade_id: str  # Unique identifier (UUID)
     ticker: str
     announcement: Announcement
     entry_price: float
@@ -206,6 +208,7 @@ class PendingOrder:
     shares: int
     limit_price: float
     submitted_at: datetime
+    trade_id: str  # Links to PendingEntry (buy) or ActiveTrade (sell)
     # Database order ID for tracking
     db_order_id: Optional[int] = None
     # Context for creating ActiveTrade on fill (buy orders)
@@ -249,10 +252,16 @@ class StrategyEngine:
         self.strategy_id = strategy_id
         self.strategy_name = strategy_name or "default"
 
-        self.pending_entries: Dict[str, PendingEntry] = {}
-        self.pending_orders: Dict[str, PendingOrder] = {}  # order_id -> PendingOrder
-        self.active_trades: Dict[str, ActiveTrade] = {}
+        # Keyed by trade_id (UUID) - allows multiple positions per ticker
+        self.pending_entries: Dict[str, PendingEntry] = {}  # trade_id -> PendingEntry
+        self.pending_orders: Dict[str, PendingOrder] = {}   # order_id -> PendingOrder
+        self.active_trades: Dict[str, ActiveTrade] = {}     # trade_id -> ActiveTrade
         self.completed_trades: List[dict] = []
+
+        # Shared candle data per ticker (not per pending entry)
+        self._ticker_candles: Dict[str, List[CandleBar]] = {}  # ticker -> completed candles
+        self._ticker_building_candle: Dict[str, dict] = {}  # ticker -> current candle being built
+        self._ticker_candle_start: Dict[str, datetime] = {}  # ticker -> start time of building candle
 
         # Trade history persistence
         self._trade_history = get_trade_history_client()
@@ -271,7 +280,13 @@ class StrategyEngine:
             logger.info(f"Database returned {len(db_trades)} active trades")
 
             for t in db_trades:
-                self.active_trades[t.ticker] = ActiveTrade(
+                # Generate trade_id if not present (migration from old data)
+                trade_id = t.trade_id if t.trade_id else str(uuid.uuid4())
+                if not t.trade_id:
+                    logger.info(f"[{t.ticker}] Generated trade_id for legacy trade: {trade_id[:8]}")
+
+                self.active_trades[trade_id] = ActiveTrade(
+                    trade_id=trade_id,
                     ticker=t.ticker,
                     announcement=None,  # Lost on restart
                     entry_price=t.entry_price,
@@ -285,7 +300,7 @@ class StrategyEngine:
                     last_quote_time=t.last_quote_time,
                 )
                 logger.info(f"[{t.ticker}] Recovered from DB: {t.shares} shares @ ${t.entry_price:.2f}, "
-                           f"SL=${t.stop_loss_price:.2f}, TP=${t.take_profit_price:.2f}")
+                           f"SL=${t.stop_loss_price:.2f}, TP=${t.take_profit_price:.2f} (trade_id={trade_id[:8]})")
 
                 # Subscribe to quotes
                 if self.on_subscribe:
@@ -307,9 +322,9 @@ class StrategyEngine:
             logger.info(f"Broker has positions in: {broker_tickers}")
 
             # Check for positions we track but broker doesn't have (manually closed)
-            orphaned = [t for t in self.active_trades.keys() if t not in broker_tickers]
-            for ticker in orphaned:
-                logger.warning(f"[{ticker}] Position not found at broker - may have been manually closed")
+            for trade_id, trade in self.active_trades.items():
+                if trade.ticker not in broker_tickers:
+                    logger.warning(f"[{trade.ticker}] Position not found at broker - may have been manually closed (trade_id={trade_id[:8]})")
 
         except Exception as e:
             logger.error(f"Failed to recover from broker: {e}", exc_info=True)
@@ -333,18 +348,40 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"Failed to check pending orders: {e}", exc_info=True)
 
+    # --- Helper methods for multi-position support ---
+
+    def _get_pending_for_ticker(self, ticker: str) -> List[PendingEntry]:
+        """Get all pending entries for a ticker."""
+        return [p for p in self.pending_entries.values() if p.ticker == ticker]
+
+    def _get_trades_for_ticker(self, ticker: str) -> List[ActiveTrade]:
+        """Get all active trades for a ticker."""
+        return [t for t in self.active_trades.values() if t.ticker == ticker]
+
+    def _has_pending_or_trade(self, ticker: str) -> bool:
+        """Check if we have any pending entries or active trades for a ticker."""
+        return bool(self._get_pending_for_ticker(ticker) or self._get_trades_for_ticker(ticker))
+
+    def _get_candles_for_ticker(self, ticker: str) -> List[CandleBar]:
+        """Get shared candle data for a ticker."""
+        return self._ticker_candles.get(ticker, [])
+
+    def _set_candles_for_ticker(self, ticker: str, candles: List[CandleBar]):
+        """Set shared candle data for a ticker."""
+        self._ticker_candles[ticker] = candles
+
+    def _clear_candles_for_ticker(self, ticker: str):
+        """Clear shared candle data when no longer tracking ticker."""
+        self._ticker_candles.pop(ticker, None)
+
     def on_alert(self, announcement: Announcement) -> bool:
         """
         Handle new alert from Discord.
 
         Returns True if alert passes filters and is being tracked.
+        Multiple alerts for the same ticker create independent pending entries.
         """
         ticker = announcement.ticker
-
-        # Already tracking or trading this ticker
-        if ticker in self.pending_entries or ticker in self.active_trades:
-            logger.info(f"[{ticker}] Already tracking, ignoring duplicate alert")
-            return False
 
         # Check filters
         if not self._passes_filters(announcement):
@@ -358,16 +395,22 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] Alert passed filters, checking subscription availability")
 
-        # Request quote subscription - reject if we can't get quotes
-        if self.on_subscribe:
+        # Request quote subscription only if not already subscribed for this ticker
+        already_tracking = self._has_pending_or_trade(ticker)
+        if not already_tracking and self.on_subscribe:
             subscribed = self.on_subscribe(ticker)
             if not subscribed:
                 logger.warning(f"[{ticker}] Cannot subscribe for quotes (at websocket limit) - rejecting alert")
                 return False
 
-        # Start tracking for entry
-        logger.info(f"[{ticker}] Starting to track for entry")
-        self.pending_entries[ticker] = PendingEntry(
+        # Generate unique trade ID for this entry
+        trade_id = str(uuid.uuid4())
+
+        # Start tracking for entry (keyed by trade_id, not ticker)
+        existing_count = len(self._get_pending_for_ticker(ticker)) + len(self._get_trades_for_ticker(ticker))
+        logger.info(f"[{ticker}] Starting to track for entry (trade_id={trade_id[:8]}, existing positions: {existing_count})")
+        self.pending_entries[trade_id] = PendingEntry(
+            trade_id=trade_id,
             ticker=ticker,
             announcement=announcement,
             alert_time=datetime.now(),
@@ -385,19 +428,20 @@ class StrategyEngine:
             volume: Current volume
             timestamp: Quote timestamp
         """
-        # Check pending entries
-        if ticker in self.pending_entries:
+        # Check all pending entries for this ticker (may be multiple)
+        pending_entries = self._get_pending_for_ticker(ticker)
+        if pending_entries:
             self._check_entry(ticker, price, volume, timestamp)
 
-        # Check active trades
-        if ticker in self.active_trades:
-            trade = self.active_trades[ticker]
+        # Check all active trades for this ticker (may be multiple)
+        active_trades = self._get_trades_for_ticker(ticker)
+        for trade in active_trades:
             # Update last price for display
             trade.last_price = price
             trade.last_quote_time = timestamp
             pnl_pct = ((price - trade.entry_price) / trade.entry_price) * 100
-            status_logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f}")
-            self._check_exit(ticker, price, timestamp)
+            status_logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f} (trade={trade.trade_id[:8]})")
+            self._check_exit(trade.trade_id, price, timestamp)
 
     def _passes_filters(self, ann: Announcement) -> bool:
         """Check if announcement passes all filters."""
@@ -444,50 +488,42 @@ class StrategyEngine:
         return True
 
     def _check_entry(self, ticker: str, price: float, volume: int, timestamp: datetime):
-        """Check if entry conditions are met for a pending entry."""
-        pending = self.pending_entries[ticker]
+        """Check if entry conditions are met for any pending entries for this ticker.
+
+        Candle data is shared across all pending entries for the same ticker.
+        Each pending entry is evaluated independently for entry conditions.
+        """
         cfg = self.config
 
         # Log every quote for debugging (to quotes.log)
         quotes_logger.info(f"[{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
 
-        # Check entry window timeout - abandon if too long since alert
-        time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
-        if time_since_alert > cfg.entry_window_minutes:
-            logger.info(f"[{ticker}] Entry window timeout ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
-            self._abandon_pending(ticker)
-            return
-
         # Price filter at actual price
         if price <= cfg.price_min or price > cfg.price_max:
             quotes_logger.info(f"[{ticker}] FILTERED: ${price:.4f} outside ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
+            # Still check timeouts even if price is filtered
+            self._check_pending_timeouts(ticker, timestamp)
             return
 
-        # Record first price
-        if pending.first_price is None:
-            pending.first_price = price
-            logger.info(f"[{ticker}] First price: ${price:.2f}")
-
-        # If no consecutive candle requirement, enter immediately
-        if cfg.consec_green_candles == 0:
-            self._execute_entry(ticker, price, timestamp, trigger="no_candle_req")
-            return
-
-        # Build candles from quote updates (minute candles)
+        # --- Build shared candles for this ticker ---
+        candles = self._ticker_candles.get(ticker, [])
         candle_start = timestamp.replace(second=0, microsecond=0)
+        building_candle = self._ticker_building_candle.get(ticker)
+        building_start = self._ticker_candle_start.get(ticker)
 
-        if pending.current_candle_start != candle_start:
+        if building_start != candle_start:
             # New candle starting - finalize previous if exists
-            if pending.current_candle_data:
+            if building_candle:
                 candle = CandleBar(
-                    timestamp=pending.current_candle_start,
-                    open=pending.current_candle_data["open"],
-                    high=pending.current_candle_data["high"],
-                    low=pending.current_candle_data["low"],
-                    close=pending.current_candle_data["close"],
-                    volume=pending.current_candle_data["volume"],
+                    timestamp=building_start,
+                    open=building_candle["open"],
+                    high=building_candle["high"],
+                    low=building_candle["low"],
+                    close=building_candle["close"],
+                    volume=building_candle["volume"],
                 )
-                pending.candles.append(candle)
+                candles.append(candle)
+                self._ticker_candles[ticker] = candles
 
                 # Detailed candle close logging (to quotes.log file)
                 color = "GREEN" if candle.is_green else "RED"
@@ -501,27 +537,28 @@ class StrategyEngine:
                 quotes_logger.info(f"")
 
             # Start new candle
-            pending.current_candle_start = candle_start
-            pending.current_candle_data = {
+            self._ticker_candle_start[ticker] = candle_start
+            self._ticker_building_candle[ticker] = {
                 "open": price,
                 "high": price,
                 "low": price,
                 "close": price,
                 "volume": volume,
             }
+            building_candle = self._ticker_building_candle[ticker]
         else:
             # Update current candle
-            if pending.current_candle_data:
-                pending.current_candle_data["high"] = max(pending.current_candle_data["high"], price)
-                pending.current_candle_data["low"] = min(pending.current_candle_data["low"], price)
-                pending.current_candle_data["close"] = price
-                pending.current_candle_data["volume"] += volume  # Sum volume from all 1-second bars
+            if building_candle:
+                building_candle["high"] = max(building_candle["high"], price)
+                building_candle["low"] = min(building_candle["low"], price)
+                building_candle["close"] = price
+                building_candle["volume"] += volume  # Sum volume from all 1-second bars
 
         # Log current candle volume progress (to quotes.log file)
-        if pending.current_candle_data:
-            curr_vol = pending.current_candle_data["volume"]
-            curr_open = pending.current_candle_data["open"]
-            curr_close = pending.current_candle_data["close"]
+        if building_candle:
+            curr_vol = building_candle["volume"]
+            curr_open = building_candle["open"]
+            curr_close = building_candle["close"]
             is_green = curr_close > curr_open
             pct_of_threshold = (curr_vol / cfg.min_candle_volume * 100) if cfg.min_candle_volume > 0 else 0
             color = "GREEN" if is_green else "RED"
@@ -532,15 +569,15 @@ class StrategyEngine:
 
         # Check for consecutive green candles with volume (from completed candles)
         completed_green_count = 0
-        for candle in reversed(pending.candles):
+        for candle in reversed(candles):
             if candle.is_green and candle.volume >= cfg.min_candle_volume:
                 completed_green_count += 1
             else:
                 break
 
         # Log completed candles status (to quotes.log file)
-        if pending.candles:
-            last_candle = pending.candles[-1]
+        if candles:
+            last_candle = candles[-1]
             meets_vol = last_candle.volume >= cfg.min_candle_volume
             quotes_logger.info(
                 f"[{ticker}] LAST COMPLETED CANDLE: {'GREEN' if last_candle.is_green else 'RED'} | "
@@ -548,44 +585,76 @@ class StrategyEngine:
                 f"Completed green candles with vol: {completed_green_count}/{cfg.consec_green_candles} needed"
             )
 
-        # EARLY ENTRY: If current building candle is green and hits volume threshold,
-        # count it toward the green candle requirement and enter immediately
-        green_count = completed_green_count
-        if pending.current_candle_data:
-            curr_vol = pending.current_candle_data["volume"]
-            curr_open = pending.current_candle_data["open"]
-            curr_close = pending.current_candle_data["close"]
-            curr_is_green = curr_close > curr_open
-            curr_meets_vol = curr_vol >= cfg.min_candle_volume
+        # --- Evaluate entry conditions for each pending entry ---
+        pending_entries = self._get_pending_for_ticker(ticker)
+        for pending in pending_entries:
+            # Check entry window timeout for this specific pending entry
+            time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
+            if time_since_alert > cfg.entry_window_minutes:
+                logger.info(f"[{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
+                self._abandon_pending(pending.trade_id)
+                continue
 
-            if curr_is_green and curr_meets_vol:
-                green_count += 1  # Count building candle toward requirement
-                if green_count >= cfg.consec_green_candles:
-                    logger.info(f"")
-                    logger.info(f"{'='*60}")
-                    logger.info(f"[{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN!")
-                    logger.info(f"[{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
-                    logger.info(f"{'='*60}")
-                    logger.info(f"")
-                    self._execute_entry(ticker, price, timestamp, trigger=f"early_entry_{green_count}_green")
-                    return
+            # Record first price for this pending entry
+            if pending.first_price is None:
+                pending.first_price = price
+                logger.info(f"[{ticker}] First price for trade_id={pending.trade_id[:8]}: ${price:.2f}")
 
-        if completed_green_count >= cfg.consec_green_candles:
-            # Fallback: enter on completed candles if early entry didn't trigger
-            logger.info(f"")
-            logger.info(f"{'='*60}")
-            logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume!")
-            logger.info(f"{'='*60}")
-            logger.info(f"")
-            self._execute_entry(ticker, price, timestamp, trigger=f"completed_{completed_green_count}_green")
+            # If no consecutive candle requirement, enter immediately
+            if cfg.consec_green_candles == 0:
+                self._execute_entry(pending.trade_id, price, timestamp, trigger="no_candle_req")
+                continue
 
-    def _execute_entry(self, ticker: str, price: float, timestamp: datetime, trigger: str = "entry_signal"):
+            # EARLY ENTRY: If current building candle is green and hits volume threshold,
+            # count it toward the green candle requirement and enter immediately
+            green_count = completed_green_count
+            if building_candle:
+                curr_vol = building_candle["volume"]
+                curr_open = building_candle["open"]
+                curr_close = building_candle["close"]
+                curr_is_green = curr_close > curr_open
+                curr_meets_vol = curr_vol >= cfg.min_candle_volume
+
+                if curr_is_green and curr_meets_vol:
+                    green_count += 1  # Count building candle toward requirement
+                    if green_count >= cfg.consec_green_candles:
+                        logger.info(f"")
+                        logger.info(f"{'='*60}")
+                        logger.info(f"[{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN! (trade_id={pending.trade_id[:8]})")
+                        logger.info(f"[{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
+                        logger.info(f"{'='*60}")
+                        logger.info(f"")
+                        self._execute_entry(pending.trade_id, price, timestamp, trigger=f"early_entry_{green_count}_green")
+                        continue
+
+            if completed_green_count >= cfg.consec_green_candles:
+                # Fallback: enter on completed candles if early entry didn't trigger
+                logger.info(f"")
+                logger.info(f"{'='*60}")
+                logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume! (trade_id={pending.trade_id[:8]})")
+                logger.info(f"{'='*60}")
+                logger.info(f"")
+                self._execute_entry(pending.trade_id, price, timestamp, trigger=f"completed_{completed_green_count}_green")
+
+    def _check_pending_timeouts(self, ticker: str, timestamp: datetime):
+        """Check and abandon pending entries that have timed out."""
+        cfg = self.config
+        pending_entries = self._get_pending_for_ticker(ticker)
+        for pending in pending_entries:
+            time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
+            if time_since_alert > cfg.entry_window_minutes:
+                logger.info(f"[{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
+                self._abandon_pending(pending.trade_id)
+
+    def _execute_entry(self, trade_id: str, price: float, timestamp: datetime, trigger: str = "entry_signal"):
         """Execute entry order.
 
         Args:
+            trade_id: The trade_id of the pending entry to execute
             trigger: Reason for entry, e.g., "early_entry", "completed_candles", "no_candle_req"
         """
-        pending = self.pending_entries.pop(ticker)
+        pending = self.pending_entries.pop(trade_id)
+        ticker = pending.ticker
         cfg = self.config
 
         # Calculate stop loss price
@@ -599,18 +668,22 @@ class StrategyEngine:
 
         take_profit_price = price * (1 + cfg.take_profit_pct / 100)
 
-        # Get candle volume for volume-based sizing
+        # Get candle volume for volume-based sizing (from shared candle data)
         # Use last completed candle, or extrapolate current candle for early entry
         candle_volume = None
         extrapolated = False
         actual_vol = None
         elapsed_secs = None
-        if pending.candles:
-            candle_volume = pending.candles[-1].volume
-        elif pending.current_candle_data and pending.current_candle_start:
+        shared_candles = self._ticker_candles.get(ticker, [])
+        building_candle = self._ticker_building_candle.get(ticker)
+        building_start = self._ticker_candle_start.get(ticker)
+
+        if shared_candles:
+            candle_volume = shared_candles[-1].volume
+        elif building_candle and building_start:
             # Early entry on first candle - extrapolate to full minute
-            actual_vol = pending.current_candle_data["volume"]
-            elapsed_secs = (timestamp - pending.current_candle_start).total_seconds()
+            actual_vol = building_candle["volume"]
+            elapsed_secs = (timestamp - building_start).total_seconds()
             if elapsed_secs > 0:
                 # Project what the full minute's volume would be
                 candle_volume = int(actual_vol * (60.0 / elapsed_secs))
@@ -621,9 +694,9 @@ class StrategyEngine:
         # Calculate shares based on position sizing mode
         shares = cfg.get_shares(price, candle_volume)
         if shares <= 0:
-            logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f}")
-            # Unsubscribe since we're no longer tracking this ticker
-            if self.on_unsubscribe:
+            logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f} (trade_id={trade_id[:8]})")
+            # Only unsubscribe if no more pending entries or active trades for this ticker
+            if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
             return
 
@@ -684,8 +757,8 @@ class StrategyEngine:
                     order_id=db_order_id,
                     raw_data={"error": str(e)},
                 )
-            # Unsubscribe since we're no longer tracking this ticker
-            if self.on_unsubscribe:
+            # Only unsubscribe if no more pending entries or active trades for this ticker
+            if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
             return
 
@@ -697,6 +770,7 @@ class StrategyEngine:
             shares=shares,
             limit_price=price,
             submitted_at=timestamp,
+            trade_id=trade_id,  # Link to the original pending entry
             db_order_id=db_order_id,
             announcement=pending.announcement,
             first_candle_open=pending.first_price or price,
@@ -705,7 +779,7 @@ class StrategyEngine:
             entry_trigger=trigger,
             sizing_info=sizing_info,
         )
-        logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation")
+        logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
     def on_buy_fill(
         self,
@@ -760,8 +834,16 @@ class StrategyEngine:
             stop_loss_price = filled_price * (1 - cfg.stop_loss_pct / 100)
         take_profit_price = filled_price * (1 + cfg.take_profit_pct / 100)
 
-        # Create active trade with actual fill price
-        self.active_trades[ticker] = ActiveTrade(
+        # Get trade_id from the pending order
+        trade_id = pending.trade_id
+        if not trade_id:
+            # Fallback for legacy orders without trade_id
+            trade_id = str(uuid.uuid4())
+            logger.warning(f"[{ticker}] Missing trade_id on buy order, generating new: {trade_id[:8]}")
+
+        # Create active trade with actual fill price, keyed by trade_id
+        self.active_trades[trade_id] = ActiveTrade(
+            trade_id=trade_id,
             ticker=ticker,
             announcement=pending.announcement,
             entry_price=filled_price,
@@ -773,8 +855,11 @@ class StrategyEngine:
             take_profit_price=take_profit_price,
         )
 
+        logger.info(f"[{ticker}] Created active trade (trade_id={trade_id[:8]})")
+
         # Persist to database
         self._active_trade_store.save_trade(
+            trade_id=trade_id,
             ticker=ticker,
             strategy_id=self.strategy_id,
             strategy_name=self.strategy_name,
@@ -875,14 +960,18 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"[{ticker}] Failed to record trade: {e}")
 
-        # Remove from database active trades
-        try:
-            self._active_trade_store.delete_trade(ticker, self.strategy_id)
-        except Exception as e:
-            logger.error(f"[{ticker}] Failed to delete from active_trades: {e}")
+        # Remove from database active trades using trade_id
+        trade_id = pending.trade_id
+        if trade_id:
+            try:
+                self._active_trade_store.delete_trade(trade_id)
+            except Exception as e:
+                logger.error(f"[{ticker}] Failed to delete trade_id={trade_id[:8]} from active_trades: {e}")
+        else:
+            logger.warning(f"[{ticker}] No trade_id on sell order - skipping active_trade_store delete")
 
-        # Unsubscribe from quotes
-        if self.on_unsubscribe:
+        # Only unsubscribe if no more pending entries or active trades for this ticker
+        if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
             self.on_unsubscribe(ticker)
 
     def on_order_canceled(self, order_id: str, ticker: str, side: str, timestamp: Optional[datetime] = None):
@@ -942,9 +1031,13 @@ class StrategyEngine:
                 # Sell rejected - position still open
                 logger.error(f"[{ticker}] Sell order rejected - position still open!")
 
-    def _check_exit(self, ticker: str, price: float, timestamp: datetime):
-        """Check exit conditions for an active trade."""
-        trade = self.active_trades[ticker]
+    def _check_exit(self, trade_id: str, price: float, timestamp: datetime):
+        """Check exit conditions for a specific active trade."""
+        trade = self.active_trades.get(trade_id)
+        if not trade:
+            return
+
+        ticker = trade.ticker
         cfg = self.config
 
         # Update highest price for trailing stop
@@ -978,35 +1071,39 @@ class StrategyEngine:
             exit_price = price
 
         if exit_reason:
-            self._execute_exit(ticker, exit_price, exit_reason, timestamp)
+            self._execute_exit(trade_id, exit_price, exit_reason, timestamp)
 
-    def _execute_exit(self, ticker: str, price: float, reason: str, timestamp: datetime):
-        """Execute exit order."""
-        trade = self.active_trades.get(ticker)
+    def _execute_exit(self, trade_id: str, price: float, reason: str, timestamp: datetime):
+        """Execute exit order for a specific trade."""
+        trade = self.active_trades.get(trade_id)
         if not trade:
-            logger.warning(f"[{ticker}] No active trade found for exit")
+            logger.warning(f"No active trade found for trade_id={trade_id[:8]}")
             return
+
+        ticker = trade.ticker
 
         # Skip if already marked as needing manual exit (3+ failed attempts)
         if trade.needs_manual_exit:
             return
 
-        # Check if we already have a pending sell order for this ticker (in-memory)
+        # Check if we already have a pending sell order for this trade_id (in-memory)
         for pending in self.pending_orders.values():
-            if pending.ticker == ticker and pending.side == "sell":
-                logger.debug(f"[{ticker}] Already have pending sell order, skipping")
+            if pending.trade_id == trade_id and pending.side == "sell":
+                logger.debug(f"[{ticker}] Already have pending sell order for trade_id={trade_id[:8]}, skipping")
                 return
 
         # On retry, check broker for existing sell orders (may exist from before restart)
+        # Note: broker doesn't know about trade_id, so we check by ticker
         if trade.sell_attempts > 0:
             try:
                 broker_orders = self.trader.get_open_orders()
                 for order in broker_orders:
                     if order.ticker == ticker and order.side == "sell":
-                        logger.info(f"[{ticker}] Found existing sell order at broker ({order.shares} shares), skipping")
-                        # Remove from active trades since we're already exiting
-                        self.active_trades.pop(ticker, None)
-                        if self.on_unsubscribe:
+                        logger.info(f"[{ticker}] Found existing sell order at broker ({order.shares} shares), skipping (trade_id={trade_id[:8]})")
+                        # Remove this trade from active trades since we're already exiting
+                        self.active_trades.pop(trade_id, None)
+                        # Only unsubscribe if no more positions for this ticker
+                        if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                             self.on_unsubscribe(ticker)
                         return
             except Exception as e:
@@ -1063,7 +1160,7 @@ class StrategyEngine:
                 broker_position = self.trader.get_position(ticker)
                 if broker_position is None or broker_position.shares == 0:
                     logger.warning(f"[{ticker}] Position not found at broker - removing orphaned trade from tracking")
-                    self._remove_orphaned_trade(ticker, trade, reason="position_not_found")
+                    self._remove_orphaned_trade(trade_id, reason="position_not_found")
                     return
                 elif broker_position.shares != trade.shares:
                     # Position exists but with different quantity - update our tracking
@@ -1082,6 +1179,7 @@ class StrategyEngine:
         # Track pending sell order - will complete trade when fill confirmed
         self.pending_orders[order.order_id] = PendingOrder(
             order_id=order.order_id,
+            trade_id=trade_id,
             ticker=ticker,
             side="sell",
             shares=trade.shares,
@@ -1092,22 +1190,35 @@ class StrategyEngine:
             entry_time=trade.entry_time,
             exit_reason=reason,
         )
-        logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation")
+        logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
         # Remove from active trades (we have a pending sell order now)
-        self.active_trades.pop(ticker, None)
+        self.active_trades.pop(trade_id, None)
 
-    def _abandon_pending(self, ticker: str):
+    def _abandon_pending(self, trade_id: str):
         """Abandon a pending entry (timeout or other reason)."""
-        if ticker in self.pending_entries:
-            del self.pending_entries[ticker]
-            logger.info(f"[{ticker}] Abandoned pending entry")
-            if self.on_unsubscribe:
-                self.on_unsubscribe(ticker)
+        pending = self.pending_entries.pop(trade_id, None)
+        if pending:
+            ticker = pending.ticker
+            logger.info(f"[{ticker}] Abandoned pending entry (trade_id={trade_id[:8]})")
+            # Only unsubscribe if no more pending entries or active trades for this ticker
+            if not self._has_pending_or_trade(ticker):
+                # Also clear shared candle data for this ticker
+                self._clear_candles_for_ticker(ticker)
+                self._ticker_building_candle.pop(ticker, None)
+                self._ticker_candle_start.pop(ticker, None)
+                if self.on_unsubscribe:
+                    self.on_unsubscribe(ticker)
 
-    def _remove_orphaned_trade(self, ticker: str, trade: ActiveTrade, reason: str = "orphaned"):
+    def _remove_orphaned_trade(self, trade_id: str, reason: str = "orphaned"):
         """Remove an orphaned trade (position doesn't exist at broker)."""
-        logger.warning(f"[{ticker}] Removing orphaned trade: {trade.shares} shares @ ${trade.entry_price:.4f} ({reason})")
+        trade = self.active_trades.get(trade_id)
+        if not trade:
+            logger.warning(f"Cannot remove orphaned trade - trade_id={trade_id[:8]} not found")
+            return
+
+        ticker = trade.ticker
+        logger.warning(f"[{ticker}] Removing orphaned trade: {trade.shares} shares @ ${trade.entry_price:.4f} ({reason}, trade_id={trade_id[:8]})")
 
         # Record as a failed/orphaned trade so we have a record
         try:
@@ -1133,16 +1244,16 @@ class StrategyEngine:
             logger.error(f"[{ticker}] Failed to record orphaned trade: {e}")
 
         # Remove from active trades
-        self.active_trades.pop(ticker, None)
+        self.active_trades.pop(trade_id, None)
 
         # Remove from database
         try:
-            self._active_trade_store.delete_trade(ticker, self.strategy_id)
+            self._active_trade_store.delete_trade(trade_id)
         except Exception as e:
             logger.error(f"[{ticker}] Failed to delete orphaned trade from database: {e}")
 
-        # Unsubscribe from quotes
-        if self.on_unsubscribe:
+        # Only unsubscribe if no more positions for this ticker
+        if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
             self.on_unsubscribe(ticker)
 
     def reconcile_positions(self, broker_positions: Optional[Dict[str, 'Position']] = None):
@@ -1161,22 +1272,24 @@ class StrategyEngine:
                 broker_positions = {p.ticker: p for p in self.trader.get_positions()}
 
             # Check each active trade
-            stale_tickers = []
-            for ticker in self.active_trades:
-                if ticker not in broker_positions:
-                    logger.warning(f"[{ticker}] Position no longer exists at broker - removing from tracking")
-                    stale_tickers.append(ticker)
+            stale_trade_ids = []
+            for trade_id, trade in self.active_trades.items():
+                if trade.ticker not in broker_positions:
+                    logger.warning(f"[{trade.ticker}] Position no longer exists at broker - removing from tracking (trade_id={trade_id[:8]})")
+                    stale_trade_ids.append((trade_id, trade.ticker))
 
-            # Remove stale trades and unsubscribe
-            for ticker in stale_tickers:
-                del self.active_trades[ticker]
+            # Remove stale trades
+            for trade_id, ticker in stale_trade_ids:
+                del self.active_trades[trade_id]
                 # Also remove from database
-                self._active_trade_store.delete_trade(ticker, self.strategy_id)
-                if self.on_unsubscribe:
+                self._active_trade_store.delete_trade(trade_id)
+                # Only unsubscribe if no more positions for this ticker
+                if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
 
-            if stale_tickers:
-                logger.info(f"Reconciliation removed {len(stale_tickers)} stale positions: {stale_tickers}")
+            if stale_trade_ids:
+                stale_tickers = [t[1] for t in stale_trade_ids]
+                logger.info(f"Reconciliation removed {len(stale_trade_ids)} stale positions: {stale_tickers}")
 
         except Exception as e:
             logger.error(f"Position reconciliation failed: {e}", exc_info=True)
@@ -1184,7 +1297,7 @@ class StrategyEngine:
     def get_status(self) -> dict:
         """Get current engine status."""
         active_trades = {}
-        for ticker, t in self.active_trades.items():
+        for trade_id, t in self.active_trades.items():
             current_price = t.last_price if t.last_price > 0 else t.entry_price
             pnl_pct = ((current_price - t.entry_price) / t.entry_price) * 100 if t.entry_price > 0 else 0
             pnl_dollars = (current_price - t.entry_price) * t.shares
@@ -1192,7 +1305,9 @@ class StrategyEngine:
             # Calculate timeout time
             timeout_at = t.entry_time + timedelta(minutes=self.config.timeout_minutes)
 
-            active_trades[ticker] = {
+            active_trades[trade_id] = {
+                "trade_id": trade_id,
+                "ticker": t.ticker,
                 "entry_price": t.entry_price,
                 "entry_time": t.entry_time.isoformat(),
                 "shares": t.shares,
@@ -1208,8 +1323,17 @@ class StrategyEngine:
                 "sell_attempts": t.sell_attempts,
             }
 
+        # Build pending entries info with ticker and trade_id
+        pending_info = []
+        for trade_id, p in self.pending_entries.items():
+            pending_info.append({
+                "trade_id": trade_id,
+                "ticker": p.ticker,
+                "alert_time": p.alert_time.isoformat(),
+            })
+
         return {
-            "pending_entries": list(self.pending_entries.keys()),
+            "pending_entries": pending_info,
             "active_trades": active_trades,
             "completed_trades": len(self.completed_trades),
         }

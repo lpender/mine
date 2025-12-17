@@ -67,7 +67,8 @@ class TestCandleVolumeAggregation:
 
         # Add pending entry
         engine.on_alert(ann)
-        assert "TEST" in engine.pending_entries
+        # pending_entries is now keyed by trade_id, use helper
+        assert engine._has_pending_or_trade("TEST")
 
         # Simulate 1-second bars within the same minute
         # Each bar has volume of 1000
@@ -78,12 +79,13 @@ class TestCandleVolumeAggregation:
             ts = base_time.replace(second=sec)
             engine.on_quote("TEST", price=5.10, volume=1000, timestamp=ts)
 
-        pending = engine.pending_entries["TEST"]
+        # Candle data is now stored at ticker level, not per pending entry
+        building_candle = engine._ticker_building_candle.get("TEST")
 
         # The current candle should have volume = 5000 (5 * 1000)
         # NOT volume = 1000 (just the last one)
-        assert pending.current_candle_data is not None
-        actual_volume = pending.current_candle_data["volume"]
+        assert building_candle is not None
+        actual_volume = building_candle["volume"]
 
         assert actual_volume == 5000, (
             f"Volume should be summed (5000), but got {actual_volume}. "
@@ -101,21 +103,23 @@ class TestCandleVolumeAggregation:
         for sec in range(3):
             engine.on_quote("TEST", price=5.10, volume=1000, timestamp=minute1.replace(second=sec))
 
-        # Verify first candle volume is summed
-        pending = engine.pending_entries["TEST"]
-        assert pending.current_candle_data["volume"] == 3000
+        # Verify first candle volume is summed (now using ticker-level candle data)
+        building_candle = engine._ticker_building_candle.get("TEST")
+        assert building_candle["volume"] == 3000
 
         # Second minute: 2 quotes with volume 500 each
         minute2 = datetime(2025, 12, 12, 15, 31, 0)
         for sec in range(2):
             engine.on_quote("TEST", price=5.20, volume=500, timestamp=minute2.replace(second=sec))
 
-        # First candle should be finalized and stored
-        assert len(pending.candles) == 1
-        assert pending.candles[0].volume == 3000
+        # First candle should be finalized and stored (now using ticker-level candles)
+        ticker_candles = engine._ticker_candles.get("TEST", [])
+        assert len(ticker_candles) == 1
+        assert ticker_candles[0].volume == 3000
 
         # Current (second) candle should have new volume
-        assert pending.current_candle_data["volume"] == 1000  # 2 * 500
+        building_candle = engine._ticker_building_candle.get("TEST")
+        assert building_candle["volume"] == 1000  # 2 * 500
 
     def test_green_candle_volume_threshold(self):
         """Entry should only trigger when candle meets volume threshold."""
@@ -134,13 +138,14 @@ class TestCandleVolumeAggregation:
         engine.on_quote("TEST", price=5.25, volume=1000, timestamp=minute2)
 
         # Should still be pending - first candle was green but only had 3000 volume
-        assert "TEST" in engine.pending_entries
-        assert "TEST" not in engine.active_trades
+        assert engine._has_pending_or_trade("TEST")
+        assert len(engine._get_trades_for_ticker("TEST")) == 0
 
-        pending = engine.pending_entries["TEST"]
-        assert len(pending.candles) == 1
-        assert pending.candles[0].volume == 3000
-        assert pending.candles[0].is_green  # close > open
+        # Check ticker-level candle data
+        ticker_candles = engine._ticker_candles.get("TEST", [])
+        assert len(ticker_candles) == 1
+        assert ticker_candles[0].volume == 3000
+        assert ticker_candles[0].is_green  # close > open
 
     def test_entry_triggers_with_sufficient_volume(self):
         """Entry should trigger when green candle meets volume threshold."""
@@ -438,10 +443,12 @@ class TestEntryWindowMinutes:
         ann = self.create_announcement(timestamp=ann_time)
         engine.on_alert(ann)
 
-        assert "TEST" in engine.pending_entries
+        assert engine._has_pending_or_trade("TEST")
 
         # Override alert_time to match our test scenario (alert_time is set to datetime.now() in production)
-        engine.pending_entries["TEST"].alert_time = ann_time
+        pending_list = engine._get_pending_for_ticker("TEST")
+        for pending in pending_list:
+            pending.alert_time = ann_time
 
         # Send quote 4 minutes after alert (past 3 minute entry window)
         # Entry conditions NOT met (red candle, low volume)
@@ -449,7 +456,7 @@ class TestEntryWindowMinutes:
         engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time)
 
         # Pending entry should be abandoned due to timeout
-        assert "TEST" not in engine.pending_entries, "Pending entry should be abandoned after entry window expires"
+        assert not engine._has_pending_or_trade("TEST"), "Pending entry should be abandoned after entry window expires"
 
     def test_entry_succeeds_within_window(self):
         """Entry should succeed when conditions are met within entry window."""
@@ -503,7 +510,7 @@ class TestEntryWindowMinutes:
         engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time)
 
         # Pending entry should still exist
-        assert "TEST" in engine.pending_entries, "Pending entry should remain within entry window"
+        assert engine._has_pending_or_trade("TEST"), "Pending entry should remain within entry window"
 
     def test_entry_window_boundary(self):
         """Test entry window at exact boundary."""
@@ -514,7 +521,9 @@ class TestEntryWindowMinutes:
         engine.on_alert(ann)
 
         # Override alert_time to match our test scenario
-        engine.pending_entries["TEST"].alert_time = ann_time
+        pending_list = engine._get_pending_for_ticker("TEST")
+        for pending in pending_list:
+            pending.alert_time = ann_time
 
         # Send quote exactly at 5 minutes (boundary)
         quote_time = ann_time + timedelta(minutes=5)
@@ -523,11 +532,11 @@ class TestEntryWindowMinutes:
         # At exactly the boundary, entry should still be allowed (using > not >=)
         # Actually looking at the code: time_since_alert > cfg.entry_window_minutes
         # So at exactly 5 minutes (5.0 > 5 is False), it should NOT be abandoned
-        assert "TEST" in engine.pending_entries, "At exact boundary, entry should still be possible"
+        assert engine._has_pending_or_trade("TEST"), "At exact boundary, entry should still be possible"
 
         # But 5 minutes + 1 second should trigger abandonment
         quote_time2 = ann_time + timedelta(minutes=5, seconds=1)
         engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time2)
 
         # Now it should be abandoned (5.016... > 5 is True)
-        assert "TEST" not in engine.pending_entries, "Past boundary, entry should be abandoned"
+        assert not engine._has_pending_or_trade("TEST"), "Past boundary, entry should be abandoned"

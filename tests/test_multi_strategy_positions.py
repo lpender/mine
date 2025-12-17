@@ -82,6 +82,7 @@ class TestStrategyEngineIsolation:
 
         # Mock returns only strategy A's positions
         mock_trade = Mock()
+        mock_trade.trade_id = "test-trade-id-a"
         mock_trade.ticker = "AMCI"
         mock_trade.entry_price = 5.0
         mock_trade.entry_time = datetime.now()
@@ -108,9 +109,10 @@ class TestStrategyEngineIsolation:
                 # Verify it called with correct strategy_id
                 mock_active_trade_store.get_trades_for_strategy.assert_called_with(strategy_a_id)
 
-                # Verify position was loaded
-                assert "AMCI" in engine_a.active_trades
-                assert engine_a.active_trades["AMCI"].shares == 100
+                # Verify position was loaded (now keyed by trade_id)
+                trades_for_amci = engine_a._get_trades_for_ticker("AMCI")
+                assert len(trades_for_amci) == 1
+                assert trades_for_amci[0].shares == 100
 
     def test_two_strategies_same_ticker_different_shares(self, mock_trader, config):
         """Two strategies can hold different positions in the same ticker."""
@@ -119,6 +121,7 @@ class TestStrategyEngineIsolation:
 
         # Strategy A has 100 shares, Strategy B has 50 shares
         mock_trade_a = Mock()
+        mock_trade_a.trade_id = "test-trade-id-a"
         mock_trade_a.ticker = "AMCI"
         mock_trade_a.entry_price = 5.0
         mock_trade_a.entry_time = datetime.now()
@@ -131,6 +134,7 @@ class TestStrategyEngineIsolation:
         mock_trade_a.last_quote_time = None
 
         mock_trade_b = Mock()
+        mock_trade_b.trade_id = "test-trade-id-b"
         mock_trade_b.ticker = "AMCI"
         mock_trade_b.entry_price = 5.2
         mock_trade_b.entry_time = datetime.now()
@@ -169,9 +173,13 @@ class TestStrategyEngineIsolation:
                     paper=True,
                 )
 
-        # Both strategies have AMCI but different share counts
-        assert engine_a.active_trades["AMCI"].shares == 100
-        assert engine_b.active_trades["AMCI"].shares == 50
+        # Both strategies have AMCI but different share counts (now keyed by trade_id)
+        trades_a = engine_a._get_trades_for_ticker("AMCI")
+        trades_b = engine_b._get_trades_for_ticker("AMCI")
+        assert len(trades_a) == 1
+        assert len(trades_b) == 1
+        assert trades_a[0].shares == 100
+        assert trades_b[0].shares == 50
 
     def test_quote_updates_correct_strategy_position(self, mock_trader, config):
         """When a quote arrives, each strategy updates its OWN position's last_price."""
@@ -196,8 +204,12 @@ class TestStrategyEngineIsolation:
                     paper=True,
                 )
 
-        # Manually add positions
-        engine_a.active_trades["AMCI"] = ActiveTrade(
+        # Manually add positions (keyed by trade_id)
+        trade_id_a = "test-trade-a"
+        trade_id_b = "test-trade-b"
+
+        engine_a.active_trades[trade_id_a] = ActiveTrade(
+            trade_id=trade_id_a,
             ticker="AMCI",
             announcement=None,
             entry_price=5.0,
@@ -209,7 +221,8 @@ class TestStrategyEngineIsolation:
             take_profit_price=5.50,
         )
 
-        engine_b.active_trades["AMCI"] = ActiveTrade(
+        engine_b.active_trades[trade_id_b] = ActiveTrade(
+            trade_id=trade_id_b,
             ticker="AMCI",
             announcement=None,
             entry_price=5.2,
@@ -227,12 +240,12 @@ class TestStrategyEngineIsolation:
         engine_b.on_quote("AMCI", 5.3, 1000, now)
 
         # Both should have updated last_price
-        assert engine_a.active_trades["AMCI"].last_price == 5.3
-        assert engine_b.active_trades["AMCI"].last_price == 5.3
+        assert engine_a.active_trades[trade_id_a].last_price == 5.3
+        assert engine_b.active_trades[trade_id_b].last_price == 5.3
 
         # But they still have their own share counts
-        assert engine_a.active_trades["AMCI"].shares == 100
-        assert engine_b.active_trades["AMCI"].shares == 50
+        assert engine_a.active_trades[trade_id_a].shares == 100
+        assert engine_b.active_trades[trade_id_b].shares == 50
 
 
 class TestExitIsolation:
@@ -276,8 +289,10 @@ class TestExitIsolation:
                     paper=True,
                 )
 
-        # Strategy A has 100 shares
-        engine_a.active_trades["AMCI"] = ActiveTrade(
+        # Strategy A has 100 shares (keyed by trade_id)
+        trade_id = "test-trade-id-a"
+        engine_a.active_trades[trade_id] = ActiveTrade(
+            trade_id=trade_id,
             ticker="AMCI",
             announcement=None,
             entry_price=5.0,
@@ -289,8 +304,8 @@ class TestExitIsolation:
             take_profit_price=5.50,
         )
 
-        # Trigger take profit
-        engine_a._execute_exit("AMCI", 5.50, "take_profit", datetime.now())
+        # Trigger take profit (now takes trade_id)
+        engine_a._execute_exit(trade_id, 5.50, "take_profit", datetime.now())
 
         # Should have called sell with 100 shares (not 150)
         mock_trader.sell.assert_called_once()
@@ -321,8 +336,12 @@ class TestExitIsolation:
                     paper=True,
                 )
 
-        # Strategy A: 100 shares, Strategy B: 50 shares
-        engine_a.active_trades["AMCI"] = ActiveTrade(
+        # Strategy A: 100 shares, Strategy B: 50 shares (keyed by trade_id)
+        trade_id_a = "test-trade-id-a"
+        trade_id_b = "test-trade-id-b"
+
+        engine_a.active_trades[trade_id_a] = ActiveTrade(
+            trade_id=trade_id_a,
             ticker="AMCI",
             announcement=None,
             entry_price=5.0,
@@ -334,7 +353,8 @@ class TestExitIsolation:
             take_profit_price=5.50,
         )
 
-        engine_b.active_trades["AMCI"] = ActiveTrade(
+        engine_b.active_trades[trade_id_b] = ActiveTrade(
+            trade_id=trade_id_b,
             ticker="AMCI",
             announcement=None,
             entry_price=5.2,
@@ -346,9 +366,9 @@ class TestExitIsolation:
             take_profit_price=5.72,
         )
 
-        # Both exit
-        engine_a._execute_exit("AMCI", 5.50, "take_profit", datetime.now())
-        engine_b._execute_exit("AMCI", 5.72, "take_profit", datetime.now())
+        # Both exit (now takes trade_id)
+        engine_a._execute_exit(trade_id_a, 5.50, "take_profit", datetime.now())
+        engine_b._execute_exit(trade_id_b, 5.72, "take_profit", datetime.now())
 
         # Should have two sell calls: 100 shares and 50 shares
         assert mock_trader.sell.call_count == 2
@@ -495,14 +515,20 @@ class TestTradingEngineQuoteDispatch:
 
         engine = TradingEngine(paper=True)
 
-        # Mock strategy engines
+        # Mock strategy engines (keyed by trade_id)
+        mock_trade_a = Mock()
+        mock_trade_a.ticker = "AMCI"
         strategy_a = Mock()
-        strategy_a.active_trades = {"AMCI": Mock()}
+        strategy_a.active_trades = {"trade-id-a": mock_trade_a}
         strategy_a.pending_entries = {}
+        strategy_a._has_pending_or_trade = lambda t: t == "AMCI"
 
+        mock_trade_b = Mock()
+        mock_trade_b.ticker = "AMCI"
         strategy_b = Mock()
-        strategy_b.active_trades = {"AMCI": Mock()}
+        strategy_b.active_trades = {"trade-id-b": mock_trade_b}
         strategy_b.pending_entries = {}
+        strategy_b._has_pending_or_trade = lambda t: t == "AMCI"
 
         engine.strategies = {
             "strategy-a": strategy_a,
@@ -513,16 +539,13 @@ class TestTradingEngineQuoteDispatch:
             "strategy-b": "Strategy B",
         }
 
-        # Current implementation uses ticker lock - this test shows what SHOULD happen
+        # Current implementation dispatches to all strategies with matching ticker
         # For multi-strategy support, we need to dispatch to all strategies that have the ticker
 
-        # Simulate a quote
-        now = datetime.now()
-
-        # Check which strategies have this ticker in active_trades
+        # Check which strategies have this ticker in active_trades (via _has_pending_or_trade)
         strategies_with_position = [
             sid for sid, eng in engine.strategies.items()
-            if "AMCI" in eng.active_trades
+            if eng._has_pending_or_trade("AMCI")
         ]
 
         # Both should have it
@@ -539,14 +562,20 @@ class TestTradingEngineQuoteDispatch:
         """
         engine = TradingEngine(paper=True)
 
-        # Mock strategy engines - both have positions in AMCI
+        # Mock strategy engines - both have positions in AMCI (keyed by trade_id)
+        mock_trade_a = Mock()
+        mock_trade_a.ticker = "AMCI"
         strategy_a = Mock()
-        strategy_a.active_trades = {"AMCI": Mock()}
+        strategy_a.active_trades = {"trade-id-a": mock_trade_a}
         strategy_a.pending_entries = {}
+        strategy_a._has_pending_or_trade = lambda t: t == "AMCI"
 
+        mock_trade_b = Mock()
+        mock_trade_b.ticker = "AMCI"
         strategy_b = Mock()
-        strategy_b.active_trades = {"AMCI": Mock()}
+        strategy_b.active_trades = {"trade-id-b": mock_trade_b}
         strategy_b.pending_entries = {}
+        strategy_b._has_pending_or_trade = lambda t: t == "AMCI"
 
         engine.strategies = {
             "strategy-a": strategy_a,
@@ -556,8 +585,6 @@ class TestTradingEngineQuoteDispatch:
             "strategy-a": "Strategy A",
             "strategy-b": "Strategy B",
         }
-        # Ticker lock only affects alert routing, not quote dispatch
-        engine._locked_tickers = {"AMCI": "strategy-a"}
 
         # Dispatch quote
         engine._on_quote("AMCI", 5.50, 1000, datetime.now())
@@ -574,15 +601,21 @@ class TestTradingEngineQuoteDispatch:
         """
         engine = TradingEngine(paper=True)
 
-        # Strategy A has position in AMCI
+        # Strategy A has position in AMCI (keyed by trade_id, with ticker in value)
+        mock_trade_a = Mock()
+        mock_trade_a.ticker = "AMCI"
         strategy_a = Mock()
-        strategy_a.active_trades = {"AMCI": Mock()}
+        strategy_a.active_trades = {"trade-id-a": mock_trade_a}
         strategy_a.pending_entries = {}
+        strategy_a._has_pending_or_trade = lambda t: t == "AMCI"
 
         # Strategy B has NO position in AMCI (different ticker)
+        mock_trade_b = Mock()
+        mock_trade_b.ticker = "TSLA"
         strategy_b = Mock()
-        strategy_b.active_trades = {"TSLA": Mock()}
+        strategy_b.active_trades = {"trade-id-b": mock_trade_b}
         strategy_b.pending_entries = {}
+        strategy_b._has_pending_or_trade = lambda t: t == "TSLA"
 
         engine.strategies = {
             "strategy-a": strategy_a,
@@ -603,15 +636,21 @@ class TestTradingEngineQuoteDispatch:
         """
         engine = TradingEngine(paper=True)
 
-        # Strategy A has active trade
+        # Strategy A has active trade (keyed by trade_id)
+        mock_trade_a = Mock()
+        mock_trade_a.ticker = "AMCI"
         strategy_a = Mock()
-        strategy_a.active_trades = {"AMCI": Mock()}
+        strategy_a.active_trades = {"trade-id-a": mock_trade_a}
         strategy_a.pending_entries = {}
+        strategy_a._has_pending_or_trade = lambda t: t == "AMCI"
 
-        # Strategy B has pending entry (watching for entry conditions)
+        # Strategy B has pending entry (watching for entry conditions) (keyed by trade_id)
+        mock_pending_b = Mock()
+        mock_pending_b.ticker = "AMCI"
         strategy_b = Mock()
         strategy_b.active_trades = {}
-        strategy_b.pending_entries = {"AMCI": Mock()}
+        strategy_b.pending_entries = {"trade-id-b": mock_pending_b}
+        strategy_b._has_pending_or_trade = lambda t: t == "AMCI"
 
         engine.strategies = {
             "strategy-a": strategy_a,
@@ -670,8 +709,10 @@ class TestReconciliation:
                     paper=True,
                 )
 
-        # We think we have 150 shares
-        engine.active_trades["AMCI"] = ActiveTrade(
+        # We think we have 150 shares (keyed by trade_id)
+        trade_id = "test-trade-id"
+        engine.active_trades[trade_id] = ActiveTrade(
+            trade_id=trade_id,
             ticker="AMCI",
             announcement=None,
             entry_price=5.0,
@@ -686,8 +727,8 @@ class TestReconciliation:
         # Reconciliation should detect this
         broker_positions = {p.ticker: p for p in mock_trader.get_positions()}
 
-        for ticker, trade in engine.active_trades.items():
-            broker_pos = broker_positions.get(ticker)
+        for trade_id, trade in engine.active_trades.items():
+            broker_pos = broker_positions.get(trade.ticker)
             if broker_pos:
                 if broker_pos.shares < trade.shares:
                     # Mismatch detected

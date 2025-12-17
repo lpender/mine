@@ -14,6 +14,7 @@ class ActiveTradeStore:
 
     def save_trade(
         self,
+        trade_id: str,
         ticker: str,
         strategy_id: Optional[str],
         strategy_name: Optional[str],
@@ -31,10 +32,9 @@ class ActiveTradeStore:
         """Save or update an active trade."""
         session = SessionLocal()
         try:
-            # Check if trade already exists
+            # Check if trade already exists by trade_id
             existing = session.query(ActiveTradeDB).filter(
-                ActiveTradeDB.ticker == ticker,
-                ActiveTradeDB.strategy_id == strategy_id,
+                ActiveTradeDB.trade_id == trade_id,
             ).first()
 
             if existing:
@@ -51,6 +51,7 @@ class ActiveTradeStore:
             else:
                 # Create new
                 trade = ActiveTradeDB(
+                    trade_id=trade_id,
                     ticker=ticker,
                     strategy_id=strategy_id,
                     strategy_name=strategy_name,
@@ -68,7 +69,7 @@ class ActiveTradeStore:
                 session.add(trade)
 
             session.commit()
-            logger.info(f"[{ticker}] Saved active trade to database")
+            logger.info(f"[{ticker}] Saved active trade to database (trade_id={trade_id[:8]})")
             return True
 
         except Exception as e:
@@ -80,8 +81,7 @@ class ActiveTradeStore:
 
     def update_price(
         self,
-        ticker: str,
-        strategy_id: Optional[str],
+        trade_id: str,
         last_price: float,
         highest_since_entry: float,
         last_quote_time: datetime,
@@ -90,8 +90,7 @@ class ActiveTradeStore:
         session = SessionLocal()
         try:
             trade = session.query(ActiveTradeDB).filter(
-                ActiveTradeDB.ticker == ticker,
-                ActiveTradeDB.strategy_id == strategy_id,
+                ActiveTradeDB.trade_id == trade_id,
             ).first()
 
             if trade:
@@ -110,19 +109,19 @@ class ActiveTradeStore:
         finally:
             session.close()
 
-    def delete_trade(self, ticker: str, strategy_id: Optional[str]) -> bool:
-        """Delete an active trade (when position is closed)."""
+    def delete_trade(self, trade_id: str) -> bool:
+        """Delete an active trade by trade_id (when position is closed)."""
         session = SessionLocal()
         try:
             trade = session.query(ActiveTradeDB).filter(
-                ActiveTradeDB.ticker == ticker,
-                ActiveTradeDB.strategy_id == strategy_id,
+                ActiveTradeDB.trade_id == trade_id,
             ).first()
 
             if trade:
+                ticker = trade.ticker
                 session.delete(trade)
                 session.commit()
-                logger.info(f"[{ticker}] Deleted active trade from database")
+                logger.info(f"[{ticker}] Deleted active trade from database (trade_id={trade_id[:8]})")
                 return True
             return False
 
@@ -133,13 +132,12 @@ class ActiveTradeStore:
         finally:
             session.close()
 
-    def get_trade(self, ticker: str, strategy_id: Optional[str]) -> Optional[ActiveTradeDB]:
-        """Get a specific active trade by ticker and strategy."""
+    def get_trade(self, trade_id: str) -> Optional[ActiveTradeDB]:
+        """Get a specific active trade by trade_id."""
         session = SessionLocal()
         try:
             trade = session.query(ActiveTradeDB).filter(
-                ActiveTradeDB.ticker == ticker,
-                ActiveTradeDB.strategy_id == strategy_id,
+                ActiveTradeDB.trade_id == trade_id,
             ).first()
             if trade:
                 session.expunge(trade)

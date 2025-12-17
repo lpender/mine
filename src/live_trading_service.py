@@ -265,9 +265,11 @@ class TradingEngine:
             total_active_trades += active_count
             total_pending_entries += pending_count
             if active_count > 0:
-                logger.info(f"Strategy '{name}' recovered {active_count} active trades: {list(engine.active_trades.keys())}")
+                active_tickers = [t.ticker for t in engine.active_trades.values()]
+                logger.info(f"Strategy '{name}' recovered {active_count} active trades: {active_tickers}")
             if pending_count > 0:
-                logger.info(f"Strategy '{name}' recovered {pending_count} pending entries: {list(engine.pending_entries.keys())}")
+                pending_tickers = [p.ticker for p in engine.pending_entries.values()]
+                logger.info(f"Strategy '{name}' recovered {pending_count} pending entries: {pending_tickers}")
 
         logger.info(f"Loaded {len(enabled)} enabled strategies with {total_active_trades} active trades, {total_pending_entries} pending entries")
         logger.info(f"Position limit: {MAX_OPEN_POSITIONS} (from JWT websocket_symbols)")
@@ -512,7 +514,7 @@ class TradingEngine:
         dispatched = False
         for strategy_id, engine in self.strategies.items():
             # Dispatch if strategy has active trade OR pending entry for this ticker
-            if ticker in engine.active_trades or ticker in engine.pending_entries:
+            if engine._has_pending_or_trade(ticker):
                 engine.on_quote(ticker, price, volume, timestamp)
                 dispatched = True
 
@@ -536,7 +538,7 @@ class TradingEngine:
         strategy_id = None
 
         for sid, engine in self.strategies.items():
-            if ticker in engine.pending_entries or ticker in engine.active_trades:
+            if engine._has_pending_or_trade(ticker):
                 is_tracked = True
                 strategy_id = sid
                 break
@@ -562,9 +564,11 @@ class TradingEngine:
 
         # Abort pending entries for this ticker across all strategies
         for strategy_id, engine in self.strategies.items():
-            if ticker in engine.pending_entries:
-                engine._abandon_pending(ticker)
-                logger.info(f"[{ticker}] Removed from pending entries for strategy {self.strategy_names.get(strategy_id, strategy_id)}")
+            # Find all pending entries for this ticker and abandon them
+            pending_for_ticker = engine._get_pending_for_ticker(ticker)
+            for pending in pending_for_ticker:
+                engine._abandon_pending(pending.trade_id)
+                logger.info(f"[{ticker}] Removed pending entry (trade_id={pending.trade_id[:8]}) for strategy {self.strategy_names.get(strategy_id, strategy_id)}")
 
         # Also unsubscribe from this ticker
         if self.quote_provider:
@@ -697,12 +701,12 @@ class TradingEngine:
             return  # Unlimited positions
 
         # Collect all active trades across all strategies with their entry times
-        # Format: [(strategy_id, ticker, entry_time), ...]
-        all_positions: List[Tuple[str, str, datetime]] = []
+        # Format: [(strategy_id, trade_id, ticker, entry_time), ...]
+        all_positions: List[Tuple[str, str, str, datetime]] = []
 
         for strategy_id, engine in self.strategies.items():
-            for ticker, trade in engine.active_trades.items():
-                all_positions.append((strategy_id, ticker, trade.entry_time))
+            for trade_id, trade in engine.active_trades.items():
+                all_positions.append((strategy_id, trade_id, trade.ticker, trade.entry_time))
 
         total_positions = len(all_positions)
         if total_positions <= MAX_OPEN_POSITIONS:
@@ -721,7 +725,7 @@ class TradingEngine:
             logger.warning(f"Could not check existing orders: {e}")
 
         # Sort by entry_time descending (newest first)
-        all_positions.sort(key=lambda x: x[2], reverse=True)
+        all_positions.sort(key=lambda x: x[3], reverse=True)
 
         # Close the newest positions until we're at the limit
         positions_to_close = total_positions - MAX_OPEN_POSITIONS
@@ -735,33 +739,35 @@ class TradingEngine:
             if closed_count >= positions_to_close:
                 break
 
-            strategy_id, ticker, entry_time = all_positions[i]
+            strategy_id, trade_id, ticker, entry_time = all_positions[i]
             engine = self.strategies[strategy_id]
             strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
 
             # Skip if there's already a sell order for this ticker
             if ticker in existing_sell_tickers:
-                logger.info(f"[{ticker}] Already has pending sell order, skipping new sell")
+                logger.info(f"[{ticker}] Already has pending sell order, skipping new sell (trade_id={trade_id[:8]})")
                 closed_count += 1  # Count as "being closed"
                 # Remove from active trades and unsubscribe (no need for quotes on pending sells)
-                trade = engine.active_trades.pop(ticker, None)
+                trade = engine.active_trades.pop(trade_id, None)
                 if trade:
-                    logger.info(f"[{ticker}] Removed from active_trades (pending sell at broker)")
-                self._on_unsubscribe(ticker, strategy_id)
+                    logger.info(f"[{ticker}] Removed from active_trades (pending sell at broker, trade_id={trade_id[:8]})")
+                # Only unsubscribe if no more positions for this ticker
+                if not engine._has_pending_or_trade(ticker):
+                    self._on_unsubscribe(ticker, strategy_id)
                 continue
 
-            trade = engine.active_trades.get(ticker)
+            trade = engine.active_trades.get(trade_id)
             if trade:
                 # Get current price for exit (use entry price as fallback)
                 current_price = trade.last_price if trade.last_price > 0 else trade.entry_price
 
                 logger.warning(
                     f"[{ticker}] Closing position (LIFO limit) from strategy '{strategy_name}' - "
-                    f"entered at {entry_time.strftime('%H:%M:%S')}"
+                    f"entered at {entry_time.strftime('%H:%M:%S')} (trade_id={trade_id[:8]})"
                 )
 
                 # Trigger exit via the strategy engine
-                engine._execute_exit(ticker, current_price, "position_limit", datetime.now())
+                engine._execute_exit(trade_id, current_price, "position_limit", datetime.now())
                 closed_count += 1
 
     def _on_subscribe(self, ticker: str, strategy_id: str) -> bool:
@@ -921,10 +927,14 @@ class TradingEngine:
         pending_entry_tickers = set()
 
         for strategy_id, engine in self.strategies.items():
-            active_trade_tickers.update(engine.active_trades.keys())
-            pending_entry_tickers.update(engine.pending_entries.keys())
-            needed_for_trading.update(engine.active_trades.keys())
-            needed_for_trading.update(engine.pending_entries.keys())
+            # Collect unique tickers from active trades (keyed by trade_id)
+            for trade in engine.active_trades.values():
+                active_trade_tickers.add(trade.ticker)
+                needed_for_trading.add(trade.ticker)
+            # Collect unique tickers from pending entries (keyed by trade_id)
+            for pending in engine.pending_entries.values():
+                pending_entry_tickers.add(pending.ticker)
+                needed_for_trading.add(pending.ticker)
 
         # What does the quote provider think it's subscribed to?
         current_subs = self.quote_provider.subscribed_tickers
@@ -1032,8 +1042,12 @@ class TradingEngine:
                 pending_entry_tickers = set()
 
                 for strategy_id, engine in self.strategies.items():
-                    active_trade_tickers.update(engine.active_trades.keys())
-                    pending_entry_tickers.update(engine.pending_entries.keys())
+                    # Collect unique tickers from active trades (keyed by trade_id)
+                    for trade in engine.active_trades.values():
+                        active_trade_tickers.add(trade.ticker)
+                    # Collect unique tickers from pending entries (keyed by trade_id)
+                    for pending in engine.pending_entries.values():
+                        pending_entry_tickers.add(pending.ticker)
 
                 prioritized_missing = []
                 for ticker in missing:

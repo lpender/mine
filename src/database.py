@@ -211,6 +211,7 @@ class ActiveTradeDB(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # Position identification
+    trade_id = Column(String(36), nullable=False, unique=True, index=True)  # UUID
     ticker = Column(String(10), nullable=False, index=True)
     strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
     strategy_name = Column(String(100), nullable=True)
@@ -242,9 +243,9 @@ class ActiveTradeDB(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (
-        # Only one active trade per ticker per strategy
-        UniqueConstraint('ticker', 'strategy_id', name='uq_active_trade_ticker_strategy'),
+        # Allow multiple trades per ticker per strategy (keyed by trade_id)
         Index('ix_active_trades_strategy', 'strategy_id'),
+        Index('ix_active_trades_ticker_strategy', 'ticker', 'strategy_id'),
     )
 
 
@@ -348,6 +349,20 @@ def init_db():
         if 'source_html' not in columns:
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE announcements ADD COLUMN source_html TEXT"))
+                conn.commit()
+
+    # Migration: Add trade_id column to active_trades if missing
+    if 'active_trades' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('active_trades')]
+        if 'trade_id' not in columns:
+            import uuid
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE active_trades ADD COLUMN trade_id VARCHAR(36)"))
+                # Generate UUIDs for existing rows
+                conn.execute(text("""
+                    UPDATE active_trades SET trade_id = gen_random_uuid()::text
+                    WHERE trade_id IS NULL
+                """))
                 conn.commit()
 
 
