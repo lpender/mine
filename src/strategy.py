@@ -1,6 +1,7 @@
 """Strategy engine for live trading."""
 
 import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -13,6 +14,7 @@ from .trade_store import get_trade_store
 from .active_trade_store import get_active_trade_store
 from .pending_entry_store import get_pending_entry_store
 from .order_store import get_order_store
+from .orphaned_order_store import get_orphaned_order_store
 from .trade_logger import log_buy_fill, log_sell_fill
 from .postgres_client import PostgresClient
 from .trace_store import get_trace_store
@@ -42,7 +44,7 @@ class StrategyConfig:
     consec_green_candles: int = 1
     min_candle_volume: int = 5000
     entry_window_minutes: int = 5  # How long to wait for entry conditions after alert
-    buy_order_timeout_seconds: int = 5  # Cancel unfilled buy orders after this many seconds
+    buy_order_timeout_seconds: int = int(os.getenv("BUY_ORDER_TIMEOUT_SECONDS", "5"))  # Cancel unfilled buy orders (includes orphaned orders)
 
     # Exit rules
     sell_order_timeout_seconds: int = 5  # Cancel and retry unfilled sell orders after this many seconds
@@ -403,18 +405,102 @@ class StrategyEngine:
         self._recover_pending_orders()
 
     def _recover_pending_orders(self):
-        """Check for pending orders - we don't track these, just log them.
+        """
+        Check for orphaned orders in broker that we're not tracking.
 
-        Note: We don't subscribe to quotes for pending orders because we don't
-        have the context (announcement, entry time, etc.) to manage them properly.
-        They'll be picked up on the next startup after they fill.
+        Auto-cancels old orders based on config.orphaned_order_timeout_minutes.
+        Logs warnings for untracked orders and stores them in the database.
         """
         try:
             orders = self.trader.get_open_orders()
-            if orders:
-                logger.info(f"[{self.strategy_name}] Broker has {len(orders)} open orders (not tracking)")
-                for order in orders:
-                    logger.info(f"[{self.strategy_name}] [{order.ticker}] Pending {order.side} order: {order.shares} shares ({order.status})")
+            if not orders:
+                return
+
+            # Filter to only orders we're not already tracking
+            untracked_orders = [
+                order for order in orders
+                if order.order_id not in self.pending_orders
+            ]
+
+            if not untracked_orders:
+                return
+
+            # Get the orphaned order store
+            orphaned_store = get_orphaned_order_store()
+            current_time = datetime.utcnow()
+            timeout_seconds = self.config.buy_order_timeout_seconds
+
+            logger.warning(
+                f"[{self.strategy_name}] ⚠️  FOUND {len(untracked_orders)} UNTRACKED ORDERS IN BROKER ⚠️"
+            )
+
+            for order in untracked_orders:
+                # Calculate order age
+                age_str = "unknown age"
+                should_cancel = False
+
+                if order.created_at:
+                    age = current_time - order.created_at
+                    age_seconds = age.total_seconds()
+                    age_str = f"{age_seconds:.1f}s old"
+
+                    # Check if we should auto-cancel
+                    if timeout_seconds > 0 and age_seconds > timeout_seconds:
+                        should_cancel = True
+
+                # Log warning
+                price_str = f"${order.limit_price:.4f}" if order.limit_price else "$N/A"
+                logger.warning(
+                    f"[{self.strategy_name}] [{order.ticker}] "
+                    f"🚨 Orphaned {order.side} order: {order.shares} shares "
+                    f"@ {price_str} "
+                    f"({order.status}, {age_str}, order_id={order.order_id})"
+                )
+
+                # Record to database
+                orphaned_store.record_orphaned_order(
+                    broker_order_id=order.order_id,
+                    ticker=order.ticker,
+                    side=order.side,
+                    shares=order.shares,
+                    order_type=order.order_type,
+                    status=order.status,
+                    limit_price=order.limit_price,
+                    order_created_at=order.created_at,
+                    strategy_name=self.strategy_name,
+                    reason=f"Found untracked order ({age_str})",
+                    paper=self.paper,
+                )
+
+                # Auto-cancel if too old
+                if should_cancel:
+                    logger.warning(
+                        f"[{self.strategy_name}] [{order.ticker}] "
+                        f"♻️  Auto-canceling order {order.order_id} "
+                        f"(age {age_seconds:.1f}s > threshold {timeout_seconds}s)"
+                    )
+                    try:
+                        if self.trader.cancel_order(order.order_id):
+                            orphaned_store.mark_as_cancelled(
+                                order.order_id,
+                                reason=f"Auto-cancelled after {age_seconds:.1f}s (threshold: {timeout_seconds}s)"
+                            )
+                            logger.info(
+                                f"[{self.strategy_name}] [{order.ticker}] "
+                                f"✅ Successfully cancelled orphaned order {order.order_id}"
+                            )
+                    except Exception as e:
+                        logger.error(
+                            f"[{self.strategy_name}] [{order.ticker}] "
+                            f"Failed to cancel orphaned order {order.order_id}: {e}"
+                        )
+
+            # Summary warning
+            if any(order.created_at and (current_time - order.created_at).total_seconds() > timeout_seconds for order in untracked_orders if timeout_seconds > 0):
+                logger.warning(
+                    f"[{self.strategy_name}] ⚠️  Check your broker dashboard - orphaned orders detected!"
+                )
+
         except Exception as e:
             logger.error(f"[{self.strategy_name}] Failed to check pending orders: {e}", exc_info=True)
 
@@ -1771,7 +1857,7 @@ class StrategyEngine:
                     event_timestamp=datetime.utcnow(),
                     order_id=pending.db_order_id,
                     broker_order_id=order_id,
-                    details={"reason": reason},
+                    raw_data={"reason": reason},
                 )
                 self._order_store.update_order_status(
                     pending.db_order_id,
@@ -1868,7 +1954,7 @@ class StrategyEngine:
                     event_timestamp=datetime.utcnow(),
                     order_id=pending.db_order_id,
                     broker_order_id=order_id,
-                    details={"reason": reason},
+                    raw_data={"reason": reason},
                 )
                 self._order_store.update_order_status(
                     pending.db_order_id,

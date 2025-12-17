@@ -668,7 +668,14 @@ class TradingEngine:
         timestamp: datetime,
     ):
         """Handle partial fill - just log, wait for final fill event."""
-        logger.info(f"[{ticker}] Partial fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}) - waiting for full fill")
+        # Find strategy name for this order
+        strategy_name = None
+        for strategy_id, engine in self.strategies.items():
+            if order_id in engine.pending_orders:
+                strategy_name = engine.strategy_name
+                break
+        strategy_prefix = f"[{strategy_name}] " if strategy_name else ""
+        logger.info(f"{strategy_prefix}[{ticker}] Partial fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}) - waiting for full fill")
 
     def _on_order_fill(
         self,
@@ -683,16 +690,19 @@ class TradingEngine:
         # Find which strategy has this pending order and get context
         trigger_info = ""
         sizing_info = ""
+        strategy_name = None
         for strategy_id, engine in self.strategies.items():
             if order_id in engine.pending_orders:
                 pending = engine.pending_orders[order_id]
+                strategy_name = engine.strategy_name
                 if pending.entry_trigger:
                     trigger_info = f" trigger={pending.entry_trigger}"
                 if pending.sizing_info:
                     sizing_info = f" ({pending.sizing_info})"
                 break
 
-        logger.info(f"[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}){trigger_info}{sizing_info}")
+        strategy_prefix = f"[{strategy_name}] " if strategy_name else ""
+        logger.info(f"{strategy_prefix}[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}){trigger_info}{sizing_info}")
 
         # Route to appropriate strategy
         for strategy_id, engine in self.strategies.items():
@@ -758,7 +768,66 @@ class TradingEngine:
 
             logger.warning(f"[{ticker}] No position found in database for any strategy")
         else:
-            logger.warning(f"[{ticker}] Fill for unknown order {order_id} - no strategy owns it")
+            # Fallback for buy fills: look up order in database by broker_order_id
+            logger.warning(f"[{ticker}] Fill for unknown buy order {order_id} - checking database")
+            from src.order_store import get_order_store
+            order_store = get_order_store()
+            db_order = order_store.get_order(broker_order_id=order_id)
+
+            if db_order and db_order.trade_id and db_order.strategy_id:
+                logger.info(f"[{ticker}] Found order in DB: trade_id={db_order.trade_id[:8]}, strategy={db_order.strategy_id[:8]}")
+
+                # Find the strategy engine
+                engine = self.strategies.get(db_order.strategy_id)
+                if engine:
+                    # Compute SL/TP from config
+                    # Use limit_price as proxy for first_price (it's what we calculated entry at)
+                    from src.strategy import PendingOrder
+                    cfg = engine.config
+                    first_price = db_order.limit_price or filled_price
+
+                    if cfg.stop_loss_from_open:
+                        stop_loss_price = first_price * (1 - cfg.stop_loss_pct / 100)
+                        # Sanity check: stop should not be above entry
+                        if stop_loss_price > filled_price:
+                            stop_loss_price = filled_price * (1 - cfg.stop_loss_pct / 100)
+                    else:
+                        stop_loss_price = filled_price * (1 - cfg.stop_loss_pct / 100)
+                    take_profit_price = filled_price * (1 + cfg.take_profit_pct / 100)
+
+                    logger.info(f"[{ticker}] Reconstructing buy fill: SL=${stop_loss_price:.2f}, TP=${take_profit_price:.2f}")
+
+                    # Check if pending entry still exists (unlikely but check anyway)
+                    pending_entry = engine.pending_entries.get(db_order.trade_id)
+                    announcement = pending_entry.announcement if pending_entry else None
+                    trace_id = pending_entry.trace_id if pending_entry else None
+
+                    # Create a synthetic PendingOrder from the DB data
+                    synthetic_pending = PendingOrder(
+                        order_id=order_id,
+                        ticker=ticker,
+                        side="buy",
+                        shares=shares,
+                        limit_price=db_order.limit_price or filled_price,
+                        submitted_at=db_order.created_at or timestamp,
+                        trade_id=db_order.trade_id,
+                        db_order_id=db_order.id,
+                        announcement=announcement,
+                        first_candle_open=first_price,
+                        stop_loss_price=stop_loss_price,
+                        take_profit_price=take_profit_price,
+                        trace_id=trace_id,
+                    )
+                    # Add to pending_orders so on_buy_fill can find it
+                    engine.pending_orders[order_id] = synthetic_pending
+                    # Now call on_buy_fill
+                    engine.on_buy_fill(order_id, ticker, shares, filled_price, timestamp)
+                    self._enforce_position_limit()
+                    return
+                else:
+                    logger.warning(f"[{ticker}] Strategy {db_order.strategy_id[:8]} not found in active strategies")
+            else:
+                logger.warning(f"[{ticker}] Order {order_id} not found in database or missing trade_id/strategy_id")
 
     def _on_order_canceled(self, order_id: str, ticker: str, side: str):
         """Handle order cancellation from Alpaca stream."""
