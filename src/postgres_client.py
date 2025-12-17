@@ -285,8 +285,19 @@ class PostgresClient:
     # ─────────────────────────────────────────────────────────────────────────────
 
     def fetch_ohlcv(self, ticker: str, start: datetime, end: datetime,
-                    use_cache: bool = True) -> Optional[List[OHLCVBar]]:
-        """Fetch OHLCV data using the configured data provider, caching in PostgreSQL."""
+                    use_cache: bool = True,
+                    announcement_ticker: str = None,
+                    announcement_timestamp: datetime = None) -> Optional[List[OHLCVBar]]:
+        """Fetch OHLCV data using the configured data provider, caching in PostgreSQL.
+
+        Args:
+            ticker: Stock ticker
+            start: Start datetime
+            end: End datetime
+            use_cache: Whether to use cached data
+            announcement_ticker: Optional announcement ticker to link bars to
+            announcement_timestamp: Optional announcement timestamp to link bars to
+        """
 
         # Check cache first
         if use_cache and self.has_ohlcv_data(ticker, start, end):
@@ -295,9 +306,11 @@ class PostgresClient:
         # Delegate to the configured provider
         bars = self._provider.fetch_ohlcv(ticker, start, end)
 
-        # Cache in database
+        # Cache in database with announcement link
         if bars:
-            self.save_ohlcv_bars(ticker, bars)
+            self.save_ohlcv_bars(ticker, bars,
+                                 announcement_ticker=announcement_ticker,
+                                 announcement_timestamp=announcement_timestamp)
 
         return bars
 
@@ -361,7 +374,12 @@ class PostgresClient:
         end_time = effective_start + timedelta(minutes=window_minutes)
 
         try:
-            bars = self.fetch_ohlcv(ticker, effective_start, end_time, use_cache=use_cache)
+            bars = self.fetch_ohlcv(
+                ticker, effective_start, end_time,
+                use_cache=use_cache,
+                announcement_ticker=ticker,
+                announcement_timestamp=announcement_time
+            )
 
             # Update status based on result
             # Provider returns: List with bars = data, [] = confirmed no data, None = error
