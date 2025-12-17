@@ -6,7 +6,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from .database import SessionLocal, AnnouncementDB, OHLCVBarDB, RawMessageDB
 from .models import Announcement, OHLCVBar, get_market_session
@@ -182,6 +182,58 @@ class PostgresClient:
                 )
                 for row in rows
             ]
+        finally:
+            db.close()
+
+    def get_ohlcv_bars_bulk(self, announcement_keys: List[tuple]) -> dict:
+        """Get OHLCV bars for multiple announcements in a single query.
+
+        Uses the announcement_ticker/announcement_timestamp columns to fetch
+        all bars in one query, which is much faster than N separate queries.
+
+        Args:
+            announcement_keys: List of (ticker, timestamp) tuples
+
+        Returns:
+            Dict mapping (ticker, timestamp) to list of OHLCVBar
+        """
+        if not announcement_keys:
+            return {}
+
+        db = self._get_db()
+        try:
+            # Build filter for all announcement keys
+            key_filters = [
+                and_(
+                    OHLCVBarDB.announcement_ticker == ticker,
+                    OHLCVBarDB.announcement_timestamp == ts
+                )
+                for ticker, ts in announcement_keys
+            ]
+
+            rows = db.query(OHLCVBarDB).filter(
+                or_(*key_filters)
+            ).order_by(
+                OHLCVBarDB.announcement_ticker,
+                OHLCVBarDB.announcement_timestamp,
+                OHLCVBarDB.timestamp
+            ).all()
+
+            # Group by announcement
+            result = {key: [] for key in announcement_keys}
+            for row in rows:
+                key = (row.announcement_ticker, row.announcement_timestamp)
+                if key in result:
+                    result[key].append(OHLCVBar(
+                        timestamp=row.timestamp,
+                        open=row.open,
+                        high=row.high,
+                        low=row.low,
+                        close=row.close,
+                        volume=row.volume,
+                        vwap=row.vwap,
+                    ))
+            return result
         finally:
             db.close()
 

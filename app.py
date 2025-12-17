@@ -130,27 +130,22 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
     Note: Both announcements and OHLCV bars are stored in UTC (naive).
-    Uses get_effective_start_time() to match the time range used when data was fetched.
+    Uses bulk query via announcement_ticker/announcement_timestamp columns
+    for much faster loading (single query instead of N queries).
     """
-    from src.massive_client import MassiveClient
-
     client = PostgresClient()
-    massive = MassiveClient()
-    bars_by_announcement = {}
 
+    # Convert string timestamps to datetime for bulk query
+    keys_with_dt = []
     for ticker, timestamp_str in announcement_keys:
         timestamp = pd.to_datetime(timestamp_str)
         # Both are UTC - just ensure naive
         if timestamp.tzinfo is not None:
             timestamp = timestamp.replace(tzinfo=None)
+        keys_with_dt.append((ticker, timestamp))
 
-        # Use the same effective start time calculation as the data fetcher
-        # This ensures we query the correct time range for premarket/postmarket/closed
-        start = massive.get_effective_start_time(timestamp)
-        end = start + timedelta(minutes=window_minutes)
-        # Use get_ohlcv_bars to read from cache only (don't trigger API fetches)
-        bars = client.get_ohlcv_bars(ticker, start, end) or []
-        bars_by_announcement[(ticker, timestamp)] = bars
+    # Single bulk query for all announcements
+    bars_by_announcement = client.get_ohlcv_bars_bulk(keys_with_dt)
 
     return bars_by_announcement
 
@@ -649,14 +644,8 @@ if not filtered:
 # Create cache key from announcement identifiers
 announcement_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in filtered)
 
-# Load OHLCV data
-bars_by_announcement = load_ohlcv_for_announcements(announcement_keys, hold_time)
-
-# Convert keys back to proper format
-bars_dict = {}
-for (ticker, ts_str), bars in bars_by_announcement.items():
-    ts = pd.to_datetime(ts_str)
-    bars_dict[(ticker, ts)] = bars
+# Load OHLCV data (bulk query - returns dict with (ticker, datetime) keys)
+bars_dict = load_ohlcv_for_announcements(announcement_keys, hold_time)
 
 # Run backtest
 config = BacktestConfig(
