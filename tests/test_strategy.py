@@ -35,7 +35,7 @@ class TestCandleVolumeAggregation:
             trader=trader,
         )
         # Mock callbacks
-        engine.on_subscribe = Mock()
+        engine.on_subscribe = Mock(return_value=True)
         engine.on_unsubscribe = Mock()
         return engine
 
@@ -384,3 +384,150 @@ class TestVolumeExtrapolation:
             f"Expected {max_allowed} shares (capped by $100 max_stake), "
             f"got {actual_shares}"
         )
+
+
+class TestEntryWindowMinutes:
+    """Tests for entry_window_minutes - limiting how long to look for entry."""
+
+    def create_engine(self, entry_window_minutes=5, consec_green_candles=1, min_candle_volume=1000):
+        """Create a strategy engine for testing."""
+        config = StrategyConfig(
+            channels=["test-channel"],
+            directions=["up", "up_right"],
+            sessions=["market"],
+            consec_green_candles=consec_green_candles,
+            min_candle_volume=min_candle_volume,
+            entry_window_minutes=entry_window_minutes,
+            take_profit_pct=10.0,
+            stop_loss_pct=5.0,
+            timeout_minutes=60,
+        )
+        trader = Mock()
+        trader.get_positions.return_value = []
+        trader.get_open_orders.return_value = []
+        trader.is_tradeable.return_value = (True, "tradeable")
+
+        engine = StrategyEngine(
+            strategy_id="test-strategy",
+            config=config,
+            trader=trader,
+        )
+        engine.on_subscribe = Mock(return_value=True)
+        engine.on_unsubscribe = Mock()
+        return engine
+
+    def create_announcement(self, ticker="TEST", timestamp=None):
+        """Create a test announcement."""
+        if timestamp is None:
+            timestamp = datetime(2025, 12, 12, 15, 0, 0)
+        return Announcement(
+            ticker=ticker,
+            timestamp=timestamp,
+            price_threshold=5.0,
+            headline="Test announcement",
+            country="US",
+            channel="test-channel",
+            direction="up",
+        )
+
+    def test_entry_abandoned_after_window_expires(self):
+        """Pending entry should be abandoned after entry_window_minutes expires."""
+        engine = self.create_engine(entry_window_minutes=3, consec_green_candles=1, min_candle_volume=5000)
+
+        ann_time = datetime(2025, 12, 12, 15, 0, 0)
+        ann = self.create_announcement(timestamp=ann_time)
+        engine.on_alert(ann)
+
+        assert "TEST" in engine.pending_entries
+
+        # Override alert_time to match our test scenario (alert_time is set to datetime.now() in production)
+        engine.pending_entries["TEST"].alert_time = ann_time
+
+        # Send quote 4 minutes after alert (past 3 minute entry window)
+        # Entry conditions NOT met (red candle, low volume)
+        quote_time = ann_time + timedelta(minutes=4)
+        engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time)
+
+        # Pending entry should be abandoned due to timeout
+        assert "TEST" not in engine.pending_entries, "Pending entry should be abandoned after entry window expires"
+
+    def test_entry_succeeds_within_window(self):
+        """Entry should succeed when conditions are met within entry window."""
+        engine = self.create_engine(entry_window_minutes=5, consec_green_candles=1, min_candle_volume=1000)
+
+        # Mock buy to track entry
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+        engine._order_store = Mock()
+        engine._order_store.create_order.return_value = 1
+
+        ann_time = datetime(2025, 12, 12, 15, 0, 0)
+        ann = self.create_announcement(timestamp=ann_time)
+        engine.on_alert(ann)
+
+        # Build green candle with sufficient volume within entry window
+        minute1 = ann_time + timedelta(minutes=2)  # 2 minutes after alert
+        engine.on_quote("TEST", price=5.00, volume=500, timestamp=minute1.replace(second=0))
+        engine.on_quote("TEST", price=5.10, volume=600, timestamp=minute1.replace(second=30))
+
+        # Finalize candle by moving to next minute
+        minute2 = ann_time + timedelta(minutes=3)
+        engine.on_quote("TEST", price=5.15, volume=100, timestamp=minute2)
+
+        # Entry should have triggered
+        assert len(buy_calls) == 1, "Entry should trigger within entry window"
+
+    def test_entry_window_does_not_affect_hold_timeout(self):
+        """Entry window is separate from hold timeout (timeout_minutes)."""
+        engine = self.create_engine(entry_window_minutes=2, consec_green_candles=0, min_candle_volume=0)
+        engine.config.timeout_minutes = 60  # Hold for 60 minutes
+
+        # Verify config is set correctly
+        assert engine.config.entry_window_minutes == 2
+        assert engine.config.timeout_minutes == 60
+
+    def test_entry_not_abandoned_if_within_window(self):
+        """Pending entry should NOT be abandoned if still within entry window."""
+        engine = self.create_engine(entry_window_minutes=10, consec_green_candles=1, min_candle_volume=5000)
+
+        ann_time = datetime(2025, 12, 12, 15, 0, 0)
+        ann = self.create_announcement(timestamp=ann_time)
+        engine.on_alert(ann)
+
+        # Send quote 5 minutes after alert (within 10 minute entry window)
+        # Entry conditions NOT met yet (low volume)
+        quote_time = ann_time + timedelta(minutes=5)
+        engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time)
+
+        # Pending entry should still exist
+        assert "TEST" in engine.pending_entries, "Pending entry should remain within entry window"
+
+    def test_entry_window_boundary(self):
+        """Test entry window at exact boundary."""
+        engine = self.create_engine(entry_window_minutes=5, consec_green_candles=1, min_candle_volume=5000)
+
+        ann_time = datetime(2025, 12, 12, 15, 0, 0)
+        ann = self.create_announcement(timestamp=ann_time)
+        engine.on_alert(ann)
+
+        # Override alert_time to match our test scenario
+        engine.pending_entries["TEST"].alert_time = ann_time
+
+        # Send quote exactly at 5 minutes (boundary)
+        quote_time = ann_time + timedelta(minutes=5)
+        engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time)
+
+        # At exactly the boundary, entry should still be allowed (using > not >=)
+        # Actually looking at the code: time_since_alert > cfg.entry_window_minutes
+        # So at exactly 5 minutes (5.0 > 5 is False), it should NOT be abandoned
+        assert "TEST" in engine.pending_entries, "At exact boundary, entry should still be possible"
+
+        # But 5 minutes + 1 second should trigger abandonment
+        quote_time2 = ann_time + timedelta(minutes=5, seconds=1)
+        engine.on_quote("TEST", price=5.00, volume=100, timestamp=quote_time2)
+
+        # Now it should be abandoned (5.016... > 5 is True)
+        assert "TEST" not in engine.pending_entries, "Past boundary, entry should be abandoned"
