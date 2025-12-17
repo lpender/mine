@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Callable, Dict, Optional, Set
+from zoneinfo import ZoneInfo
 
 import aiohttp
 import requests
@@ -392,8 +393,11 @@ class InsightSentryQuoteProvider:
         series = msg.get("series", [])
         for bar in series:
             ts = bar.get("time", 0)
-            # Store as naive UTC (per project timezone rules)
-            timestamp = datetime.utcfromtimestamp(ts) if ts else datetime.utcnow()
+            # Store as naive UTC to match Alpaca stream convention
+            if ts:
+                timestamp = datetime.utcfromtimestamp(ts)
+            else:
+                timestamp = datetime.utcnow()
 
             # Extract full OHLCV
             open_price = bar.get("open", 0)
@@ -417,7 +421,8 @@ class InsightSentryQuoteProvider:
 
         price = quote.get("last_price", 0)
         volume = int(quote.get("volume", 0))
-        timestamp = datetime.now()
+        # Store as naive UTC to match Alpaca stream convention
+        timestamp = datetime.utcnow()
 
         if self.on_quote and price > 0:
             self.on_quote(ticker, price, volume, timestamp)
