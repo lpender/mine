@@ -89,6 +89,9 @@ class Announcement:
     source_message: Optional[str] = None  # Clean text of Discord message
     source_html: Optional[str] = None  # Raw HTML of Discord message (for re-parsing)
 
+    # OHLCV fetch status: 'pending' | 'fetched' | 'no_data' | 'error'
+    ohlcv_status: Optional[str] = 'pending'
+
     @property
     def market_session(self) -> str:
         """Returns the market session: premarket, market, postmarket, or closed."""

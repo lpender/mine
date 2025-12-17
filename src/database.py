@@ -75,6 +75,9 @@ class AnnouncementDB(Base):
     source_html = Column(Text)  # Raw HTML of Discord message (for re-parsing)
     source = Column(String(20), default='backfill')  # 'backfill' | 'live'
 
+    # OHLCV fetch status: 'pending' | 'fetched' | 'no_data' | 'error'
+    ohlcv_status = Column(String(20), default='pending')
+
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -471,6 +474,14 @@ def init_db():
         if 'source' not in columns:
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE announcements ADD COLUMN source VARCHAR(20) DEFAULT 'backfill'"))
+                conn.commit()
+
+    # Migration: Add ohlcv_status column to announcements if missing
+    if 'announcements' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('announcements')]
+        if 'ohlcv_status' not in columns:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE announcements ADD COLUMN ohlcv_status VARCHAR(20) DEFAULT 'pending'"))
                 conn.commit()
 
     # Migration: Add trade_id column to active_trades if missing

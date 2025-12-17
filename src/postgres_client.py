@@ -249,9 +249,38 @@ class PostgresClient:
 
         return bars
 
+    def update_ohlcv_status(self, ticker: str, timestamp: datetime, status: str) -> bool:
+        """Update the OHLCV fetch status for an announcement.
+
+        Args:
+            ticker: Stock ticker
+            timestamp: Announcement timestamp
+            status: 'pending' | 'fetched' | 'no_data' | 'error'
+
+        Returns:
+            True if updated, False if announcement not found
+        """
+        db = self._get_db()
+        try:
+            ann = db.query(AnnouncementDB).filter(
+                and_(
+                    AnnouncementDB.ticker == ticker,
+                    AnnouncementDB.timestamp == timestamp
+                )
+            ).first()
+
+            if ann:
+                ann.ohlcv_status = status
+                db.commit()
+                return True
+            return False
+        finally:
+            db.close()
+
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
-                                  use_cache: bool = True) -> Optional[List[OHLCVBar]]:
+                                  use_cache: bool = True,
+                                  update_status: bool = True) -> Optional[List[OHLCVBar]]:
         """Fetch OHLCV data starting from announcement time.
 
         Args:
@@ -259,6 +288,7 @@ class PostgresClient:
             announcement_time: Naive datetime in UTC (from database)
             window_minutes: How many minutes of data to fetch
             use_cache: Whether to use cached data
+            update_status: Whether to update the announcement's ohlcv_status
 
         Returns:
             List of OHLCV bars (timestamps in ET) or empty list
@@ -278,7 +308,21 @@ class PostgresClient:
 
         end_time = effective_start + timedelta(minutes=window_minutes)
 
-        return self.fetch_ohlcv(ticker, effective_start, end_time, use_cache=use_cache)
+        try:
+            bars = self.fetch_ohlcv(ticker, effective_start, end_time, use_cache=use_cache)
+
+            # Update status based on result
+            if update_status:
+                if bars:
+                    self.update_ohlcv_status(ticker, announcement_time, 'fetched')
+                else:
+                    self.update_ohlcv_status(ticker, announcement_time, 'no_data')
+
+            return bars
+        except Exception as e:
+            if update_status:
+                self.update_ohlcv_status(ticker, announcement_time, 'error')
+            raise
 
     # ─────────────────────────────────────────────────────────────────────────────
     # Raw Messages
@@ -418,4 +462,5 @@ class PostgresClient:
             scanner_after_lull=row.scanner_after_lull or False,
             source_message=row.source_message,
             source_html=row.source_html,
+            ohlcv_status=row.ohlcv_status or 'pending',
         )

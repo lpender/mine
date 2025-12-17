@@ -983,4 +983,11 @@ else:
                           (f"Float: **{ann.float_shares/1e6:.1f}M** | " if ann.float_shares else "") +
                           (f"Market Cap: **${ann.market_cap/1e6:.1f}M**" if ann.market_cap else ""))
         else:
-            st.warning(f"No OHLCV data available for {ann.ticker}")
+            # Show different messages based on ohlcv_status
+            status = getattr(ann, 'ohlcv_status', 'pending')
+            if status == 'no_data':
+                st.warning(f"No OHLCV data exists for {ann.ticker} (confirmed empty from data provider)")
+            elif status == 'error':
+                st.error(f"Failed to fetch OHLCV data for {ann.ticker} (API error)")
+            else:  # pending or fetched but bars not found in dict
+                st.info(f"OHLCV data not yet fetched for {ann.ticker}")
