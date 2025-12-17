@@ -215,6 +215,23 @@ class AlpacaTradingClient(TradingClient):
         results = self._request("GET", "/v2/orders", params={"status": "open"})
         orders = []
         for data in results:
+            # Parse created_at timestamp
+            created_at = None
+            if "created_at" in data:
+                created_at_str = data["created_at"]
+                if created_at_str:
+                    if created_at_str.endswith("Z"):
+                        created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                    else:
+                        created_at = datetime.fromisoformat(created_at_str)
+                    # Store as naive UTC
+                    created_at = created_at.astimezone(UTC_TZ).replace(tzinfo=None)
+
+            # Parse limit price if present
+            limit_price = None
+            if "limit_price" in data and data["limit_price"]:
+                limit_price = float(data["limit_price"])
+
             orders.append(Order(
                 order_id=data["id"],
                 ticker=data["symbol"],
@@ -222,6 +239,8 @@ class AlpacaTradingClient(TradingClient):
                 shares=int(data["qty"]),
                 order_type=data["type"],
                 status=data["status"],
+                created_at=created_at,
+                limit_price=limit_price,
             ))
         return orders
 

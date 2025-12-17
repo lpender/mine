@@ -37,19 +37,19 @@ def to_est_display(dt: datetime) -> str:
 
 def get_order_events_for_trade(db_trade_id: int, ticker: str, entry_time: datetime, exit_time: datetime, strategy_id: str = None, trade_id: str = None) -> pd.DataFrame:
     """Get all orders and their events for a completed trade, displayed in EST.
-    
+
     Uses trade_id (UUID) for direct lookup if available, falls back to time-based matching for legacy trades.
     """
     db = SessionLocal()
     try:
         orders = []
-        
+
         # Primary method: Query by trade_id (UUID) if available
         if trade_id:
             orders = db.query(OrderDB).filter(
                 OrderDB.trade_id == trade_id
             ).order_by(OrderDB.created_at.asc()).all()
-        
+
         # Fallback for legacy trades: time-based matching
         if not orders:
             # Find BUY order (created within 2 minutes before entry fill time)

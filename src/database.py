@@ -360,6 +360,37 @@ class OrderEventDB(Base):
     )
 
 
+class OrphanedOrderDB(Base):
+    """Orphaned order - orders found in broker that system wasn't tracking."""
+    __tablename__ = "orphaned_orders"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Order details
+    broker_order_id = Column(String(50), nullable=False, index=True)
+    ticker = Column(String(10), nullable=False, index=True)
+    side = Column(String(4), nullable=False)  # "buy" or "sell"
+    shares = Column(Integer, nullable=False)
+    order_type = Column(String(20), nullable=False)  # "limit", "market", etc.
+    status = Column(String(20), nullable=False)  # "new", "partially_filled", etc.
+    limit_price = Column(Float, nullable=True)
+    
+    # Timestamps
+    order_created_at = Column(DateTime, nullable=True)  # When order was created at broker
+    discovered_at = Column(DateTime, default=datetime.utcnow)  # When we discovered it
+    cancelled_at = Column(DateTime, nullable=True)  # When we cancelled it (if auto-cancelled)
+    
+    # Context
+    strategy_name = Column(String(100), nullable=True)
+    reason = Column(String(200), nullable=True)  # Why it was orphaned/cancelled
+    paper = Column(Boolean, default=True)
+    
+    __table_args__ = (
+        Index('ix_orphaned_orders_discovered', 'discovered_at'),
+        Index('ix_orphaned_orders_ticker_side', 'ticker', 'side'),
+    )
+
+
 class TraceDB(Base):
     """Trace record - tracks alert lifecycle from receipt through completion."""
     __tablename__ = "traces"

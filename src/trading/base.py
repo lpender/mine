@@ -28,6 +28,8 @@ class Order:
     status: str  # "new", "filled", "canceled", etc.
     filled_price: Optional[float] = None
     filled_at: Optional[datetime] = None
+    created_at: Optional[datetime] = None  # When order was submitted
+    limit_price: Optional[float] = None
 
 
 @dataclass

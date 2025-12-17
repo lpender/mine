@@ -30,6 +30,7 @@ class CompletedTrade:
     strategy_params: dict
     strategy_id: Optional[str] = None
     strategy_name: Optional[str] = None
+    trade_id: Optional[str] = None  # UUID linking to orders
     created_at: Optional[datetime] = None
 
 
@@ -196,6 +197,7 @@ class TradeStore:
             strategy_params=params,
             strategy_id=row.strategy_id,
             strategy_name=row.strategy_name,
+            trade_id=row.trade_id,
             created_at=row.created_at,
         )
 

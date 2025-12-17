@@ -179,7 +179,11 @@ def get_completed_today_count(strategy_id: str) -> int:
 
 st.subheader("Your Strategies")
 
-strategies = store.list_strategies()
+try:
+    strategies = store.list_strategies()
+except Exception as e:
+    st.error(f"Error loading strategies: {e}")
+    st.stop()
 
 if not strategies:
     st.info("No strategies created yet. Use the form above to create one.")
@@ -190,37 +194,43 @@ else:
 
     # Build dataframe - always read counts from database for persistence
     rows = []
-    for s in strategies:
-        # Always read from database for accurate counts
-        db_pending = pending_store.get_entries_for_strategy(s.id)
-        db_active = active_store.get_trades_for_strategy(s.id)
-        db_completed = get_completed_today_count(s.id)
+    try:
+        for s in strategies:
+            # Always read from database for accurate counts
+            db_pending = pending_store.get_entries_for_strategy(s.id)
+            db_active = active_store.get_trades_for_strategy(s.id)
+            db_completed = get_completed_today_count(s.id)
 
-        # Use strings for all columns to avoid Arrow mixed-type errors
-        pending = str(len(db_pending)) if s.enabled else "-"
-        active = str(len(db_active)) if s.enabled else "-"
-        completed = str(db_completed) if s.enabled else "-"
+            # Use strings for all columns to avoid Arrow mixed-type errors
+            pending = str(len(db_pending)) if s.enabled else "-"
+            active = str(len(db_active)) if s.enabled else "-"
+            completed = str(db_completed) if s.enabled else "-"
 
-        # Format position sizing display
-        if s.config.stake_mode == "volume_pct":
-            sizing_str = f"{s.config.volume_pct}% vol (max ${s.config.max_stake:.0f})"
-        else:
-            sizing_str = f"${s.config.stake_amount:.0f}"
+            # Format position sizing display
+            if s.config.stake_mode == "volume_pct":
+                sizing_str = f"{s.config.volume_pct}% vol (max ${s.config.max_stake:.0f})"
+            else:
+                sizing_str = f"${s.config.stake_amount:.0f}"
 
-        rows.append({
-            "id": s.id,
-            "priority": s.priority,
-            "#": s.priority + 1,  # 1-indexed for display
-            "Name": s.name,
-            "Enabled": s.enabled,
-            "Pending": pending,
-            "Active": active,
-            "Completed": completed,
-            "Sizing": sizing_str,
-            "TP/SL": f"{s.config.take_profit_pct:.0f}% / {s.config.stop_loss_pct:.0f}%",
-        })
+            rows.append({
+                "id": s.id,
+                "priority": s.priority,
+                "#": s.priority + 1,  # 1-indexed for display
+                "Name": s.name,
+                "Enabled": s.enabled,
+                "Pending": pending,
+                "Active": active,
+                "Completed": completed,
+                "Sizing": sizing_str,
+                "TP/SL": f"{s.config.take_profit_pct:.0f}% / {s.config.stop_loss_pct:.0f}%",
+            })
 
-    df = pd.DataFrame(rows)
+        df = pd.DataFrame(rows)
+    except Exception as e:
+        st.error(f"Error building strategy table: {e}")
+        import traceback
+        st.code(traceback.format_exc())
+        st.stop()
 
     # Display with selection (hide internal columns)
     event = st.dataframe(

@@ -215,7 +215,7 @@ strategy_id_filter = None
 if selected_strategy != "All Strategies":
     matching = [s for s in strategies if s.name == selected_strategy]
     if matching:
-        strategy_id_filter = matching[0].strategy_id
+        strategy_id_filter = matching[0].id
 
 # Date range filter
 date_range_options = ["Today", "Last 7 days", "Last 30 days", "All time"]
