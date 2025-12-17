@@ -2,10 +2,12 @@
 
 import streamlit as st
 import pandas as pd
+import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 from src.trade_history import get_trade_history_client
 from src.strategy_store import get_strategy_store
+from src.live_bar_store import get_live_bar_store
 from src.database import init_db
 
 
@@ -32,6 +34,7 @@ st.title("Trade History")
 # Get clients
 client = get_trade_history_client()
 store = get_strategy_store()
+bar_store = get_live_bar_store()
 
 # Sidebar filters
 st.sidebar.header("Filters")
@@ -258,6 +261,127 @@ else:
                     st.write(f"- Stake: ${p.get('stake_amount', 0)}")
             else:
                 st.write("No strategy parameters recorded")
+
+        # Price chart for selected trade
+        st.subheader("Price Chart")
+
+        # Query bars for this trade (with some buffer before/after)
+        buffer = timedelta(minutes=2)
+        bars = bar_store.get_bars(
+            ticker=selected_trade.ticker,
+            start_time=selected_trade.entry_time - buffer,
+            end_time=selected_trade.exit_time + buffer,
+            strategy_id=selected_trade.strategy_id,
+        )
+
+        if not bars:
+            st.info("No bar data available for this trade. Bar data is only captured during live monitoring.")
+        else:
+            # Resample 1-second bars to 1-minute for cleaner display
+            bar_df = pd.DataFrame([
+                {
+                    "timestamp": b.timestamp,
+                    "open": b.open,
+                    "high": b.high,
+                    "low": b.low,
+                    "close": b.close,
+                    "volume": b.volume,
+                }
+                for b in bars
+            ])
+            bar_df["timestamp"] = pd.to_datetime(bar_df["timestamp"])
+            bar_df.set_index("timestamp", inplace=True)
+
+            # Resample to 1-minute OHLCV
+            ohlcv = bar_df.resample("1min").agg({
+                "open": "first",
+                "high": "max",
+                "low": "min",
+                "close": "last",
+                "volume": "sum",
+            }).dropna()
+
+            if ohlcv.empty:
+                st.info("No complete minute bars available.")
+            else:
+                # Create candlestick chart
+                fig = go.Figure()
+
+                # Add candlestick
+                fig.add_trace(go.Candlestick(
+                    x=ohlcv.index,
+                    open=ohlcv["open"],
+                    high=ohlcv["high"],
+                    low=ohlcv["low"],
+                    close=ohlcv["close"],
+                    name="Price",
+                ))
+
+                # Add entry marker
+                fig.add_trace(go.Scatter(
+                    x=[selected_trade.entry_time],
+                    y=[selected_trade.entry_price],
+                    mode="markers",
+                    marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
+                    name=f"Entry @ {format_price(selected_trade.entry_price)}",
+                    hoverinfo="name",
+                ))
+
+                # Add exit marker
+                exit_color = "green" if selected_trade.pnl > 0 else "red"
+                fig.add_trace(go.Scatter(
+                    x=[selected_trade.exit_time],
+                    y=[selected_trade.exit_price],
+                    mode="markers",
+                    marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
+                    name=f"Exit @ {format_price(selected_trade.exit_price)} ({selected_trade.exit_reason})",
+                    hoverinfo="name",
+                ))
+
+                # Add stop loss line if available in params
+                params = selected_trade.strategy_params
+                if params and "exit" in params:
+                    stop_loss_pct = params["exit"].get("stop_loss_pct", 0)
+                    stop_loss_from_open = params["exit"].get("stop_loss_from_open", False)
+                    if stop_loss_pct > 0:
+                        # Calculate stop loss price
+                        if stop_loss_from_open:
+                            # Would need first candle open - approximate with entry for now
+                            sl_price = selected_trade.entry_price * (1 - stop_loss_pct / 100)
+                        else:
+                            sl_price = selected_trade.entry_price * (1 - stop_loss_pct / 100)
+
+                        fig.add_hline(
+                            y=sl_price,
+                            line_dash="dash",
+                            line_color="red",
+                            annotation_text=f"SL @ {format_price(sl_price)}",
+                            annotation_position="right",
+                        )
+
+                    # Add take profit line
+                    take_profit_pct = params["exit"].get("take_profit_pct", 0)
+                    if take_profit_pct > 0:
+                        tp_price = selected_trade.entry_price * (1 + take_profit_pct / 100)
+                        fig.add_hline(
+                            y=tp_price,
+                            line_dash="dash",
+                            line_color="green",
+                            annotation_text=f"TP @ {format_price(tp_price)}",
+                            annotation_position="right",
+                        )
+
+                fig.update_layout(
+                    title=f"{selected_trade.ticker} - Trade #{selected_trade.id}",
+                    xaxis_title="Time",
+                    yaxis_title="Price",
+                    xaxis_rangeslider_visible=False,
+                    showlegend=True,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                    height=400,
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
 
 # Chart of P&L over time
 if trades:
