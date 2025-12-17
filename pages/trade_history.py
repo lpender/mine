@@ -94,7 +94,33 @@ if strategy_name_filter:
 # Stats section
 st.header("Performance Summary")
 
-stats = client.get_trade_stats(paper=paper_filter)
+# Compute stats from filtered trades (not a separate DB call that ignores filters)
+if trades:
+    wins = sum(1 for t in trades if t.pnl > 0)
+    losses = sum(1 for t in trades if t.pnl <= 0)
+    total_pnl = sum(t.pnl for t in trades)
+    returns = [t.return_pct for t in trades]
+    stats = {
+        "total_trades": len(trades),
+        "wins": wins,
+        "losses": losses,
+        "win_rate": wins / len(trades) * 100,
+        "total_pnl": total_pnl,
+        "avg_return_pct": sum(returns) / len(returns),
+        "best_trade_pct": max(returns),
+        "worst_trade_pct": min(returns),
+    }
+else:
+    stats = {
+        "total_trades": 0,
+        "wins": 0,
+        "losses": 0,
+        "win_rate": 0,
+        "total_pnl": 0,
+        "avg_return_pct": 0,
+        "best_trade_pct": 0,
+        "worst_trade_pct": 0,
+    }
 
 col1, col2, col3, col4 = st.columns(4)
 
