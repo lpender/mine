@@ -154,7 +154,7 @@ with st.sidebar:
 
     st.divider()
     st.markdown("[← Back to Backtest](../)")
-    st.markdown("[View Trade History →](trade_history)")
+    st.markdown("[View Trades →](trades)")
 
 store = get_strategy_store()
 

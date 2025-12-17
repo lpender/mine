@@ -1,4 +1,4 @@
-"""Trade History Dashboard - View live/paper trading performance."""
+"""Trades Dashboard - View live/paper trading performance."""
 
 import streamlit as st
 import pandas as pd
@@ -122,12 +122,12 @@ def get_order_events_for_trade(trade_id: int, ticker: str, entry_time: datetime,
 init_db()
 
 st.set_page_config(
-    page_title="Trade History",
+    page_title="Trades",
     page_icon="📊",
     layout="wide",
 )
 
-st.title("Trade History")
+st.title("Trades")
 
 # Get clients
 client = get_trade_store()
@@ -289,7 +289,7 @@ with col8:
 st.divider()
 
 # Trade list
-st.header("Trade History")
+st.header("Trades")
 
 if not trades:
     st.info("No trades found matching the current filters.")
