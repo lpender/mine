@@ -732,8 +732,11 @@ class TradingEngine:
                     except Exception as e:
                         logger.error(f"[{ticker}] Failed to record trade: {e}")
 
-                    # Remove from database
-                    store.delete_trade(ticker, strategy_id)
+                    # Remove from database and in-memory tracking
+                    store.delete_trade(trade.trade_id)
+                    if trade.trade_id in engine.active_trades:
+                        engine.active_trades.pop(trade.trade_id, None)
+                        logger.info(f"[{ticker}] Removed from active trades (trade_id={trade.trade_id[:8]})")
 
                     # Unsubscribe
                     self._on_unsubscribe(ticker, strategy_id)
