@@ -152,7 +152,7 @@ def init_session_state():
     sl_val = get_param("sl", 5.0, float)
     set_if_missing("_sl", max(1.0, min(30.0, sl_val)) if sl_val > 0 else 5.0)
     tp_val = get_param("tp", 10.0, float)
-    set_if_missing("_tp", max(1.0, min(50.0, tp_val)) if tp_val > 0 else 10.0)
+    set_if_missing("_tp", max(1.0, min(1000.0, tp_val)) if tp_val > 0 else 10.0)
     hold_val = get_param("hold", 60, int)
     set_if_missing("_hold", max(5, min(120, hold_val)) if hold_val > 0 else 60)
     # Parse session list, filtering to valid values
@@ -178,6 +178,8 @@ def init_session_state():
     set_if_missing("_sl_from_open", get_param("sl_open", False, bool))
     set_if_missing("_consec_candles", get_param("consec", 0, int))
     set_if_missing("_min_candle_vol", get_param("min_vol", 0, int))
+    entry_window_val = get_param("entry_window", 5, int)
+    set_if_missing("_entry_window", max(1, min(30, entry_window_val)) if entry_window_val > 0 else 5)
     set_if_missing("_price_min", get_param("price_min", 0.0, float))
     # price_max=0 is invalid (would filter everything), use default
     price_max_val = get_param("price_max", 100.0, float)
@@ -208,7 +210,7 @@ with st.sidebar:
 
     take_profit = st.slider(
         "Take Profit %",
-        min_value=1.0, max_value=50.0,
+        min_value=1.0, max_value=1000.0,
         step=0.5,
         key="_tp",
         help="Exit when price rises by this percentage"
@@ -236,6 +238,14 @@ with st.sidebar:
         step=1000,
         key="_min_candle_vol",
         help="Minimum volume each candle must have for consecutive entry (0 = no minimum)"
+    )
+
+    entry_window = st.slider(
+        "Entry Window (min)",
+        min_value=1, max_value=30,
+        step=1,
+        key="_entry_window",
+        help="How long to wait for entry conditions after alert"
     )
 
     sl_from_open = st.checkbox(
@@ -416,6 +426,7 @@ with st.sidebar:
     set_param("hold", hold_time)
     set_param("consec", consec_candles)
     set_param("min_vol", min_candle_vol)
+    set_param("entry_window", entry_window)
     set_param("sl_open", sl_from_open)
     set_param("sess", sessions)
     set_param("country", countries)
@@ -473,6 +484,7 @@ with st.sidebar:
                     max_intraday_mentions=max_mentions if max_mentions > 0 else None,
                     consec_green_candles=consec_candles,
                     min_candle_volume=int(min_candle_vol),
+                    entry_window_minutes=entry_window,
                     take_profit_pct=take_profit,
                     stop_loss_pct=stop_loss,
                     stop_loss_from_open=sl_from_open,

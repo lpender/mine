@@ -345,8 +345,8 @@ class TradingEngine:
 
         logger.info(f"Added strategy '{name}' ({strategy_id}) [priority={priority}]")
         logger.info(f"  Filters: channels={config.channels}, price=${config.price_min:.2f}-${config.price_max:.2f}")
-        logger.info(f"  Entry: {config.consec_green_candles} green candles, {config.min_candle_volume:,} min volume")
-        logger.info(f"  Exit: TP={config.take_profit_pct}%, SL={config.stop_loss_pct}%, timeout={config.timeout_minutes}m")
+        logger.info(f"  Entry: {config.consec_green_candles} green candles, {config.min_candle_volume:,} min volume, {config.entry_window_minutes}m window")
+        logger.info(f"  Exit: TP={config.take_profit_pct}%, SL={config.stop_loss_pct}%, hold timeout={config.timeout_minutes}m")
 
     def _remove_strategy_engine(self, strategy_id: str):
         """Remove a StrategyEngine."""
@@ -613,7 +613,7 @@ class TradingEngine:
                 if pending.sizing_info:
                     sizing_info = f" ({pending.sizing_info})"
                 break
-        
+
         logger.info(f"[{ticker}] Order fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}){trigger_info}{sizing_info}")
 
         # Route to appropriate strategy
@@ -774,8 +774,13 @@ class TradingEngine:
                 engine._execute_exit(ticker, current_price, "position_limit", datetime.now())
                 closed_count += 1
 
-    def _on_subscribe(self, ticker: str, strategy_id: str):
-        """Callback when a strategy needs quotes for a ticker."""
+    def _on_subscribe(self, ticker: str, strategy_id: str) -> bool:
+        """Callback when a strategy needs quotes for a ticker.
+
+        Returns:
+            True if subscription successful or already subscribed
+            False if at subscription limit and cannot subscribe
+        """
         # Track which strategy subscribed
         if strategy_id not in self._strategy_subscriptions:
             self._strategy_subscriptions[strategy_id] = set()
@@ -793,9 +798,10 @@ class TradingEngine:
             if ticker not in current_ws_subs:
                 # Check if this subscription would exceed limits
                 if len(current_ws_subs) >= self.quote_provider.max_subscriptions:
-                    logger.warning(f"[{ticker}] Subscription queued - would exceed limit of {self.quote_provider.max_subscriptions} symbols (current: {current_ws_subs}). Will retry during reconciliation.")
-                    # Keep in strategy subscriptions for later retry during reconciliation
-                    # Don't return - let the strategy keep tracking this ticker
+                    logger.warning(f"[{ticker}] Cannot subscribe - at limit of {self.quote_provider.max_subscriptions} symbols (current: {current_ws_subs}).")
+                    # Remove from strategy subscriptions since we can't actually track it
+                    self._strategy_subscriptions[strategy_id].discard(ticker)
+                    return False
                 else:
                     self.quote_provider.subscribe_sync(ticker)
                     logger.info(f"[{ticker}] Added to WS subscriptions: {self.quote_provider.subscribed_tickers}")
@@ -808,6 +814,8 @@ class TradingEngine:
                         logger.warning(f"[{ticker}] Event loop not running - subscription queued (will send on WS connect)")
             else:
                 logger.debug(f"[{ticker}] Already in WS subscriptions")
+
+        return True
 
     def _on_unsubscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy no longer needs quotes for a ticker."""
@@ -1299,7 +1307,13 @@ def enable_strategy(strategy_id: str) -> bool:
 
 
 def _exit_strategy_positions(trades, trader, context="log"):
-    """Helper to exit positions for trades. Context can be 'log' or 'ui'."""
+    """Helper to exit positions for trades. Context can be 'log' or 'ui'.
+
+    Submits sell orders and cleans up database records if position doesn't exist.
+    """
+    from .active_trade_store import get_active_trade_store
+    trade_store = get_active_trade_store()
+
     results = []
     for trade in trades:
         try:
@@ -1307,13 +1321,23 @@ def _exit_strategy_positions(trades, trader, context="log"):
             msg = f"Sold {trade.ticker}: {order.status}"
             results.append((trade.ticker, msg, None))
         except Exception as e:
+            error_str = str(e)
             msg = f"Failed to sell {trade.ticker}: {e}"
             results.append((trade.ticker, None, msg))
+
+            # If error is "cannot be sold short", position doesn't exist - clean up DB
+            if "cannot be sold short" in error_str or "42210000" in error_str:
+                logger.warning(f"[{trade.ticker}] Position doesn't exist at broker - cleaning up database record")
+                trade_store.delete_trade(trade.ticker, trade.strategy_id)
+
     return results
 
 
 def disable_strategy(strategy_id: str) -> bool:
-    """Disable a strategy from live trading (hot-reload supported)."""
+    """Disable a strategy from live trading (hot-reload supported).
+
+    Returns False if positions couldn't be exited (strategy remains enabled).
+    """
     global _trading_engine
 
     store = get_strategy_store()
@@ -1332,11 +1356,25 @@ def disable_strategy(strategy_id: str) -> bool:
 
         if active_trades:
             results = _exit_strategy_positions(active_trades, trader, context="log")
+
+            # Check if any sells failed
+            failed_sales = []
             for ticker, success_msg, error_msg in results:
                 if success_msg:
                     logger.info(success_msg)
                 if error_msg:
                     logger.error(error_msg)
+                    failed_sales.append((ticker, error_msg))
+
+            # If any sales failed, don't disable the strategy
+            if failed_sales:
+                logger.error(
+                    f"Cannot disable strategy '{strategy_name}' - failed to sell {len(failed_sales)} position(s):"
+                )
+                for ticker, error in failed_sales:
+                    logger.error(f"  - {ticker}: {error}")
+                logger.error("Please manually close these positions or fix the issue before disabling.")
+                return False
 
     # Update database
     if not store.set_enabled(strategy_id, False):

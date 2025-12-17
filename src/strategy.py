@@ -11,6 +11,7 @@ from .trading import TradingClient, Position
 from .trade_history import get_trade_history_client
 from .active_trade_store import get_active_trade_store
 from .order_store import get_order_store
+from .trade_logger import log_buy_fill, log_sell_fill
 
 logger = logging.getLogger(__name__)
 # Separate logger for verbose quote/candle logs - writes to logs/quotes.log
@@ -36,13 +37,14 @@ class StrategyConfig:
     # Entry rules
     consec_green_candles: int = 1
     min_candle_volume: int = 5000
+    entry_window_minutes: int = 5  # How long to wait for entry conditions after alert
 
     # Exit rules
     take_profit_pct: float = 10.0
     stop_loss_pct: float = 11.0
     stop_loss_from_open: bool = True
     trailing_stop_pct: float = 7.0
-    timeout_minutes: int = 15
+    timeout_minutes: int = 15  # How long to hold position before timeout exit
 
     # Position sizing
     stake_mode: str = "fixed"  # "fixed" or "volume_pct"
@@ -104,6 +106,7 @@ class StrategyConfig:
             sessions=parse_list(params.get("sess", "premarket,market")),
             consec_green_candles=int(params.get("consec", 0)),
             min_candle_volume=int(params.get("min_vol", 0)),
+            entry_window_minutes=int(params.get("entry_window", 5)),
             take_profit_pct=float(params.get("tp", 10)),
             stop_loss_pct=float(params.get("sl", 5)),
             stop_loss_from_open=params.get("sl_open", "0") == "1",
@@ -131,6 +134,7 @@ class StrategyConfig:
             "entry": {
                 "consec_green_candles": self.consec_green_candles,
                 "min_candle_volume": self.min_candle_volume,
+                "entry_window_minutes": self.entry_window_minutes,
             },
             "exit": {
                 "take_profit_pct": self.take_profit_pct,
@@ -215,6 +219,7 @@ class PendingOrder:
     # Context for recording trade on fill (sell orders)
     entry_price: Optional[float] = None
     entry_time: Optional[datetime] = None
+    exit_reason: Optional[str] = None  # e.g., "take_profit", "stop_loss", "timeout"
 
 
 class StrategyEngine:
@@ -230,7 +235,7 @@ class StrategyEngine:
         self,
         config: StrategyConfig,
         trader: TradingClient,
-        on_subscribe: Optional[Callable[[str], None]] = None,
+        on_subscribe: Optional[Callable[[str], bool]] = None,
         on_unsubscribe: Optional[Callable[[str], None]] = None,
         paper: bool = True,
         strategy_id: Optional[str] = None,
@@ -238,7 +243,7 @@ class StrategyEngine:
     ):
         self.config = config
         self.trader = trader
-        self.on_subscribe = on_subscribe  # Called when we need quotes for a ticker
+        self.on_subscribe = on_subscribe  # Called when we need quotes for a ticker (returns True if subscribed)
         self.on_unsubscribe = on_unsubscribe  # Called when done with a ticker
         self.paper = paper
         self.strategy_id = strategy_id
@@ -284,7 +289,9 @@ class StrategyEngine:
 
                 # Subscribe to quotes
                 if self.on_subscribe:
-                    self.on_subscribe(t.ticker)
+                    subscribed = self.on_subscribe(t.ticker)
+                    if not subscribed:
+                        logger.warning(f"[{t.ticker}] Could not subscribe for quotes (at limit) - position recovered but won't get live updates until slot available")
 
         except Exception as e:
             logger.error(f"Failed to load from database: {e}", exc_info=True)
@@ -349,18 +356,22 @@ class StrategyEngine:
             logger.warning(f"[{ticker}] Not tradeable: {reason}")
             return False
 
-        logger.info(f"[{ticker}] Alert passed filters, starting to track")
+        logger.info(f"[{ticker}] Alert passed filters, checking subscription availability")
+
+        # Request quote subscription - reject if we can't get quotes
+        if self.on_subscribe:
+            subscribed = self.on_subscribe(ticker)
+            if not subscribed:
+                logger.warning(f"[{ticker}] Cannot subscribe for quotes (at websocket limit) - rejecting alert")
+                return False
 
         # Start tracking for entry
+        logger.info(f"[{ticker}] Starting to track for entry")
         self.pending_entries[ticker] = PendingEntry(
             ticker=ticker,
             announcement=announcement,
             alert_time=datetime.now(),
         )
-
-        # Request quote subscription
-        if self.on_subscribe:
-            self.on_subscribe(ticker)
 
         return True
 
@@ -440,10 +451,10 @@ class StrategyEngine:
         # Log every quote for debugging (to quotes.log)
         quotes_logger.info(f"[{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
 
-        # Check timeout - abandon if too long since alert
+        # Check entry window timeout - abandon if too long since alert
         time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
-        if time_since_alert > cfg.timeout_minutes:
-            logger.info(f"[{ticker}] Entry timeout ({time_since_alert:.1f}m > {cfg.timeout_minutes}m)")
+        if time_since_alert > cfg.entry_window_minutes:
+            logger.info(f"[{ticker}] Entry window timeout ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
             self._abandon_pending(ticker)
             return
 
@@ -570,7 +581,7 @@ class StrategyEngine:
 
     def _execute_entry(self, ticker: str, price: float, timestamp: datetime, trigger: str = "entry_signal"):
         """Execute entry order.
-        
+
         Args:
             trigger: Reason for entry, e.g., "early_entry", "completed_candles", "no_candle_req"
         """
@@ -712,6 +723,16 @@ class StrategyEngine:
 
         logger.info(f"[{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
 
+        # Log to dedicated trades file
+        log_buy_fill(
+            ticker=ticker,
+            shares=shares,
+            price=filled_price,
+            strategy_name=self.strategy_name,
+            trigger=pending.entry_trigger or "",
+            sizing_info=pending.sizing_info or "",
+        )
+
         # Record fill event and update order status
         if pending.db_order_id:
             self._order_store.record_event(
@@ -787,6 +808,18 @@ class StrategyEngine:
         pnl = (filled_price - pending.entry_price) * shares
 
         logger.info(f"[{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
+
+        # Log to dedicated trades file
+        log_sell_fill(
+            ticker=ticker,
+            shares=shares,
+            price=filled_price,
+            strategy_name=self.strategy_name,
+            entry_price=pending.entry_price,
+            pnl=pnl,
+            pnl_pct=return_pct,
+            exit_reason=pending.exit_reason or "",
+        )
 
         # Record fill event and update order status
         if pending.db_order_id:
@@ -1057,6 +1090,7 @@ class StrategyEngine:
             db_order_id=db_order_id,
             entry_price=trade.entry_price,
             entry_time=trade.entry_time,
+            exit_reason=reason,
         )
         logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation")
 

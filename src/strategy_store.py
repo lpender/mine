@@ -305,6 +305,7 @@ def _config_from_dict(data: dict) -> StrategyConfig:
         exclude_financing_headlines=filters.get("exclude_financing_headlines", False),
         consec_green_candles=entry.get("consec_green_candles", 1),
         min_candle_volume=entry.get("min_candle_volume", 5000),
+        entry_window_minutes=entry.get("entry_window_minutes", 5),
         take_profit_pct=exit_rules.get("take_profit_pct", 10.0),
         stop_loss_pct=exit_rules.get("stop_loss_pct", 11.0),
         stop_loss_from_open=exit_rules.get("stop_loss_from_open", True),
