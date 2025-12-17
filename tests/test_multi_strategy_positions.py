@@ -385,11 +385,12 @@ class TestDatabaseConstraints:
     @pytest.mark.skip(reason="Requires strategy records to exist (foreign key constraint)")
     def test_unique_ticker_strategy_pair(self):
         """Database should allow same ticker with different strategy_ids."""
-        from src.database import SessionLocal, ActiveTradeDB, init_db
+        from src import database
+        from src.database import ActiveTradeDB, init_db
         from datetime import datetime
 
         init_db()
-        session = SessionLocal()
+        session = database.SessionLocal()
 
         try:
             # Clean up any existing test data (use short ticker name)
@@ -487,8 +488,9 @@ class TestDatabaseConstraints:
         )
 
         # Should only have one entry
-        from src.database import SessionLocal, ActiveTradeDB
-        session = SessionLocal()
+        from src import database
+        from src.database import ActiveTradeDB
+        session = database.SessionLocal()
         try:
             trades = session.query(ActiveTradeDB).filter(
                 ActiveTradeDB.ticker == "DUPTST",

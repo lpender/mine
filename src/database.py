@@ -118,7 +118,7 @@ class TradeHistoryDB(Base):
     # Core trade data
     ticker = Column(String(10), nullable=False, index=True)
     entry_price = Column(Float, nullable=False)
-    entry_time = Column(DateTime, nullable=False, index=True)
+    entry_time = Column(DateTime, nullable=False)  # Indexed via __table_args__
     exit_price = Column(Float, nullable=False)
     exit_time = Column(DateTime, nullable=False)
     exit_reason = Column(String(50))  # take_profit, stop_loss, trailing_stop, timeout
@@ -213,7 +213,7 @@ class ActiveTradeDB(Base):
     # Position identification
     trade_id = Column(String(36), nullable=False, unique=True, index=True)  # UUID
     ticker = Column(String(10), nullable=False, index=True)
-    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True)  # Indexed via __table_args__
     strategy_name = Column(String(100), nullable=True)
 
     # Entry details
@@ -257,8 +257,8 @@ class PendingEntryDB(Base):
 
     # Entry identification
     trade_id = Column(String(36), nullable=False, unique=True, index=True)  # UUID
-    ticker = Column(String(10), nullable=False, index=True)
-    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
+    ticker = Column(String(10), nullable=False)  # Indexed via __table_args__
+    strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True)  # Indexed via __table_args__
     strategy_name = Column(String(100), nullable=True)
 
     # Alert details
@@ -328,7 +328,7 @@ class OrderEventDB(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     # References
-    order_id = Column(Integer, ForeignKey('orders.id'), nullable=True, index=True)
+    order_id = Column(Integer, ForeignKey('orders.id'), nullable=True)  # Indexed via __table_args__
     broker_order_id = Column(String(50), nullable=True, index=True)
 
     # Event details
