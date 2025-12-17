@@ -1,5 +1,7 @@
 """Streamlit dashboard for backtesting press release announcements."""
 
+import random
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -488,6 +490,34 @@ with st.sidebar:
     set_param("max_stake", max_stake)
 
     # ─────────────────────────────────────────────────────────────────────────
+    # Sampling (for faster iteration)
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Sampling")
+
+    sample_pct = st.slider(
+        "Sample Size %",
+        min_value=1,
+        max_value=100,
+        value=int(get_param("sample_pct", 100)),
+        step=1,
+        key="_sample_pct",
+        help="Test on random subset for faster iteration (100% = all data)"
+    )
+
+    sample_seed = st.number_input(
+        "Random Seed",
+        value=int(get_param("sample_seed", 0)),
+        min_value=0,
+        step=1,
+        key="_sample_seed",
+        help="0 = different sample each run, >0 = reproducible sample"
+    )
+
+    set_param("sample_pct", sample_pct if sample_pct < 100 else "")
+    set_param("sample_seed", sample_seed if sample_seed > 0 else "")
+
+    # ─────────────────────────────────────────────────────────────────────────
     # Save Strategy / Live Trading
     # ─────────────────────────────────────────────────────────────────────────
     st.divider()
@@ -632,6 +662,14 @@ filtered = [a for a in filtered if a.market_cap is None or
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 
+# Apply sampling (for faster iteration)
+total_before_sampling = len(filtered)
+if sample_pct < 100 and filtered:
+    if sample_seed > 0:
+        random.seed(sample_seed)
+    sample_size = max(1, int(len(filtered) * sample_pct / 100))
+    filtered = random.sample(filtered, sample_size)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Run Backtest
@@ -679,6 +717,11 @@ stats = calculate_summary_stats(summary.results)
 # ─────────────────────────────────────────────────────────────────────────────
 
 st.header("Summary")
+
+# Show sampling notice if active
+if sample_pct < 100:
+    st.info(f"Sampling {sample_pct}% of data ({len(filtered)} of {total_before_sampling} announcements)" +
+            (f" - seed: {sample_seed}" if sample_seed > 0 else " - random"))
 
 col1, col2, col3, col4, col5, col6 = st.columns(6)
 
