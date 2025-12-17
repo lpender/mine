@@ -204,8 +204,9 @@ elif "ticker" in st.query_params:
 
 # Links
 st.sidebar.divider()
-st.sidebar.markdown("[← Back to Backtest](../)")
-st.sidebar.markdown("[Manage Strategies →](strategies)")
+st.sidebar.markdown("[<- Back to Backtest](../)")
+st.sidebar.markdown("[Manage Strategies ->](strategies)")
+st.sidebar.markdown("[View Orders ->](orders)")
 
 # Load trades
 trades = client.get_trades(

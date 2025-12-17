@@ -565,7 +565,8 @@ with st.sidebar:
 
     # Links
     st.markdown("[Manage Strategies →](strategies)")
-    st.markdown("[View Trade History →](trade_history)")
+    st.markdown("[View Trades →](trades)")
+    st.markdown("[View Orders →](orders)")
 
     # Cache control
     st.divider()
