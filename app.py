@@ -606,6 +606,14 @@ with st.sidebar:
 
 filtered = all_announcements
 
+# Apply sampling FIRST (for faster iteration) - sample before filtering
+total_before_sampling = len(filtered)
+if sample_pct < 100 and filtered:
+    if sample_seed > 0:
+        random.seed(sample_seed)
+    sample_size = max(1, int(len(filtered) * sample_pct / 100))
+    filtered = random.sample(filtered, sample_size)
+
 # Session filter
 if sessions:
     filtered = [a for a in filtered if a.market_session in sessions]
@@ -661,14 +669,6 @@ filtered = [a for a in filtered if a.market_cap is None or
             (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
-
-# Apply sampling (for faster iteration)
-total_before_sampling = len(filtered)
-if sample_pct < 100 and filtered:
-    if sample_seed > 0:
-        random.seed(sample_seed)
-    sample_size = max(1, int(len(filtered) * sample_pct / 100))
-    filtered = random.sample(filtered, sample_size)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
