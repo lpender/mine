@@ -72,11 +72,6 @@ class TradingEngine:
         # Track subscriptions per strategy for proper cleanup
         self._strategy_subscriptions: Dict[str, set] = {}  # strategy_id -> set of tickers
 
-        # Ticker lock for ALERT ROUTING only - prevents same alert from triggering
-        # multiple strategies. Does NOT affect position management - multiple strategies
-        # CAN hold independent positions in the same ticker.
-        self._locked_tickers: Dict[str, str] = {}  # ticker -> strategy_id for alert routing
-
         # Orphaned tickers (positions in DB but strategy disabled)
         self._orphaned_tickers: set = set()
 
@@ -484,29 +479,24 @@ class TradingEngine:
             ticker = announcement.ticker
             logger.info(f"Alert received: {ticker} @ ${announcement.price_threshold}")
 
-            # Check if ticker is already locked by another strategy
-            if ticker in self._locked_tickers:
-                owner = self._locked_tickers[ticker]
-                owner_name = self.strategy_names.get(owner, owner)
-                logger.info(f"[{ticker}] Already locked by strategy '{owner_name}' - skipping alert")
-                return
-
             # Sort strategies by priority (lower = higher priority)
             sorted_strategies = sorted(
                 self.strategies.items(),
                 key=lambda x: self.strategy_priorities.get(x[0], 999)
             )
 
-            # Offer to strategies in priority order - first to accept wins
+            # Offer to ALL strategies - each can independently accept or reject
+            accepted_by = []
             for strategy_id, engine in sorted_strategies:
                 name = self.strategy_names.get(strategy_id, strategy_id)
                 if engine.on_alert(announcement):
-                    # Lock the ticker for this strategy
-                    self._locked_tickers[ticker] = strategy_id
-                    logger.info(f"[{ticker}] Alert accepted by '{name}' (locked)")
-                    return
+                    accepted_by.append(name)
+                    logger.info(f"[{ticker}] Alert accepted by '{name}'")
 
-            logger.info(f"[{ticker}] No strategy accepted the alert (filtered by all {len(sorted_strategies)} strategies)")
+            if accepted_by:
+                logger.info(f"[{ticker}] Alert accepted by {len(accepted_by)} strategies: {', '.join(accepted_by)}")
+            else:
+                logger.info(f"[{ticker}] No strategy accepted the alert (filtered by all {len(sorted_strategies)} strategies)")
 
         except Exception as e:
             logger.error(f"Error handling alert: {e}", exc_info=True)
@@ -820,11 +810,6 @@ class TradingEngine:
     def _on_unsubscribe(self, ticker: str, strategy_id: str):
         """Callback when a strategy no longer needs quotes for a ticker."""
         strategy_name = self.strategy_names.get(strategy_id, strategy_id[:8])
-
-        # Release the ticker lock if this strategy owned it
-        if self._locked_tickers.get(ticker) == strategy_id:
-            del self._locked_tickers[ticker]
-            logger.info(f"[{ticker}] Lock released by '{strategy_name}'")
 
         # Remove from this strategy's subscriptions
         if strategy_id in self._strategy_subscriptions:
