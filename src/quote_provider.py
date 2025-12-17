@@ -392,7 +392,8 @@ class InsightSentryQuoteProvider:
         series = msg.get("series", [])
         for bar in series:
             ts = bar.get("time", 0)
-            timestamp = datetime.fromtimestamp(ts) if ts else datetime.now()
+            # Store as naive UTC (per project timezone rules)
+            timestamp = datetime.utcfromtimestamp(ts) if ts else datetime.utcnow()
 
             # Extract full OHLCV
             open_price = bar.get("open", 0)

@@ -274,6 +274,21 @@ else:
             strategy_id=selected_trade.strategy_id,
         )
 
+        # Also check for legacy bars stored in local time (ET = UTC-5)
+        # TODO: Remove this fallback after migrating old bars to UTC
+        if not bars:
+            et_offset = timedelta(hours=5)
+            bars = bar_store.get_bars(
+                ticker=selected_trade.ticker,
+                start_time=selected_trade.entry_time - buffer - et_offset,
+                end_time=selected_trade.exit_time + buffer - et_offset,
+                strategy_id=selected_trade.strategy_id,
+            )
+            # Adjust timestamps to UTC for display consistency
+            if bars:
+                for bar in bars:
+                    bar.timestamp = bar.timestamp + et_offset
+
         if not bars:
             st.info("No bar data available for this trade. Bar data is only captured during live monitoring.")
         else:
