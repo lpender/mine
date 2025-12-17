@@ -1369,8 +1369,12 @@ class StrategyEngine:
                             trade_id=trade_id,
                             ticker=ticker,
                             side="sell",
-                            entry_price=trade.entry_price,
                             shares=trade.shares,
+                            limit_price=fresh_price,
+                            submitted_at=timestamp,
+                            entry_price=trade.entry_price,
+                            entry_time=trade.entry_time,
+                            exit_reason=reason,
                         )
                         return  # Success on retry
                     except Exception as retry_err:
