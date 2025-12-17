@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from src.trade_history import get_trade_history_client
 from src.strategy_store import get_strategy_store
 from src.live_bar_store import get_live_bar_store
-from src.database import init_db
+from src.database import init_db, SessionLocal, OrderDB, OrderEventDB
+from src.order_store import get_order_store
 
 
 def format_price(price: float) -> str:
@@ -19,6 +20,103 @@ def format_price(price: float) -> str:
         return f"${price:.4f}"
     else:
         return f"${price:.6f}"
+
+
+def to_est_display(dt: datetime) -> str:
+    """Convert UTC datetime to EST and format for display."""
+    from zoneinfo import ZoneInfo
+    if dt is None:
+        return "N/A"
+    # All DB timestamps are naive UTC
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=ZoneInfo("UTC"))
+    # Convert to EST
+    est_dt = dt.astimezone(ZoneInfo("America/New_York"))
+    return est_dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def get_order_events_for_trade(trade_id: int, ticker: str, entry_time: datetime, exit_time: datetime, strategy_id: str = None) -> pd.DataFrame:
+    """Get all orders and their events for a completed trade, displayed in EST."""
+    db = SessionLocal()
+    try:
+        # Find the specific BUY and SELL orders for this trade
+        # BUY order: created shortly before entry_time (order submitted, then filled = entry_time)
+        # SELL order: created shortly before exit_time (order submitted, then filled = exit_time)
+        orders = []
+
+        # Find BUY order (created within 30 seconds before entry fill time)
+        buy_query = db.query(OrderDB).filter(
+            OrderDB.ticker == ticker,
+            OrderDB.side == "buy",
+            OrderDB.created_at >= entry_time - timedelta(seconds=30),
+            OrderDB.created_at <= entry_time + timedelta(seconds=5),
+        )
+        if strategy_id:
+            buy_query = buy_query.filter(OrderDB.strategy_id == strategy_id)
+        buy_order = buy_query.first()
+        if buy_order:
+            orders.append(buy_order)
+
+        # Find SELL order (created within 30 seconds before exit fill time)
+        sell_query = db.query(OrderDB).filter(
+            OrderDB.ticker == ticker,
+            OrderDB.side == "sell",
+            OrderDB.created_at >= exit_time - timedelta(seconds=30),
+            OrderDB.created_at <= exit_time + timedelta(seconds=5),
+        )
+        if strategy_id:
+            sell_query = sell_query.filter(OrderDB.strategy_id == strategy_id)
+        sell_order = sell_query.first()
+        if sell_order:
+            orders.append(sell_order)
+
+        # Sort by created_at
+        orders.sort(key=lambda o: o.created_at)
+
+        if not orders:
+            return pd.DataFrame()
+
+        # Get all events for these orders
+        events_data = []
+        for order in orders:
+            # Get events for this order
+            events = db.query(OrderEventDB).filter(
+                OrderEventDB.order_id == order.id
+            ).order_by(OrderEventDB.event_timestamp.asc()).all()
+
+            for event in events:
+                # For SUBMITTED events, show the order details
+                # For FILL events, show the fill details
+                if event.event_type.lower() == "submitted":
+                    shares_display = order.requested_shares
+                    price_display = f"${order.limit_price:.2f}" if order.limit_price else "-"
+                elif event.event_type.lower() in ("fill", "partial_fill"):
+                    shares_display = event.filled_shares if event.filled_shares else "-"
+                    price_display = f"${event.fill_price:.2f}" if event.fill_price else "-"
+                else:
+                    shares_display = event.filled_shares if event.filled_shares else order.requested_shares
+                    price_display = f"${event.fill_price:.2f}" if event.fill_price else (f"${order.limit_price:.2f}" if order.limit_price else "-")
+
+                events_data.append({
+                    "Time (EST)": to_est_display(event.event_timestamp),
+                    "Event": event.event_type.upper(),
+                    "Side": order.side.upper(),
+                    "Type": order.order_type,
+                    "Shares": shares_display,
+                    "Limit Price": f"${order.limit_price:.2f}" if order.limit_price else "-",
+                    "Fill Price": price_display if event.event_type.lower() in ("fill", "partial_fill") else "-",
+                    "Filled": f"{event.cumulative_filled}/{order.requested_shares}" if event.cumulative_filled is not None else "-",
+                    "Status": order.status,
+                })
+
+        if not events_data:
+            return pd.DataFrame()
+
+        return pd.DataFrame(events_data)
+    finally:
+        db.close()
+
+
 
 # Initialize database tables
 init_db()
@@ -199,14 +297,31 @@ else:
     # Convert to DataFrame for display
     trade_data = []
     for t in trades:
+        # Format times as EST without seconds (YYYY-MM-DD HH:MM)
+        entry_est = to_est_display(t.entry_time)[:-3]  # Remove seconds
+        exit_est = to_est_display(t.exit_time)[:-3]  # Remove seconds
+
+        # Calculate hold time
+        hold_time_seconds = (t.exit_time - t.entry_time).total_seconds()
+        hold_time_minutes = hold_time_seconds / 60
+
+        # Format hold time (show hours:minutes if >= 60 min, else just minutes)
+        if hold_time_minutes >= 60:
+            hours = int(hold_time_minutes // 60)
+            minutes = int(hold_time_minutes % 60)
+            hold_time_str = f"{hours}h {minutes}m"
+        else:
+            hold_time_str = f"{hold_time_minutes:.1f}m"
+
         trade_data.append({
             "ID": t.id,
             "Strategy": t.strategy_name or "-",
             "Ticker": t.ticker,
-            "Entry Time": t.entry_time.strftime("%Y-%m-%d %H:%M"),
+            "Entry Time (EST)": entry_est,
             "Entry $": format_price(t.entry_price),
-            "Exit Time": t.exit_time.strftime("%Y-%m-%d %H:%M"),
+            "Exit Time (EST)": exit_est,
             "Exit $": format_price(t.exit_price),
+            "Hold Time": hold_time_str,
             "Exit Reason": t.exit_reason,
             "Shares": t.shares,
             "Return %": f"{t.return_pct:+.2f}%",
@@ -246,46 +361,83 @@ else:
     if selected_trade_id:
         selected_trade = next(t for t in trades if t.id == selected_trade_id)
 
+        # Order Events Table (only for trades with order tracking)
+        st.subheader("Order Events (Chronological)")
+        order_events_df = get_order_events_for_trade(
+            trade_id=selected_trade.id,
+            ticker=selected_trade.ticker,
+            entry_time=selected_trade.entry_time,
+            exit_time=selected_trade.exit_time,
+            strategy_id=selected_trade.strategy_id,
+        )
+
+        if not order_events_df.empty:
+            st.dataframe(
+                order_events_df,
+                use_container_width=True,
+                hide_index=True,
+            )
+        else:
+            st.info("No order events found (order tracking was not enabled for this trade, or orders have been cleared).")
+
+        st.divider()
+
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("**Trade Info**")
-            st.write(f"- Ticker: {selected_trade.ticker}")
-            st.write(f"- Entry: {format_price(selected_trade.entry_price)} @ {selected_trade.entry_time}")
-            st.write(f"- Exit: {format_price(selected_trade.exit_price)} @ {selected_trade.exit_time}")
-            st.write(f"- Reason: {selected_trade.exit_reason}")
-            st.write(f"- Shares: {selected_trade.shares}")
-            st.write(f"- P&L: ${selected_trade.pnl:+.2f} ({selected_trade.return_pct:+.2f}%)")
+            st.write("**Trade Summary**")
+            st.write(f"- Ticker: **{selected_trade.ticker}**")
+            st.write(f"- Strategy: {selected_trade.strategy_name or 'N/A'}")
+            entry_est = to_est_display(selected_trade.entry_time).split()[1]  # Get time part only
+            exit_est = to_est_display(selected_trade.exit_time).split()[1]  # Get time part only
+            st.write(f"- Entry: {format_price(selected_trade.entry_price)} @ {entry_est} EST")
+            st.write(f"- Exit: {format_price(selected_trade.exit_price)} @ {exit_est} EST")
+            duration = (selected_trade.exit_time - selected_trade.entry_time).total_seconds() / 60
+            st.write(f"- Duration: {duration:.1f} min")
+            st.write(f"- Exit Reason: {selected_trade.exit_reason}")
+            st.write(f"- Shares: {selected_trade.shares:,}")
+            st.write(f"- **P&L: ${selected_trade.pnl:+.2f} ({selected_trade.return_pct:+.2f}%)**")
 
         with col2:
             st.write("**Strategy Parameters**")
-            params = selected_trade.strategy_params
-            if params:
+            strategy_params = selected_trade.strategy_params
+            if strategy_params:
                 # Filters
-                if "filters" in params:
-                    f = params["filters"]
-                    st.write(f"- Channels: {', '.join(f.get('channels', []))}")
-                    st.write(f"- Directions: {', '.join(f.get('directions', []))}")
-                    st.write(f"- Price: ${f.get('price_min', 0)}-${f.get('price_max', 100)}")
+                if "filters" in strategy_params:
+                    f = strategy_params["filters"]
+                    if f.get('channels'):
+                        st.write(f"- Channels: {', '.join(f.get('channels', []))}")
+                    if f.get('directions'):
+                        st.write(f"- Directions: {', '.join(f.get('directions', []))}")
+                    st.write(f"- Price Range: ${f.get('price_min', 0)}-${f.get('price_max', 100)}")
 
                 # Entry rules
-                if "entry" in params:
-                    e = params["entry"]
-                    st.write(f"- Green candles: {e.get('consec_green_candles', 0)}")
-                    st.write(f"- Min volume: {e.get('min_candle_volume', 0):,}")
+                if "entry" in strategy_params:
+                    e = strategy_params["entry"]
+                    st.write(f"- Entry Window: {e.get('entry_window_minutes', 5)} min")
+                    if e.get('consec_green_candles', 0) > 0:
+                        st.write(f"- Green Candles: {e.get('consec_green_candles', 0)}")
+                        st.write(f"- Min Volume/Candle: {e.get('min_candle_volume', 0):,}")
 
                 # Exit rules
-                if "exit" in params:
-                    ex = params["exit"]
-                    st.write(f"- TP: {ex.get('take_profit_pct', 0)}%")
-                    st.write(f"- SL: {ex.get('stop_loss_pct', 0)}% (from open: {ex.get('stop_loss_from_open', False)})")
-                    st.write(f"- Trail: {ex.get('trailing_stop_pct', 0)}%")
-                    st.write(f"- Timeout: {ex.get('timeout_minutes', 0)}m")
+                if "exit" in strategy_params:
+                    ex = strategy_params["exit"]
+                    st.write(f"- Take Profit: {ex.get('take_profit_pct', 0)}%")
+                    st.write(f"- Stop Loss: {ex.get('stop_loss_pct', 0)}%" +
+                            (" (from open)" if ex.get('stop_loss_from_open', False) else ""))
+                    if ex.get('trailing_stop_pct', 0) > 0:
+                        st.write(f"- Trailing Stop: {ex.get('trailing_stop_pct', 0)}%")
+                    st.write(f"- Timeout: {ex.get('timeout_minutes', 0)} min")
 
                 # Position
-                if "position" in params:
-                    p = params["position"]
-                    st.write(f"- Stake: ${p.get('stake_amount', 0)}")
+                if "position" in strategy_params:
+                    p = strategy_params["position"]
+                    stake_mode = p.get('stake_mode', 'fixed')
+                    if stake_mode == 'volume_pct':
+                        st.write(f"- Position Sizing: {p.get('volume_pct', 1.0)}% of prev candle volume")
+                        st.write(f"- Max Stake: ${p.get('max_stake', 10000):,.2f}")
+                    else:
+                        st.write(f"- Position Sizing: Fixed ${p.get('stake_amount', 50):,.2f}")
             else:
                 st.write("No strategy parameters recorded")
 
@@ -359,9 +511,10 @@ else:
                     name="Price",
                 ))
 
-                # Add entry marker
+                # Add entry marker - round to minute to align with resampled bars
+                entry_time_rounded = pd.Timestamp(selected_trade.entry_time).floor('1min')
                 fig.add_trace(go.Scatter(
-                    x=[selected_trade.entry_time],
+                    x=[entry_time_rounded],
                     y=[selected_trade.entry_price],
                     mode="markers",
                     marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
@@ -369,10 +522,11 @@ else:
                     hoverinfo="name",
                 ))
 
-                # Add exit marker
+                # Add exit marker - round to minute to align with resampled bars
+                exit_time_rounded = pd.Timestamp(selected_trade.exit_time).floor('1min')
                 exit_color = "green" if selected_trade.pnl > 0 else "red"
                 fig.add_trace(go.Scatter(
-                    x=[selected_trade.exit_time],
+                    x=[exit_time_rounded],
                     y=[selected_trade.exit_price],
                     mode="markers",
                     marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
