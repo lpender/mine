@@ -5,11 +5,13 @@ import pandas as pd
 import time
 from datetime import datetime
 
-from src.database import init_db
+from src.database import init_db, SessionLocal, TradeHistoryDB
 from src.strategy import StrategyConfig
 from src.strategy_store import get_strategy_store, Strategy
 from src.active_trade_store import get_active_trade_store
+from src.pending_entry_store import get_pending_entry_store
 from src.trading import get_trading_client
+from datetime import date
 from src.live_trading_service import (
     get_live_trading_status,
     is_live_trading_active,
@@ -129,6 +131,23 @@ with st.sidebar:
     st.markdown("[View Trade History →](trade_history)")
 
 store = get_strategy_store()
+pending_store = get_pending_entry_store()
+active_store = get_active_trade_store()
+
+
+def get_completed_today_count(strategy_id: str) -> int:
+    """Get count of trades completed today for a strategy from the database."""
+    session = SessionLocal()
+    try:
+        today_start = datetime.combine(date.today(), datetime.min.time())
+        count = session.query(TradeHistoryDB).filter(
+            TradeHistoryDB.strategy_id == strategy_id,
+            TradeHistoryDB.exit_time >= today_start,
+        ).count()
+        return count
+    finally:
+        session.close()
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Strategy List
@@ -141,19 +160,22 @@ strategies = store.list_strategies()
 if not strategies:
     st.info("No strategies created yet. Use the form above to create one.")
 else:
-    # Get live status if engine is running
+    # Get live status if engine is running (for WebSocket status only)
     live_status = get_live_trading_status() or {}
     strategies_status = live_status.get("strategies", {})
 
-    # Build dataframe
+    # Build dataframe - always read counts from database for persistence
     rows = []
     for s in strategies:
-        strategy_live = strategies_status.get(s.id, {})
+        # Always read from database for accurate counts
+        db_pending = pending_store.get_entries_for_strategy(s.id)
+        db_active = active_store.get_trades_for_strategy(s.id)
+        db_completed = get_completed_today_count(s.id)
 
         # Use strings for all columns to avoid Arrow mixed-type errors
-        pending = str(len(strategy_live.get("pending_entries", []))) if s.enabled else "-"
-        active = str(len(strategy_live.get("active_trades", {}))) if s.enabled else "-"
-        completed = str(strategy_live.get("completed_trades", 0)) if s.enabled else "-"
+        pending = str(len(db_pending)) if s.enabled else "-"
+        active = str(len(db_active)) if s.enabled else "-"
+        completed = str(db_completed) if s.enabled else "-"
 
         # Format position sizing display
         if s.config.stake_mode == "volume_pct":
@@ -222,11 +244,85 @@ else:
             with col1:
                 if strategy.enabled:
                     if st.button("Disable", type="secondary"):
-                        disable_strategy(strategy_id)
-                        st.rerun()
+                        # Check for active trades before disabling
+                        has_active_trades = False
+
+                        # First check live status (if engine is running)
+                        if trading_active:
+                            strategy_status = strategies_status.get(strategy_id, {})
+                            active_trades_dict = strategy_status.get("active_trades", {})
+                            has_active_trades = len(active_trades_dict) > 0
+                        else:
+                            # Engine not running - check database
+                            active_store = get_active_trade_store()
+                            db_trades = active_store.get_trades_for_strategy(strategy_id)
+                            has_active_trades = len(db_trades) > 0
+
+                        if has_active_trades:
+                            # Has active trades - show confirmation
+                            st.session_state[f"confirm_disable_{strategy_id}"] = True
+                            st.rerun()
+                        else:
+                            # No active trades - disable immediately
+                            if disable_strategy(strategy_id):
+                                st.success(f"Disabled strategy '{strategy.name}'")
+                            else:
+                                st.error(f"Failed to disable strategy '{strategy.name}' - check logs")
+                            st.rerun()
                 else:
                     if st.button("Enable", type="primary"):
                         enable_strategy(strategy_id)
+                        st.rerun()
+
+            # Disable confirmation dialog
+            if st.session_state.get(f"confirm_disable_{strategy_id}", False):
+                st.divider()
+                st.markdown("**⚠️ Disable Strategy Confirmation**")
+
+                # Get active trades (from live status or database)
+                if trading_active:
+                    # Engine running - use live status
+                    strategy_status = strategies_status.get(strategy_id, {})
+                    active_trades_dict = strategy_status.get("active_trades", {})
+
+                    st.warning(f"This strategy has {len(active_trades_dict)} active position(s):")
+                    for ticker, trade_info in active_trades_dict.items():
+                        shares = trade_info.get("shares", 0)
+                        entry = trade_info.get("entry_price", 0)
+                        current = trade_info.get("current_price", entry)
+                        pnl_pct = trade_info.get("pnl_pct", 0)
+                        st.write(f"- **{ticker}**: {shares} shares @ ${entry:.2f} (current: ${current:.2f}, {pnl_pct:+.2f}%)")
+                else:
+                    # Engine not running - check database
+                    active_store = get_active_trade_store()
+                    db_trades = active_store.get_trades_for_strategy(strategy_id)
+
+                    st.warning(f"This strategy has {len(db_trades)} active position(s) in database:")
+                    for trade in db_trades:
+                        st.write(f"- **{trade.ticker}**: {trade.shares} shares @ ${trade.entry_price:.2f}")
+                    st.info("Note: Trading engine is not running. Positions cannot be sold automatically.")
+
+                st.info("Disabling will sell all positions at market price (if engine is running).")
+
+                col_disable, col_cancel = st.columns(2)
+                with col_disable:
+                    if st.button("🔴 Disable & Sell Positions", type="primary", key=f"confirm_disable_yes_{strategy_id}"):
+                        with st.spinner("Disabling strategy and selling positions..."):
+                            success = disable_strategy(strategy_id)
+                        st.session_state[f"confirm_disable_{strategy_id}"] = False
+
+                        if success:
+                            if trading_active:
+                                st.success(f"Disabled strategy '{strategy.name}' and sold positions")
+                            else:
+                                st.warning(f"Disabled strategy '{strategy.name}' - positions NOT sold (engine not running)")
+                        else:
+                            st.error(f"Failed to disable strategy '{strategy.name}' - could not sell all positions. Check logs and manually close positions if needed.")
+                        st.rerun()
+
+                with col_cancel:
+                    if st.button("Cancel", key=f"cancel_disable_{strategy_id}"):
+                        st.session_state[f"confirm_disable_{strategy_id}"] = False
                         st.rerun()
 
             with col2:
@@ -273,9 +369,12 @@ else:
                     # If strategy is enabled, disable it first (which exits positions)
                     if strategy.enabled:
                         with st.spinner("Disabling strategy and exiting positions..."):
-                            disable_strategy(strategy_id)
+                            success = disable_strategy(strategy_id)
+                        if success:
                             st.success(f"Disabled strategy '{strategy.name}' and exited positions")
-                            st.rerun()
+                        else:
+                            st.error(f"Failed to exit all positions for '{strategy.name}'. Cannot delete until positions are closed.")
+                        st.rerun()
                     else:
                         # Check for active trades in DB (should be none after disabling)
                         active_store = get_active_trade_store()
@@ -447,65 +546,51 @@ else:
                         st.session_state[f"edit_sizing_{strategy_id}"] = False
                         st.rerun()
 
-            # Live status if enabled
-            if strategy.enabled and strategy_id in strategies_status:
+            # Live status if enabled - always read from database
+            if strategy.enabled:
                 st.divider()
                 st.markdown("**Live Status**")
 
-                strat_status = strategies_status[strategy_id]
+                # Read from database for persistence across restarts
+                db_pending = pending_store.get_entries_for_strategy(strategy_id)
+                db_active = active_store.get_trades_for_strategy(strategy_id)
+                db_completed = get_completed_today_count(strategy_id)
 
                 col1, col2, col3 = st.columns(3)
                 with col1:
-                    pending = strat_status.get("pending_entries", [])
-                    st.metric("Pending Entries", len(pending))
-                    if pending:
-                        st.write("Tickers: " + ", ".join(pending))
+                    st.metric("Pending Entries", len(db_pending))
+                    if db_pending:
+                        tickers = [e.ticker for e in db_pending]
+                        st.write("Tickers: " + ", ".join(tickers))
 
                 with col2:
-                    active = strat_status.get("active_trades", {})
-                    st.metric("Active Trades", len(active))
+                    st.metric("Active Trades", len(db_active))
 
                 with col3:
-                    st.metric("Completed Today", strat_status.get("completed_trades", 0))
+                    st.metric("Completed Today", db_completed)
 
-                # Active trades details
-                if active:
+                # Active trades details from database
+                if db_active:
                     st.markdown("**Active Positions**")
-                    for ticker, trade in active.items():
-                        entry = trade.get("entry_price", 0)
-                        current = trade.get("current_price", entry)
-                        pnl_pct = trade.get("pnl_pct", 0)
-                        pnl_dollars = trade.get("pnl_dollars", 0)
-                        sl = trade.get("stop_loss", 0)
-                        tp = trade.get("take_profit", 0)
-                        shares = trade.get("shares", 0)
-                        timeout_at = trade.get("timeout_at")
+                    for trade in db_active:
+                        ticker = trade.ticker
+                        entry = trade.entry_price
+                        current = trade.last_price if trade.last_price else entry
+                        pnl_pct = ((current - entry) / entry) * 100 if entry > 0 else 0
+                        pnl_dollars = (current - entry) * trade.shares
+                        sl = trade.stop_loss_price
+                        tp = trade.take_profit_price
+                        shares = trade.shares
 
                         # Color P&L
                         pnl_color = "green" if pnl_pct >= 0 else "red"
                         pnl_str = f":{pnl_color}[{pnl_pct:+.2f}% (${pnl_dollars:+.2f})]"
 
-                        # Format timeout time
-                        timeout_str = ""
-                        if timeout_at:
-                            timeout_dt = datetime.fromisoformat(timeout_at)
-                            timeout_str = f" | Timeout: {timeout_dt.strftime('%H:%M:%S')}"
-
                         # Show stale data warning
-                        last_quote = trade.get("last_quote_time")
                         stale_str = ""
-                        if last_quote:
-                            last_dt = datetime.fromisoformat(last_quote)
-                            age_secs = (datetime.now() - last_dt).total_seconds()
+                        if trade.last_quote_time:
+                            age_secs = (datetime.utcnow() - trade.last_quote_time).total_seconds()
                             if age_secs > 30:
                                 stale_str = f" :orange[(stale: {int(age_secs)}s ago)]"
 
-                        # Show manual exit warning
-                        manual_exit_str = ""
-                        if trade.get("needs_manual_exit"):
-                            manual_exit_str = " :red[⚠️ NEEDS MANUAL EXIT]"
-                        elif trade.get("sell_attempts", 0) > 0:
-                            attempts = trade.get("sell_attempts", 0)
-                            manual_exit_str = f" :orange[(sell attempts: {attempts}/3)]"
-
-                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str}{stale_str} | SL: ${sl:.2f} | TP: ${tp:.2f}{timeout_str}{manual_exit_str}")
+                        st.write(f"**{ticker}**: {shares} @ ${entry:.2f} → ${current:.2f} {pnl_str}{stale_str} | SL: ${sl:.2f} | TP: ${tp:.2f}")
