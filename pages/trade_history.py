@@ -39,29 +39,46 @@ bar_store = get_live_bar_store()
 # Sidebar filters
 st.sidebar.header("Filters")
 
+# Read initial values from query params
+params = st.query_params
+
 # Paper/Live filter
+trade_type_options = ["All", "Paper", "Live"]
+trade_type_default = params.get("type", "Paper")
+trade_type_index = trade_type_options.index(trade_type_default) if trade_type_default in trade_type_options else 1
+
 trade_type = st.sidebar.radio(
     "Trade Type",
-    options=["All", "Paper", "Live"],
-    index=1,  # Default to Paper
+    options=trade_type_options,
+    index=trade_type_index,
+    key="trade_type",
 )
 paper_filter = None if trade_type == "All" else (trade_type == "Paper")
 
 # Strategy filter
 strategies = store.list_strategies()
 strategy_options = ["All Strategies"] + [s.name for s in strategies]
+strategy_default = params.get("strategy", "All Strategies")
+strategy_index = strategy_options.index(strategy_default) if strategy_default in strategy_options else 0
+
 selected_strategy = st.sidebar.selectbox(
     "Strategy",
     options=strategy_options,
-    index=0,
+    index=strategy_index,
+    key="strategy",
 )
 strategy_name_filter = None if selected_strategy == "All Strategies" else selected_strategy
 
 # Date range filter
+date_range_options = ["Today", "Last 7 days", "Last 30 days", "All time"]
+date_range_default = params.get("range", "Last 7 days")
+date_range_index = date_range_options.index(date_range_default) if date_range_default in date_range_options else 1
+
 date_range = st.sidebar.selectbox(
     "Date Range",
-    options=["Today", "Last 7 days", "Last 30 days", "All time"],
-    index=1,
+    options=date_range_options,
+    index=date_range_index,
+    key="date_range",
 )
 
 if date_range == "Today":
@@ -74,8 +91,18 @@ else:
     start_date = None
 
 # Ticker filter
-ticker_filter = st.sidebar.text_input("Ticker (optional)")
+ticker_default = params.get("ticker", "")
+ticker_filter = st.sidebar.text_input("Ticker (optional)", value=ticker_default, key="ticker")
 ticker_filter = ticker_filter.upper() if ticker_filter else None
+
+# Update query params to reflect current filter state
+st.query_params["type"] = trade_type
+st.query_params["strategy"] = selected_strategy
+st.query_params["range"] = date_range
+if ticker_filter:
+    st.query_params["ticker"] = ticker_filter
+elif "ticker" in st.query_params:
+    del st.query_params["ticker"]
 
 # Links
 st.sidebar.divider()
