@@ -320,40 +320,59 @@ class TradingEngine:
             self._orphaned_tickers = set()
 
     def _cleanup_orphaned_positions(self, broker_positions: Dict[str, any]):
-        """Check for and liquidate orphaned positions.
+        """Check for and clean up orphaned positions in both directions.
 
-        Orphaned positions are at the broker but not tracked in our database.
-        These can occur when a trade fails to save to DB but the buy order filled.
+        1. At broker but not in DB: Liquidate (sell) them
+        2. In DB but not at broker: Remove from DB (ghost positions)
         """
         from src.active_trade_store import get_active_trade_store
 
         trade_store = get_active_trade_store()
         db_trades = trade_store.get_all_trades()
-        db_tickers = {t.ticker for t in db_trades}
+        db_tickers = {t.ticker: t for t in db_trades}
+        broker_tickers = set(broker_positions.keys())
 
-        # Find positions at broker that aren't in our database
-        orphaned = []
+        # 1. Find positions at broker that aren't in our database - SELL them
+        broker_orphans = []
         for ticker, position in broker_positions.items():
             if ticker not in db_tickers:
-                orphaned.append((ticker, position.shares, position.avg_entry_price))
+                broker_orphans.append((ticker, position.shares, position.avg_entry_price))
 
-        if not orphaned:
-            return
+        if broker_orphans:
+            logger.warning(f"Found {len(broker_orphans)} orphaned position(s) at broker - liquidating...")
+            for ticker, shares, entry_price in broker_orphans:
+                try:
+                    current_price = self._fetch_current_price(ticker)
+                    if current_price is None:
+                        current_price = entry_price
+                        logger.warning(f"[{ticker}] Could not fetch current price, using entry: ${entry_price:.4f}")
 
-        logger.warning(f"Found {len(orphaned)} orphaned position(s) at broker - liquidating...")
+                    order = self.trader.sell(ticker, shares, limit_price=current_price)
+                    logger.warning(f"[{ticker}] Orphan liquidated: {shares} shares @ ${current_price:.4f} ({order.status})")
+                except Exception as e:
+                    logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}")
 
-        for ticker, shares, entry_price in orphaned:
-            try:
-                # Fetch current price from REST API
-                current_price = self._fetch_current_price(ticker)
-                if current_price is None:
-                    current_price = entry_price
-                    logger.warning(f"[{ticker}] Could not fetch current price, using entry: ${entry_price:.4f}")
+        # 2. Find positions in DB that aren't at broker - DELETE from DB
+        db_ghosts = []
+        for ticker, trade in db_tickers.items():
+            if ticker not in broker_tickers:
+                db_ghosts.append(trade)
 
-                order = self.trader.sell(ticker, shares, limit_price=current_price)
-                logger.warning(f"[{ticker}] Orphan liquidated: {shares} shares @ ${current_price:.4f} ({order.status})")
-            except Exception as e:
-                logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}")
+        if db_ghosts:
+            logger.warning(f"Found {len(db_ghosts)} ghost position(s) in DB (not at broker) - removing...")
+            for trade in db_ghosts:
+                try:
+                    # Remove from in-memory tracking in strategies
+                    for engine in self.strategies.values():
+                        if trade.trade_id in engine.active_trades:
+                            engine.active_trades.pop(trade.trade_id, None)
+                            logger.warning(f"[{trade.ticker}] Removed ghost trade from strategy memory (trade_id={trade.trade_id[:8]})")
+
+                    # Remove from database
+                    trade_store.delete_trade(trade.trade_id)
+                    logger.warning(f"[{trade.ticker}] Ghost position removed from DB: {trade.shares} shares (trade_id={trade.trade_id[:8]})")
+                except Exception as e:
+                    logger.error(f"[{trade.ticker}] Failed to remove ghost position: {e}")
 
     def _fetch_current_price(self, ticker: str) -> Optional[float]:
         """Fetch the current price for a ticker from InsightSentry REST API."""
