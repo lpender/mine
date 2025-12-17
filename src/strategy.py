@@ -974,7 +974,7 @@ class StrategyEngine:
         logger.info(f"[{ticker}] Created active trade (trade_id={trade_id[:8]})")
 
         # Persist to database
-        self._active_trade_store.save_trade(
+        save_success = self._active_trade_store.save_trade(
             trade_id=trade_id,
             ticker=ticker,
             strategy_id=self.strategy_id,
@@ -990,6 +990,20 @@ class StrategyEngine:
             announcement_ticker=pending.announcement.ticker if pending.announcement else None,
             announcement_timestamp=pending.announcement.timestamp if pending.announcement else None,
         )
+
+        # CRITICAL: If save failed, immediately sell to prevent orphaned position at broker
+        if not save_success:
+            logger.error(f"[{ticker}] ⚠️ FAILED TO SAVE TRADE TO DATABASE - LIQUIDATING POSITION TO PREVENT ORPHAN")
+            logger.error(f"[{ticker}] This is likely due to a duplicate constraint. Selling {shares} shares immediately.")
+            try:
+                # Remove from in-memory tracking
+                self.active_trades.pop(trade_id, None)
+                # Sell the position immediately
+                order = self.trader.sell(ticker, shares)
+                logger.error(f"[{ticker}] Emergency sell submitted: {order.order_id} ({order.status})")
+            except Exception as e:
+                logger.critical(f"[{ticker}] ❌ CRITICAL: Failed to emergency sell orphaned position: {e}")
+                logger.critical(f"[{ticker}] MANUAL INTERVENTION REQUIRED: {shares} shares at broker without DB record!")
 
     def on_sell_fill(
         self,

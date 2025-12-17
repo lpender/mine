@@ -18,6 +18,8 @@ from src.live_trading_service import (
     enable_strategy,
     disable_strategy,
     exit_all_positions,
+    exit_orphaned_positions,
+    get_orphaned_positions,
     _exit_strategy_positions,
 )
 # Initialize database tables
@@ -74,19 +76,37 @@ with st.sidebar:
             st.divider()
             st.error(f"**Orphaned Positions!**\n\n{', '.join(orphaned)}\n\nThese positions exist but their strategy is DISABLED. Stop losses will NOT be enforced!")
 
-        # Exit all positions button
+        # Exit positions buttons
         st.divider()
-        if st.button("🔴 Exit All Positions", type="secondary", key="exit_all"):
-            with st.spinner("Exiting positions..."):
-                results = exit_all_positions(paper=is_paper)
-                if results:
-                    for ticker, result in results.items():
-                        if "failed" in result.lower():
-                            st.error(f"{ticker}: {result}")
-                        else:
-                            st.success(f"{ticker}: {result}")
-                else:
-                    st.info("No positions to exit")
+        col_exit_all, col_exit_orphaned = st.columns(2)
+        with col_exit_all:
+            if st.button("🔴 Exit All", type="secondary", key="exit_all"):
+                with st.spinner("Exiting positions..."):
+                    results = exit_all_positions(paper=is_paper)
+                    if results:
+                        for ticker, result in results.items():
+                            if "failed" in result.lower():
+                                st.error(f"{ticker}: {result}")
+                            else:
+                                st.success(f"{ticker}: {result}")
+                    else:
+                        st.info("No positions to exit")
+
+        with col_exit_orphaned:
+            # Check for orphaned positions
+            orphaned = get_orphaned_positions(paper=is_paper)
+            btn_label = f"🧹 Exit Orphans ({len(orphaned)})" if orphaned else "🧹 Exit Orphans"
+            if st.button(btn_label, type="secondary" if orphaned else "secondary", key="exit_orphaned", disabled=not orphaned):
+                with st.spinner("Exiting orphaned positions..."):
+                    results = exit_orphaned_positions(paper=is_paper)
+                    if results:
+                        for ticker, result in results.items():
+                            if "failed" in result.lower():
+                                st.error(f"{ticker}: {result}")
+                            else:
+                                st.success(f"{ticker}: {result}")
+                    else:
+                        st.info("No orphaned positions")
 
         # See open positions button
         if st.button("📊 See Open Positions", key="see_positions"):

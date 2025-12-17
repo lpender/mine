@@ -32,8 +32,10 @@ module.exports = class StockAlertMonitor {
         this.enabledChannels = new Set(savedSettings.enabledChannels || []);
         this.alertWebhookUrl = savedSettings.alertWebhookUrl || "http://localhost:8765/alert";
         this.backfillWebhookUrl = savedSettings.backfillWebhookUrl || "http://localhost:8765/backfill";
+        this.alertVolume = savedSettings.alertVolume !== undefined ? savedSettings.alertVolume : 0.7;
 
         console.log("[StockAlertMonitor] Enabled channels:", Array.from(this.enabledChannels));
+        console.log("[StockAlertMonitor] Alert volume:", this.alertVolume);
     }
 
     saveSettings() {
@@ -41,6 +43,7 @@ module.exports = class StockAlertMonitor {
             enabledChannels: Array.from(this.enabledChannels),
             alertWebhookUrl: this.alertWebhookUrl,
             backfillWebhookUrl: this.backfillWebhookUrl,
+            alertVolume: this.alertVolume,
         };
         console.log("[StockAlertMonitor] Saving settings:", JSON.stringify(settings));
         BdApi.Data.save("StockAlertMonitor", "settings", settings);
@@ -114,8 +117,23 @@ module.exports = class StockAlertMonitor {
         this.updateChannelIndicators();
 
         // Set up observer for DOM changes (channel list updates)
-        this._channelIndicatorObserver = new MutationObserver(() => {
-            this.updateChannelIndicators();
+        this._channelIndicatorObserver = new MutationObserver((mutations) => {
+            // Ignore mutations that are just our own indicator updates
+            const hasNonIndicatorChanges = mutations.some(mutation => {
+                const addedNodes = Array.from(mutation.addedNodes);
+                const removedNodes = Array.from(mutation.removedNodes);
+
+                // If all added/removed nodes are our indicators, ignore this mutation
+                const onlyIndicators =
+                    addedNodes.every(node => node.classList?.contains('sam-channel-indicator')) &&
+                    removedNodes.every(node => node.classList?.contains('sam-channel-indicator'));
+
+                return !onlyIndicators;
+            });
+
+            if (hasNonIndicatorChanges) {
+                this.updateChannelIndicators();
+            }
         });
 
         // Observe the channel list area
@@ -146,8 +164,17 @@ module.exports = class StockAlertMonitor {
     }
 
     updateChannelIndicators() {
-        // Find all channel links in the sidebar
-        const channelLinks = document.querySelectorAll('[class*="link_"][class*="channel_"], [data-list-item-id^="channels___"]');
+        // Prevent re-entrancy (guard against infinite recursion)
+        if (this._isUpdatingIndicators) {
+            return;
+        }
+        this._isUpdatingIndicators = true;
+
+        try {
+            // Find all channel links in the sidebar
+            const channelLinks = document.querySelectorAll('[class*="link_"][class*="channel_"], [data-list-item-id^="channels___"]');
+            console.log(`[StockAlertMonitor] [Indicators] Found ${channelLinks.length} channel links`);
+            console.log(`[StockAlertMonitor] [Indicators] Enabled channels:`, Array.from(this.enabledChannels));
 
         channelLinks.forEach(link => {
             // Try to extract channel ID from the element
@@ -175,18 +202,25 @@ module.exports = class StockAlertMonitor {
             let indicator = nameEl.querySelector(".sam-channel-indicator");
             const isEnabled = this.isChannelEnabled(channelId);
 
-            if (isEnabled && !indicator) {
-                // Add indicator
-                indicator = document.createElement("span");
-                indicator.className = "sam-channel-indicator";
-                indicator.textContent = "📈";
-                indicator.title = "Live trading enabled";
-                nameEl.appendChild(indicator);
+            if (isEnabled) {
+                console.log(`[StockAlertMonitor] [Indicators] Channel ${channelId} is ENABLED, has indicator: ${!!indicator}`);
+                if (!indicator) {
+                    // Add indicator
+                    indicator = document.createElement("span");
+                    indicator.className = "sam-channel-indicator";
+                    indicator.textContent = "📈";
+                    indicator.title = "Live trading enabled";
+                    nameEl.appendChild(indicator);
+                    console.log(`[StockAlertMonitor] [Indicators] Added indicator to channel ${channelId}`);
+                }
             } else if (!isEnabled && indicator) {
                 // Remove indicator
                 indicator.remove();
             }
         });
+        } finally {
+            this._isUpdatingIndicators = false;
+        }
     }
 
     start() {
@@ -194,7 +228,7 @@ module.exports = class StockAlertMonitor {
 
         // Create alert sound
         this.alertSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-        this.alertSound.volume = 0.7;
+        this.alertSound.volume = this.alertVolume;
 
         // Subscribe to Discord's message dispatcher
         this.patchMessageCreate();
@@ -978,8 +1012,13 @@ Full message: ${fullContent.substring(0, 200)}
                 <input type="text" id="sam-backfill-webhook" value="${this.backfillWebhookUrl}"
                     style="width: 100%; padding: 8px; margin-top: 5px; background: #40444b; border: none; border-radius: 4px; color: white;">
             </div>
+            <div style="margin-bottom: 15px;">
+                <label style="color: #b9bbbe;">Alert Sound Volume: <span id="sam-volume-value" style="color: #3ba55c; font-weight: bold;">${Math.round(this.alertVolume * 100)}%</span></label><br>
+                <input type="range" id="sam-volume-slider" min="0" max="100" value="${Math.round(this.alertVolume * 100)}"
+                    style="width: 100%; margin-top: 5px; accent-color: #5865f2;">
+            </div>
             <button id="sam-save" style="background: #5865f2; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
-                Save URLs
+                Save Settings
             </button>
             <button id="sam-clear" style="background: #ed4245; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
                 Clear All Channels
@@ -991,9 +1030,28 @@ Full message: ${fullContent.substring(0, 200)}
 
         // Add event listeners after panel is created
         setTimeout(() => {
+            // Volume slider real-time update
+            const volumeSlider = document.getElementById("sam-volume-slider");
+            const volumeValue = document.getElementById("sam-volume-value");
+
+            volumeSlider?.addEventListener("input", (e) => {
+                const volume = parseInt(e.target.value);
+                volumeValue.textContent = `${volume}%`;
+                this.alertVolume = volume / 100;
+                if (this.alertSound) {
+                    this.alertSound.volume = this.alertVolume;
+                    // Test the volume by playing a short beep
+                    if (this.alertVolume > 0) {
+                        this.alertSound.currentTime = 0;
+                        this.alertSound.play().catch(e => console.log("Audio play failed:", e));
+                    }
+                }
+            });
+
             document.getElementById("sam-save")?.addEventListener("click", () => {
                 this.alertWebhookUrl = document.getElementById("sam-alert-webhook").value;
                 this.backfillWebhookUrl = document.getElementById("sam-backfill-webhook").value;
+                this.alertVolume = parseInt(volumeSlider.value) / 100;
                 this.saveSettings();
                 BdApi.UI.showToast("Settings saved!", { type: "success" });
             });

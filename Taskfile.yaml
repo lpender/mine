@@ -161,6 +161,26 @@ tasks:
     cmds:
       - tail -f logs/price_monitor.log 2>/dev/null || echo "No price monitor log found - run 'task trade' first"
 
+  logs:trades:
+    desc: Tail the trade execution log (buys and sells)
+    cmds:
+      - tail -f logs/trades.log 2>/dev/null || echo "No trades log found yet"
+
+  logs:trades:recent:
+    desc: Show last 50 trades
+    cmds:
+      - tail -50 logs/trades.log 2>/dev/null || echo "No trades log found yet"
+
+  logs:trades:buys:
+    desc: Show only buy executions
+    cmds:
+      - grep "\[BUY\]" logs/trades.log 2>/dev/null | tail -20 || echo "No trades log found yet"
+
+  logs:trades:sells:
+    desc: Show only sell executions
+    cmds:
+      - grep "\[SELL\]" logs/trades.log 2>/dev/null | tail -20 || echo "No trades log found yet"
+
   clean:
     desc: Clean up cache files
     cmds:

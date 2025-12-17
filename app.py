@@ -23,6 +23,47 @@ def to_est(dt):
     return dt.astimezone(EST)
 
 
+def explain_trigger_type(trigger_type: str, config) -> str:
+    """Provide detailed explanation of why a backtest trade exited."""
+    explanations = {
+        "take_profit": f"✅ **Take Profit Hit** - Price reached the {config.take_profit_pct}% profit target",
+        "stop_loss": f"🛑 **Stop Loss Hit** - Price dropped to the {config.stop_loss_pct}% stop loss level" +
+                     (f" (calculated from first candle open)" if config.stop_loss_from_open else " (calculated from entry price)"),
+        "trailing_stop": f"📉 **Trailing Stop Hit** - Price dropped {config.trailing_stop_pct}% from the highest point reached during the trade",
+        "timeout": f"⏰ **Timeout** - Trade held for maximum duration of {config.window_minutes} minutes without hitting TP/SL",
+        "no_entry": "❌ **No Entry** - Entry conditions were not met within the entry window",
+    }
+    return explanations.get(trigger_type, f"ℹ️ {trigger_type}")
+
+
+def explain_backtest_entry(config) -> str:
+    """Provide detailed explanation of backtest entry conditions."""
+    consec = config.entry_after_consecutive_candles
+    min_vol = config.min_candle_volume
+    window = config.entry_window_minutes
+
+    if consec > 0:
+        vol_text = f" with {min_vol:,}+ volume each" if min_vol > 0 else ""
+        return f"📊 **Entry Condition**: Wait for {consec} consecutive green candle{'s' if consec > 1 else ''}{vol_text} within {window} minute window after alert"
+    else:
+        return f"📊 **Entry Condition**: Entry at candle close within {window} minute window after alert"
+
+
+def get_backtest_chart_legend() -> str:
+    """Return explanation of backtest chart elements."""
+    return """
+    **Chart Elements:**
+    - 🟢/🔴 **Candlesticks**: 1-minute OHLCV bars (green = close > open, red = close < open)
+    - 🔵 **Blue Circle**: Entry point (where simulated position was opened)
+    - ❌ **X Marker**: Exit point (green X = profitable exit, red X = loss)
+    - 🔵 **Blue Solid Line**: Entry price level
+    - 🟢 **Green Dashed Line**: Take Profit (TP) target price
+    - 🔴 **Red Dashed Line**: Stop Loss (SL) trigger price
+
+    **Note**: Bars are displayed using "end-time" convention (like WeBull), so a 10:05 bar represents trading from 10:04 to 10:05.
+    """
+
+
 from src.backtest import run_backtest, calculate_summary_stats
 from src.models import BacktestConfig
 from src.strategy import StrategyConfig
@@ -821,6 +862,16 @@ else:
         if ann.source_message:
             st.markdown(f"**Full Message:** {ann.source_message}")
 
+        # Show trade outcome explanation
+        st.info(explain_trigger_type(selected_result.trigger_type, config))
+
+        # Show entry conditions
+        st.info(explain_backtest_entry(config))
+
+        # Show chart legend
+        with st.expander("📖 Chart Legend - What do the colors and markers mean?"):
+            st.markdown(get_backtest_chart_legend())
+
         # Get the bars for this announcement
         key = (ann.ticker, ann.timestamp)
         bars = bars_dict.get(key, [])
@@ -859,8 +910,10 @@ else:
 
             # Add entry marker (entry at close of first candle, +1 min for end-time display)
             if selected_result.entry_price and selected_result.entry_time:
+                # Round to minute to align with bar timestamps, then shift +1 min for display
+                entry_time_aligned = pd.Timestamp(to_est(selected_result.entry_time)).floor('1min') + timedelta(minutes=1)
                 fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.entry_time) + timedelta(minutes=1)],
+                    x=[entry_time_aligned],
                     y=[selected_result.entry_price],
                     mode="markers",
                     marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
@@ -869,9 +922,11 @@ else:
 
             # Add exit marker (+1 min for end-time display)
             if selected_result.exit_price and selected_result.exit_time:
+                # Round to minute to align with bar timestamps, then shift +1 min for display
+                exit_time_aligned = pd.Timestamp(to_est(selected_result.exit_time)).floor('1min') + timedelta(minutes=1)
                 exit_color = "green" if selected_result.return_pct > 0 else "red"
                 fig.add_trace(go.Scatter(
-                    x=[to_est(selected_result.exit_time) + timedelta(minutes=1)],
+                    x=[exit_time_aligned],
                     y=[selected_result.exit_price],
                     mode="markers",
                     marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
@@ -907,10 +962,24 @@ else:
             st.plotly_chart(fig, width="stretch")
 
             # Show trade details
-            col1, col2, col3, col4 = st.columns(4)
+            st.subheader("Trade Metrics")
+            col1, col2, col3, col4, col5 = st.columns(5)
             col1.metric("Entry Price", f"${selected_result.entry_price:.2f}" if selected_result.entry_price else "N/A")
             col2.metric("Exit Price", f"${selected_result.exit_price:.2f}" if selected_result.exit_price else "N/A")
             col3.metric("Return", f"{selected_result.return_pct:+.2f}%" if selected_result.return_pct else "N/A")
-            col4.metric("Exit Type", selected_result.trigger_type)
+            col4.metric("Exit Type", selected_result.trigger_type.replace('_', ' ').title())
+
+            # Calculate duration if both times exist
+            if selected_result.entry_time and selected_result.exit_time:
+                duration = (selected_result.exit_time - selected_result.entry_time).total_seconds() / 60
+                col5.metric("Duration", f"{duration:.1f} min")
+            else:
+                col5.metric("Duration", "N/A")
+
+            # Additional context
+            if ann.market_session:
+                st.caption(f"📅 Market Session: **{ann.market_session}** | Country: **{ann.country}** | " +
+                          (f"Float: **{ann.float_shares/1e6:.1f}M** | " if ann.float_shares else "") +
+                          (f"Market Cap: **${ann.market_cap/1e6:.1f}M**" if ann.market_cap else ""))
         else:
             st.warning(f"No OHLCV data available for {ann.ticker}")

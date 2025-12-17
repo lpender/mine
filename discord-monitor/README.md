@@ -94,7 +94,77 @@ Then reload the plugin in Discord (disable and re-enable, or restart Discord).
 
 ### Channel Indicators (📈) Not Showing
 
+The plugin should show a 📈 emoji next to channels enabled for live trading. If they're not appearing:
+
+**Debug Steps:**
+
+1. **Check console logs** (Cmd+Option+I on Mac):
+   ```javascript
+   // Look for these messages:
+   [StockAlertMonitor] [Indicators] Found X channel links
+   [StockAlertMonitor] [Indicators] Enabled channels: [...]
+   [StockAlertMonitor] [Indicators] Channel XXX is ENABLED
+   [StockAlertMonitor] [Indicators] Added indicator to channel XXX
+   ```
+
+2. **Verify channels are actually enabled:**
+   ```javascript
+   // In Discord console:
+   BdApi.Data.load("StockAlertMonitor", "settings")
+   // Should show: { enabledChannels: ["123456789", ...], ... }
+   ```
+
+3. **Common issues:**
+   - **No channels enabled** - Use Ctrl+Shift+T to toggle current channel
+   - **Wrong channel IDs** - The channel IDs in settings may not match Discord's current IDs
+   - **DOM selectors outdated** - Discord updated their UI structure
+   - **Plugin not fully loaded** - Wait 1.5 seconds after enabling, or disable/re-enable
+
+4. **Manual fix - get correct channel ID:**
+   ```javascript
+   // Navigate to a channel, then run in console:
+   window.location.pathname.match(/\/channels\/\d+\/(\d+)/)[1]
+   // This gives you the channel ID
+
+   // Manually enable it:
+   const settings = BdApi.Data.load("StockAlertMonitor", "settings");
+   settings.enabledChannels.push("YOUR_CHANNEL_ID_HERE");
+   BdApi.Data.save("StockAlertMonitor", "settings", settings);
+   // Then disable/re-enable the plugin
+   ```
+
 Discord occasionally updates their DOM structure which can break the selectors. Check if the plugin needs updating for newer Discord versions.
+
+### "Maximum call stack size exceeded" Error
+
+If you see `RangeError: Maximum call stack size exceeded` in the BetterDiscord console:
+
+**If error persists when StockAlertMonitor is disabled:**
+- This is NOT caused by StockAlertMonitor
+- The error message mentions "ThemeAttributes" which is BetterDiscord's theme system
+- Likely caused by another plugin or theme creating recursive patches
+
+**To troubleshoot:**
+1. Disable all other plugins one by one to find the culprit
+2. Try disabling your current theme
+3. Check for BetterDiscord updates
+4. Clear BetterDiscord cache: Delete `~/Library/Application Support/BetterDiscord/data/stable`
+
+**If error only happens when StockAlertMonitor is enabled:**
+- This was caused by a recursive loop in the channel indicator system (fixed in latest version)
+- The indicator updates would trigger DOM mutations, which would trigger more updates
+
+**Fix applied to StockAlertMonitor (v1.0+):**
+- Added re-entrancy guard to prevent concurrent updates
+- Modified MutationObserver to ignore self-caused mutations (indicator additions/removals)
+
+**To update StockAlertMonitor:**
+```bash
+# Copy updated plugin to BetterDiscord
+cp discord-monitor/StockAlertMonitor.plugin.js ~/Library/Application\ Support/BetterDiscord/plugins/
+
+# Then reload Discord or disable/enable the plugin
+```
 
 ## Configuration
 
@@ -102,6 +172,9 @@ Settings are stored in BetterDiscord's data store. Access via the plugin setting
 
 - **Alert webhook URL** - Where to send live alerts (default: `http://localhost:8765/alert`)
 - **Backfill webhook URL** - Where to send historical data (default: `http://localhost:8765/backfill`)
+- **Alert Sound Volume** - Volume slider (0-100%) for the alert sound (default: 70%)
+  - Move the slider to test the volume - it will play a preview
+  - Set to 0% to mute alerts completely
 - **Enabled channels** - List of channel IDs enabled for live trading
 
 ## Alert Format

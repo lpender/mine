@@ -1444,3 +1444,71 @@ def exit_all_positions(paper: bool = True) -> Dict[str, str]:
             logger.error(f"[{ticker}] Failed to sell: {e}")
 
     return results
+
+
+def get_orphaned_positions(paper: bool = True) -> List[Tuple[str, int, float]]:
+    """
+    Get positions at the broker that don't have corresponding active trades in DB.
+
+    Returns:
+        List of (ticker, shares, avg_entry_price) tuples for orphaned positions
+    """
+    from .trading import get_trading_client
+    from .active_trade_store import get_active_trade_store
+
+    trader = get_trading_client(paper=paper)
+    trade_store = get_active_trade_store()
+
+    # Get all positions from broker
+    positions = trader.get_positions()
+    if not positions:
+        return []
+
+    # Get all active trades from database
+    db_trades = trade_store.get_all_trades()
+    db_tickers = {t.ticker for t in db_trades}
+
+    # Find orphaned positions (at broker but not in DB)
+    orphaned = []
+    for pos in positions:
+        if pos.ticker not in db_tickers:
+            orphaned.append((pos.ticker, pos.shares, pos.avg_entry_price))
+
+    return orphaned
+
+
+def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
+    """
+    Exit positions at the broker that don't have corresponding active trades in DB.
+
+    These are "orphaned" positions - they exist at the broker but aren't being
+    tracked by any strategy, so stop losses won't be enforced.
+
+    Args:
+        paper: Use paper trading (default True)
+
+    Returns:
+        Dict mapping ticker to result ("sold", "failed: reason", etc.)
+    """
+    from .trading import get_trading_client
+
+    results = {}
+    orphaned = get_orphaned_positions(paper=paper)
+
+    if not orphaned:
+        logger.info("No orphaned positions to exit")
+        return results
+
+    logger.warning(f"Exiting {len(orphaned)} orphaned positions...")
+    trader = get_trading_client(paper=paper)
+
+    for ticker, shares, entry_price in orphaned:
+        try:
+            order = trader.sell(ticker, shares)
+            results[ticker] = f"sell order submitted ({order.status}) - {shares} shares"
+            logger.info(f"[{ticker}] Submitted sell for {shares} orphaned shares")
+        except Exception as e:
+            results[ticker] = f"failed: {e}"
+            logger.error(f"[{ticker}] Failed to sell orphaned position: {e}")
+
+    return results

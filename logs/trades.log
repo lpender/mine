@@ -1,0 +1,64 @@
+2025-12-16 16:44:47 [BUY] TEST: 100 shares @ $10.5000 | strategy=test-strategy trigger=green_candles 1% vol
+2025-12-16 16:44:47 [SELL] TEST: 100 shares @ $11.2500 | strategy=test-strategy entry=$10.5000 P&L=$+75.00 (+7.14%) reason=take_profit
+2025-12-16 17:05:35 [BUY] ULCC: 60 shares @ $5.6300 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 6,040 vol = 60 shares ($337)
+2025-12-16 17:09:51 [BUY] ADTX: 27 shares @ $1.8000 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 2,791 vol (extrapolated from 2,373 in 51s) = 27 shares ($48)
+2025-12-16 17:09:56 [BUY] ATPC: 141 shares @ $0.1220 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 14,145 vol (extrapolated from 12,731 in 54s) = 141 shares ($17)
+2025-12-16 17:11:58 [SELL] ADTX: 27 shares @ $1.6700 | strategy=test - vol catchall entry=$1.8000 P&L=$-3.51 (-7.22%) reason=stop_loss
+2025-12-16 17:12:57 [BUY] DRCT: 660 shares @ $0.0760 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 66,043 vol (extrapolated from 60,540 in 55s) = 660 shares ($50)
+2025-12-16 17:15:09 [SELL] DRCT: 660 shares @ $0.0717 | strategy=test - vol catchall entry=$0.0760 P&L=$-2.84 (-5.66%) reason=stop_loss
+2025-12-16 17:17:50 [SELL] ATPC: 141 shares @ $0.1142 | strategy=test - vol catchall entry=$0.1220 P&L=$-1.10 (-6.39%) reason=stop_loss
+2025-12-16 17:18:11 [BUY] LION: 258 shares @ $8.9000 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 25,836 vol (extrapolated from 4,306 in 10s) = 258 shares ($2296)
+2025-12-16 17:21:51 [BUY] WORX: 188 shares @ $0.2230 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 18,896 vol (extrapolated from 5,984 in 19s) = 188 shares ($42)
+2025-12-16 17:25:12 [SELL] ULCC: 60 shares @ $5.2842 | strategy=test - vol catchall entry=$5.6300 P&L=$-20.75 (-6.14%) reason=stop_loss
+2025-12-16 17:26:34 [BUY] PFSA: 39 shares @ $0.1200 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 3,963 vol (extrapolated from 2,246 in 34s) = 39 shares ($13)
+2025-12-16 17:31:36 [BUY] GSUN: 228 shares @ $1.4200 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 22,800 vol = 228 shares ($326)
+2025-12-16 17:32:03 [BUY] ADTX: 1260 shares @ $1.9400 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 126,017 vol = 1260 shares ($2444)
+2025-12-16 17:34:26 [SELL] GSUN: 228 shares @ $1.3400 | strategy=test - vol catchall entry=$1.4200 P&L=$-18.24 (-5.63%) reason=stop_loss
+2025-12-16 17:36:57 [SELL] WORX: 188 shares @ $0.2133 | strategy=test - vol catchall entry=$0.2230 P&L=$-1.82 (-4.35%) reason=stop_loss
+2025-12-16 17:38:17 [BUY] MASK: 110 shares @ $0.3600 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 11,066 vol = 110 shares ($40)
+2025-12-16 17:41:46 [BUY] ATPC: 71 shares @ $0.1121 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 7,132 vol (extrapolated from 5,349 in 45s) = 71 shares ($8)
+2025-12-16 17:41:54 [SELL] MASK: 110 shares @ $0.3401 | strategy=test - vol catchall entry=$0.3600 P&L=$-2.19 (-5.53%) reason=stop_loss
+2025-12-16 17:48:38 [BUY] DRCT: 49 shares @ $0.0833 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 4,988 vol (extrapolated from 3,076 in 37s) = 49 shares ($4)
+2025-12-16 17:49:07 [SELL] DRCT: 49 shares @ $0.0803 | strategy=test - vol catchall entry=$0.0833 P&L=$-0.15 (-3.60%) reason=stop_loss
+2025-12-16 17:49:29 [SELL] ATPC: 71 shares @ $0.1087 | strategy=test - vol catchall entry=$0.1121 P&L=$-0.24 (-3.03%) reason=stop_loss
+2025-12-16 18:01:46 [BUY] VSME: 40 shares @ $0.0825 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 4,074 vol (extrapolated from 3,124 in 46s) = 40 shares ($3)
+2025-12-16 18:19:50 [SELL] ADTX: 1260 shares @ $2.1400 | strategy=test - vol catchall entry=$1.9400 P&L=$+252.00 (+10.31%) reason=take_profit
+2025-12-16 18:20:06 [BUY] ADTX: 198 shares @ $2.1400 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 19,830 vol (extrapolated from 1,322 in 4s) = 198 shares ($422)
+2025-12-16 19:03:17 [SELL] ADTX: 198 shares @ $2.0100 | strategy=test - vol catchall entry=$2.1400 P&L=$-25.74 (-6.07%) reason=stop_loss
+2025-12-16 19:25:02 [BUY] ATPC: 431 shares @ $0.1232 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 43,149 vol = 431 shares ($53)
+2025-12-17 08:14:45 [BUY] UDMY: 1589 shares @ $6.4300 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 79,497 vol = 1589 shares ($10201)
+2025-12-17 08:33:06 [BUY] MBRX: 1615 shares @ $5.5500 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 80,754 vol = 1615 shares ($8963)
+2025-12-17 08:36:38 [SELL] MBRX: 1615 shares @ $5.2567 | strategy=353k from 40k entry=$5.5500 P&L=$-473.66 (-5.28%) reason=trailing_stop
+2025-12-17 09:31:58 [BUY] SGML: 2194 shares @ $11.8500 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 109,703 vol (extrapolated from 100,562 in 55s) = 2194 shares ($25974)
+2025-12-17 09:32:17 [BUY] RXRX: 8429 shares @ $4.7500 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 549,225 vol (extrapolated from 146,460 in 16s) = 8429 shares ($39996)
+2025-12-17 09:33:45 [SELL] RXRX: 8429 shares @ $4.6500 | strategy=353k from 40k entry=$4.7500 P&L=$-842.90 (-2.11%) reason=stop_loss
+2025-12-17 09:33:52 [BUY] HYMC: 1015 shares @ $14.9000 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 50,752 vol = 1015 shares ($14971)
+2025-12-17 09:37:57 [BUY] AXTI: 2727 shares @ $14.7100 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 202,427 vol = 2727 shares ($39991)
+2025-12-17 09:39:04 [SELL] HYMC: 1015 shares @ $14.4000 | strategy=353k from 40k entry=$14.9000 P&L=$-507.50 (-3.36%) reason=stop_loss
+2025-12-17 09:41:04 [SELL] AXTI: 2727 shares @ $14.6500 | strategy=353k from 40k entry=$14.7100 P&L=$-163.62 (-0.41%) reason=stop_loss
+2025-12-17 09:48:19 [SELL] SGML: 2194 shares @ $11.5100 | strategy=353k from 40k entry=$11.8500 P&L=$-745.96 (-2.87%) reason=stop_loss
+2025-12-17 10:02:40 [BUY] PCSA: 400 shares @ $6.8080 | strategy=353k from 40k trigger=early_entry_1_green 2.0% of 20,019 vol = 400 shares ($2740)
+2025-12-17 10:19:23 [SELL] PCSA: 400 shares @ $6.7361 | strategy=353k from 40k entry=$6.8080 P&L=$-28.74 (-1.06%) reason=trailing_stop
+2025-12-17 10:40:15 [SELL] UDMY: 1589 shares @ $6.6400 | strategy=353k from 40k entry=$6.4300 P&L=$+333.69 (+3.27%) reason=timeout
+2025-12-17 11:38:39 [BUY] RZLT: 325 shares @ $2.1900 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 32,568 vol (extrapolated from 20,084 in 37s) = 325 shares ($712)
+2025-12-17 11:40:05 [BUY] ATPC: 988 shares @ $0.1477 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 98,881 vol = 988 shares ($146)
+2025-12-17 11:44:04 [BUY] ATPC: 1061 shares @ $0.1604 | strategy=test - vol catchall trigger=completed_1_green 1.0% of 106,134 vol = 1061 shares ($170)
+2025-12-17 11:56:28 [BUY] YCBD: 4255 shares @ $2.3500 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 541,777 vol (extrapolated from 243,800 in 27s) = 4255 shares ($9999)
+2025-12-17 12:00:00 [BUY] MGRT: 14 shares @ $9.7400 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 1,491 vol (extrapolated from 1,467 in 59s) = 14 shares ($136)
+2025-12-17 12:00:01 [BUY] SHFS: 227 shares @ $1.7900 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 22,730 vol = 227 shares ($404)
+2025-12-17 12:05:19 [SELL] SHFS: 227 shares @ $1.9800 | strategy=test - vol catchall entry=$1.7900 P&L=$+43.13 (+10.61%) reason=take_profit
+2025-12-17 12:05:21 [BUY] SHFS: 10 shares @ $1.9900 | strategy=test - vol catchall trigger=completed_1_green 1.0% of 1,076 vol = 10 shares ($20)
+2025-12-17 12:05:32 [SELL] SHFS: 10 shares @ $1.9350 | strategy=test - vol catchall entry=$1.9900 P&L=$-0.55 (-2.76%) reason=stop_loss
+2025-12-17 12:15:22 [SELL] YCBD: 4255 shares @ $2.2200 | strategy=test - vol catchall entry=$2.3500 P&L=$-553.15 (-5.53%) reason=stop_loss
+2025-12-17 12:24:06 [BUY] VTGN: 232 shares @ $0.8842 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 23,200 vol (extrapolated from 1,160 in 3s) = 232 shares ($205)
+2025-12-17 12:26:26 [BUY] VTGN: 11 shares @ $0.9167 | strategy=test - vol catchall trigger=completed_1_green 1.0% of 1,160 vol = 11 shares ($10)
+2025-12-17 12:32:08 [SELL] VTGN: 11 shares @ $0.8681 | strategy=test - vol catchall entry=$0.9167 P&L=$-0.53 (-5.30%) reason=stop_loss
+2025-12-17 12:40:07 [BUY] PCSA: 1090 shares @ $6.5700 | strategy=test - vol catchall trigger=early_entry_1_green 1.0% of 109,045 vol (extrapolated from 12,722 in 7s) = 1090 shares ($7172)
+2025-12-17 12:45:25 [SELL] PCSA: 1090 shares @ $6.1900 | strategy=test - vol catchall entry=$6.5700 P&L=$-414.20 (-5.78%) reason=stop_loss
+2025-12-17 12:50:17 [BUY] PCSA: 127 shares @ $6.9500 | strategy=test - vol catchall trigger=completed_1_green 1.0% of 12,722 vol = 127 shares ($881)
+2025-12-17 12:51:57 [BUY] YCBD: 2438 shares @ $2.5101 | strategy=test - vol catchall trigger=completed_1_green 1.0% of 243,800 vol = 2438 shares ($6136)
+2025-12-17 12:55:50 [SELL] PCSA: 127 shares @ $6.5900 | strategy=test - vol catchall entry=$6.9500 P&L=$-45.72 (-5.18%) reason=stop_loss
+2025-12-17 12:57:18 [SELL] YCBD: 2438 shares @ $2.3700 | strategy=test - vol catchall entry=$2.5101 P&L=$-341.62 (-5.58%) reason=stop_loss
+2025-12-17 13:02:45 [SELL] VTGN: 232 shares @ $0.9239 | strategy=test - vol catchall entry=$0.8842 P&L=$+9.21 (+4.49%) reason=timeout
+2025-12-17 13:02:46 [SELL] RZLT: 325 shares @ $2.1100 | strategy=test - vol catchall entry=$2.1900 P&L=$-26.00 (-3.65%) reason=timeout
+2025-12-17 13:02:46 [SELL] ATPC: 988 shares @ $0.1454 | strategy=test - vol catchall entry=$0.1477 P&L=$-2.30 (-1.58%) reason=timeout
