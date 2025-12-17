@@ -42,6 +42,7 @@ class StrategyConfig:
     consec_green_candles: int = 1
     min_candle_volume: int = 5000
     entry_window_minutes: int = 5  # How long to wait for entry conditions after alert
+    buy_order_timeout_seconds: int = 5  # Cancel unfilled buy orders after this many seconds
 
     # Exit rules
     take_profit_pct: float = 10.0
@@ -283,16 +284,16 @@ class StrategyEngine:
     def _recover_positions(self):
         """Recover open positions from database and broker on startup."""
         # First, load from our database (has accurate entry times, SL/TP)
-        logger.info(f"Loading active trades from database for strategy {self.strategy_id}...")
+        logger.info(f"[{self.strategy_name}] Loading active trades from database...")
         try:
             db_trades = self._active_trade_store.get_trades_for_strategy(self.strategy_id)
-            logger.info(f"Database returned {len(db_trades)} active trades")
+            logger.info(f"[{self.strategy_name}] Database returned {len(db_trades)} active trades")
 
             for t in db_trades:
                 # Generate trade_id if not present (migration from old data)
                 trade_id = t.trade_id if t.trade_id else str(uuid.uuid4())
                 if not t.trade_id:
-                    logger.info(f"[{t.ticker}] Generated trade_id for legacy trade: {trade_id[:8]}")
+                    logger.info(f"[{self.strategy_name}] [{t.ticker}] Generated trade_id for legacy trade: {trade_id[:8]}")
 
                 self.active_trades[trade_id] = ActiveTrade(
                     trade_id=trade_id,
@@ -308,24 +309,24 @@ class StrategyEngine:
                     last_price=t.last_price or 0.0,
                     last_quote_time=t.last_quote_time,
                 )
-                logger.info(f"[{t.ticker}] Recovered from DB: {t.shares} shares @ ${t.entry_price:.2f}, "
+                logger.info(f"[{self.strategy_name}] [{t.ticker}] Recovered from DB: {t.shares} shares @ ${t.entry_price:.2f}, "
                            f"SL=${t.stop_loss_price:.2f}, TP=${t.take_profit_price:.2f} (trade_id={trade_id[:8]})")
 
                 # Subscribe to quotes
                 if self.on_subscribe:
                     subscribed = self.on_subscribe(t.ticker)
                     if not subscribed:
-                        logger.warning(f"[{t.ticker}] Could not subscribe for quotes (at limit) - position recovered but won't get live updates until slot available")
+                        logger.warning(f"[{self.strategy_name}] [{t.ticker}] Could not subscribe for quotes (at limit) - position recovered but won't get live updates until slot available")
 
         except Exception as e:
-            logger.error(f"Failed to load from database: {e}", exc_info=True)
+            logger.error(f"[{self.strategy_name}] Failed to load from database: {e}", exc_info=True)
 
         # Recover pending entries from database
-        logger.info(f"Loading pending entries from database for strategy {self.strategy_id}...")
+        logger.info(f"[{self.strategy_name}] Loading pending entries from database...")
         try:
             pending_store = get_pending_entry_store()
             db_entries = pending_store.get_entries_for_strategy(self.strategy_id)
-            logger.info(f"Database returned {len(db_entries)} pending entries")
+            logger.info(f"[{self.strategy_name}] Database returned {len(db_entries)} pending entries")
 
             postgres_client = PostgresClient()
             cfg = self.config
@@ -336,7 +337,7 @@ class StrategyEngine:
                 # Check if entry window has expired
                 time_since_alert = (datetime.now() - e.alert_time).total_seconds() / 60
                 if time_since_alert > cfg.entry_window_minutes:
-                    logger.info(f"[{e.ticker}] Pending entry expired during restart ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m window) - removing")
+                    logger.info(f"[{self.strategy_name}] [{e.ticker}] Pending entry expired during restart ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m window) - removing")
                     pending_store.delete_entry(e.trade_id)
                     expired_count += 1
                     continue
@@ -344,7 +345,7 @@ class StrategyEngine:
                 # Reconstruct announcement from database
                 announcement = postgres_client.get_announcement(e.announcement_ticker, e.announcement_timestamp)
                 if not announcement:
-                    logger.warning(f"[{e.ticker}] Could not find announcement for pending entry - creating minimal announcement")
+                    logger.warning(f"[{self.strategy_name}] [{e.ticker}] Could not find announcement for pending entry - creating minimal announcement")
                     # Create minimal announcement for recovery
                     announcement = Announcement(
                         ticker=e.announcement_ticker,
@@ -365,37 +366,37 @@ class StrategyEngine:
                 )
                 recovered_count += 1
                 remaining_window = cfg.entry_window_minutes - time_since_alert
-                logger.info(f"[{e.ticker}] Recovered pending entry (trade_id={e.trade_id[:8]}, {remaining_window:.1f}m remaining in entry window)")
+                logger.info(f"[{self.strategy_name}] [{e.ticker}] Recovered pending entry (trade_id={e.trade_id[:8]}, {remaining_window:.1f}m remaining in entry window)")
 
                 # Subscribe to quotes (if not already subscribed via active trades)
                 if not self._get_trades_for_ticker(e.ticker) and self.on_subscribe:
                     subscribed = self.on_subscribe(e.ticker)
                     if not subscribed:
-                        logger.warning(f"[{e.ticker}] Could not subscribe for quotes (at limit) - pending entry recovered but won't get live updates")
+                        logger.warning(f"[{self.strategy_name}] [{e.ticker}] Could not subscribe for quotes (at limit) - pending entry recovered but won't get live updates")
 
             if expired_count > 0:
-                logger.info(f"Removed {expired_count} expired pending entries")
+                logger.info(f"[{self.strategy_name}] Removed {expired_count} expired pending entries")
 
         except Exception as e:
-            logger.error(f"Failed to load pending entries from database: {e}", exc_info=True)
+            logger.error(f"[{self.strategy_name}] Failed to load pending entries from database: {e}", exc_info=True)
 
         # Verify our positions still exist at broker (positions may have been manually closed)
         # NOTE: We do NOT auto-claim broker positions. A strategy only owns positions that
         # were explicitly created through its entry flow (on_alert -> on_buy_fill).
         # This prevents all strategies from claiming all broker positions.
-        logger.info("Verifying positions with broker...")
+        logger.info(f"[{self.strategy_name}] Verifying positions with broker...")
         try:
             positions = self.trader.get_positions()
             broker_tickers = {p.ticker for p in positions}
-            logger.info(f"Broker has positions in: {broker_tickers}")
+            logger.info(f"[{self.strategy_name}] Broker has positions in: {broker_tickers}")
 
             # Check for positions we track but broker doesn't have (manually closed)
             for trade_id, trade in self.active_trades.items():
                 if trade.ticker not in broker_tickers:
-                    logger.warning(f"[{trade.ticker}] Position not found at broker - may have been manually closed (trade_id={trade_id[:8]})")
+                    logger.warning(f"[{self.strategy_name}] [{trade.ticker}] Position not found at broker - may have been manually closed (trade_id={trade_id[:8]})")
 
         except Exception as e:
-            logger.error(f"Failed to recover from broker: {e}", exc_info=True)
+            logger.error(f"[{self.strategy_name}] Failed to recover from broker: {e}", exc_info=True)
 
         # Also check for pending orders
         self._recover_pending_orders()
@@ -410,11 +411,11 @@ class StrategyEngine:
         try:
             orders = self.trader.get_open_orders()
             if orders:
-                logger.info(f"Broker has {len(orders)} open orders (not tracking)")
+                logger.info(f"[{self.strategy_name}] Broker has {len(orders)} open orders (not tracking)")
                 for order in orders:
-                    logger.info(f"[{order.ticker}] Pending {order.side} order: {order.shares} shares ({order.status})")
+                    logger.info(f"[{self.strategy_name}] [{order.ticker}] Pending {order.side} order: {order.shares} shares ({order.status})")
         except Exception as e:
-            logger.error(f"Failed to check pending orders: {e}", exc_info=True)
+            logger.error(f"[{self.strategy_name}] Failed to check pending orders: {e}", exc_info=True)
 
     # --- Helper methods for multi-position support ---
 
@@ -427,8 +428,14 @@ class StrategyEngine:
         return [t for t in self.active_trades.values() if t.ticker == ticker]
 
     def _has_pending_or_trade(self, ticker: str) -> bool:
-        """Check if we have any pending entries or active trades for a ticker."""
-        return bool(self._get_pending_for_ticker(ticker) or self._get_trades_for_ticker(ticker))
+        """Check if we have any pending entries, pending orders, or active trades for a ticker."""
+        if self._get_pending_for_ticker(ticker) or self._get_trades_for_ticker(ticker):
+            return True
+        # Also check for pending orders (buy orders waiting to fill)
+        for pending in self.pending_orders.values():
+            if pending.ticker == ticker:
+                return True
+        return False
 
     def _get_candles_for_ticker(self, ticker: str) -> List[CandleBar]:
         """Get shared candle data for a ticker."""
@@ -459,7 +466,7 @@ class StrategyEngine:
         # Check filters with reason tracking
         passes, rejection_reason = self._passes_filters_with_reason(announcement)
         if not passes:
-            logger.info(f"[{ticker}] Filtered by '{self.strategy_name}': {rejection_reason}")
+            logger.info(f"[{self.strategy_name}] [{ticker}] Filtered: {rejection_reason}")
             if trace_store and trace_id:
                 trace_store.add_event(
                     trace_id=trace_id,
@@ -484,7 +491,7 @@ class StrategyEngine:
         # Check if tradeable on broker before tracking
         tradeable, reason = self.trader.is_tradeable(ticker)
         if not tradeable:
-            logger.warning(f"[{ticker}] Not tradeable: {reason}")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Not tradeable: {reason}")
             if trace_store and trace_id:
                 trace_store.add_event(
                     trace_id=trace_id,
@@ -496,14 +503,14 @@ class StrategyEngine:
                 )
             return False
 
-        logger.info(f"[{ticker}] Alert passed filters, checking subscription availability")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Alert passed filters, checking subscription availability")
 
         # Request quote subscription only if not already subscribed for this ticker
         already_tracking = self._has_pending_or_trade(ticker)
         if not already_tracking and self.on_subscribe:
             subscribed = self.on_subscribe(ticker)
             if not subscribed:
-                logger.warning(f"[{ticker}] Cannot subscribe for quotes (at websocket limit) - rejecting alert")
+                logger.warning(f"[{self.strategy_name}] [{ticker}] Cannot subscribe for quotes (at websocket limit) - rejecting alert")
                 if trace_store and trace_id:
                     trace_store.add_event(
                         trace_id=trace_id,
@@ -520,7 +527,7 @@ class StrategyEngine:
 
         # Start tracking for entry (keyed by trade_id, not ticker)
         existing_count = len(self._get_pending_for_ticker(ticker)) + len(self._get_trades_for_ticker(ticker))
-        logger.info(f"[{ticker}] Starting to track for entry (trade_id={trade_id[:8]}, existing positions: {existing_count})")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Starting to track for entry (trade_id={trade_id[:8]}, existing positions: {existing_count})")
         alert_time = datetime.utcnow()  # Use UTC to match quote timestamps
         self.pending_entries[trade_id] = PendingEntry(
             trade_id=trade_id,
@@ -621,8 +628,11 @@ class StrategyEngine:
             trade.last_price = price
             trade.last_quote_time = timestamp
             pnl_pct = ((price - trade.entry_price) / trade.entry_price) * 100
-            status_logger.info(f"[{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f} (trade={trade.trade_id[:8]})")
+            status_logger.info(f"[{self.strategy_name}] [{ticker}] ${price:.2f} ({pnl_pct:+.1f}%) | SL=${trade.stop_loss_price:.2f} TP=${trade.take_profit_price:.2f} (trade={trade.trade_id[:8]})")
             self._check_exit(trade.trade_id, price, timestamp)
+
+        # Check for pending buy orders that have timed out
+        self._check_pending_buy_order_timeouts(ticker, timestamp)
 
     def _passes_filters(self, ann: Announcement) -> bool:
         """Check if announcement passes all filters."""
@@ -630,40 +640,40 @@ class StrategyEngine:
 
         # Channel filter
         if cfg.channels and ann.channel not in cfg.channels:
-            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': channel '{ann.channel}' not in {cfg.channels}")
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: channel '{ann.channel}' not in {cfg.channels}")
             return False
 
         # Direction filter
         if cfg.directions and ann.direction not in cfg.directions:
-            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': direction '{ann.direction}' not in {cfg.directions}")
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: direction '{ann.direction}' not in {cfg.directions}")
             return False
 
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
-            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': session '{ann.market_session}' not in {cfg.sessions}")
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: session '{ann.market_session}' not in {cfg.sessions}")
             return False
 
         # Price filter (using price_threshold from announcement as proxy)
         # Note: Real price check happens at entry time
         if ann.price_threshold:
             if ann.price_threshold <= cfg.price_min or ann.price_threshold > cfg.price_max:
-                logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}")
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: price ${ann.price_threshold} outside ${cfg.price_min}-${cfg.price_max}")
                 return False
 
         # Country blacklist filter
         if cfg.country_blacklist and ann.country in cfg.country_blacklist:
-            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': country '{ann.country}' in blacklist")
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: country '{ann.country}' in blacklist")
             return False
 
         # Intraday mentions filter (must be less than max)
         if cfg.max_intraday_mentions is not None and ann.mention_count is not None:
             if ann.mention_count >= cfg.max_intraday_mentions:
-                logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': {ann.mention_count} mentions >= max {cfg.max_intraday_mentions}")
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: {ann.mention_count} mentions >= max {cfg.max_intraday_mentions}")
                 return False
 
         # Financing headline filter (offerings, reverse splits, etc.)
         if cfg.exclude_financing_headlines and ann.headline_is_financing:
-            logger.info(f"[{ann.ticker}] Filtered by '{self.strategy_name}': financing headline ({ann.headline_financing_type})")
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: financing headline ({ann.headline_financing_type})")
             return False
 
         return True
@@ -718,11 +728,11 @@ class StrategyEngine:
         cfg = self.config
 
         # Log every quote for debugging (to volume.log)
-        quotes_logger.info(f"[{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
+        quotes_logger.info(f"[{self.strategy_name}] [{ticker}] QUOTE: ${price:.4f} vol={volume:,} | filter: ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
 
         # Price filter at actual price
         if price <= cfg.price_min or price > cfg.price_max:
-            quotes_logger.info(f"[{ticker}] FILTERED: ${price:.4f} outside ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
+            quotes_logger.info(f"[{self.strategy_name}] [{ticker}] FILTERED: ${price:.4f} outside ${cfg.price_min:.2f}-${cfg.price_max:.2f}")
             # Still check timeouts even if price is filtered
             self._check_pending_timeouts(ticker, timestamp)
             return
@@ -752,10 +762,10 @@ class StrategyEngine:
                 meets_vol = candle.volume >= cfg.min_candle_volume
                 qualifies = candle.is_green and meets_vol
                 quotes_logger.info(f"")
-                quotes_logger.info(f"[{ticker}] ━━━ CANDLE CLOSED ━━━")
-                quotes_logger.info(f"[{ticker}] {color} candle | O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f}")
-                quotes_logger.info(f"[{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
-                quotes_logger.info(f"[{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
+                quotes_logger.info(f"[{self.strategy_name}] [{ticker}] ━━━ CANDLE CLOSED ━━━")
+                quotes_logger.info(f"[{self.strategy_name}] [{ticker}] {color} candle | O={candle.open:.2f} H={candle.high:.2f} L={candle.low:.2f} C={candle.close:.2f}")
+                quotes_logger.info(f"[{self.strategy_name}] [{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
+                quotes_logger.info(f"[{self.strategy_name}] [{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
                 quotes_logger.info(f"")
 
             # Start new candle
@@ -814,14 +824,14 @@ class StrategyEngine:
             time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
             logger.debug(f"[{ticker}] Timeout check: quote_ts={timestamp}, alert_time={pending.alert_time}, diff={time_since_alert:.1f}m")
             if time_since_alert > cfg.entry_window_minutes:
-                logger.info(f"[{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
-                self._abandon_pending(pending.trade_id)
+                logger.info(f"[{self.strategy_name}] [{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
+                self._abandon_pending_entry(pending.trade_id)
                 continue
 
             # Record first price for this pending entry
             if pending.first_price is None:
                 pending.first_price = price
-                logger.info(f"[{ticker}] First price for trade_id={pending.trade_id[:8]}: ${price:.2f}")
+                logger.info(f"[{self.strategy_name}] [{ticker}] First price for trade_id={pending.trade_id[:8]}: ${price:.2f}")
 
             # If no consecutive candle requirement, enter immediately
             if cfg.consec_green_candles == 0:
@@ -843,8 +853,8 @@ class StrategyEngine:
                     if green_count >= cfg.consec_green_candles:
                         logger.info(f"")
                         logger.info(f"{'='*60}")
-                        logger.info(f"[{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN! (trade_id={pending.trade_id[:8]})")
-                        logger.info(f"[{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN! (trade_id={pending.trade_id[:8]})")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
                         logger.info(f"{'='*60}")
                         logger.info(f"")
                         self._execute_entry(pending.trade_id, price, timestamp, trigger=f"early_entry_{green_count}_green")
@@ -854,7 +864,7 @@ class StrategyEngine:
                 # Fallback: enter on completed candles if early entry didn't trigger
                 logger.info(f"")
                 logger.info(f"{'='*60}")
-                logger.info(f"[{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume! (trade_id={pending.trade_id[:8]})")
+                logger.info(f"[{self.strategy_name}] [{ticker}] 🚀🚀🚀 ENTRY CONDITION MET! {completed_green_count} completed green candles with volume! (trade_id={pending.trade_id[:8]})")
                 logger.info(f"{'='*60}")
                 logger.info(f"")
                 self._execute_entry(pending.trade_id, price, timestamp, trigger=f"completed_{completed_green_count}_green")
@@ -866,8 +876,8 @@ class StrategyEngine:
         for pending in pending_entries:
             time_since_alert = (timestamp - pending.alert_time).total_seconds() / 60
             if time_since_alert > cfg.entry_window_minutes:
-                logger.info(f"[{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
-                self._abandon_pending(pending.trade_id)
+                logger.info(f"[{self.strategy_name}] [{ticker}] Entry window timeout for trade_id={pending.trade_id[:8]} ({time_since_alert:.1f}m > {cfg.entry_window_minutes}m)")
+                self._abandon_pending_entry(pending.trade_id)
 
     def _execute_entry(self, trade_id: str, price: float, timestamp: datetime, trigger: str = "entry_signal"):
         """Execute entry order.
@@ -934,7 +944,7 @@ class StrategyEngine:
         # Calculate shares based on position sizing mode
         shares = cfg.get_shares(price, candle_volume)
         if shares <= 0:
-            logger.error(f"[{ticker}] Cannot calculate shares for price ${price:.2f} (trade_id={trade_id[:8]})")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Cannot calculate shares for price ${price:.2f} (trade_id={trade_id[:8]})")
             # Only unsubscribe if no more pending entries or active trades for this ticker
             if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                 self.on_unsubscribe(ticker)
@@ -952,10 +962,10 @@ class StrategyEngine:
 
         logger.info(f"")
         logger.info(f"{'$'*60}")
-        logger.info(f"[{ticker}] 💰💰💰 EXECUTING BUY ORDER 💰💰💰")
-        logger.info(f"[{ticker}] ENTRY @ ${price:.4f}, {sizing_info}")
-        logger.info(f"[{ticker}] Config: price_min=${cfg.price_min:.2f}, price_max=${cfg.price_max:.2f}")
-        logger.info(f"[{ticker}] SL=${stop_loss_price:.4f}, TP=${take_profit_price:.4f}")
+        logger.info(f"[{self.strategy_name}] [{ticker}] 💰💰💰 EXECUTING BUY ORDER 💰💰💰")
+        logger.info(f"[{self.strategy_name}] [{ticker}] ENTRY @ ${price:.4f}, {sizing_info}")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Config: price_min=${cfg.price_min:.2f}, price_max=${cfg.price_max:.2f}")
+        logger.info(f"[{self.strategy_name}] [{ticker}] SL=${stop_loss_price:.4f}, TP=${take_profit_price:.4f}")
         logger.info(f"{'$'*60}")
         logger.info(f"")
 
@@ -975,7 +985,7 @@ class StrategyEngine:
         # Execute buy order (limit order at current price + slippage)
         try:
             order = self.trader.buy(ticker, shares, limit_price=price)
-            logger.info(f"[{ticker}] ✅ Buy order submitted: {order.order_id} ({order.status})")
+            logger.info(f"[{self.strategy_name}] [{ticker}] ✅ Buy order submitted: {order.order_id} ({order.status})")
 
             # Update database with broker order ID
             if db_order_id:
@@ -1006,7 +1016,7 @@ class StrategyEngine:
                 trace_store.update_trace_status(trace_id, status='buy_submitted')
 
         except Exception as e:
-            logger.error(f"[{ticker}] Buy order failed: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Buy order failed: {e}")
             # Update order status to rejected
             if db_order_id:
                 self._order_store.update_order_status(order_id=db_order_id, status="rejected")
@@ -1051,7 +1061,7 @@ class StrategyEngine:
             sizing_info=sizing_info,
             trace_id=trace_id,
         )
-        logger.info(f"[{ticker}] Order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
     def on_buy_fill(
         self,
@@ -1064,10 +1074,10 @@ class StrategyEngine:
         """Handle buy order fill - create ActiveTrade."""
         pending = self.pending_orders.pop(order_id, None)
         if not pending:
-            logger.warning(f"[{ticker}] Fill for unknown order {order_id}")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Fill for unknown order {order_id}")
             return
 
-        logger.info(f"[{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
+        logger.info(f"[{self.strategy_name}] [{ticker}] ✅ BUY FILLED: {shares} shares @ ${filled_price:.4f}")
         trace_id = pending.trace_id
 
         # Record buy_order_filled event
@@ -1129,7 +1139,7 @@ class StrategyEngine:
         if not trade_id:
             # Fallback for legacy orders without trade_id
             trade_id = str(uuid.uuid4())
-            logger.warning(f"[{ticker}] Missing trade_id on buy order, generating new: {trade_id[:8]}")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Missing trade_id on buy order, generating new: {trade_id[:8]}")
 
         # Create active trade with actual fill price, keyed by trade_id
         self.active_trades[trade_id] = ActiveTrade(
@@ -1146,7 +1156,7 @@ class StrategyEngine:
             trace_id=trace_id,
         )
 
-        logger.info(f"[{ticker}] Created active trade (trade_id={trade_id[:8]})")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Created active trade (trade_id={trade_id[:8]})")
 
         # Record active_trade_created event
         if trace_id:
@@ -1185,8 +1195,8 @@ class StrategyEngine:
 
         # CRITICAL: If save failed, immediately sell to prevent orphaned position at broker
         if not save_success:
-            logger.error(f"[{ticker}] ⚠️ FAILED TO SAVE TRADE TO DATABASE - LIQUIDATING POSITION TO PREVENT ORPHAN")
-            logger.error(f"[{ticker}] This is likely due to a duplicate constraint. Selling {shares} shares immediately.")
+            logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ FAILED TO SAVE TRADE TO DATABASE - LIQUIDATING POSITION TO PREVENT ORPHAN")
+            logger.error(f"[{self.strategy_name}] [{ticker}] This is likely due to a duplicate constraint. Selling {shares} shares immediately.")
             try:
                 # Remove from in-memory tracking
                 self.active_trades.pop(trade_id, None)
@@ -1198,7 +1208,7 @@ class StrategyEngine:
                 if current_price is None:
                     # Fallback to filled price if REST fetch fails
                     current_price = filled_price
-                    logger.warning(f"[{ticker}] Could not fetch current price, using fill price ${current_price:.4f}")
+                    logger.warning(f"[{self.strategy_name}] [{ticker}] Could not fetch current price, using fill price ${current_price:.4f}")
 
                 # Create order record for proper logging
                 db_order_id = self._order_store.create_order(
@@ -1215,7 +1225,7 @@ class StrategyEngine:
 
                 # Sell the position immediately
                 order = self.trader.sell(ticker, shares, limit_price=current_price)
-                logger.error(f"[{ticker}] Emergency sell submitted: {order.order_id} ({order.status}) @ ${current_price:.4f}")
+                logger.error(f"[{self.strategy_name}] [{ticker}] Emergency sell submitted: {order.order_id} ({order.status}) @ ${current_price:.4f}")
 
                 # Update order with broker order ID
                 if db_order_id:
@@ -1242,13 +1252,13 @@ class StrategyEngine:
         """Handle sell order fill - complete the trade."""
         pending = self.pending_orders.pop(order_id, None)
         if not pending:
-            logger.warning(f"[{ticker}] Fill for unknown sell order {order_id}")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Fill for unknown sell order {order_id}")
             return
 
         return_pct = ((filled_price - pending.entry_price) / pending.entry_price) * 100
         pnl = (filled_price - pending.entry_price) * shares
 
-        logger.info(f"[{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
+        logger.info(f"[{self.strategy_name}] [{ticker}] ✅ SELL FILLED: {shares} shares @ ${filled_price:.4f} | P&L: ${pnl:+.2f} ({return_pct:+.2f}%)")
 
         # Record sell_order_filled trace event
         if pending.trace_id:
@@ -1334,7 +1344,7 @@ class StrategyEngine:
                 trade_id=pending.trade_id,
             )
         except Exception as e:
-            logger.error(f"[{ticker}] Failed to record trade: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record trade: {e}")
 
         # Remove from database active trades using trade_id
         trade_id = pending.trade_id
@@ -1342,9 +1352,9 @@ class StrategyEngine:
             try:
                 self._active_trade_store.delete_trade(trade_id)
             except Exception as e:
-                logger.error(f"[{ticker}] Failed to delete trade_id={trade_id[:8]} from active_trades: {e}")
+                logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete trade_id={trade_id[:8]} from active_trades: {e}")
         else:
-            logger.warning(f"[{ticker}] No trade_id on sell order - skipping active_trade_store delete")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] No trade_id on sell order - skipping active_trade_store delete")
 
         # Only unsubscribe if no more pending entries or active trades for this ticker
         if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
@@ -1379,7 +1389,7 @@ class StrategyEngine:
         """Handle order cancellation."""
         pending = self.pending_orders.pop(order_id, None)
         if pending:
-            logger.warning(f"[{ticker}] Order {order_id} ({side}) was CANCELED")
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Order {order_id} ({side}) was CANCELED")
 
             # Record canceled event and update order status
             if pending.db_order_id:
@@ -1401,13 +1411,13 @@ class StrategyEngine:
                     self.on_unsubscribe(ticker)
             else:
                 # Sell canceled - need to re-add to active trades or retry
-                logger.warning(f"[{ticker}] Sell order canceled - position still open!")
+                logger.warning(f"[{self.strategy_name}] [{ticker}] Sell order canceled - position still open!")
 
     def on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str, timestamp: Optional[datetime] = None):
         """Handle order rejection."""
         pending = self.pending_orders.pop(order_id, None)
         if pending:
-            logger.error(f"[{ticker}] Order {order_id} ({side}) was REJECTED: {reason}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Order {order_id} ({side}) was REJECTED: {reason}")
 
             # Record rejected event and update order status
             if pending.db_order_id:
@@ -1430,7 +1440,7 @@ class StrategyEngine:
                     self.on_unsubscribe(ticker)
             else:
                 # Sell rejected - position still open
-                logger.error(f"[{ticker}] Sell order rejected - position still open!")
+                logger.error(f"[{self.strategy_name}] [{ticker}] Sell order rejected - position still open!")
 
     def _check_exit(self, trade_id: str, price: float, timestamp: datetime):
         """Check exit conditions for a specific active trade."""
@@ -1478,7 +1488,7 @@ class StrategyEngine:
         """Execute exit order for a specific trade."""
         trade = self.active_trades.get(trade_id)
         if not trade:
-            logger.warning(f"No active trade found for trade_id={trade_id[:8]}")
+            logger.warning(f"[{self.strategy_name}] No active trade found for trade_id={trade_id[:8]}")
             return
 
         ticker = trade.ticker
@@ -1500,7 +1510,7 @@ class StrategyEngine:
                 broker_orders = self.trader.get_open_orders()
                 for order in broker_orders:
                     if order.ticker == ticker and order.side == "sell":
-                        logger.info(f"[{ticker}] Found existing sell order at broker ({order.shares} shares), skipping (trade_id={trade_id[:8]})")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] Found existing sell order at broker ({order.shares} shares), skipping (trade_id={trade_id[:8]})")
                         # Remove this trade from active trades since we're already exiting
                         self.active_trades.pop(trade_id, None)
                         # Only unsubscribe if no more positions for this ticker
@@ -1508,11 +1518,11 @@ class StrategyEngine:
                             self.on_unsubscribe(ticker)
                         return
             except Exception as e:
-                logger.warning(f"[{ticker}] Could not check broker orders: {e}")
+                logger.warning(f"[{self.strategy_name}] [{ticker}] Could not check broker orders: {e}")
 
         return_pct = ((price - trade.entry_price) / trade.entry_price) * 100
 
-        logger.info(f"[{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
+        logger.info(f"[{self.strategy_name}] [{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
 
         # Record exit_condition_triggered event
         if trade.trace_id:
@@ -1549,7 +1559,7 @@ class StrategyEngine:
         # Execute sell order (limit order at current price - slippage)
         try:
             order = self.trader.sell(ticker, trade.shares, limit_price=price)
-            logger.info(f"[{ticker}] Sell order submitted: {order.order_id} ({order.status})")
+            logger.info(f"[{self.strategy_name}] [{ticker}] Sell order submitted: {order.order_id} ({order.status})")
 
             # Update database with broker order ID
             if db_order_id:
@@ -1581,7 +1591,7 @@ class StrategyEngine:
 
         except Exception as e:
             error_msg = str(e).lower()
-            logger.error(f"[{ticker}] Sell order failed: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Sell order failed: {e}")
 
             # Update order status to rejected
             if db_order_id:
@@ -1601,26 +1611,26 @@ class StrategyEngine:
                     open_orders = self.trader.get_open_orders()
                     for existing_order in open_orders:
                         if existing_order.ticker == ticker and existing_order.side == "sell":
-                            logger.warning(f"[{ticker}] Canceling existing sell order {existing_order.order_id} that may be holding shares")
+                            logger.warning(f"[{self.strategy_name}] [{ticker}] Canceling existing sell order {existing_order.order_id} that may be holding shares")
                             self.trader.cancel_order(existing_order.order_id)
                             canceled_order = True
                 except Exception as cancel_err:
-                    logger.warning(f"[{ticker}] Could not cancel existing orders: {cancel_err}")
+                    logger.warning(f"[{self.strategy_name}] [{ticker}] Could not cancel existing orders: {cancel_err}")
 
                 # Verify with broker - maybe position was already closed
                 broker_position = self.trader.get_position(ticker)
                 if broker_position is None or broker_position.shares == 0:
-                    logger.warning(f"[{ticker}] Position not found at broker - removing orphaned trade from tracking")
+                    logger.warning(f"[{self.strategy_name}] [{ticker}] Position not found at broker - removing orphaned trade from tracking")
                     self._remove_orphaned_trade(trade_id, reason="position_not_found")
                     return
                 elif broker_position.shares != trade.shares:
                     # Position exists but with different quantity - update our tracking
-                    logger.warning(f"[{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
+                    logger.warning(f"[{self.strategy_name}] [{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
                     trade.shares = broker_position.shares
 
                 # If we canceled an order, fetch fresh price and retry immediately
                 if canceled_order:
-                    logger.info(f"[{ticker}] Retrying sell after canceling stale order...")
+                    logger.info(f"[{self.strategy_name}] [{ticker}] Retrying sell after canceling stale order...")
                     # Fetch fresh price from REST API
                     fresh_price = None
                     if self.on_fetch_price:
@@ -1628,14 +1638,14 @@ class StrategyEngine:
                     if fresh_price is None:
                         fresh_price = price  # fallback to original price
                     else:
-                        logger.info(f"[{ticker}] Fetched fresh price: ${fresh_price:.4f}")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] Fetched fresh price: ${fresh_price:.4f}")
 
                     # Retry the sell with fresh price
                     try:
                         import time
                         time.sleep(0.5)  # Brief pause for order cancellation to settle
                         retry_order = self.trader.sell(ticker, trade.shares, limit_price=fresh_price)
-                        logger.info(f"[{ticker}] Retry sell order submitted: {retry_order.order_id} ({retry_order.status}) @ ${fresh_price:.4f}")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] Retry sell order submitted: {retry_order.order_id} ({retry_order.status}) @ ${fresh_price:.4f}")
 
                         # Track pending sell order
                         self.pending_orders[retry_order.order_id] = PendingOrder(
@@ -1653,15 +1663,15 @@ class StrategyEngine:
                         )
                         return  # Success on retry
                     except Exception as retry_err:
-                        logger.error(f"[{ticker}] Retry sell also failed: {retry_err}")
+                        logger.error(f"[{self.strategy_name}] [{ticker}] Retry sell also failed: {retry_err}")
 
             # Track sell attempts - after 3 failures, stop retrying
             trade.sell_attempts += 1
             if trade.sell_attempts >= 3:
                 trade.needs_manual_exit = True
-                logger.error(f"[{ticker}] ⚠️ SELL FAILED 3 TIMES - needs manual exit! Position: {trade.shares} shares @ ${trade.entry_price:.4f}")
+                logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ SELL FAILED 3 TIMES - needs manual exit! Position: {trade.shares} shares @ ${trade.entry_price:.4f}")
             else:
-                logger.warning(f"[{ticker}] Sell attempt {trade.sell_attempts}/3 failed - will retry on next exit signal")
+                logger.warning(f"[{self.strategy_name}] [{ticker}] Sell attempt {trade.sell_attempts}/3 failed - will retry on next exit signal")
             return  # Don't remove from tracking
 
         # Track pending sell order - will complete trade when fill confirmed
@@ -1679,17 +1689,17 @@ class StrategyEngine:
             exit_reason=reason,
             trace_id=trade.trace_id,
         )
-        logger.info(f"[{ticker}] Sell order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
+        logger.info(f"[{self.strategy_name}] [{ticker}] Sell order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
         # Remove from active trades (we have a pending sell order now)
         self.active_trades.pop(trade_id, None)
 
-    def _abandon_pending(self, trade_id: str):
+    def _abandon_pending_entry(self, trade_id: str):
         """Abandon a pending entry (timeout or other reason)."""
         pending = self.pending_entries.pop(trade_id, None)
         if pending:
             ticker = pending.ticker
-            logger.info(f"[{ticker}] Abandoned pending entry (trade_id={trade_id[:8]})")
+            logger.info(f"[{self.strategy_name}] [{ticker}] Abandoned pending entry (trade_id={trade_id[:8]})")
 
             # Record entry_timeout event
             if pending.trace_id:
@@ -1721,15 +1731,111 @@ class StrategyEngine:
                 if self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
 
+    def _cancel_pending_buy_order(self, order_id: str, reason: str = "timeout"):
+        """Cancel a pending buy order at the broker and clean up tracking.
+
+        Args:
+            order_id: The broker order ID to cancel
+            reason: Reason for cancellation (for logging/tracing)
+        """
+        pending = self.pending_orders.pop(order_id, None)
+        if not pending:
+            logger.warning(f"[{self.strategy_name}] Cannot cancel order {order_id} - not found in pending_orders")
+            return
+
+        ticker = pending.ticker
+        trade_id = pending.trade_id
+
+        logger.warning(f"[{self.strategy_name}] [{ticker}] Canceling pending buy order {order_id} ({reason}, trade_id={trade_id[:8]})")
+
+        # Cancel at broker
+        try:
+            self.trader.cancel_order(order_id)
+            logger.info(f"[{self.strategy_name}] [{ticker}] Buy order {order_id} canceled at broker")
+        except Exception as e:
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to cancel order {order_id} at broker: {e}")
+            # Still continue with cleanup - order may have already filled or been canceled
+
+        # Update order status in database
+        if pending.db_order_id:
+            try:
+                self._order_store.record_event(
+                    event_type="canceled",
+                    event_timestamp=datetime.utcnow(),
+                    order_id=pending.db_order_id,
+                    broker_order_id=order_id,
+                    details={"reason": reason},
+                )
+                self._order_store.update_order_status(
+                    pending.db_order_id,
+                    status="canceled",
+                )
+            except Exception as e:
+                logger.error(f"[{self.strategy_name}] [{ticker}] Failed to update order status in DB: {e}")
+
+        # Record trace event
+        if pending.trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=pending.trace_id,
+                event_type='buy_order_canceled',
+                event_timestamp=datetime.utcnow(),
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                reason=reason,
+                details={
+                    'trade_id': trade_id,
+                    'order_id': order_id,
+                    'limit_price': pending.limit_price,
+                    'shares': pending.shares,
+                    'seconds_pending': (datetime.utcnow() - pending.submitted_at).total_seconds(),
+                },
+            )
+            trace_store.update_trace_status(pending.trace_id, status='buy_order_canceled')
+
+        # Only unsubscribe if no more pending entries or active trades for this ticker
+        if not self._has_pending_or_trade(ticker):
+            self._clear_candles_for_ticker(ticker)
+            self._ticker_building_candle.pop(ticker, None)
+            self._ticker_candle_start.pop(ticker, None)
+            if self.on_unsubscribe:
+                self.on_unsubscribe(ticker)
+
+    def _check_pending_buy_order_timeouts(self, ticker: str, timestamp: datetime):
+        """Check for and cancel buy orders that have exceeded the timeout.
+
+        Args:
+            ticker: The ticker symbol to check orders for
+            timestamp: Current timestamp for calculating elapsed time
+        """
+        cfg = self.config
+        timeout_seconds = cfg.buy_order_timeout_seconds
+
+        # Find pending buy orders for this ticker that have timed out
+        orders_to_cancel = []
+        for order_id, pending in self.pending_orders.items():
+            if pending.ticker == ticker and pending.side == "buy":
+                elapsed = (timestamp - pending.submitted_at).total_seconds()
+                if elapsed > timeout_seconds:
+                    logger.info(
+                        f"[{self.strategy_name}] [{ticker}] Buy order {order_id} timed out "
+                        f"({elapsed:.1f}s > {timeout_seconds}s, trade_id={pending.trade_id[:8]})"
+                    )
+                    orders_to_cancel.append(order_id)
+
+        # Cancel timed-out orders (separate loop to avoid modifying dict during iteration)
+        for order_id in orders_to_cancel:
+            self._cancel_pending_buy_order(order_id, reason=f"timeout_{timeout_seconds}s")
+
     def _remove_orphaned_trade(self, trade_id: str, reason: str = "orphaned"):
         """Remove an orphaned trade (position doesn't exist at broker)."""
         trade = self.active_trades.get(trade_id)
         if not trade:
-            logger.warning(f"Cannot remove orphaned trade - trade_id={trade_id[:8]} not found")
+            logger.warning(f"[{self.strategy_name}] Cannot remove orphaned trade - trade_id={trade_id[:8]} not found")
             return
 
         ticker = trade.ticker
-        logger.warning(f"[{ticker}] Removing orphaned trade: {trade.shares} shares @ ${trade.entry_price:.4f} ({reason}, trade_id={trade_id[:8]})")
+        logger.warning(f"[{self.strategy_name}] [{ticker}] Removing orphaned trade: {trade.shares} shares @ ${trade.entry_price:.4f} ({reason}, trade_id={trade_id[:8]})")
 
         # Record as a failed/orphaned trade so we have a record
         try:
@@ -1753,7 +1859,7 @@ class StrategyEngine:
                 trade_id=trade_id,
             )
         except Exception as e:
-            logger.error(f"[{ticker}] Failed to record orphaned trade: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record orphaned trade: {e}")
 
         # Remove from active trades
         self.active_trades.pop(trade_id, None)
@@ -1762,7 +1868,7 @@ class StrategyEngine:
         try:
             self._active_trade_store.delete_trade(trade_id)
         except Exception as e:
-            logger.error(f"[{ticker}] Failed to delete orphaned trade from database: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete orphaned trade from database: {e}")
 
         # Only unsubscribe if no more positions for this ticker
         if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
@@ -1801,10 +1907,10 @@ class StrategyEngine:
 
             if stale_trade_ids:
                 stale_tickers = [t[1] for t in stale_trade_ids]
-                logger.info(f"Reconciliation removed {len(stale_trade_ids)} stale positions: {stale_tickers}")
+                logger.info(f"[{self.strategy_name}] Reconciliation removed {len(stale_trade_ids)} stale positions: {stale_tickers}")
 
         except Exception as e:
-            logger.error(f"Position reconciliation failed: {e}", exc_info=True)
+            logger.error(f"[{self.strategy_name}] Position reconciliation failed: {e}", exc_info=True)
 
     def get_status(self) -> dict:
         """Get current engine status."""

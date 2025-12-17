@@ -22,6 +22,7 @@ class TestCandleVolumeAggregation:
             take_profit_pct=10.0,
             stop_loss_pct=5.0,
             timeout_minutes=60,
+            buy_order_timeout_seconds=300,  # Long timeout for tests
         )
         # Create mock trader with proper return values
         trader = Mock()
@@ -194,6 +195,7 @@ class TestVolumeExtrapolation:
             take_profit_pct=10.0,
             stop_loss_pct=5.0,
             timeout_minutes=60,
+            buy_order_timeout_seconds=300,  # Long timeout for tests
             stake_mode=stake_mode,
             volume_pct=volume_pct,
             max_stake=max_stake,
@@ -406,6 +408,7 @@ class TestEntryWindowMinutes:
             take_profit_pct=10.0,
             stop_loss_pct=5.0,
             timeout_minutes=60,
+            buy_order_timeout_seconds=300,  # Long timeout for tests
         )
         trader = Mock()
         trader.get_positions.return_value = []
