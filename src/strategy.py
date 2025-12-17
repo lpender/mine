@@ -242,6 +242,7 @@ class StrategyEngine:
         trader: TradingClient,
         on_subscribe: Optional[Callable[[str], bool]] = None,
         on_unsubscribe: Optional[Callable[[str], None]] = None,
+        on_fetch_price: Optional[Callable[[str], Optional[float]]] = None,
         paper: bool = True,
         strategy_id: Optional[str] = None,
         strategy_name: Optional[str] = None,
@@ -250,6 +251,7 @@ class StrategyEngine:
         self.trader = trader
         self.on_subscribe = on_subscribe  # Called when we need quotes for a ticker (returns True if subscribed)
         self.on_unsubscribe = on_unsubscribe  # Called when done with a ticker
+        self.on_fetch_price = on_fetch_price  # Called to fetch current price from REST API
         self.paper = paper
         self.strategy_id = strategy_id
         self.strategy_name = strategy_name or "default"
@@ -998,9 +1000,42 @@ class StrategyEngine:
             try:
                 # Remove from in-memory tracking
                 self.active_trades.pop(trade_id, None)
+
+                # Fetch current price from REST API (price may have moved since fill)
+                current_price = None
+                if self.on_fetch_price:
+                    current_price = self.on_fetch_price(ticker)
+                if current_price is None:
+                    # Fallback to filled price if REST fetch fails
+                    current_price = filled_price
+                    logger.warning(f"[{ticker}] Could not fetch current price, using fill price ${current_price:.4f}")
+
+                # Create order record for proper logging
+                db_order_id = self._order_store.create_order(
+                    ticker=ticker,
+                    side="sell",
+                    order_type="limit",
+                    requested_shares=shares,
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    limit_price=current_price,
+                    paper=self.paper,
+                )
+
                 # Sell the position immediately
-                order = self.trader.sell(ticker, shares)
-                logger.error(f"[{ticker}] Emergency sell submitted: {order.order_id} ({order.status})")
+                order = self.trader.sell(ticker, shares, limit_price=current_price)
+                logger.error(f"[{ticker}] Emergency sell submitted: {order.order_id} ({order.status}) @ ${current_price:.4f}")
+
+                # Update order with broker order ID
+                if db_order_id:
+                    self._order_store.update_broker_order_id(db_order_id, order.order_id)
+                    self._order_store.record_event(
+                        event_type="submitted",
+                        event_timestamp=timestamp,
+                        order_id=db_order_id,
+                        broker_order_id=order.order_id,
+                    )
+
             except Exception as e:
                 logger.critical(f"[{ticker}] ❌ CRITICAL: Failed to emergency sell orphaned position: {e}")
                 logger.critical(f"[{ticker}] MANUAL INTERVENTION REQUIRED: {shares} shares at broker without DB record!")

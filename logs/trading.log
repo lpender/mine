@@ -34714,3 +34714,4 @@ task: <Task pending name='Task-2' coro=<Connection.keepalive() running at /Users
 2025-12-17 13:02:46 [src.quote_provider] No subscriptions to send on connect - server starts with clean state
 2025-12-17 13:02:46 [src.quote_provider] Starting WebSocket message loop...
 2025-12-17 13:07:46 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:12:48 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra

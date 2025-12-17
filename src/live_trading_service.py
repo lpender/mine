@@ -319,6 +319,18 @@ class TradingEngine:
         else:
             self._orphaned_tickers = set()
 
+    def _fetch_current_price(self, ticker: str) -> Optional[float]:
+        """Fetch the current price for a ticker from InsightSentry REST API."""
+        if not self.quote_provider:
+            return None
+        try:
+            candle = self.quote_provider.fetch_current_minute_candle(ticker)
+            if candle and "close" in candle:
+                return candle["close"]
+        except Exception as e:
+            logger.warning(f"[{ticker}] Failed to fetch current price: {e}")
+        return None
+
     def _add_strategy_engine(self, strategy_id: str, name: str, config: StrategyConfig, priority: int = 0):
         """Create and add a StrategyEngine for a strategy."""
         if strategy_id in self.strategies:
@@ -332,6 +344,7 @@ class TradingEngine:
             trader=self.trader,
             on_subscribe=lambda ticker, sid=strategy_id: self._on_subscribe(ticker, sid),
             on_unsubscribe=lambda ticker, sid=strategy_id: self._on_unsubscribe(ticker, sid),
+            on_fetch_price=self._fetch_current_price,
             paper=self.paper,
         )
 
