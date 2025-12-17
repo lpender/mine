@@ -319,6 +319,42 @@ class TradingEngine:
         else:
             self._orphaned_tickers = set()
 
+    def _cleanup_orphaned_positions(self, broker_positions: Dict[str, any]):
+        """Check for and liquidate orphaned positions.
+
+        Orphaned positions are at the broker but not tracked in our database.
+        These can occur when a trade fails to save to DB but the buy order filled.
+        """
+        from src.active_trade_store import get_active_trade_store
+
+        trade_store = get_active_trade_store()
+        db_trades = trade_store.get_all_trades()
+        db_tickers = {t.ticker for t in db_trades}
+
+        # Find positions at broker that aren't in our database
+        orphaned = []
+        for ticker, position in broker_positions.items():
+            if ticker not in db_tickers:
+                orphaned.append((ticker, position.shares, position.avg_entry_price))
+
+        if not orphaned:
+            return
+
+        logger.warning(f"Found {len(orphaned)} orphaned position(s) at broker - liquidating...")
+
+        for ticker, shares, entry_price in orphaned:
+            try:
+                # Fetch current price from REST API
+                current_price = self._fetch_current_price(ticker)
+                if current_price is None:
+                    current_price = entry_price
+                    logger.warning(f"[{ticker}] Could not fetch current price, using entry: ${entry_price:.4f}")
+
+                order = self.trader.sell(ticker, shares, limit_price=current_price)
+                logger.warning(f"[{ticker}] Orphan liquidated: {shares} shares @ ${current_price:.4f} ({order.status})")
+            except Exception as e:
+                logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}")
+
     def _fetch_current_price(self, ticker: str) -> Optional[float]:
         """Fetch the current price for a ticker from InsightSentry REST API."""
         if not self.quote_provider:
@@ -404,9 +440,9 @@ class TradingEngine:
         # Connect to quote provider
         quote_task = asyncio.create_task(self._run_quote_provider())
 
-        # Reconciliation counter (run every 30 iterations = 30 seconds)
+        # Reconciliation counter (includes orphan cleanup)
         reconcile_counter = 0
-        RECONCILE_INTERVAL = 300  # 5 minutes - Alpaca rate limits are strict
+        RECONCILE_INTERVAL = 60  # 1 minute - check for orphans and reconcile positions
 
         # Wait for shutdown
         try:
@@ -924,6 +960,9 @@ class TradingEngine:
                     engine.reconcile_positions(broker_positions)
                 except Exception as e:
                     logger.error(f"Reconciliation failed for strategy {strategy_id}: {e}")
+
+            # Check for and liquidate orphaned positions (at broker but not in DB)
+            self._cleanup_orphaned_positions(broker_positions)
 
         # Always reconcile subscriptions - this doesn't require broker API calls
         # and catches drift even when we can't check broker positions

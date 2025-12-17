@@ -34926,3 +34926,91 @@ task: <Task pending name='Task-2' coro=<Connection.keepalive() running at /Users
 2025-12-17 13:24:06 [src.trading.alpaca_stream] Connected to Alpaca stream: wss://paper-api.alpaca.markets/stream
 2025-12-17 13:24:06 [src.trading.alpaca_stream] Alpaca stream authenticated
 2025-12-17 13:24:06 [src.trading.alpaca_stream] Now listening to: ['trade_updates']
+2025-12-17 13:25:47 [__main__] 
+Shutdown signal received...
+2025-12-17 13:25:47 [src.live_trading_service] Stopping trading engine...
+2025-12-17 13:25:47 [src.alert_service] Alert callback set: False
+2025-12-17 13:25:47 [src.trading.alpaca_stream] Alpaca stream error: Event loop stopped before Future completed.
+2025-12-17 13:25:47 [src.trading.alpaca_stream] Alpaca trade stream stopped
+2025-12-17 13:25:47 [src.quote_provider] Disconnected from WebSocket
+2025-12-17 13:25:47 [src.live_trading_service] WebSocket disconnected
+2025-12-17 13:25:47 [src.live_trading_service] Trading engine stopped
+2025-12-17 13:25:47 [__main__] Stopping trading engine...
+2025-12-17 13:25:47 [__main__] Trading engine stopped.
+2025-12-17 13:25:47 [src.trading.alpaca_stream] Alpaca stream error: no running event loop
+2025-12-17 13:25:47 [asyncio] Task was destroyed but it is pending!
+task: <Task pending name='Task-12' coro=<Connection.keepalive() done, defined at /Users/lpender/dev/trading/backtest/venv/lib/python3.11/site-packages/websockets/asyncio/connection.py:803> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+2025-12-17 13:25:48 [__main__] Initializing database...
+2025-12-17 13:25:48 [__main__] Starting alert service...
+2025-12-17 13:25:48 [src.alert_service] Alert service started on port 8765
+2025-12-17 13:25:48 [__main__] Starting trading engine (PAPER mode)...
+2025-12-17 13:25:48 [src.live_trading_service] Trading engine started
+2025-12-17 13:25:48 [__main__] Trading engine started successfully!
+2025-12-17 13:25:48 [__main__] Press Ctrl+C to stop
+
+2025-12-17 13:25:48 [src.live_trading_service] Trading client: AlpacaTradingClient (paper=True)
+2025-12-17 13:25:48 [src.trading.alpaca_stream] Alpaca trade stream started (paper=True)
+2025-12-17 13:25:48 [src.live_trading_service] Alpaca trade stream started
+2025-12-17 13:25:48 [src.strategy] Loading active trades from database for strategy d2402e8e-d77e-4fb7-92b4-3329dfbb9043...
+2025-12-17 13:25:48 [src.strategy] Database returned 1 active trades
+2025-12-17 13:25:48 [src.strategy] [MGRT] Recovered from DB: 14 shares @ $9.74, SL=$9.20, TP=$10.71 (trade_id=c10b714d)
+2025-12-17 13:25:48 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:25:48 [src.trading.alpaca_stream] Connected to Alpaca stream: wss://paper-api.alpaca.markets/stream
+2025-12-17 13:25:48 [src.trading.alpaca_stream] Alpaca stream authenticated
+2025-12-17 13:25:48 [src.trading.alpaca_stream] Now listening to: ['trade_updates']
+2025-12-17 13:25:48 [src.quote_provider] [MGRT] Resolved to NASDAQ:MGRT
+2025-12-17 13:25:49 [src.quote_provider] [MGRT] Fetched current minute candle: 18:25 | O=7.27 H=7.47 L=7.24 C=7.47 V=7,384
+2025-12-17 13:25:49 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:25:49 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:25:49 [src.live_trading_service] [MGRT] Added to WS subscriptions: {'MGRT'}
+2025-12-17 13:25:49 [src.live_trading_service] [MGRT] Event loop not running - subscription queued (will send on WS connect)
+2025-12-17 13:25:49 [src.strategy] Loading pending entries from database for strategy d2402e8e-d77e-4fb7-92b4-3329dfbb9043...
+2025-12-17 13:25:49 [src.strategy] Database returned 0 pending entries
+2025-12-17 13:25:49 [src.strategy] Verifying positions with broker...
+2025-12-17 13:25:49 [src.strategy] Broker has positions in: set()
+2025-12-17 13:25:49 [src.strategy] [MGRT] Position not found at broker - may have been manually closed (trade_id=c10b714d)
+2025-12-17 13:25:49 [src.live_trading_service] Added strategy 'test - vol catchall' (d2402e8e-d77e-4fb7-92b4-3329dfbb9043) [priority=4]
+2025-12-17 13:25:49 [src.live_trading_service]   Filters: channels=[], price=$0.00-$100.00
+2025-12-17 13:25:49 [src.live_trading_service]   Entry: 1 green candles, 1,000 min volume, 5m window
+2025-12-17 13:25:49 [src.live_trading_service]   Exit: TP=10.0%, SL=5.0%, hold timeout=5m
+2025-12-17 13:25:49 [src.strategy] Loading active trades from database for strategy a5a2ba99-986b-4755-a791-bf95a402f72d...
+2025-12-17 13:25:49 [src.strategy] Database returned 0 active trades
+2025-12-17 13:25:49 [src.strategy] Loading pending entries from database for strategy a5a2ba99-986b-4755-a791-bf95a402f72d...
+2025-12-17 13:25:49 [src.strategy] Database returned 0 pending entries
+2025-12-17 13:25:49 [src.strategy] Verifying positions with broker...
+2025-12-17 13:25:49 [src.strategy] Broker has positions in: set()
+2025-12-17 13:25:49 [src.live_trading_service] Added strategy '353k from 40k' (a5a2ba99-986b-4755-a791-bf95a402f72d) [priority=14]
+2025-12-17 13:25:49 [src.live_trading_service]   Filters: channels=['🍷-nuntio-std'], price=$4.50-$17.00
+2025-12-17 13:25:49 [src.live_trading_service]   Entry: 1 green candles, 100,000 min volume, 5m window
+2025-12-17 13:25:49 [src.live_trading_service]   Exit: TP=190.0%, SL=1.5%, hold timeout=25m
+2025-12-17 13:25:49 [src.live_trading_service] Strategy 'test - vol catchall' recovered 1 active trades: ['MGRT']
+2025-12-17 13:25:49 [src.live_trading_service] Loaded 2 enabled strategies with 1 active trades, 0 pending entries
+2025-12-17 13:25:49 [src.live_trading_service] Position limit: 5 (from JWT websocket_symbols)
+2025-12-17 13:25:49 [src.alert_service] Alert callback set: True
+2025-12-17 13:25:49 [src.live_trading_service] Alert callback registered
+2025-12-17 13:25:49 [src.quote_provider] Using INSIGHT_SENTRY_KEY as WebSocket key (native subscriber)
+2025-12-17 13:25:49 [src.quote_provider] Connecting to wss://realtime.insightsentry.com/live
+2025-12-17 13:25:50 [src.quote_provider] WebSocket connected
+2025-12-17 13:25:50 [src.quote_provider] Subscribed to 1 tickers: ['MGRT']
+2025-12-17 13:25:50 [src.quote_provider] Starting WebSocket message loop...
+2025-12-17 13:25:50 [src.strategy] [MGRT] EXIT @ $7.47 (timeout) - Return: -23.31%
+2025-12-17 13:25:50 [src.order_store] [MGRT] Created order 194: sell 14 shares
+2025-12-17 13:25:50 [src.trading.alpaca] [MGRT] SELL LIMIT $7.4 (price=$7.4700 - 1.0% slippage)
+2025-12-17 13:25:50 [src.trading.alpaca] Alpaca 422 error: asset "MGRT" cannot be sold short (code=42210000)
+2025-12-17 13:25:50 [src.strategy] [MGRT] Sell order failed: 422 Error: asset "MGRT" cannot be sold short
+2025-12-17 13:25:50 [src.order_store] [MGRT] Updated order 194: status=rejected, filled=None
+2025-12-17 13:25:50 [src.strategy] [MGRT] Sell attempt 1/3 failed - will retry on next exit signal
+2025-12-17 13:25:58 [src.strategy] [MGRT] EXIT @ $7.47 (timeout) - Return: -23.31%
+2025-12-17 13:25:58 [src.order_store] [MGRT] Created order 195: sell 14 shares
+2025-12-17 13:25:58 [src.trading.alpaca] [MGRT] SELL LIMIT $7.4 (price=$7.4700 - 1.0% slippage)
+2025-12-17 13:25:58 [src.trading.alpaca] Alpaca 422 error: asset "MGRT" cannot be sold short (code=42210000)
+2025-12-17 13:25:58 [src.strategy] [MGRT] Sell order failed: 422 Error: asset "MGRT" cannot be sold short
+2025-12-17 13:25:58 [src.order_store] [MGRT] Updated order 195: status=rejected, filled=None
+2025-12-17 13:25:58 [src.strategy] [MGRT] Sell attempt 2/3 failed - will retry on next exit signal
+2025-12-17 13:25:58 [src.strategy] [MGRT] EXIT @ $7.10 (timeout) - Return: -27.10%
+2025-12-17 13:25:58 [src.order_store] [MGRT] Created order 196: sell 14 shares
+2025-12-17 13:25:58 [src.trading.alpaca] [MGRT] SELL LIMIT $7.03 (price=$7.1000 - 1.0% slippage)
+2025-12-17 13:25:58 [src.trading.alpaca] Alpaca 422 error: asset "MGRT" cannot be sold short (code=42210000)
+2025-12-17 13:25:58 [src.strategy] [MGRT] Sell order failed: 422 Error: asset "MGRT" cannot be sold short
+2025-12-17 13:25:58 [src.order_store] [MGRT] Updated order 196: status=rejected, filled=None
+2025-12-17 13:25:58 [src.strategy] [MGRT] ⚠️ SELL FAILED 3 TIMES - needs manual exit! Position: 14 shares @ $9.7400
