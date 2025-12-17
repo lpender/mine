@@ -236,69 +236,32 @@ def init_session_state():
 init_session_state()
 
 with st.sidebar:
-    st.header("Trigger Config")
+    # ─────────────────────────────────────────────────────────────────────────
+    # Sampling (for faster iteration) - FIRST in execution order
+    # ─────────────────────────────────────────────────────────────────────────
+    st.header("Sampling")
 
-    stop_loss = st.slider(
-        "Stop Loss %",
-        min_value=1.0, max_value=30.0,
-        step=0.5,
-        key="_sl",
-        help="Exit when price drops by this percentage"
-    )
-
-    take_profit = st.slider(
-        "Take Profit %",
-        min_value=1.0, max_value=1000.0,
-        step=0.5,
-        key="_tp",
-        help="Exit when price rises by this percentage"
-    )
-
-    hold_time = st.slider(
-        "Hold Time (min)",
-        min_value=5, max_value=120,
-        step=5,
-        key="_hold",
-        help="Maximum time to hold before timeout exit"
-    )
-
-    consec_candles = st.slider(
-        "Entry after X green candles",
-        min_value=0, max_value=10,
+    sample_pct = st.slider(
+        "Sample Size %",
+        min_value=1,
+        max_value=100,
+        value=int(get_param("sample_pct", 100) or 100),
         step=1,
-        key="_consec_candles",
-        help="Wait for X consecutive green candles (close > open) before entry (0 = disabled)"
+        key="_sample_pct",
+        help="Test on random subset for faster iteration (100% = all data)"
     )
 
-    min_candle_vol = st.number_input(
-        "Min volume per candle",
+    sample_seed = st.number_input(
+        "Random Seed",
+        value=int(get_param("sample_seed", 0) or 0),
         min_value=0,
-        step=1000,
-        key="_min_candle_vol",
-        help="Minimum volume each candle must have for consecutive entry (0 = no minimum)"
-    )
-
-    entry_window = st.slider(
-        "Entry Window (min)",
-        min_value=1, max_value=30,
         step=1,
-        key="_entry_window",
-        help="How long to wait for entry conditions after alert"
+        key="_sample_seed",
+        help="0 = different sample each run, >0 = reproducible sample"
     )
 
-    sl_from_open = st.checkbox(
-        "SL from first candle open",
-        key="_sl_from_open",
-        help="Calculate stop loss from first candle's open instead of entry price"
-    )
-
-    trailing_stop = st.slider(
-        "Trailing Stop %",
-        min_value=0.0, max_value=30.0,
-        step=0.5,
-        key="_trailing_stop",
-        help="Exit if price drops this % from highest point since entry (0 = disabled)"
-    )
+    set_param("sample_pct", sample_pct if sample_pct < 100 else "")
+    set_param("sample_seed", sample_seed if sample_seed > 0 else "")
 
     st.divider()
     st.header("Filters")
@@ -413,6 +376,74 @@ with st.sidebar:
     price_max = col2.number_input("Max", min_value=0.0, step=1.0, key="_price_max", help="Exclude if entry price > this")
 
     # ─────────────────────────────────────────────────────────────────────────
+    # Trigger Config
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Trigger Config")
+
+    stop_loss = st.slider(
+        "Stop Loss %",
+        min_value=1.0, max_value=30.0,
+        step=0.5,
+        key="_sl",
+        help="Exit when price drops by this percentage"
+    )
+
+    take_profit = st.slider(
+        "Take Profit %",
+        min_value=1.0, max_value=1000.0,
+        step=0.5,
+        key="_tp",
+        help="Exit when price rises by this percentage"
+    )
+
+    hold_time = st.slider(
+        "Hold Time (min)",
+        min_value=5, max_value=120,
+        step=5,
+        key="_hold",
+        help="Maximum time to hold before timeout exit"
+    )
+
+    consec_candles = st.slider(
+        "Entry after X green candles",
+        min_value=0, max_value=10,
+        step=1,
+        key="_consec_candles",
+        help="Wait for X consecutive green candles (close > open) before entry (0 = disabled)"
+    )
+
+    min_candle_vol = st.number_input(
+        "Min volume per candle",
+        min_value=0,
+        step=1000,
+        key="_min_candle_vol",
+        help="Minimum volume each candle must have for consecutive entry (0 = no minimum)"
+    )
+
+    entry_window = st.slider(
+        "Entry Window (min)",
+        min_value=1, max_value=30,
+        step=1,
+        key="_entry_window",
+        help="How long to wait for entry conditions after alert"
+    )
+
+    sl_from_open = st.checkbox(
+        "SL from first candle open",
+        key="_sl_from_open",
+        help="Calculate stop loss from first candle's open instead of entry price"
+    )
+
+    trailing_stop = st.slider(
+        "Trailing Stop %",
+        min_value=0.0, max_value=30.0,
+        step=0.5,
+        key="_trailing_stop",
+        help="Exit if price drops this % from highest point since entry (0 = disabled)"
+    )
+
+    # ─────────────────────────────────────────────────────────────────────────
     # Position Sizing
     # ─────────────────────────────────────────────────────────────────────────
     st.divider()
@@ -488,34 +519,6 @@ with st.sidebar:
     set_param("stake", stake_amount)
     set_param("vol_pct", volume_pct)
     set_param("max_stake", max_stake)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # Sampling (for faster iteration)
-    # ─────────────────────────────────────────────────────────────────────────
-    st.divider()
-    st.header("Sampling")
-
-    sample_pct = st.slider(
-        "Sample Size %",
-        min_value=1,
-        max_value=100,
-        value=int(get_param("sample_pct", 100) or 100),
-        step=1,
-        key="_sample_pct",
-        help="Test on random subset for faster iteration (100% = all data)"
-    )
-
-    sample_seed = st.number_input(
-        "Random Seed",
-        value=int(get_param("sample_seed", 0) or 0),
-        min_value=0,
-        step=1,
-        key="_sample_seed",
-        help="0 = different sample each run, >0 = reproducible sample"
-    )
-
-    set_param("sample_pct", sample_pct if sample_pct < 100 else "")
-    set_param("sample_seed", sample_seed if sample_seed > 0 else "")
 
     # ─────────────────────────────────────────────────────────────────────────
     # Save Strategy / Live Trading
