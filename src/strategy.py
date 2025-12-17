@@ -1321,6 +1321,18 @@ class StrategyEngine:
 
             # Check if error indicates position doesn't exist at broker
             if "insufficient qty" in error_msg or "position does not exist" in error_msg:
+                # First, cancel any existing open orders that might be holding shares
+                canceled_order = False
+                try:
+                    open_orders = self.trader.get_open_orders()
+                    for existing_order in open_orders:
+                        if existing_order.ticker == ticker and existing_order.side == "sell":
+                            logger.warning(f"[{ticker}] Canceling existing sell order {existing_order.order_id} that may be holding shares")
+                            self.trader.cancel_order(existing_order.order_id)
+                            canceled_order = True
+                except Exception as cancel_err:
+                    logger.warning(f"[{ticker}] Could not cancel existing orders: {cancel_err}")
+
                 # Verify with broker - maybe position was already closed
                 broker_position = self.trader.get_position(ticker)
                 if broker_position is None or broker_position.shares == 0:
@@ -1331,6 +1343,38 @@ class StrategyEngine:
                     # Position exists but with different quantity - update our tracking
                     logger.warning(f"[{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
                     trade.shares = broker_position.shares
+
+                # If we canceled an order, fetch fresh price and retry immediately
+                if canceled_order:
+                    logger.info(f"[{ticker}] Retrying sell after canceling stale order...")
+                    # Fetch fresh price from REST API
+                    fresh_price = None
+                    if self.on_fetch_price:
+                        fresh_price = self.on_fetch_price(ticker)
+                    if fresh_price is None:
+                        fresh_price = price  # fallback to original price
+                    else:
+                        logger.info(f"[{ticker}] Fetched fresh price: ${fresh_price:.4f}")
+
+                    # Retry the sell with fresh price
+                    try:
+                        import time
+                        time.sleep(0.5)  # Brief pause for order cancellation to settle
+                        retry_order = self.trader.sell(ticker, trade.shares, limit_price=fresh_price)
+                        logger.info(f"[{ticker}] Retry sell order submitted: {retry_order.order_id} ({retry_order.status}) @ ${fresh_price:.4f}")
+
+                        # Track pending sell order
+                        self.pending_orders[retry_order.order_id] = PendingOrder(
+                            order_id=retry_order.order_id,
+                            trade_id=trade_id,
+                            ticker=ticker,
+                            side="sell",
+                            entry_price=trade.entry_price,
+                            shares=trade.shares,
+                        )
+                        return  # Success on retry
+                    except Exception as retry_err:
+                        logger.error(f"[{ticker}] Retry sell also failed: {retry_err}")
 
             # Track sell attempts - after 3 failures, stop retrying
             trade.sell_attempts += 1

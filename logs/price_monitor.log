@@ -44848,3 +44848,5 @@
 13:02:45 [src.strategy.status] [RZLT] $2.12 (-3.2%) | SL=$2.08 TP=$2.41 (trade=c4da02f5)
 13:02:45 [src.strategy.status] [ATPC] $0.15 (-1.6%) | SL=$0.14 TP=$0.16 (trade=5c7ac2e6)
 13:02:45 [src.strategy.status] [MGRT] $7.71 (-20.8%) | SL=$9.20 TP=$10.71 (trade=c10b714d)
+13:20:58 [src.strategy.status] [MGRT] $7.19 (-26.2%) | SL=$9.20 TP=$10.71 (trade=c10b714d)
+13:21:24 [src.strategy.status] [MGRT] $7.19 (-26.2%) | SL=$9.20 TP=$10.71 (trade=c10b714d)

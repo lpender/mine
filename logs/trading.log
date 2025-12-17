@@ -34724,3 +34724,94 @@ task: <Task pending name='Task-2' coro=<Connection.keepalive() running at /Users
 2025-12-17 13:17:04 [src.trading.alpaca_stream] Connected to Alpaca stream: wss://paper-api.alpaca.markets/stream
 2025-12-17 13:17:04 [src.trading.alpaca_stream] Alpaca stream authenticated
 2025-12-17 13:17:04 [src.trading.alpaca_stream] Now listening to: ['trade_updates']
+2025-12-17 13:17:50 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:20:55 [__main__] 
+Shutdown signal received...
+2025-12-17 13:20:55 [src.live_trading_service] Stopping trading engine...
+2025-12-17 13:20:55 [src.alert_service] Alert callback set: False
+2025-12-17 13:20:55 [src.trading.alpaca_stream] Alpaca stream error: Event loop stopped before Future completed.
+2025-12-17 13:20:55 [src.trading.alpaca_stream] Alpaca trade stream stopped
+2025-12-17 13:20:55 [src.quote_provider] Disconnected from WebSocket
+2025-12-17 13:20:55 [src.live_trading_service] WebSocket disconnected
+2025-12-17 13:20:55 [src.live_trading_service] Trading engine stopped
+2025-12-17 13:20:55 [__main__] Stopping trading engine...
+2025-12-17 13:20:55 [__main__] Trading engine stopped.
+2025-12-17 13:20:55 [src.trading.alpaca_stream] Alpaca stream error: no running event loop
+2025-12-17 13:20:55 [asyncio] Task was destroyed but it is pending!
+task: <Task pending name='Task-15' coro=<Connection.keepalive() done, defined at /Users/lpender/dev/trading/backtest/venv/lib/python3.11/site-packages/websockets/asyncio/connection.py:803> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+2025-12-17 13:20:56 [__main__] Initializing database...
+2025-12-17 13:20:56 [__main__] Starting alert service...
+2025-12-17 13:20:56 [src.alert_service] Alert service started on port 8765
+2025-12-17 13:20:56 [__main__] Starting trading engine (PAPER mode)...
+2025-12-17 13:20:56 [src.live_trading_service] Trading engine started
+2025-12-17 13:20:56 [src.live_trading_service] Trading client: AlpacaTradingClient (paper=True)
+2025-12-17 13:20:56 [__main__] Trading engine started successfully!
+2025-12-17 13:20:56 [__main__] Press Ctrl+C to stop
+
+2025-12-17 13:20:56 [src.trading.alpaca_stream] Alpaca trade stream started (paper=True)
+2025-12-17 13:20:56 [src.live_trading_service] Alpaca trade stream started
+2025-12-17 13:20:56 [src.strategy] Loading active trades from database for strategy d2402e8e-d77e-4fb7-92b4-3329dfbb9043...
+2025-12-17 13:20:56 [src.strategy] Database returned 1 active trades
+2025-12-17 13:20:56 [src.strategy] [MGRT] Recovered from DB: 14 shares @ $9.74, SL=$9.20, TP=$10.71 (trade_id=c10b714d)
+2025-12-17 13:20:56 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:20:57 [src.trading.alpaca_stream] Connected to Alpaca stream: wss://paper-api.alpaca.markets/stream
+2025-12-17 13:20:57 [src.trading.alpaca_stream] Alpaca stream authenticated
+2025-12-17 13:20:57 [src.quote_provider] [MGRT] Resolved to NASDAQ:MGRT
+2025-12-17 13:20:57 [src.trading.alpaca_stream] Now listening to: ['trade_updates']
+2025-12-17 13:20:57 [src.quote_provider] [MGRT] Fetched current minute candle: 18:20 | O=7.19 H=7.19 L=7.19 C=7.19 V=100
+2025-12-17 13:20:57 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:20:57 [src.jwt_utils] Parsed JWT: websocket_symbols=5, plan=ultra
+2025-12-17 13:20:57 [src.live_trading_service] [MGRT] Added to WS subscriptions: {'MGRT'}
+2025-12-17 13:20:57 [src.live_trading_service] [MGRT] Event loop not running - subscription queued (will send on WS connect)
+2025-12-17 13:20:57 [src.strategy] Loading pending entries from database for strategy d2402e8e-d77e-4fb7-92b4-3329dfbb9043...
+2025-12-17 13:20:57 [src.strategy] Database returned 0 pending entries
+2025-12-17 13:20:57 [src.strategy] Verifying positions with broker...
+2025-12-17 13:20:57 [src.strategy] Broker has positions in: {'MGRT'}
+2025-12-17 13:20:58 [src.strategy] Broker has 1 open orders (not tracking)
+2025-12-17 13:20:58 [src.strategy] [MGRT] Pending sell order: 14 shares (new)
+2025-12-17 13:20:58 [src.live_trading_service] Added strategy 'test - vol catchall' (d2402e8e-d77e-4fb7-92b4-3329dfbb9043) [priority=4]
+2025-12-17 13:20:58 [src.live_trading_service]   Filters: channels=[], price=$0.00-$100.00
+2025-12-17 13:20:58 [src.live_trading_service]   Entry: 1 green candles, 1,000 min volume, 5m window
+2025-12-17 13:20:58 [src.live_trading_service]   Exit: TP=10.0%, SL=5.0%, hold timeout=5m
+2025-12-17 13:20:58 [src.strategy] Loading active trades from database for strategy a5a2ba99-986b-4755-a791-bf95a402f72d...
+2025-12-17 13:20:58 [src.strategy] Database returned 0 active trades
+2025-12-17 13:20:58 [src.strategy] Loading pending entries from database for strategy a5a2ba99-986b-4755-a791-bf95a402f72d...
+2025-12-17 13:20:58 [src.strategy] Database returned 0 pending entries
+2025-12-17 13:20:58 [src.strategy] Verifying positions with broker...
+2025-12-17 13:20:58 [src.strategy] Broker has positions in: {'MGRT'}
+2025-12-17 13:20:58 [src.strategy] Broker has 1 open orders (not tracking)
+2025-12-17 13:20:58 [src.strategy] [MGRT] Pending sell order: 14 shares (new)
+2025-12-17 13:20:58 [src.live_trading_service] Added strategy '353k from 40k' (a5a2ba99-986b-4755-a791-bf95a402f72d) [priority=14]
+2025-12-17 13:20:58 [src.live_trading_service]   Filters: channels=['🍷-nuntio-std'], price=$4.50-$17.00
+2025-12-17 13:20:58 [src.live_trading_service]   Entry: 1 green candles, 100,000 min volume, 5m window
+2025-12-17 13:20:58 [src.live_trading_service]   Exit: TP=190.0%, SL=1.5%, hold timeout=25m
+2025-12-17 13:20:58 [src.live_trading_service] Strategy 'test - vol catchall' recovered 1 active trades: ['MGRT']
+2025-12-17 13:20:58 [src.live_trading_service] Loaded 2 enabled strategies with 1 active trades, 0 pending entries
+2025-12-17 13:20:58 [src.live_trading_service] Position limit: 5 (from JWT websocket_symbols)
+2025-12-17 13:20:58 [src.alert_service] Alert callback set: True
+2025-12-17 13:20:58 [src.live_trading_service] Alert callback registered
+2025-12-17 13:20:58 [src.quote_provider] Using INSIGHT_SENTRY_KEY as WebSocket key (native subscriber)
+2025-12-17 13:20:58 [src.quote_provider] Connecting to wss://realtime.insightsentry.com/live
+2025-12-17 13:20:58 [src.quote_provider] WebSocket connected
+2025-12-17 13:20:58 [src.quote_provider] Subscribed to 1 tickers: ['MGRT']
+2025-12-17 13:20:58 [src.quote_provider] Starting WebSocket message loop...
+2025-12-17 13:20:58 [src.strategy] [MGRT] EXIT @ $7.19 (timeout) - Return: -26.18%
+2025-12-17 13:20:58 [src.order_store] [MGRT] Created order 192: sell 14 shares
+2025-12-17 13:20:58 [src.trading.alpaca] [MGRT] SELL LIMIT $7.12 (price=$7.1900 - 1.0% slippage)
+2025-12-17 13:20:58 [src.trading.alpaca] Alpaca 403 error: insufficient qty available for order (requested: 14, available: 0) (code=40310000)
+2025-12-17 13:20:58 [src.strategy] [MGRT] Sell order failed: 403 Error: insufficient qty available for order (requested: 14, available: 0)
+2025-12-17 13:20:58 [src.order_store] [MGRT] Updated order 192: status=rejected, filled=None
+2025-12-17 13:20:58 [src.strategy] [MGRT] Sell attempt 1/3 failed - will retry on next exit signal
+2025-12-17 13:21:24 [src.strategy] [MGRT] Found existing sell order at broker (14 shares), skipping (trade_id=c10b714d)
+2025-12-17 13:21:24 [src.live_trading_service] [MGRT] Unsubscribe requested by test - vol catchall, all tracked: set()
+2025-12-17 13:21:24 [src.live_trading_service] [MGRT] No longer needed by any strategy, removing from WS. Current WS subs: {'MGRT'}
+2025-12-17 13:21:24 [src.quote_provider] WebSocket message loop ended (running=True)
+2025-12-17 13:21:24 [src.quote_provider] Connecting to wss://realtime.insightsentry.com/live
+2025-12-17 13:21:24 [src.quote_provider] WebSocket connected
+2025-12-17 13:21:24 [src.quote_provider] No subscriptions to send on connect - server starts with clean state
+2025-12-17 13:21:24 [src.quote_provider] Starting WebSocket message loop...
+2025-12-17 13:22:55 [src.quote_provider] WebSocket message loop ended (running=True)
+2025-12-17 13:22:55 [src.quote_provider] Connecting to wss://realtime.insightsentry.com/live
+2025-12-17 13:22:55 [src.quote_provider] WebSocket connected
+2025-12-17 13:22:55 [src.quote_provider] No subscriptions to send on connect - server starts with clean state
+2025-12-17 13:22:55 [src.quote_provider] Starting WebSocket message loop...

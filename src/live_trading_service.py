@@ -644,7 +644,8 @@ class TradingEngine:
 
             # Find which strategy had this position
             for strategy_id, engine in self.strategies.items():
-                trade = store.get_trade(ticker, strategy_id)
+                trades = store.get_trades_for_strategy(strategy_id)
+                trade = next((t for t in trades if t.ticker == ticker), None)
                 if trade:
                     logger.info(f"[{ticker}] Found position in DB for strategy {strategy_id[:8]} - completing trade")
                     # Create a minimal completed trade record
