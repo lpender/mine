@@ -8,7 +8,7 @@ from typing import List, Optional
 from dotenv import load_dotenv
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, tuple_
 
 from .database import SessionLocal, AnnouncementDB, OHLCVBarDB, RawMessageDB
 from .models import Announcement, OHLCVBar, get_market_session
@@ -199,7 +199,8 @@ class PostgresClient:
         """Get OHLCV bars for multiple announcements in a single query.
 
         Uses the announcement_ticker/announcement_timestamp columns to fetch
-        all bars in one query, which is much faster than N separate queries.
+        all bars efficiently (composite IN query, chunked), which is much faster
+        than N separate queries or a giant OR(...) chain.
 
         Args:
             announcement_keys: List of (ticker, timestamp) tuples
@@ -210,39 +211,63 @@ class PostgresClient:
         if not announcement_keys:
             return {}
 
+        # Note: large key lists can be slow/large in a single SQL statement.
+        # Chunk into batches for more predictable performance and fewer bind params.
+        chunk_size = int(os.getenv("POSTGRESCLIENT_BULK_CHUNK_SIZE", "2000") or 2000)
+        if chunk_size <= 0:
+            chunk_size = 2000
+
+        log_timing = os.getenv("POSTGRESCLIENT_LOG_TIMING", "0") == "1"
+        t0 = datetime.now() if log_timing else None
+
+        # Pre-create result map with all keys (even those with no bars)
+        result = {key: [] for key in announcement_keys}
+
         db = self._get_db()
         try:
-            # Build filter for all announcement keys
-            key_filters = [
-                and_(
-                    OHLCVBarDB.announcement_ticker == ticker,
-                    OHLCVBarDB.announcement_timestamp == ts
+            total_rows = 0
+            key_col = tuple_(OHLCVBarDB.announcement_ticker, OHLCVBarDB.announcement_timestamp)
+
+            for start_idx in range(0, len(announcement_keys), chunk_size):
+                batch = announcement_keys[start_idx:start_idx + chunk_size]
+
+                rows = (
+                    db.query(OHLCVBarDB)
+                    .filter(key_col.in_(batch))
+                    .order_by(
+                        OHLCVBarDB.announcement_ticker,
+                        OHLCVBarDB.announcement_timestamp,
+                        OHLCVBarDB.timestamp,
+                    )
+                    .all()
                 )
-                for ticker, ts in announcement_keys
-            ]
 
-            rows = db.query(OHLCVBarDB).filter(
-                or_(*key_filters)
-            ).order_by(
-                OHLCVBarDB.announcement_ticker,
-                OHLCVBarDB.announcement_timestamp,
-                OHLCVBarDB.timestamp
-            ).all()
+                total_rows += len(rows)
+                for row in rows:
+                    key = (row.announcement_ticker, row.announcement_timestamp)
+                    if key in result:
+                        result[key].append(
+                            OHLCVBar(
+                                timestamp=row.timestamp,
+                                open=row.open,
+                                high=row.high,
+                                low=row.low,
+                                close=row.close,
+                                volume=row.volume,
+                                vwap=row.vwap,
+                            )
+                        )
 
-            # Group by announcement
-            result = {key: [] for key in announcement_keys}
-            for row in rows:
-                key = (row.announcement_ticker, row.announcement_timestamp)
-                if key in result:
-                    result[key].append(OHLCVBar(
-                        timestamp=row.timestamp,
-                        open=row.open,
-                        high=row.high,
-                        low=row.low,
-                        close=row.close,
-                        volume=row.volume,
-                        vwap=row.vwap,
-                    ))
+            if log_timing:
+                dt = (datetime.now() - t0).total_seconds() if t0 else 0.0
+                logger.info(
+                    "get_ohlcv_bars_bulk: keys=%d rows=%d chunk=%d took=%.2fs",
+                    len(announcement_keys),
+                    total_rows,
+                    chunk_size,
+                    dt,
+                )
+
             return result
         finally:
             db.close()
@@ -407,17 +432,6 @@ class PostgresClient:
                 self.update_ohlcv_status(ticker, announcement_time, 'error')
             raise
 
-
-@lru_cache(maxsize=8)
-def get_postgres_client(backend: Optional[str] = None) -> PostgresClient:
-    """
-    Get a cached PostgresClient instance.
-
-    This avoids repeated provider initialization and log spam (especially in Streamlit reruns).
-    Safe because DB sessions are created per call via SessionLocal().
-    """
-    return PostgresClient(backend=backend)
-
     # ─────────────────────────────────────────────────────────────────────────────
     # Raw Messages
     # ─────────────────────────────────────────────────────────────────────────────
@@ -558,3 +572,14 @@ def get_postgres_client(backend: Optional[str] = None) -> PostgresClient:
             source_html=row.source_html,
             ohlcv_status=row.ohlcv_status or 'pending',
         )
+
+
+@lru_cache(maxsize=8)
+def get_postgres_client(backend: Optional[str] = None) -> PostgresClient:
+    """
+    Get a cached PostgresClient instance.
+
+    This avoids repeated provider initialization and log spam (especially in Streamlit reruns).
+    Safe because DB sessions are created per call via SessionLocal().
+    """
+    return PostgresClient(backend=backend)

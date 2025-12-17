@@ -1,11 +1,17 @@
 """Streamlit dashboard for backtesting press release announcements."""
 
+import logging
+import os
 import random
+import sys
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+from pathlib import Path
+from time import perf_counter
 
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 from src.postgres_client import get_postgres_client
@@ -13,6 +19,66 @@ from src.postgres_client import get_postgres_client
 # Timezone for display
 EST = ZoneInfo("America/New_York")
 UTC = ZoneInfo("UTC")
+
+
+def _setup_dashboard_logging() -> logging.Logger:
+    """
+    Configure dashboard logging to a file so "stuck" work becomes visible.
+    Safe to call multiple times (Streamlit reruns).
+    """
+    level_name = (os.getenv("DASHBOARD_LOG_LEVEL", "INFO") or "INFO").upper()
+    level = getattr(logging, level_name, logging.INFO)
+    log_path = os.getenv("DASHBOARD_LOG_FILE", "logs/dashboard.log") or "logs/dashboard.log"
+
+    logger = logging.getLogger("dashboard")
+    logger.setLevel(level)
+
+    # Root logger may already have handlers; we only add our dashboard file handler once.
+    root = logging.getLogger()
+    root.setLevel(min(root.level, level) if root.level else level)
+
+    # Ensure log dir exists
+    try:
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        pass
+
+    already = False
+    for h in root.handlers:
+        if isinstance(h, logging.FileHandler) and getattr(h, "baseFilename", "").endswith(str(Path(log_path))):
+            already = True
+            break
+
+    if not already:
+        fh = logging.FileHandler(log_path)
+        fh.setLevel(level)
+        fh.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
+        root.addHandler(fh)
+
+    # Avoid chatty third-party logs unless explicitly requested
+    if level > logging.DEBUG:
+        logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+    logger.info("Dashboard logging enabled (level=%s file=%s pid=%s)", level_name, log_path, os.getpid())
+    return logger
+
+
+LOGGER = _setup_dashboard_logging()
+
+
+@contextmanager
+def log_time(label: str, **fields):
+    """Lightweight timing logger for dashboard hotspots."""
+    t0 = perf_counter()
+    if fields:
+        LOGGER.info("START %s %s", label, " ".join(f"{k}={v}" for k, v in fields.items()))
+    else:
+        LOGGER.info("START %s", label)
+    try:
+        yield
+    finally:
+        dt = perf_counter() - t0
+        LOGGER.info("END   %s took=%.2fs", label, dt)
 
 
 def to_est(dt):
@@ -137,14 +203,14 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """
     client = get_postgres_client()
 
-    # Convert string timestamps to datetime for bulk query
+    # Convert string timestamps to datetime for bulk query.
+    # Avoid pandas here: this runs on every cache miss and can get expensive for 10k+ keys.
     keys_with_dt = []
     for ticker, timestamp_str in announcement_keys:
-        timestamp = pd.to_datetime(timestamp_str)
-        # Both are UTC - just ensure naive
-        if timestamp.tzinfo is not None:
-            timestamp = timestamp.replace(tzinfo=None)
-        keys_with_dt.append((ticker, timestamp))
+        ts = datetime.fromisoformat(timestamp_str)
+        if getattr(ts, "tzinfo", None) is not None:
+            ts = ts.replace(tzinfo=None)
+        keys_with_dt.append((ticker, ts))
 
     # Single bulk query for all announcements
     bars_by_announcement = client.get_ohlcv_bars_bulk(keys_with_dt)
@@ -159,7 +225,8 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
 st.title("PR Backtest Dashboard")
 
 # Load all announcements
-all_announcements = load_announcements()
+with log_time("load_announcements"):
+    all_announcements = load_announcements()
 
 if not all_announcements:
     st.warning("No announcements found in database.")
@@ -429,6 +496,12 @@ with st.sidebar:
         help="How long to wait for entry conditions after alert"
     )
 
+    entry_at_open = st.checkbox(
+        "Entry at first bar OPEN (optimistic)",
+        key="_entry_at_open",
+        help="Enter at first candle's open price. Most optimistic - ignores green candle/volume filters."
+    )
+
     sl_from_open = st.checkbox(
         "SL from first candle open",
         key="_sl_from_open",
@@ -686,7 +759,8 @@ if not filtered:
 announcement_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in filtered)
 
 # Load OHLCV data (bulk query - returns dict with (ticker, datetime) keys)
-bars_dict = load_ohlcv_for_announcements(announcement_keys, hold_time)
+with log_time("load_ohlcv_for_announcements", keys=len(announcement_keys), window_minutes=hold_time):
+    bars_dict = load_ohlcv_for_announcements(announcement_keys, hold_time)
 
 # Run backtest
 config = BacktestConfig(
@@ -696,13 +770,15 @@ config = BacktestConfig(
     stop_loss_from_open=sl_from_open,
     window_minutes=hold_time,
     entry_window_minutes=entry_window,
-    entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
-    entry_after_consecutive_candles=consec_candles,
-    min_candle_volume=int(min_candle_vol),
+    entry_at_open=entry_at_open,  # Most optimistic - enter at first bar's open
+    entry_at_candle_close=(consec_candles == 0 and not entry_at_open),  # Only use candle close if not waiting for consecutive candles
+    entry_after_consecutive_candles=consec_candles if not entry_at_open else 0,
+    min_candle_volume=int(min_candle_vol) if not entry_at_open else 0,
     trailing_stop_pct=trailing_stop,
 )
 
-summary = run_backtest(filtered, bars_dict, config)
+with log_time("run_backtest", announcements=len(filtered)):
+    summary = run_backtest(filtered, bars_dict, config)
 
 # Price filter (applied after backtest based on actual entry price)
 # Filter out results where entry price is outside the min/max range
@@ -712,7 +788,8 @@ if price_min > 0 or price_max < 100:
         if r.entry_price is None or (price_min < r.entry_price <= price_max)
     ]
 
-stats = calculate_summary_stats(summary.results)
+with log_time("calculate_summary_stats", trades=len(summary.results)):
+    stats = calculate_summary_stats(summary.results)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

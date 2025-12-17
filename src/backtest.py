@@ -46,10 +46,20 @@ def run_single_backtest(
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
 
+    # Handle "entry at open" mode - most optimistic, enter at first bar's open
+    if config.entry_at_open:
+        entry_price = bars[0].open
+        entry_time = bars[0].timestamp
+        entry_bar_idx = 0
+
+        if entry_price <= 0:
+            result.trigger_type = "invalid_price"
+            return result
+
     # Handle "entry after consecutive candles" mode
     # Wait for X consecutive GREEN candles (close > open) with volume threshold
     # Then enter at the OPEN of the next bar (realistic: can't act until candle closes)
-    if config.entry_after_consecutive_candles > 0:
+    elif config.entry_after_consecutive_candles > 0:
         required = config.entry_after_consecutive_candles
         consecutive_count = 0
         signal_bar_idx = None

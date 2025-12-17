@@ -32,12 +32,19 @@ tasks:
   dashboard:
     desc: Run the Streamlit dashboard
     cmds:
-      - streamlit run app.py
+      # Use exec so Ctrl+C is delivered directly to Streamlit (cleaner/faster shutdown)
+      - sh -c 'exec streamlit run app.py'
 
   dashboard:venv:
     desc: Run dashboard using venv
     cmds:
-      - "{{.VENV}}/bin/streamlit run app.py"
+      # Use exec so Ctrl+C is delivered directly to Streamlit (cleaner/faster shutdown)
+      - sh -c 'exec "{{.VENV}}/bin/streamlit" run app.py'
+
+  dashboard:debug:
+    desc: Run the Streamlit dashboard with verbose logging (writes logs/dashboard.log)
+    cmds:
+      - sh -c 'export DASHBOARD_LOG_LEVEL=DEBUG; export POSTGRESCLIENT_LOG_TIMING=1; export POSTGRESCLIENT_BULK_CHUNK_SIZE=${POSTGRESCLIENT_BULK_CHUNK_SIZE:-2000}; exec streamlit run app.py --logger.level=debug'
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Discord Plugin
