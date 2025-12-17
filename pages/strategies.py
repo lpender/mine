@@ -23,6 +23,10 @@ from src.live_trading_service import (
 # Initialize database tables
 init_db()
 
+# Initialize stores for database access
+pending_store = get_pending_entry_store()
+active_store = get_active_trade_store()
+
 # Note: Alert service is now started by run_trading.py only
 
 st.set_page_config(
@@ -90,13 +94,11 @@ with st.sidebar:
                 trader = get_trading_client(paper=is_paper)
                 positions = trader.get_positions()
 
-                # Build strategy lookup from status
+                # Build strategy lookup from database (not in-memory status)
                 strategy_lookup = {}  # ticker -> strategy name
-                strategies_info = status.get("strategies", {})
-                for sid, sinfo in strategies_info.items():
-                    active_trades = sinfo.get("active_trades", {})
-                    for ticker in active_trades.keys():
-                        strategy_lookup[ticker] = sinfo.get("name", sid)
+                all_active_trades = active_store.get_all_trades()
+                for trade in all_active_trades:
+                    strategy_lookup[trade.ticker] = trade.strategy_name or "Unknown"
 
                 if positions:
                     st.markdown("**Broker Positions:**")
@@ -131,8 +133,6 @@ with st.sidebar:
     st.markdown("[View Trade History →](trade_history)")
 
 store = get_strategy_store()
-pending_store = get_pending_entry_store()
-active_store = get_active_trade_store()
 
 
 def get_completed_today_count(strategy_id: str) -> int:
