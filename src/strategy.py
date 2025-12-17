@@ -45,6 +45,7 @@ class StrategyConfig:
     buy_order_timeout_seconds: int = 5  # Cancel unfilled buy orders after this many seconds
 
     # Exit rules
+    sell_order_timeout_seconds: int = 5  # Cancel and retry unfilled sell orders after this many seconds
     take_profit_pct: float = 10.0
     stop_loss_pct: float = 11.0
     stop_loss_from_open: bool = True
@@ -633,6 +634,9 @@ class StrategyEngine:
 
         # Check for pending buy orders that have timed out
         self._check_pending_buy_order_timeouts(ticker, timestamp)
+
+        # Check for pending sell orders that have timed out (cancel and retry with fresh price)
+        self._check_pending_sell_order_timeouts(ticker, timestamp)
 
     def _passes_filters(self, ann: Announcement) -> bool:
         """Check if announcement passes all filters."""
@@ -1346,9 +1350,12 @@ class StrategyEngine:
         except Exception as e:
             logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record trade: {e}")
 
-        # Remove from database active trades using trade_id
+        # Remove from in-memory and database active trades using trade_id
         trade_id = pending.trade_id
         if trade_id:
+            # Remove from in-memory tracking
+            self.active_trades.pop(trade_id, None)
+            # Remove from database
             try:
                 self._active_trade_store.delete_trade(trade_id)
             except Exception as e:
@@ -1691,8 +1698,8 @@ class StrategyEngine:
         )
         logger.info(f"[{self.strategy_name}] [{ticker}] Sell order {order.order_id} pending fill confirmation (trade_id={trade_id[:8]})")
 
-        # Remove from active trades (we have a pending sell order now)
-        self.active_trades.pop(trade_id, None)
+        # Keep ActiveTrade in tracking until sell fill is confirmed
+        # This ensures we can retry with fresh price if sell times out
 
     def _abandon_pending_entry(self, trade_id: str):
         """Abandon a pending entry (timeout or other reason)."""
@@ -1826,6 +1833,189 @@ class StrategyEngine:
         # Cancel timed-out orders (separate loop to avoid modifying dict during iteration)
         for order_id in orders_to_cancel:
             self._cancel_pending_buy_order(order_id, reason=f"timeout_{timeout_seconds}s")
+
+    def _cancel_pending_sell_order(self, order_id: str, timestamp: datetime, reason: str = "timeout"):
+        """Cancel a pending sell order at the broker and retry with fresh price.
+
+        Args:
+            order_id: The broker order ID to cancel
+            timestamp: Current timestamp for the retry order
+            reason: Reason for cancellation (for logging/tracing)
+        """
+        pending = self.pending_orders.pop(order_id, None)
+        if not pending:
+            logger.warning(f"[{self.strategy_name}] Cannot cancel sell order {order_id} - not found in pending_orders")
+            return
+
+        ticker = pending.ticker
+        trade_id = pending.trade_id
+
+        logger.warning(f"[{self.strategy_name}] [{ticker}] Canceling pending sell order {order_id} ({reason}, trade_id={trade_id[:8]})")
+
+        # Cancel at broker
+        try:
+            self.trader.cancel_order(order_id)
+            logger.info(f"[{self.strategy_name}] [{ticker}] Sell order {order_id} canceled at broker")
+        except Exception as e:
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to cancel sell order {order_id} at broker: {e}")
+            # Continue with retry - order may have already filled or been canceled
+
+        # Update order status in database
+        if pending.db_order_id:
+            try:
+                self._order_store.record_event(
+                    event_type="canceled",
+                    event_timestamp=datetime.utcnow(),
+                    order_id=pending.db_order_id,
+                    broker_order_id=order_id,
+                    details={"reason": reason},
+                )
+                self._order_store.update_order_status(
+                    pending.db_order_id,
+                    status="canceled",
+                )
+            except Exception as e:
+                logger.error(f"[{self.strategy_name}] [{ticker}] Failed to update order status in DB: {e}")
+
+        # Record trace event
+        if pending.trace_id:
+            trace_store = get_trace_store()
+            trace_store.add_event(
+                trace_id=pending.trace_id,
+                event_type='sell_order_canceled',
+                event_timestamp=datetime.utcnow(),
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                reason=reason,
+                details={
+                    'trade_id': trade_id,
+                    'order_id': order_id,
+                    'limit_price': pending.limit_price,
+                    'shares': pending.shares,
+                    'seconds_pending': (datetime.utcnow() - pending.submitted_at).total_seconds(),
+                },
+            )
+
+        # Fetch fresh price and retry the sell
+        fresh_price = None
+        if self.on_fetch_price:
+            fresh_price = self.on_fetch_price(ticker)
+        if fresh_price is None:
+            fresh_price = pending.limit_price  # fallback to original price
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Could not fetch fresh price, using original: ${fresh_price:.4f}")
+        else:
+            logger.info(f"[{self.strategy_name}] [{ticker}] Fetched fresh price for retry: ${fresh_price:.4f}")
+
+        # Get the trade to check sell_attempts (may be in active_trades)
+        trade = self.active_trades.get(trade_id)
+        if trade:
+            trade.sell_attempts += 1
+            if trade.sell_attempts >= 3:
+                trade.needs_manual_exit = True
+                logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ SELL TIMED OUT 3 TIMES - needs manual exit! Position: {pending.shares} shares")
+                # Record trace
+                if pending.trace_id:
+                    trace_store = get_trace_store()
+                    trace_store.update_trace_status(pending.trace_id, status='needs_manual_exit')
+                return
+
+        # Retry the sell with fresh price
+        try:
+            retry_order = self.trader.sell(ticker, pending.shares, limit_price=fresh_price)
+            logger.info(f"[{self.strategy_name}] [{ticker}] Retry sell order submitted: {retry_order.order_id} ({retry_order.status}) @ ${fresh_price:.4f}")
+
+            # Create new order record in database
+            db_order_id = self._order_store.create_order(
+                ticker=ticker,
+                side="sell",
+                order_type="limit",
+                requested_shares=pending.shares,
+                strategy_id=self.strategy_id,
+                strategy_name=self.strategy_name,
+                limit_price=fresh_price,
+                trade_id=trade_id,
+                paper=self.paper,
+            )
+            if db_order_id:
+                self._order_store.update_broker_order_id(db_order_id, retry_order.order_id)
+                self._order_store.record_event(
+                    event_type="submitted",
+                    event_timestamp=datetime.utcnow(),
+                    order_id=db_order_id,
+                    broker_order_id=retry_order.order_id,
+                )
+
+            # Track the new pending sell order
+            self.pending_orders[retry_order.order_id] = PendingOrder(
+                order_id=retry_order.order_id,
+                trade_id=trade_id,
+                ticker=ticker,
+                side="sell",
+                shares=pending.shares,
+                limit_price=fresh_price,
+                submitted_at=timestamp,
+                db_order_id=db_order_id,
+                entry_price=pending.entry_price,
+                entry_time=pending.entry_time,
+                exit_reason=pending.exit_reason,
+                trace_id=pending.trace_id,
+            )
+
+            # Record trace event for retry
+            if pending.trace_id:
+                trace_store = get_trace_store()
+                trace_store.add_event(
+                    trace_id=pending.trace_id,
+                    event_type='sell_order_retry',
+                    event_timestamp=datetime.utcnow(),
+                    strategy_id=self.strategy_id,
+                    strategy_name=self.strategy_name,
+                    details={
+                        'trade_id': trade_id,
+                        'new_order_id': retry_order.order_id,
+                        'new_limit_price': fresh_price,
+                        'attempt': trade.sell_attempts if trade else 1,
+                    },
+                )
+
+        except Exception as e:
+            logger.error(f"[{self.strategy_name}] [{ticker}] Retry sell failed: {e}")
+            if trade:
+                trade.sell_attempts += 1
+                if trade.sell_attempts >= 3:
+                    trade.needs_manual_exit = True
+                    logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ SELL RETRY FAILED 3 TIMES - needs manual exit!")
+
+    def _check_pending_sell_order_timeouts(self, ticker: str, timestamp: datetime):
+        """Check for and cancel/retry sell orders that have exceeded the timeout.
+
+        Args:
+            ticker: The ticker symbol to check orders for
+            timestamp: Current timestamp for calculating elapsed time
+        """
+        cfg = self.config
+        timeout_seconds = cfg.sell_order_timeout_seconds
+
+        # Find pending sell orders for this ticker that have timed out
+        orders_to_cancel = []
+        for order_id, pending in self.pending_orders.items():
+            if pending.ticker == ticker and pending.side == "sell":
+                elapsed = (timestamp - pending.submitted_at).total_seconds()
+                if elapsed > timeout_seconds:
+                    # Check if we've already exceeded retry limit
+                    trade = self.active_trades.get(pending.trade_id)
+                    if trade and trade.needs_manual_exit:
+                        continue  # Skip, already marked for manual exit
+
+                    logger.info(
+                        f"[{self.strategy_name}] [{ticker}] Sell order {order_id} timed out "
+                        f"({elapsed:.1f}s > {timeout_seconds}s, trade_id={pending.trade_id[:8]})"
+                    )
+                    orders_to_cancel.append(order_id)
+
+        # Cancel and retry timed-out orders (separate loop to avoid modifying dict during iteration)
+        for order_id in orders_to_cancel:
+            self._cancel_pending_sell_order(order_id, timestamp, reason=f"timeout_{timeout_seconds}s")
 
     def _remove_orphaned_trade(self, trade_id: str, reason: str = "orphaned"):
         """Remove an orphaned trade (position doesn't exist at broker)."""

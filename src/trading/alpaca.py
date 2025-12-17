@@ -15,9 +15,11 @@ logger = logging.getLogger("src.trading.alpaca")
 ET_TZ = ZoneInfo("America/New_York")
 UTC_TZ = ZoneInfo("UTC")
 
-# Slippage for limit orders (default 1%)
+# Slippage for limit orders
 # Buy limit = price * (1 + slippage), Sell limit = price * (1 - slippage)
-DEFAULT_SLIPPAGE_PCT = float(os.getenv("TRADE_SLIPPAGE_PCT", "1.0"))
+DEFAULT_BUY_SLIPPAGE_PCT = float(os.getenv("TRADE_SLIPPAGE_PCT", "1.0"))
+# Sell slippage defaults to 2x buy slippage for more aggressive fills
+DEFAULT_SELL_SLIPPAGE_PCT = float(os.getenv("TRADE_SELL_SLIPPAGE_PCT", str(DEFAULT_BUY_SLIPPAGE_PCT * 2)))
 
 
 def _round_price(price: float) -> float:
@@ -126,7 +128,7 @@ class AlpacaTradingClient(TradingClient):
 
         # Apply slippage - willing to pay up to X% more
         # Round to valid tick size (2 decimals >= $1, 4 decimals < $1)
-        limit_with_slippage = _round_price(limit_price * (1 + DEFAULT_SLIPPAGE_PCT / 100))
+        limit_with_slippage = _round_price(limit_price * (1 + DEFAULT_BUY_SLIPPAGE_PCT / 100))
 
         data = {
             "symbol": ticker,
@@ -137,7 +139,7 @@ class AlpacaTradingClient(TradingClient):
             "time_in_force": "day",
             "extended_hours": True,
         }
-        logger.info(f"[{ticker}] BUY LIMIT ${limit_with_slippage} (price=${limit_price:.4f} + {DEFAULT_SLIPPAGE_PCT}% slippage)")
+        logger.info(f"[{ticker}] BUY LIMIT ${limit_with_slippage} (price=${limit_price:.4f} + {DEFAULT_BUY_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
@@ -146,9 +148,9 @@ class AlpacaTradingClient(TradingClient):
         if limit_price is None:
             raise ValueError("limit_price is required for sell orders")
 
-        # Apply slippage - willing to accept up to X% less
+        # Apply slippage - willing to accept up to X% less (2x buy slippage by default)
         # Round to valid tick size (2 decimals >= $1, 4 decimals < $1)
-        limit_with_slippage = _round_price(limit_price * (1 - DEFAULT_SLIPPAGE_PCT / 100))
+        limit_with_slippage = _round_price(limit_price * (1 - DEFAULT_SELL_SLIPPAGE_PCT / 100))
 
         data = {
             "symbol": ticker,
@@ -159,7 +161,7 @@ class AlpacaTradingClient(TradingClient):
             "time_in_force": "day",
             "extended_hours": True,
         }
-        logger.info(f"[{ticker}] SELL LIMIT ${limit_with_slippage} (price=${limit_price:.4f} - {DEFAULT_SLIPPAGE_PCT}% slippage)")
+        logger.info(f"[{ticker}] SELL LIMIT ${limit_with_slippage} (price=${limit_price:.4f} - {DEFAULT_SELL_SLIPPAGE_PCT}% slippage)")
         result = self._request("POST", "/v2/orders", json=data)
         return self._parse_order(result)
 
