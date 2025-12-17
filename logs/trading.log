@@ -35014,3 +35014,14 @@ task: <Task pending name='Task-12' coro=<Connection.keepalive() done, defined at
 2025-12-17 13:25:58 [src.strategy] [MGRT] Sell order failed: 422 Error: asset "MGRT" cannot be sold short
 2025-12-17 13:25:58 [src.order_store] [MGRT] Updated order 196: status=rejected, filled=None
 2025-12-17 13:25:58 [src.strategy] [MGRT] ⚠️ SELL FAILED 3 TIMES - needs manual exit! Position: 14 shares @ $9.7400
+2025-12-17 13:30:51 [src.strategy] [MGRT] Position no longer exists at broker - removing from tracking (trade_id=c10b714d)
+2025-12-17 13:30:51 [src.active_trade_store] [MGRT] Deleted active trade from database (trade_id=c10b714d)
+2025-12-17 13:30:51 [src.live_trading_service] [MGRT] Unsubscribe requested by test - vol catchall, all tracked: set()
+2025-12-17 13:30:51 [src.live_trading_service] [MGRT] No longer needed by any strategy, removing from WS. Current WS subs: {'MGRT'}
+2025-12-17 13:30:51 [src.strategy] Reconciliation removed 1 stale positions: ['MGRT']
+2025-12-17 13:30:51 [src.live_trading_service] Subscription cleanup - unsubscribing from unwanted tickers: {'MGRT'}
+2025-12-17 13:30:51 [src.quote_provider] WebSocket message loop ended (running=True)
+2025-12-17 13:30:51 [src.quote_provider] Connecting to wss://realtime.insightsentry.com/live
+2025-12-17 13:30:52 [src.quote_provider] WebSocket connected
+2025-12-17 13:30:52 [src.quote_provider] No subscriptions to send on connect - server starts with clean state
+2025-12-17 13:30:52 [src.quote_provider] Starting WebSocket message loop...

@@ -1319,8 +1319,8 @@ class StrategyEngine:
                     raw_data={"error": str(e)},
                 )
 
-            # Check if error indicates position doesn't exist at broker
-            if "insufficient qty" in error_msg or "position does not exist" in error_msg:
+            # Check if error indicates position doesn't exist at broker (DB ghost)
+            if "insufficient qty" in error_msg or "position does not exist" in error_msg or "sold short" in error_msg:
                 # First, cancel any existing open orders that might be holding shares
                 canceled_order = False
                 try:
