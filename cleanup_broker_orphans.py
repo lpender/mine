@@ -23,7 +23,7 @@ from datetime import datetime
 from src.database import init_db
 from src.active_trade_store import get_active_trade_store
 from src.trading import get_trading_client
-from src.trade_history import get_trade_history_client
+from src.trade_store import get_trade_store
 from src.trade_logger import log_sell_fill
 
 logging.basicConfig(
@@ -68,7 +68,7 @@ def sell_positions(positions, paper=True):
         return 0, []
 
     trader = get_trading_client(paper=paper)
-    trade_history = get_trade_history_client()
+    trade_history = get_trade_store()
 
     sold = 0
     failed = []

@@ -35,43 +35,51 @@ def to_est_display(dt: datetime) -> str:
     return est_dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
-def get_order_events_for_trade(trade_id: int, ticker: str, entry_time: datetime, exit_time: datetime, strategy_id: str = None) -> pd.DataFrame:
-    """Get all orders and their events for a completed trade, displayed in EST."""
+def get_order_events_for_trade(db_trade_id: int, ticker: str, entry_time: datetime, exit_time: datetime, strategy_id: str = None, trade_id: str = None) -> pd.DataFrame:
+    """Get all orders and their events for a completed trade, displayed in EST.
+    
+    Uses trade_id (UUID) for direct lookup if available, falls back to time-based matching for legacy trades.
+    """
     db = SessionLocal()
     try:
-        # Find the specific BUY and SELL orders for this trade
-        # BUY order: created shortly before entry_time (order submitted, then filled = entry_time)
-        # SELL order: created shortly before exit_time (order submitted, then filled = exit_time)
         orders = []
+        
+        # Primary method: Query by trade_id (UUID) if available
+        if trade_id:
+            orders = db.query(OrderDB).filter(
+                OrderDB.trade_id == trade_id
+            ).order_by(OrderDB.created_at.asc()).all()
+        
+        # Fallback for legacy trades: time-based matching
+        if not orders:
+            # Find BUY order (created within 2 minutes before entry fill time)
+            buy_query = db.query(OrderDB).filter(
+                OrderDB.ticker == ticker,
+                OrderDB.side == "buy",
+                OrderDB.created_at >= entry_time - timedelta(seconds=120),
+                OrderDB.created_at <= entry_time + timedelta(seconds=5),
+            )
+            if strategy_id:
+                buy_query = buy_query.filter(OrderDB.strategy_id == strategy_id)
+            buy_order = buy_query.first()
+            if buy_order:
+                orders.append(buy_order)
 
-        # Find BUY order (created within 30 seconds before entry fill time)
-        buy_query = db.query(OrderDB).filter(
-            OrderDB.ticker == ticker,
-            OrderDB.side == "buy",
-            OrderDB.created_at >= entry_time - timedelta(seconds=30),
-            OrderDB.created_at <= entry_time + timedelta(seconds=5),
-        )
-        if strategy_id:
-            buy_query = buy_query.filter(OrderDB.strategy_id == strategy_id)
-        buy_order = buy_query.first()
-        if buy_order:
-            orders.append(buy_order)
+            # Find SELL order (created within 2 minutes before exit fill time)
+            sell_query = db.query(OrderDB).filter(
+                OrderDB.ticker == ticker,
+                OrderDB.side == "sell",
+                OrderDB.created_at >= exit_time - timedelta(seconds=120),
+                OrderDB.created_at <= exit_time + timedelta(seconds=5),
+            )
+            if strategy_id:
+                sell_query = sell_query.filter(OrderDB.strategy_id == strategy_id)
+            sell_order = sell_query.first()
+            if sell_order:
+                orders.append(sell_order)
 
-        # Find SELL order (created within 30 seconds before exit fill time)
-        sell_query = db.query(OrderDB).filter(
-            OrderDB.ticker == ticker,
-            OrderDB.side == "sell",
-            OrderDB.created_at >= exit_time - timedelta(seconds=30),
-            OrderDB.created_at <= exit_time + timedelta(seconds=5),
-        )
-        if strategy_id:
-            sell_query = sell_query.filter(OrderDB.strategy_id == strategy_id)
-        sell_order = sell_query.first()
-        if sell_order:
-            orders.append(sell_order)
-
-        # Sort by created_at
-        orders.sort(key=lambda o: o.created_at)
+            # Sort by created_at
+            orders.sort(key=lambda o: o.created_at)
 
         if not orders:
             return pd.DataFrame()
@@ -365,11 +373,12 @@ else:
         # Order Events Table (only for trades with order tracking)
         st.subheader("Order Events (Chronological)")
         order_events_df = get_order_events_for_trade(
-            trade_id=selected_trade.id,
+            db_trade_id=selected_trade.id,
             ticker=selected_trade.ticker,
             entry_time=selected_trade.entry_time,
             exit_time=selected_trade.exit_time,
             strategy_id=selected_trade.strategy_id,
+            trade_id=selected_trade.trade_id,  # UUID for direct order lookup
         )
 
         if not order_events_df.empty:

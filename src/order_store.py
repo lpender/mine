@@ -24,6 +24,7 @@ class OrderStore:
         limit_price: Optional[float] = None,
         broker_order_id: Optional[str] = None,
         active_trade_id: Optional[int] = None,
+        trade_id: Optional[str] = None,
         paper: bool = True,
     ) -> Optional[int]:
         """
@@ -44,6 +45,7 @@ class OrderStore:
                 strategy_id=strategy_id,
                 strategy_name=strategy_name,
                 active_trade_id=active_trade_id,
+                trade_id=trade_id,
                 paper=paper,
                 status='pending',
             )

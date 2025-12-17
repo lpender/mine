@@ -393,6 +393,10 @@ class TradingEngine:
             logger.warning(f"Strategy {strategy_id} already running")
             return
 
+        # Initialize subscription tracking BEFORE creating engine -
+        # engine's __init__ calls _recover_positions() which may call on_subscribe callbacks
+        self._strategy_subscriptions[strategy_id] = set()
+
         engine = StrategyEngine(
             strategy_id=strategy_id,
             strategy_name=name,
@@ -407,7 +411,6 @@ class TradingEngine:
         self.strategies[strategy_id] = engine
         self.strategy_names[strategy_id] = name
         self.strategy_priorities[strategy_id] = priority
-        self._strategy_subscriptions[strategy_id] = set()
 
         logger.info(f"Added strategy '{name}' ({strategy_id}) [priority={priority}]")
         logger.info(f"  Filters: channels={config.channels}, price=${config.price_min:.2f}-${config.price_max:.2f}")

@@ -116,6 +116,9 @@ class TradeDB(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
+    # Trade identification - links to orders via this UUID
+    trade_id = Column(String(36), nullable=True, index=True)  # UUID from ActiveTrade
+
     # Core trade data
     ticker = Column(String(10), nullable=False, index=True)
     entry_price = Column(Float, nullable=False)
@@ -285,6 +288,9 @@ class OrderDB(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
 
+    # Trade identification - links orders to completed trades
+    trade_id = Column(String(36), nullable=True, index=True)  # UUID from ActiveTrade
+
     # Broker reference
     broker_order_id = Column(String(50), unique=True, nullable=True, index=True)
 
@@ -306,7 +312,7 @@ class OrderDB(Base):
     strategy_id = Column(String(36), ForeignKey('strategies.id'), nullable=True, index=True)
     strategy_name = Column(String(100), nullable=True)
 
-    # Link sell orders to the position they're closing
+    # Link sell orders to the position they're closing (deprecated, use trade_id)
     active_trade_id = Column(Integer, ForeignKey('active_trades.id'), nullable=True)
 
     # Trading mode
@@ -489,6 +495,24 @@ def init_db():
         if 'uq_active_trade_ticker_strategy' in constraint_names:
             with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE active_trades DROP CONSTRAINT uq_active_trade_ticker_strategy"))
+                conn.commit()
+
+    # Migration: Add trade_id column to trades if missing
+    if 'trades' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('trades')]
+        if 'trade_id' not in columns:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE trades ADD COLUMN trade_id VARCHAR(36)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_trades_trade_id ON trades (trade_id)"))
+                conn.commit()
+
+    # Migration: Add trade_id column to orders if missing
+    if 'orders' in inspector.get_table_names():
+        columns = [c['name'] for c in inspector.get_columns('orders')]
+        if 'trade_id' not in columns:
+            with engine.connect() as conn:
+                conn.execute(text("ALTER TABLE orders ADD COLUMN trade_id VARCHAR(36)"))
+                conn.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_trade_id ON orders (trade_id)"))
                 conn.commit()
 
 

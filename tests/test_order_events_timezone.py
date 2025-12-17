@@ -79,7 +79,7 @@ def test_order_event_timestamps_are_utc():
 
 def test_display_conversion_to_est():
     """Test that display properly converts UTC to EST."""
-    from pages.trade_history import to_est_display
+    from pages.trades import to_est_display
 
     # Create a naive UTC time
     utc_time = datetime(2025, 12, 17, 15, 5, 0)  # 3:05 PM UTC

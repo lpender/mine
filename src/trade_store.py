@@ -45,6 +45,7 @@ class TradeStore:
         paper: bool = True,
         strategy_id: Optional[str] = None,
         strategy_name: Optional[str] = None,
+        trade_id: Optional[str] = None,
     ) -> int:
         """
         Save a completed trade to the database.
@@ -54,6 +55,7 @@ class TradeStore:
             paper: Whether this was a paper trade
             strategy_id: Optional strategy ID
             strategy_name: Optional strategy name
+            trade_id: UUID linking this trade to its orders
 
         Returns:
             ID of the saved trade
@@ -71,6 +73,7 @@ class TradeStore:
 
             db_trade = TradeDB(
                 ticker=trade["ticker"],
+                trade_id=trade_id,
                 entry_price=trade["entry_price"],
                 entry_time=entry_time,
                 exit_price=trade["exit_price"],

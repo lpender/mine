@@ -968,6 +968,7 @@ class StrategyEngine:
             strategy_id=self.strategy_id,
             strategy_name=self.strategy_name,
             limit_price=price,
+            trade_id=trade_id,
             paper=self.paper,
         )
 
@@ -1208,6 +1209,7 @@ class StrategyEngine:
                     strategy_id=self.strategy_id,
                     strategy_name=self.strategy_name,
                     limit_price=current_price,
+                    trade_id=trade_id,
                     paper=self.paper,
                 )
 
@@ -1329,6 +1331,7 @@ class StrategyEngine:
                 paper=self.paper,
                 strategy_id=self.strategy_id,
                 strategy_name=self.strategy_name,
+                trade_id=pending.trade_id,
             )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to record trade: {e}")
@@ -1539,6 +1542,7 @@ class StrategyEngine:
             strategy_id=self.strategy_id,
             strategy_name=self.strategy_name,
             limit_price=price,
+            trade_id=trade_id,
             paper=self.paper,
         )
 
@@ -1746,6 +1750,7 @@ class StrategyEngine:
                 paper=self.paper,
                 strategy_id=self.strategy_id,
                 strategy_name=self.strategy_name,
+                trade_id=trade_id,
             )
         except Exception as e:
             logger.error(f"[{ticker}] Failed to record orphaned trade: {e}")

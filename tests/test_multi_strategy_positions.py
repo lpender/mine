@@ -95,7 +95,7 @@ class TestStrategyEngineIsolation:
         mock_trade.last_quote_time = None
 
         with patch('src.strategy.get_active_trade_store', return_value=mock_active_trade_store):
-            with patch('src.strategy.get_trade_history_client'):
+            with patch('src.strategy.get_trade_store'):
                 mock_active_trade_store.get_trades_for_strategy.return_value = [mock_trade]
 
                 engine_a = StrategyEngine(
@@ -154,7 +154,7 @@ class TestStrategyEngineIsolation:
         store_b.get_trades_for_strategy.return_value = [mock_trade_b]
         store_b.save_trade.return_value = True
 
-        with patch('src.strategy.get_trade_history_client'):
+        with patch('src.strategy.get_trade_store'):
             with patch('src.strategy.get_active_trade_store', return_value=store_a):
                 engine_a = StrategyEngine(
                     strategy_id=strategy_a_id,
@@ -185,7 +185,7 @@ class TestStrategyEngineIsolation:
         """When a quote arrives, each strategy updates its OWN position's last_price."""
         # Create two strategies with same ticker, different positions
         with patch('src.strategy.get_active_trade_store') as mock_store:
-            with patch('src.strategy.get_trade_history_client'):
+            with patch('src.strategy.get_trade_store'):
                 mock_store.return_value.get_trades_for_strategy.return_value = []
 
                 engine_a = StrategyEngine(
@@ -277,7 +277,7 @@ class TestExitIsolation:
     def test_strategy_sells_only_its_shares(self, mock_trader, config):
         """When strategy exits, it should only sell its own shares."""
         with patch('src.strategy.get_active_trade_store') as mock_store:
-            with patch('src.strategy.get_trade_history_client'):
+            with patch('src.strategy.get_trade_store'):
                 mock_store.return_value.get_trades_for_strategy.return_value = []
                 mock_store.return_value.delete_trade.return_value = True
 
@@ -316,7 +316,7 @@ class TestExitIsolation:
     def test_both_strategies_can_exit_same_ticker(self, mock_trader, config):
         """Both strategies should be able to exit their positions independently."""
         with patch('src.strategy.get_active_trade_store') as mock_store:
-            with patch('src.strategy.get_trade_history_client'):
+            with patch('src.strategy.get_trade_store'):
                 mock_store.return_value.get_trades_for_strategy.return_value = []
                 mock_store.return_value.delete_trade.return_value = True
 
@@ -699,7 +699,7 @@ class TestReconciliation:
         mock_trader.get_position.return_value = MockPosition("AMCI", 100, 5.0)
 
         with patch('src.strategy.get_active_trade_store') as mock_store:
-            with patch('src.strategy.get_trade_history_client'):
+            with patch('src.strategy.get_trade_store'):
                 mock_store.return_value.get_trades_for_strategy.return_value = []
                 mock_store.return_value.delete_trade.return_value = True
 

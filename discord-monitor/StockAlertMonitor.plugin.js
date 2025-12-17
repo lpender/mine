@@ -1,7 +1,7 @@
 /**
  * @name StockAlertMonitor
  * @description Monitors Discord channels for stock alerts (TICKER < $X pattern) and provides backfill widget
- * @version 2.1.0
+ * @version 2.2.0
  * @author lpender
  */
 
@@ -24,6 +24,13 @@ module.exports = class StockAlertMonitor {
         this.widgetContainer = null;
         this.updateInterval = null;
 
+        // Auto-send backfill state
+        this.autoSendEnabled = false;
+        this.sentMessageIds = new Set();
+        this.autoSendQueue = [];
+        this.autoSendInterval = null;
+        this._autoSendObserver = null;
+
         // Load saved settings or use defaults
         const savedSettings = BdApi.Data.load("StockAlertMonitor", "settings") || {};
         console.log("[StockAlertMonitor] Loaded settings:", JSON.stringify(savedSettings));
@@ -33,6 +40,11 @@ module.exports = class StockAlertMonitor {
         this.alertWebhookUrl = savedSettings.alertWebhookUrl || "http://localhost:8765/alert";
         this.backfillWebhookUrl = savedSettings.backfillWebhookUrl || "http://localhost:8765/backfill";
         this.alertVolume = savedSettings.alertVolume !== undefined ? savedSettings.alertVolume : 0.7;
+
+        // Load previously sent message IDs (persisted to avoid re-sending on reload)
+        const sentIds = BdApi.Data.load("StockAlertMonitor", "sentMessageIds") || [];
+        this.sentMessageIds = new Set(sentIds);
+        console.log(`[StockAlertMonitor] Loaded ${this.sentMessageIds.size} previously sent message IDs`);
 
         console.log("[StockAlertMonitor] Enabled channels:", Array.from(this.enabledChannels));
         console.log("[StockAlertMonitor] Alert volume:", this.alertVolume);
@@ -253,6 +265,9 @@ module.exports = class StockAlertMonitor {
             Dispatcher.unsubscribe("MESSAGE_CREATE", this.messageCreateHandler);
             console.log("[StockAlertMonitor] Unsubscribed from MESSAGE_CREATE events");
         }
+
+        // Stop auto-send if running
+        this.stopAutoSend();
 
         BdApi.Patcher.unpatchAll("StockAlertMonitor");
         this.removeBackfillWidget();
@@ -723,6 +738,9 @@ Full message: ${fullContent.substring(0, 200)}
             if (success) {
                 statusEl.textContent = `Sent ${messages.length} messages!`;
                 statusEl.style.color = "#43b581";
+                // Mark all as sent for auto-send tracking
+                messages.forEach(m => this.sentMessageIds.add(m.id));
+                this.saveSentMessageIds();
             } else {
                 statusEl.textContent = "Failed - server not running?";
                 statusEl.style.color = "#f04747";
@@ -732,6 +750,161 @@ Full message: ${fullContent.substring(0, 200)}
                 if (statusEl) statusEl.textContent = "";
             }, 3000);
         }
+    }
+
+    // ============== Auto-Send Backfill ==============
+
+    saveSentMessageIds() {
+        // Only save the last 50k IDs to prevent unbounded growth
+        const ids = Array.from(this.sentMessageIds);
+        const toSave = ids.slice(-50000);
+        BdApi.Data.save("StockAlertMonitor", "sentMessageIds", toSave);
+    }
+
+    toggleAutoSend() {
+        this.autoSendEnabled = !this.autoSendEnabled;
+        this.updateAutoSendButton();
+
+        if (this.autoSendEnabled) {
+            this.startAutoSend();
+            BdApi.UI.showToast("Auto-send ENABLED - scroll to backfill", { type: "success" });
+        } else {
+            this.stopAutoSend();
+            BdApi.UI.showToast("Auto-send disabled", { type: "info" });
+        }
+    }
+
+    updateAutoSendButton() {
+        const btn = this.widgetContainer?.querySelector("#auto-send-btn");
+        if (!btn) return;
+
+        if (this.autoSendEnabled) {
+            btn.textContent = "● Auto-Send ON";
+            btn.style.background = "#3ba55c";
+        } else {
+            btn.textContent = "○ Auto-Send OFF";
+            btn.style.background = "#40444b";
+        }
+    }
+
+    startAutoSend() {
+        console.log("[StockAlertMonitor] Starting auto-send mode");
+
+        // Queue any currently visible messages that haven't been sent
+        this.queueNewMessages();
+
+        // Set up mutation observer to detect new messages appearing
+        this._autoSendObserver = new MutationObserver((mutations) => {
+            let hasNewNodes = false;
+            for (const mutation of mutations) {
+                if (mutation.addedNodes.length > 0) {
+                    hasNewNodes = true;
+                    break;
+                }
+            }
+            if (hasNewNodes) {
+                this.queueNewMessages();
+            }
+        });
+
+        // Observe the message list
+        const messageList = document.querySelector('[data-list-id="chat-messages"]') ||
+                           document.querySelector('[class*="messagesWrapper"]');
+        if (messageList) {
+            this._autoSendObserver.observe(messageList, { childList: true, subtree: true });
+            console.log("[StockAlertMonitor] Auto-send observer attached to message list");
+        }
+
+        // Process queue every 500ms
+        this.autoSendInterval = setInterval(() => this.processAutoSendQueue(), 500);
+    }
+
+    stopAutoSend() {
+        console.log("[StockAlertMonitor] Stopping auto-send mode");
+
+        if (this._autoSendObserver) {
+            this._autoSendObserver.disconnect();
+            this._autoSendObserver = null;
+        }
+
+        if (this.autoSendInterval) {
+            clearInterval(this.autoSendInterval);
+            this.autoSendInterval = null;
+        }
+
+        this.autoSendQueue = [];
+    }
+
+    queueNewMessages() {
+        const messages = this.getVisibleMessages();
+        let newCount = 0;
+
+        for (const msg of messages) {
+            // Skip if already sent or already in queue
+            if (this.sentMessageIds.has(msg.id)) continue;
+            if (this.autoSendQueue.some(m => m.id === msg.id)) continue;
+
+            this.autoSendQueue.push(msg);
+            newCount++;
+        }
+
+        if (newCount > 0) {
+            console.log(`[StockAlertMonitor] Queued ${newCount} new messages for auto-send (total queue: ${this.autoSendQueue.length})`);
+            this.updateAutoSendStatus();
+        }
+    }
+
+    updateAutoSendStatus() {
+        const statusEl = this.widgetContainer?.querySelector("#backfill-status");
+        if (!statusEl || !this.autoSendEnabled) return;
+
+        const queueSize = this.autoSendQueue.length;
+        const sentCount = this.sentMessageIds.size;
+
+        if (queueSize > 0) {
+            statusEl.textContent = `Queue: ${queueSize} | Sent: ${sentCount}`;
+            statusEl.style.color = "#faa61a";
+        } else {
+            statusEl.textContent = `Sent: ${sentCount} total`;
+            statusEl.style.color = "#43b581";
+        }
+    }
+
+    async processAutoSendQueue() {
+        if (!this.autoSendEnabled || this.autoSendQueue.length === 0) return;
+
+        // Take up to 50 messages at a time
+        const batch = this.autoSendQueue.splice(0, 50);
+        const channel = this.getCurrentChannelName();
+
+        console.log(`[StockAlertMonitor] Auto-sending batch of ${batch.length} messages`);
+
+        const success = await this.sendToWebhook(this.backfillWebhookUrl, {
+            channel,
+            messages: batch,
+            sent_at: new Date().toISOString(),
+            auto_send: true
+        });
+
+        if (success) {
+            // Mark as sent
+            batch.forEach(m => this.sentMessageIds.add(m.id));
+            this.saveSentMessageIds();
+            console.log(`[StockAlertMonitor] Auto-sent ${batch.length} messages successfully`);
+        } else {
+            // Put back in queue for retry
+            this.autoSendQueue.unshift(...batch);
+            console.log(`[StockAlertMonitor] Auto-send failed, re-queued ${batch.length} messages`);
+        }
+
+        this.updateAutoSendStatus();
+    }
+
+    clearSentHistory() {
+        this.sentMessageIds.clear();
+        BdApi.Data.save("StockAlertMonitor", "sentMessageIds", []);
+        BdApi.UI.showToast("Cleared sent message history", { type: "info" });
+        this.updateAutoSendStatus();
     }
 
     findChatScroller() {
@@ -893,6 +1066,7 @@ Full message: ${fullContent.substring(0, 200)}
                 <span class="widget-value" id="backfill-count">0</span>
             </div>
             <button class="widget-btn" id="backfill-send">Send Data</button>
+            <button class="widget-btn" id="auto-send-btn" style="margin-top: 6px; background: #40444b;">○ Auto-Send OFF</button>
             <div class="widget-status" id="backfill-status"></div>
         `;
 
@@ -910,6 +1084,10 @@ Full message: ${fullContent.substring(0, 200)}
         // Channel toggle button
         const channelToggleBtn = this.widgetContainer.querySelector("#channel-toggle-btn");
         channelToggleBtn?.addEventListener("click", () => this.toggleCurrentChannel());
+
+        // Auto-send toggle button
+        const autoSendBtn = this.widgetContainer.querySelector("#auto-send-btn");
+        autoSendBtn?.addEventListener("click", () => this.toggleAutoSend());
 
         // Update button when channel changes
         this.updateChannelToggleButton();
@@ -1026,6 +1204,18 @@ Full message: ${fullContent.substring(0, 200)}
             <button id="sam-toggle-widget" style="background: #faa61a; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px;">
                 Toggle Widget
             </button>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #40444b;">
+                <div style="color: #b9bbbe; font-size: 12px; margin-bottom: 8px;">
+                    <strong style="color: white;">Auto-Send Backfill:</strong> Enable auto-send in the widget, then scroll through history.
+                    Messages are automatically sent as they appear. Tracking prevents duplicates.
+                </div>
+                <div style="color: #8e9297; margin-bottom: 8px;">
+                    Sent messages tracked: <span id="sam-sent-count" style="color: #3ba55c; font-weight: bold;">${this.sentMessageIds.size}</span>
+                </div>
+                <button id="sam-clear-sent" style="background: #ed4245; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Clear Sent History
+                </button>
+            </div>
         `;
 
         // Add event listeners after panel is created
@@ -1071,6 +1261,12 @@ Full message: ${fullContent.substring(0, 200)}
                 } else {
                     this.createBackfillWidget();
                 }
+            });
+
+            document.getElementById("sam-clear-sent")?.addEventListener("click", () => {
+                this.clearSentHistory();
+                const countEl = document.getElementById("sam-sent-count");
+                if (countEl) countEl.textContent = "0";
             });
         }, 100);
 

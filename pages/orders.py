@@ -201,7 +201,7 @@ if events_data:
         selected_idx = st.selectbox(
             "Select an event to view raw data",
             options=range(len(results)),
-            format_func=lambda x: f"{events_data[x]['Event Time (EST)']} - {events_data[x]['Ticker']} {events_data[x]['Event Type']}",
+            format_func=lambda x: f"{events_data[x]['Event Time (EST)']} - {events_data[x]['Ticker']} {events_data[x]['Side']} {events_data[x]['Event Type']}",
         )
 
         if selected_idx is not None:

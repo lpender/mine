@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf77-nuntio-std",
+  "messages": [
+    {
+      "id": "1158132609260458166-1422923698750619648",
+      "content": "08:30  \u2191  ENTO  < $7  \u00b7  1  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 1.0x  |  High CTB",
+      "timestamp": "2025-10-01T12:30:46.426Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422924814804582472",
+      "content": "08:35  \u2191  CJET  < $.50c  137%  \u00b7  7  after-lull  ~  :flag_ky:  |  Float: 15.7 M  |  RVol: 100x  |  Vol: 228 M  |  Reg SHO  |  High CTB  |  PR",
+      "timestamp": "2025-10-01T12:35:12.514Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422925464246161552",
+      "content": "08:37  \u2191  CJET  < $.50c  153%  \u00b7  8  NHOD  ~  :flag_ky:  |  Float: 15.7 M  |  RVol: 100x  |  Vol: 243 M  |  Reg SHO  |  High CTB  |  PR",
+      "timestamp": "2025-10-01T12:37:47.353Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422926047262802011",
+      "content": "08:40  \u2191  ASNS  < $.50c  \u00b7  1  ~  Float: 13.6 M  |  MC: 6.1 M  |  +34.3% from 52W-Low",
+      "timestamp": "2025-10-01T12:40:06.355Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422926445919080498",
+      "content": "08:41  \u2191  ELUT  < $2  \u00b7  1  ~  Float: 25.9 M  |  MC: 37.7 M  |  +21.4% from 52W-Low",
+      "timestamp": "2025-10-01T12:41:41.402Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422927247186067608",
+      "content": "08:44  \u2191  RAYA  < $5  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 600 k  |  RVol: 0.0x  |  High CTB  |  +36.2% from 52W-Low  ~  1 for 220  R/S  Sep. 30",
+      "timestamp": "2025-10-01T12:44:52.439Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422927281558392902",
+      "content": "08:44  \u2191  USAR  < $19  \u00b7  1  ~  Float: 77.7 M  |  MC: 1.7 B",
+      "timestamp": "2025-10-01T12:45:00.634Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422927358964404297",
+      "content": "08:45  \u2191  SCNX  < $1  \u00b7  1  ~  Float: 15.1 M  |  MC: 17.6 M  |  +35.6% from 52W-Low",
+      "timestamp": "2025-10-01T12:45:19.089Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422927700242469006",
+      "content": "08:46  \u2191  UCFIW  < $.50c  \u00b7  1",
+      "timestamp": "2025-10-01T12:46:40.456Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422927867930742936",
+      "content": "08:47  \u2191  CJET  < $.50c  162%  \u00b7  9  NHOD  ~  :flag_ky:  |  Float: 15.7 M  |  RVol: 125x  |  Vol: 278 M  |  Reg SHO  |  High CTB  |  PR",
+      "timestamp": "2025-10-01T12:47:20.436Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422928337617158195",
+      "content": "08:49  \u2197  BTM  < $5  \u00b7  1  ~  Float: 23.1 M  |  MC: 256 M  |  Reg SHO",
+      "timestamp": "2025-10-01T12:49:12.418Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422929201018835004",
+      "content": "08:52  \u2191  CJET  < $.50c  180%  \u00b7  10  NHOD  ~  :flag_ky:  |  Float: 15.7 M  |  RVol: 125x  |  Vol: 299 M  |  Reg SHO  |  High CTB  |  PR",
+      "timestamp": "2025-10-01T12:52:38.269Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422930128438296577",
+      "content": "08:56  \u2197  DKI  < $2  \u00b7  1  3 green bars 5m  ~  :flag_hk:  |  Float: 3.8 M  |  RVol: 125x  |  -5.4% from 52W-Low",
+      "timestamp": "2025-10-01T12:56:19.383Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422930258109403218",
+      "content": "08:56  \u2191  CJET  < $.50c  205%  \u00b7  11  NHOD  ~  :flag_ky:  |  Float: 15.7 M  |  RVol: 125x  |  Vol: 321 M  |  Reg SHO  |  High CTB  |  PR",
+      "timestamp": "2025-10-01T12:56:50.299Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422931256403955793",
+      "content": "09:00  \u2191  NVVE  < $.50c  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 19.0 M  |  RVol: 2.8x  |  +41.4% from 52W-Low  |  PR",
+      "timestamp": "2025-10-01T13:00:48.311Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422932829393649714",
+      "content": "09:07  \u2197  CHR  < $.50c  \u00b7  1  3 green bars 1m  ~  :flag_cn:  |  Float: 6.4 M  |  RVol: 1,300x  |  -74.5% from 52W-Low  |  PR+",
+      "timestamp": "2025-10-01T13:07:03.341Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422933189894340628",
+      "content": "09:08  \u2191  KAVL  < $1  35%  \u00b7  4  ~  :flag_us:  |  Float: 5.6 M  |  RVol: 550x  |  Vol: 12.3 M  |  +44.2% from 52W-Low  |  Theme:  Nicotine",
+      "timestamp": "2025-10-01T13:08:29.291Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422933831912001679",
+      "content": "09:11  \u2197  CHR  < $.50c  -71%  \u00b7  2  3 green bars 1m  ~  :flag_cn:  |  Float: 6.4 M  |  RVol: 1,900x  |  Vol: 6.0 M  |  -70.4% from 52W-Low  |  PR+",
+      "timestamp": "2025-10-01T13:11:02.360Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422934381726793830",
+      "content": "09:13  \u2191  KAVL  < $1  46%  \u00b7  5  NHOD  ~  :flag_us:  |  Float: 5.6 M  |  RVol: 650x  |  Vol: 14.9 M  |  Theme:  Nicotine",
+      "timestamp": "2025-10-01T13:13:13.446Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422936444241969206",
+      "content": "09:21  \u2191  PALI  < $1  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 9.1 M  |  RVol: 2.7x  |  PR+",
+      "timestamp": "2025-10-01T13:21:25.188Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422936537108320286",
+      "content": "09:21  \u2191  PALI  < $2  28%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 9.1 M  |  RVol: 4.0x  |  Vol: 602 k  |  PR+",
+      "timestamp": "2025-10-01T13:21:47.329Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422936830369857537",
+      "content": "09:22  \u2191  PALI  < $2  48%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 9.1 M  |  RVol: 14x  |  Vol: 2.0 M  |  PR+",
+      "timestamp": "2025-10-01T13:22:57.248Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422938215291158569",
+      "content": "09:28  \u2191  PRFX  < $2  \u00b7  1  ~  Float: 1.8 M  |  MC: 2.8 M  |  +28.0% from 52W-Low",
+      "timestamp": "2025-10-01T13:28:27.439Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422939062972710913",
+      "content": "09:31  \u2191  UAMY  < $8  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 104 M  |  RVol: 40x  |  SI: 16.6%",
+      "timestamp": "2025-10-01T13:31:49.542Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422939444323024896",
+      "content": "09:33  \u2191  RUN  < $20  \u00b7  2  ~  Float: 222 M  |  MC: 4.2 B  |  SI: 25.6%",
+      "timestamp": "2025-10-01T13:33:20.463Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422939700095615050",
+      "content": "09:34  \u2191  LPTX  < $1  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 33.4 M  |  RVol: 45x",
+      "timestamp": "2025-10-01T13:34:21.444Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422939723814539356",
+      "content": "09:34  \u2191  HCTI  < $4  16%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 5.8 M  |  RVol: 0.1x  |  Vol: 550 k  |  SI: 17.2%  |  PR",
+      "timestamp": "2025-10-01T13:34:27.099Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422939813107204167",
+      "content": "09:34  \u2191  HCTI  < $4  33%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 5.8 M  |  RVol: 0.4x  |  Vol: 745 k  |  SI: 17.2%  |  PR",
+      "timestamp": "2025-10-01T13:34:48.388Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422940543356239873",
+      "content": "09:37  \u2197  BYND  < $3  \u00b7  1  ~  Float: 62.6 M  |  MC: 157 M  |  SI: 49.9%",
+      "timestamp": "2025-10-01T13:37:42.493Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422940821400977640",
+      "content": "09:38  \u2191  HCTI  < $4  40%  \u00b7  4  NHOD  ~  :flag_us:  |  Float: 5.8 M  |  RVol: 2.5x  |  Vol: 4.1 M  |  SI: 17.2%  |  PR",
+      "timestamp": "2025-10-01T13:38:48.784Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422941005245579325",
+      "content": "09:39  \u2191  YCBD  < $2  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 8.3 M  |  RVol: 150x",
+      "timestamp": "2025-10-01T13:39:32.616Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422941019070009364",
+      "content": "09:39  \u2191  RAYA  < $6  34%  \u00b7  2  NHOD  ~  :flag_cn:  |  Float: 600 k  |  RVol: 0.1x  |  Vol: 229 k  |  High CTB  ~  1 for 220  R/S  Sep. 30",
+      "timestamp": "2025-10-01T13:39:35.912Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422941635058208788",
+      "content": "09:42  \u2197  BENF  < $1  \u00b7  1  3 green bars 3m  ~  :flag_us:  |  Float: 7.2 M  |  RVol: 80x  |  High CTB",
+      "timestamp": "2025-10-01T13:42:02.775Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422941888389845123",
+      "content": "09:43  \u2197  APM  < $3  \u00b7  1  3 green bars 1m  ~  :flag_gb:  |  Float: 4.3 M  |  RVol: 25x  |  High CTB",
+      "timestamp": "2025-10-01T13:43:03.174Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422942145102352425",
+      "content": "09:44  \u2197  SKYQ  < $1  \u00b7  1  3 green bars 2m  ~  :flag_us:  |  Float: 16.9 M  |  RVol: 70x  |  SI: 18.0%  |  High CTB",
+      "timestamp": "2025-10-01T13:44:04.379Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422942149502308433",
+      "content": "09:44  \u2197  SKYQ  < $1  2%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 16.9 M  |  RVol: 70x  |  Vol: 1.8 M  |  SI: 18.0%  |  High CTB",
+      "timestamp": "2025-10-01T13:44:05.428Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422942179415953540",
+      "content": "09:44  \u2197  PLUG  < $3  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 1.1 B  |  RVol: 6.2x  |  SI: 32.5%  |  PR",
+      "timestamp": "2025-10-01T13:44:12.560Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422942913763217589",
+      "content": "09:47  \u2191  AIHS  < $3  22%  \u00b7  2  NSH  ~  :flag_cn:  |  Float: 990 k  |  RVol: 40x  |  Vol: 1.9 M  |  High CTB  |  +32.5% from 52W-Low",
+      "timestamp": "2025-10-01T13:47:07.642Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422942934948380692",
+      "content": "09:47  \u2197  DPRO  < $10  \u00b7  1  ~  Float: 5.4 M  |  MC: 46.5 M  |  Reg SHO  |  SI: 36.4%",
+      "timestamp": "2025-10-01T13:47:12.693Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422943647166365799",
+      "content": "09:50  \u2197  AKAN  < $7  \u00b7  1  ~  Float: 730 k  |  MC: 3.4 M",
+      "timestamp": "2025-10-01T13:50:02.499Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422943650937311335",
+      "content": "09:50  \u2191  AKAN  < $7  38%  \u00b7  2  NHOD  ~  :flag_gb:  |  Float: 730 k  |  RVol: 60x  |  Vol: 399 k  |  Theme:  Weed  |  PR+",
+      "timestamp": "2025-10-01T13:50:03.398Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422943794898145442",
+      "content": "09:50  \u2191  CHR  < $.50c  -67%  \u00b7  3  NSH  ~  :flag_cn:  |  Float: 6.4 M  |  RVol: 1,700x  |  Vol: 21.8 M  |  -65.3% from 52W-Low  |  PR+",
+      "timestamp": "2025-10-01T13:50:37.721Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422945575938166988",
+      "content": "09:57  \u2191  PALI  < $2  41%  \u00b7  4  NSH  ~  :flag_us:  |  Float: 9.1 M  |  RVol: 450x  |  Vol: 26.5 M  |  PR+",
+      "timestamp": "2025-10-01T13:57:42.354Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422945660780417115",
+      "content": "09:58  \u2197  APLT  < $1  \u00b7  1  4 green bars 2m  ~  :flag_us:  |  Float: 125 M  |  RVol: 25x",
+      "timestamp": "2025-10-01T13:58:02.582Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422945664979042325",
+      "content": "09:58  \u2197  APLT  < $1  18%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 125 M  |  RVol: 25x  |  Vol: 2.1 M",
+      "timestamp": "2025-10-01T13:58:03.583Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422945722550190223",
+      "content": "09:58  \u2191  PALI  < $2  56%  \u00b7  5  NHOD  ~  :flag_us:  |  Float: 9.1 M  |  RVol: 475x  |  Vol: 28.3 M  |  PR+",
+      "timestamp": "2025-10-01T13:58:17.309Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422946167867707532",
+      "content": "10:00  \u2197  NUKK  < $9  \u00b7  1  ~  Float: 4.5 M  |  MC: 51.3 M  |  SI: 30.7%",
+      "timestamp": "2025-10-01T14:00:03.481Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422946174138187888",
+      "content": "10:00  \u2197  VUZI  < $4  \u00b7  1  3 green bars 10m  ~  :flag_us:  |  Float: 63.9 M  |  RVol: 11x  |  SI: 25.8%",
+      "timestamp": "2025-10-01T14:00:04.976Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422946290643505195",
+      "content": "10:00  \u2197  AKAN  < $7  58%  \u00b7  3  4 green bars 1m  ~  :flag_gb:  |  Float: 730 k  |  RVol: 80x  |  Vol: 711 k  |  Theme:  Weed  |  PR+",
+      "timestamp": "2025-10-01T14:00:32.753Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1422946309564010517",
+      "content": "10:00  \u2191  AKAN  < $8  63%  \u00b7  4  NHOD  ~  :flag_gb:  |  Float: 730 k  |  RVol: 90x  |  Vol: 851 k  |  Theme:  Weed  |  PR+",
+      "timestamp": "2025-10-01T14:00:37.264Z",
+      "author": ""
+    }
+  ],
+  "sent_at": "2025-12-17T20:02:18.351Z"
+}

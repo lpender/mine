@@ -20,7 +20,7 @@ from src.database import init_db
 from src.active_trade_store import get_active_trade_store
 from src.strategy_store import get_strategy_store
 from src.trading import get_trading_client
-from src.trade_history import get_trade_history_client
+from src.trade_store import get_trade_store
 from src.trade_logger import log_sell_fill
 
 logging.basicConfig(
@@ -109,7 +109,7 @@ def check_broker_positions(orphaned_trades, paper=True):
 def cleanup_database_only(trades, paper=True):
     """Remove orphaned trades from database (don't touch broker)."""
     trade_store = get_active_trade_store()
-    trade_history = get_trade_history_client()
+    trade_history = get_trade_store()
 
     cleaned = 0
     for trade in trades:
@@ -149,7 +149,7 @@ def sell_and_cleanup(at_broker_dict, paper=True):
     """Sell positions at broker and clean up database."""
     trader = get_trading_client(paper=paper)
     trade_store = get_active_trade_store()
-    trade_history = get_trade_history_client()
+    trade_history = get_trade_store()
 
     sold = 0
     failed = []

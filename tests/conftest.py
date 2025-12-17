@@ -52,11 +52,11 @@ def use_test_database(monkeypatch, test_engine):
     # Patch all modules that import SessionLocal directly at module level
     # This is needed because they capture the reference before this fixture runs
     from src import order_store, strategy_store, live_bar_store
-    from src import pending_entry_store, trade_history, active_trade_store
+    from src import pending_entry_store, trade_store, active_trade_store
     from src import postgres_client
 
     for module in [order_store, strategy_store, live_bar_store,
-                   pending_entry_store, trade_history, active_trade_store,
+                   pending_entry_store, trade_store, active_trade_store,
                    postgres_client]:
         monkeypatch.setattr(module, "SessionLocal", TestSessionLocal)
 

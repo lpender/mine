@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf77-nuntio-std",
+  "messages": [
+    {
+      "id": "1158132609260458166-1427208053929021440",
+      "content": "04:15  \u2191  PMAX  < $6  126%  \u00b7  6  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,500x  |  Vol: 2.3 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:15:16.300Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427208980480135291",
+      "content": "04:18  \u2197  NVX  < $4  \u00b7  1  NHOD  ~  :flag_au:  |  Float: 122 M  |  RVol: 125x  |  Reg SHO",
+      "timestamp": "2025-10-13T08:18:57.207Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427209198923415623",
+      "content": "04:19  \u2191  NVX  < $5  45%  \u00b7  2  NHOD  ~  :flag_au:  |  Float: 122 M  |  RVol: 150x  |  Vol: 192 k  |  Reg SHO",
+      "timestamp": "2025-10-13T08:19:49.288Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427209291609149551",
+      "content": "04:20  \u2191  NVX  < $5  68%  \u00b7  3  NHOD  ~  :flag_au:  |  Float: 122 M  |  RVol: 200x  |  Vol: 268 k  |  Reg SHO",
+      "timestamp": "2025-10-13T08:20:11.386Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427210004221530173",
+      "content": "04:22  \u2191  PMAX  < $7  149%  \u00b7  7  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,600x  |  Vol: 3.7 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:23:01.286Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427210726317228122",
+      "content": "04:25  \u2191  PMAX  < $8  187%  \u00b7  8  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,800x  |  Vol: 4.8 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:25:53.447Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427211199610749019",
+      "content": "04:27  \u2191  FORA  < $4  35%  \u00b7  3  ~  :flag_us:  |  Float: 7.9 M  |  RVol: 143,800x  |  Vol: 667 k",
+      "timestamp": "2025-10-13T08:27:46.289Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427211321522520085",
+      "content": "04:28  \u2191  FORA  < $4  45%  \u00b7  4  NHOD  ~  :flag_us:  |  Float: 7.9 M  |  RVol: 160,800x  |  Vol: 753 k",
+      "timestamp": "2025-10-13T08:28:15.355Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427211405228118066",
+      "content": "04:28  \u2197  FGL  < $.50c  \u00b7  1  NHOD  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 17x  |  SI: 24.9%  |  +6.6% from 52W-Low",
+      "timestamp": "2025-10-13T08:28:35.312Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427212613447844002",
+      "content": "04:33  \u2191  PMAX  < $9  232%  \u00b7  9  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,900x  |  Vol: 6.3 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:33:23.374Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427213364064423966",
+      "content": "04:36  \u2191  FGL  < $.50c  22%  \u00b7  2  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 150x  |  Vol: 1.6 M  |  SI: 24.9%  |  +9.5% from 52W-Low",
+      "timestamp": "2025-10-13T08:36:22.335Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427213619673956424",
+      "content": "04:37  \u2191  PMAX  < $9  227%  \u00b7  10  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 2,000x  |  Vol: 7.4 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:37:23.277Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427213726012149861",
+      "content": "04:37  \u2191  FGL  < $.50c  26%  \u00b7  3  NHOD  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 150x  |  Vol: 1.7 M  |  SI: 24.9%  |  +13.5% from 52W-Low",
+      "timestamp": "2025-10-13T08:37:48.630Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427214265823268969",
+      "content": "04:39  \u2191  FGL  < $1  45%  \u00b7  4  NHOD  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 300x  |  Vol: 3.4 M  |  SI: 24.9%  |  +30.7% from 52W-Low",
+      "timestamp": "2025-10-13T08:39:57.331Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427215025143283774",
+      "content": "04:42  \u2191  PMAX  < $10  285%  \u00b7  11  NHOD  ~  :flag_hk:  |  Float: 630 k  |  RVol: 2,000x  |  Vol: 8.6 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T08:42:58.367Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427216144854552638",
+      "content": "04:47  \u2191  FGL  < $1  50%  \u00b7  5  NHOD  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 650x  |  Vol: 8.6 M  |  SI: 24.9%  |  +35.2% from 52W-Low",
+      "timestamp": "2025-10-13T08:47:25.327Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427217809846440106",
+      "content": "04:54  \u2197  ACON  < $15  68%  \u00b7  3  3 green bars 1m  ~  :flag_us:  |  Float: 580 k  |  RVol: 32,700x  |  Vol: 1.6 M  |  High CTB",
+      "timestamp": "2025-10-13T08:54:02.292Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427218653182562374",
+      "content": "04:57  \u2191  NCNA  < $8  \u00b7  1  NHOD  ~  :flag_gb:  |  Float: 1.9 M  |  RVol: 0.1x  |  SI: 22.9%",
+      "timestamp": "2025-10-13T08:57:23.359Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427219034746650696",
+      "content": "04:58  \u2191  FGL  < $1  72%  \u00b7  6  NHOD  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 1,300x  |  Vol: 21.0 M  |  SI: 24.9%",
+      "timestamp": "2025-10-13T08:58:54.331Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427220075018190898",
+      "content": "05:03  \u2197  PMAX  < $9  234%  \u00b7  12  3 green bars 1m  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,800x  |  Vol: 11.6 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T09:03:02.351Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427220821319090247",
+      "content": "05:05  \u2191  FGL  < $1  84%  \u00b7  7  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 1,600x  |  Vol: 30.2 M  |  SI: 24.9%",
+      "timestamp": "2025-10-13T09:06:00.283Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427222465691521056",
+      "content": "05:12  \u2191  INHD  < $2  \u00b7  1  NHOD  ~  :flag_hk:  |  Float: 7.6 M  |  RVol: 5.3x  |  High CTB  |  +28.8% from 52W-Low",
+      "timestamp": "2025-10-13T09:12:32.332Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427223660690673765",
+      "content": "05:17  \u2191  GWH  < $5  16%  \u00b7  3  test  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 750x  |  Vol: 1.7 M",
+      "timestamp": "2025-10-13T09:17:17.242Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427224541570269194",
+      "content": "05:20  \u2191  INHD  < $2  44%  \u00b7  2  ~  :flag_hk:  |  Float: 7.6 M  |  RVol: 200x  |  Vol: 3.1 M  |  High CTB  |  +43.2% from 52W-Low",
+      "timestamp": "2025-10-13T09:20:47.260Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427225338634829845",
+      "content": "05:23  \u2191  HCAI  < $1  \u00b7  1  ~  :flag_cn:  |  Float: 1.1 M  |  RVol: 2.6x  |  High CTB  |  +49.7% from 52W-Low",
+      "timestamp": "2025-10-13T09:23:57.295Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427226366515875951",
+      "content": "05:28  \u2197  PMAX  < $9  214%  \u00b7  13  4 green bars 1m  ~  :flag_hk:  |  Float: 630 k  |  RVol: 1,500x  |  Vol: 13.3 M  ~  1 for 8  R/S  Oct. 06",
+      "timestamp": "2025-10-13T09:28:02.361Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427227817246199900",
+      "content": "05:33  \u2191  GWH  < $5  16%  \u00b7  4  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 1,000x  |  Vol: 2.7 M",
+      "timestamp": "2025-10-13T09:33:48.242Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427227947269488670",
+      "content": "05:34  \u2191  GWH  < $6  20%  \u00b7  5  NHOD  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 1,000x  |  Vol: 2.9 M",
+      "timestamp": "2025-10-13T09:34:19.242Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427228371074682933",
+      "content": "05:35  \u2191  GWH  < $6  39%  \u00b7  6  NHOD  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 1,300x  |  Vol: 3.6 M",
+      "timestamp": "2025-10-13T09:36:00.285Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427228472912117760",
+      "content": "05:36  \u2191  GWH  < $8  71%  \u00b7  7  NHOD  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 1,500x  |  Vol: 4.1 M",
+      "timestamp": "2025-10-13T09:36:24.565Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427233609026240592",
+      "content": "05:56  \u2191  GWH  < $7  58%  \u00b7  8  test  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 3,100x  |  Vol: 10.2 M",
+      "timestamp": "2025-10-13T09:56:49.110Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427234611439603723",
+      "content": "06:00  \u2191  STI  < $7  \u00b7  1  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 1.7x  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:00:48.104Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427234901245169807",
+      "content": "06:01  \u2191  STI  < $8  34%  \u00b7  2  NHOD  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 3.8x  |  Vol: 16.9 k  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:01:57.199Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427235576700211244",
+      "content": "06:04  \u2191  STI  < $9  58%  \u00b7  3  NHOD  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 100x  |  Vol: 434 k  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:04:38.240Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427236403166711829",
+      "content": "06:07  \u2191  STI  < $11  82%  \u00b7  4  NHOD  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 250x  |  Vol: 1.0 M  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:07:55.285Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427237082555748463",
+      "content": "06:10  \u2191  STI  < $12  113%  \u00b7  5  NHOD  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 400x  |  Vol: 1.7 M  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:10:37.264Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427237623893594112",
+      "content": "06:12  \u2191  GV  < $2  \u00b7  1  NHOD  ~  :flag_ca:  |  Float: 2.3 M  |  RVol: 2.3x  |  High CTB",
+      "timestamp": "2025-10-13T10:12:46.329Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427238776945508395",
+      "content": "06:17  \u2191  GV  < $3  48%  \u00b7  2  NHOD  ~  :flag_ca:  |  Float: 2.3 M  |  RVol: 150x  |  Vol: 700 k  |  High CTB",
+      "timestamp": "2025-10-13T10:17:21.238Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427239011558363312",
+      "content": "06:18  \u2191  AZI  < $.50c  \u00b7  1  NHOD  ~  :flag_cn:  |  Float: 33.9 M  |  RVol: 4.5x  |  Reg SHO  |  +29.1% from 52W-Low",
+      "timestamp": "2025-10-13T10:18:17.174Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427239125580382209",
+      "content": "06:18  \u2191  GV  < $3  73%  \u00b7  3  NHOD  ~  :flag_ca:  |  Float: 2.3 M  |  RVol: 325x  |  Vol: 1.6 M  |  High CTB",
+      "timestamp": "2025-10-13T10:18:44.359Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427239909542068298",
+      "content": "06:21  \u2191  AG  < $15  \u00b7  1  NHOD  ~  :flag_ca:  |  Float: 457 M  |  RVol: 2.0x",
+      "timestamp": "2025-10-13T10:21:51.270Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427239913560215604",
+      "content": "06:21  \u2191  KFFB  < $6  \u00b7  1  ~  :flag_us:  |  Float: 3.0 M  |  RVol: 700x",
+      "timestamp": "2025-10-13T10:21:52.228Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427242434642837565",
+      "content": "06:31  \u2191  GWH  < $8  75%  \u00b7  9  NHOD  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 3,900x  |  Vol: 16.8 M",
+      "timestamp": "2025-10-13T10:31:53.301Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427243227253178388",
+      "content": "06:35  \u2197  STI  < $8  33%  \u00b7  6  3 green bars 1m  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 900x  |  Vol: 4.7 M  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:35:02.274Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427245743839772672",
+      "content": "06:45  \u2197  STI  < $10  75%  \u00b7  7  3 green bars 5m  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 1,200x  |  Vol: 6.7 M  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T10:45:02.275Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427246477767348275",
+      "content": "06:47  \u2191  FGL  < $.50c  37%  \u00b7  8  after-lull  ~  :flag_my:  |  Float: 2.5 M  |  RVol: 1,200x  |  Vol: 59.5 M  |  SI: 24.9%  |  +46.0% from 52W-Low",
+      "timestamp": "2025-10-13T10:47:57.257Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427248583429853226",
+      "content": "06:56  \u2191  GWH  < $8  85%  \u00b7  10  NHOD  ~  :flag_us:  |  Float: 8.0 M  |  RVol: 4,300x  |  Vol: 21.3 M",
+      "timestamp": "2025-10-13T10:56:19.286Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427249938156355638",
+      "content": "07:01  \u2191  STI  < $10  78%  \u00b7  8  ~  :flag_us:  |  Float: 1.5 M  |  RVol: 1,400x  |  Vol: 8.5 M  |  High CTB  |  PR",
+      "timestamp": "2025-10-13T11:01:42.278Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427249992808005633",
+      "content": "07:01  \u2191  PGEN  < $4  \u00b7  1  NHOD  ~  :flag_us:  |  Float: 123 M  |  RVol: 0.6x  |  SI: 30.8%  |  PR",
+      "timestamp": "2025-10-13T11:01:55.308Z",
+      "author": ""
+    },
+    {
+      "id": "1158132609260458166-1427250240582320230",
+      "content": "07:02  \u2191  CHNR  < $6  \u00b7  1  NHOD  ~  :flag_hk:  |  Float: 520 k  |  RVol: 2.6x",
+      "timestamp": "2025-10-13T11:02:54.382Z",
+      "author": ""
+    }
+  ],
+  "sent_at": "2025-12-17T19:58:56.856Z"
+}
