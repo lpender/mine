@@ -365,20 +365,34 @@ def _active_sample_seed(user_seed: int) -> int:
 def init_session_state():
     """Initialize session state from URL params.
 
-    URL is the source of truth. Session state is always synced FROM URL params.
-    Widget changes update URL (via set_param calls after widgets), and on the next
-    rerun, those URL values flow back into session state.
+    We only apply URL params on:
+    1. First load (no _url_loaded flag)
+    2. Navigation from another page (detected by _load_id param changing)
+
+    Widget changes don't trigger URL reads because _url_loaded is set and _load_id hasn't changed.
     """
-    # Helper to always sync session state from URL param
+    # Check if this is a fresh navigation (Load in Backtest sets _load_id)
+    current_load_id = st.query_params.get("_load_id", "")
+    previous_load_id = st.session_state.get("_last_load_id", "")
+
+    # Apply URL params if: first load OR load_id changed (navigation from strategy page)
+    should_apply_url = (
+        "_url_loaded" not in st.session_state or  # First load
+        (current_load_id and current_load_id != previous_load_id)  # New navigation
+    )
+
+    if should_apply_url:
+        st.session_state["_url_loaded"] = True
+        if current_load_id:
+            st.session_state["_last_load_id"] = current_load_id
+
+    # Helper to set from URL (only if should_apply_url) or keep existing/default
     def sync_from_url(key, url_param, default, param_type=str, validator=None):
-        if url_param in st.query_params:
+        if should_apply_url and url_param in st.query_params:
             val = get_param(url_param, default, param_type)
             st.session_state[key] = validator(val) if validator else val
         elif key not in st.session_state:
-            # No URL param and no session state - use default
             st.session_state[key] = default
-        # If no URL param but session state exists, keep session state
-        # (this handles params that aren't in URL yet)
 
     # Slider value validators
     def validate_sl(v): return max(1.0, min(30.0, v)) if v > 0 else 5.0
@@ -438,7 +452,7 @@ def init_session_state():
     sync_from_url("_sample_pct", "sample_pct", 100, int, lambda v: max(1, min(100, v)))
 
     # Market cap filter from URL (max_mcap is an alias for mc_max from strategy page)
-    if "max_mcap" in st.query_params:
+    if should_apply_url and "max_mcap" in st.query_params:
         max_mcap_val = get_param("max_mcap", 0.0, float)
         if max_mcap_val > 0:
             st.session_state["_mc_max"] = max_mcap_val
