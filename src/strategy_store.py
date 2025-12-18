@@ -261,6 +261,7 @@ def _config_from_dict(data: dict) -> StrategyConfig:
     return StrategyConfig(
         channels=filters.get("channels", ["select-news"]),
         directions=filters.get("directions", ["up_right"]),
+        authors=filters.get("authors", []),
         price_min=filters.get("price_min", 1.0),
         price_max=filters.get("price_max", 10.0),
         sessions=filters.get("sessions", ["premarket", "market"]),

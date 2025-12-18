@@ -758,7 +758,7 @@ with st.sidebar:
                 LOGGER.info(f"  entry_window={entry_window}, sl_from_open={sl_from_open}")
                 LOGGER.info(f"  price_min={price_min}, price_max={price_max}")
                 LOGGER.info(f"  stake_mode={stake_mode}, stake_amount={stake_amount}, vol_pct={volume_pct}, max_stake={max_stake}")
-                LOGGER.info(f"  channels={channels}, directions={directions}, sessions={sessions}")
+                LOGGER.info(f"  channels={channels}, directions={directions}, sessions={sessions}, authors={authors}")
                 LOGGER.info(f"  country_blacklist={country_blacklist}, max_mentions={max_mentions}")
                 LOGGER.info(f"  exclude_financing_headlines={exclude_financing_headlines}, exclude_biotech={exclude_biotech}")
                 LOGGER.info(f"  prior_move_max={prior_move_max}")
@@ -766,6 +766,7 @@ with st.sidebar:
                 strategy_config = StrategyConfig(
                     channels=channels if channels else [],
                     directions=directions if directions else [],
+                    authors=authors if authors else [],
                     price_min=price_min,
                     price_max=price_max,
                     sessions=sessions if sessions else ["premarket", "market"],

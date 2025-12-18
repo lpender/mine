@@ -34,6 +34,7 @@ class StrategyConfig:
     # Filters (which alerts to trade)
     channels: List[str] = field(default_factory=lambda: ["select-news"])
     directions: List[str] = field(default_factory=lambda: ["up_right"])
+    authors: List[str] = field(default_factory=list)  # Filter by alert author (empty = all authors)
     price_min: float = 1.0
     price_max: float = 10.0
     sessions: List[str] = field(default_factory=lambda: ["premarket", "market"])
@@ -218,6 +219,7 @@ class StrategyConfig:
             "filters": {
                 "channels": self.channels,
                 "directions": self.directions,
+                "authors": self.authors,
                 "price_min": self.price_min,
                 "price_max": self.price_max,
                 "sessions": self.sessions,
@@ -869,6 +871,11 @@ class StrategyEngine:
             logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: direction '{ann.direction}' not in {cfg.directions}")
             return False
 
+        # Author filter
+        if cfg.authors and ann.author not in cfg.authors:
+            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: author '{ann.author}' not in {cfg.authors}")
+            return False
+
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
             logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: session '{ann.market_session}' not in {cfg.sessions}")
@@ -936,6 +943,10 @@ class StrategyEngine:
         # Direction filter
         if cfg.directions and ann.direction not in cfg.directions:
             return False, f"direction '{ann.direction}' not in {cfg.directions}"
+
+        # Author filter
+        if cfg.authors and ann.author not in cfg.authors:
+            return False, f"author '{ann.author}' not in {cfg.authors}"
 
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
