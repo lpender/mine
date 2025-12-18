@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from typing import List, Optional, Tuple
 from zoneinfo import ZoneInfo
 from bs4 import BeautifulSoup
@@ -111,7 +111,6 @@ def parse_timestamp(time_str: str, reference_date: Optional[datetime] = None) ->
             except ValueError:
                 time_obj = datetime.min.time()
 
-        from datetime import date
         return datetime.combine(date(year, month, day), time_obj)
 
     # Extract date context (Yesterday, Today, or assume reference date)

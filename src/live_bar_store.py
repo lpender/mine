@@ -155,19 +155,6 @@ class LiveBarStore(BaseStore):
             logger.error(f"Failed to delete bars: {e}", exc_info=True)
             return 0
 
-    def delete_old_bars(self, before: datetime) -> int:
-        """Delete all bars older than a given time (for cleanup)."""
-        try:
-            with self._db_session() as session:
-                count = session.query(LiveBarDB).filter(
-                    LiveBarDB.timestamp < before
-                ).delete()
-                logger.info(f"Deleted {count} old live bars")
-                return count
-        except Exception as e:
-            logger.error(f"Failed to delete old bars: {e}", exc_info=True)
-            return 0
-
 
 # Global instance
 _live_bar_store: Optional[LiveBarStore] = None

@@ -79,7 +79,6 @@ def _find_prev_close(
     session_date: datetime.date,
     *,
     lookback_days: int = 7,
-    use_cache: bool = True,
 ) -> Optional[float]:
     """
     Best-effort: find the most recent regular-session close before `session_date`.
@@ -89,7 +88,7 @@ def _find_prev_close(
         d = session_date - timedelta(days=i)
         start = datetime.combine(d, time(15, 30))
         end = datetime.combine(d, time(16, 1))
-        bars = client.fetch_ohlcv(ticker, start, end, use_cache=use_cache)
+        bars = client.fetch_ohlcv(ticker, start, end)
         if bars:
             return float(bars[-1].close)
     return None
@@ -99,8 +98,6 @@ def compute_premarket_features(
     client: MassiveClient,
     ticker: str,
     effective_session_date: datetime.date,
-    *,
-    use_cache: bool = True,
 ) -> Dict[str, Optional[float]]:
     """
     Compute premarket context features for the given trading date:
@@ -114,14 +111,14 @@ def compute_premarket_features(
     open_start = datetime.combine(effective_session_date, MARKET_OPEN)
     open_end = open_start + timedelta(minutes=1)
 
-    pre_bars = client.fetch_ohlcv(ticker, pre_start, pre_end, use_cache=use_cache)
-    open_bars = client.fetch_ohlcv(ticker, open_start, open_end, use_cache=use_cache)
+    pre_bars = client.fetch_ohlcv(ticker, pre_start, pre_end)
+    open_bars = client.fetch_ohlcv(ticker, open_start, open_end)
 
     pre_vol = int(sum(b.volume for b in pre_bars)) if pre_bars else None
     pre_dv = float(_sum_dollar_volume(pre_bars)) if pre_bars else None
 
     regular_open = float(open_bars[0].open) if open_bars else None
-    prev_close = _find_prev_close(client, ticker, effective_session_date, use_cache=use_cache)
+    prev_close = _find_prev_close(client, ticker, effective_session_date)
 
     gap_pct = None
     if regular_open is not None and prev_close is not None and prev_close > 0:

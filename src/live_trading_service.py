@@ -307,8 +307,8 @@ class TradingEngine:
                 self._lock_fd.seek(0)
                 self._lock_fd.write(f"{os.getpid()}\n{time.time()}")
                 self._lock_fd.flush()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical: failed to write lock file PID: {e}")
 
     def start(self):
         """Start the trading engine in a background thread."""
@@ -1340,8 +1340,8 @@ class TradingEngine:
         """Write status to file for cross-process reading."""
         try:
             TRADING_STATUS_FILE.write_text(json.dumps(status))
-        except Exception:
-            pass  # Don't fail on status write errors
+        except Exception as e:
+            logger.debug(f"Non-critical: failed to write status file: {e}")
 
     def _reconcile_all_positions(self):
         """Reconcile positions across all strategies with broker.
@@ -1642,9 +1642,6 @@ class TradingEngine:
         return self._running
 
 
-# Backwards compatibility aliases
-LiveTradingService = TradingEngine
-
 # Global instance for dashboard integration
 _trading_engine: Optional[TradingEngine] = None
 
@@ -1680,8 +1677,8 @@ def stop_live_trading():
     try:
         if TRADING_STATUS_FILE.exists():
             TRADING_STATUS_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"Non-critical: failed to clean up status file: {e}")
 
 
 def get_trading_engine() -> Optional[TradingEngine]:
@@ -1703,8 +1700,8 @@ def get_live_trading_status() -> Optional[dict]:
         try:
             if TRADING_STATUS_FILE.exists():
                 return json.loads(TRADING_STATUS_FILE.read_text())
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"Non-critical: failed to read status file: {e}")
 
     return None
 

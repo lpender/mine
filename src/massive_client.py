@@ -88,22 +88,12 @@ class MassiveClient:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
         backend: Optional[str] = None,
         provider: Optional[OHLCVDataProvider] = None,
     ):
-        # For backwards compatibility, accept api_key but don't require it
-        # (providers manage their own credentials)
-        self._api_key = api_key
-
         # Use provided provider or create one from factory
         self._provider = provider or get_provider(backend)
         logger.info(f"Using {self._provider.name} backend")
-
-    @property
-    def api_key(self) -> Optional[str]:
-        """For backwards compatibility."""
-        return self._api_key
 
     @property
     def rate_limit_delay(self) -> float:
@@ -117,7 +107,6 @@ class MassiveClient:
         end: datetime,
         multiplier: int = 1,
         timespan: str = "minute",
-        use_cache: bool = True,  # Deprecated, kept for backwards compat
     ) -> List[OHLCVBar]:
         """
         Fetch OHLCV bars using the configured data provider.
@@ -128,7 +117,6 @@ class MassiveClient:
             end: End datetime
             multiplier: Size of timespan multiplier (for compatibility, not used by all providers)
             timespan: Time window (minute, hour, day, etc.)
-            use_cache: Deprecated, ignored. Use PostgresClient for caching.
 
         Returns:
             List of OHLCVBar objects
@@ -142,7 +130,6 @@ class MassiveClient:
         announcement_time: datetime,
         window_minutes: int = 120,
         pre_window_minutes: int = 5,
-        use_cache: bool = True,  # Deprecated, kept for backwards compat
     ) -> List[OHLCVBar]:
         """
         Fetch OHLCV data for a window before and after an announcement.
@@ -156,7 +143,6 @@ class MassiveClient:
             announcement_time: When the announcement was made
             window_minutes: How many minutes of data to fetch AFTER announcement
             pre_window_minutes: How many minutes of data to fetch BEFORE announcement (default: 5)
-            use_cache: Deprecated, ignored. Use PostgresClient for caching.
 
         Returns:
             List of OHLCVBar objects
@@ -269,8 +255,3 @@ class MassiveClient:
         # Fallback: next market open (in UTC)
         next_day = _first_trading_day_after(et_time.date())
         return _combine_et_to_utc(next_day, MARKET_OPEN)
-
-
-def create_client(api_key: Optional[str] = None) -> MassiveClient:
-    """Factory function to create a MassiveClient instance."""
-    return MassiveClient(api_key=api_key)

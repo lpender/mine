@@ -108,7 +108,8 @@ class AlpacaTradingClient(TradingClient):
                     error_msg = error_body.get("message", response.text)
                     error_code = error_body.get("code", "")
                     logger.error(f"Alpaca {response.status_code} error: {error_msg} (code={error_code})")
-                except Exception:
+                except (ValueError, requests.exceptions.JSONDecodeError):
+                    # Response body is not valid JSON
                     error_msg = response.text
                     logger.error(f"Alpaca {response.status_code} error: {error_msg}")
 

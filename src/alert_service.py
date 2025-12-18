@@ -50,11 +50,13 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
     include_today: bool = False
     fetch_ohlcv: bool = False
     # Use OrderedDict for LRU-style eviction (maintains insertion order)
+    # Thread-safe access via _dedup_lock
+    _dedup_lock: threading.Lock = threading.Lock()
     seen_alerts: OrderedDict = OrderedDict()  # key -> True for deduplication
     seen_backfill: OrderedDict = OrderedDict()  # key -> True for deduplication
 
-    def log_message(self, format, *args):
-        logger.debug(f"HTTP: {format % args}")
+    def log_message(self, fmt, *args):
+        logger.debug(f"HTTP: {fmt % args}")
 
     def do_OPTIONS(self):
         """Handle CORS preflight."""
@@ -133,22 +135,23 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             alert_key = f"{ticker}:{timestamp_str[:16]}"
             trace_store = get_trace_store()
 
-            if alert_key in UnifiedAlertHandler.seen_alerts:
-                logger.info(f"[ALERT DEDUPE] Skipping duplicate alert: {alert_key}")
-                # Record deduplication event on existing trace
-                existing_trace = trace_store.get_trace_by_alert_key(alert_key)
-                if existing_trace:
-                    trace_store.add_event(
-                        trace_id=existing_trace.trace_id,
-                        event_type='alert_deduplicated',
-                        event_timestamp=datetime.utcnow(),
-                    )
-                return
-            UnifiedAlertHandler.seen_alerts[alert_key] = True
+            with UnifiedAlertHandler._dedup_lock:
+                if alert_key in UnifiedAlertHandler.seen_alerts:
+                    logger.info(f"[ALERT DEDUPE] Skipping duplicate alert: {alert_key}")
+                    # Record deduplication event on existing trace
+                    existing_trace = trace_store.get_trace_by_alert_key(alert_key)
+                    if existing_trace:
+                        trace_store.add_event(
+                            trace_id=existing_trace.trace_id,
+                            event_type='alert_deduplicated',
+                            event_timestamp=datetime.utcnow(),
+                        )
+                    return
+                UnifiedAlertHandler.seen_alerts[alert_key] = True
 
-            # Limit seen alerts size with proper LRU eviction (OrderedDict maintains insertion order)
-            while len(UnifiedAlertHandler.seen_alerts) > 500:
-                UnifiedAlertHandler.seen_alerts.popitem(last=False)  # Remove oldest
+                # Limit seen alerts size with proper LRU eviction (OrderedDict maintains insertion order)
+                while len(UnifiedAlertHandler.seen_alerts) > 500:
+                    UnifiedAlertHandler.seen_alerts.popitem(last=False)  # Remove oldest
 
             # Parse price from the alert
             price_match = re.search(r'\$([0-9.]+)', price_info)
@@ -165,7 +168,6 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             now = datetime.now().strftime("%H:%M:%S")
             price_str = f"${price:.2f}" if price else "$?"
             msg = f"ALERT @ {now}: {ticker_symbol} {price_str} #{channel}"
-            print(f"[AlertService] {msg}")  # Direct print for Streamlit
             logger.info(msg)
 
             # Parse full announcement using the same parser as backfill
@@ -252,11 +254,12 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             author = msg.get("author")
             inferred_author = _infer_author(channel, author)
 
-            # Skip if we've seen this message
-            if msg_id in UnifiedAlertHandler.seen_backfill:
-                skipped += 1
-                continue
-            UnifiedAlertHandler.seen_backfill[msg_id] = True
+            # Skip if we've seen this message (thread-safe check)
+            with UnifiedAlertHandler._dedup_lock:
+                if msg_id in UnifiedAlertHandler.seen_backfill:
+                    skipped += 1
+                    continue
+                UnifiedAlertHandler.seen_backfill[msg_id] = True
 
             # Parse timestamp
             try:
@@ -272,9 +275,10 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
                 ann.author = inferred_author or ann.author
                 parsed_announcements.append(ann)
 
-        # Limit seen_backfill size with proper LRU eviction
-        while len(UnifiedAlertHandler.seen_backfill) > 5000:
-            UnifiedAlertHandler.seen_backfill.popitem(last=False)  # Remove oldest
+        # Limit seen_backfill size with proper LRU eviction (thread-safe)
+        with UnifiedAlertHandler._dedup_lock:
+            while len(UnifiedAlertHandler.seen_backfill) > 5000:
+                UnifiedAlertHandler.seen_backfill.popitem(last=False)  # Remove oldest
 
         logger.info(f"Parsed: {len(parsed_announcements)} | Skipped: {skipped}")
 
