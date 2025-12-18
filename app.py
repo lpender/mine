@@ -1165,7 +1165,6 @@ else:
                     mode="markers",
                     marker=dict(symbol="circle", size=10, color="blue", line=dict(width=1, color="white")),
                     name=f"Entry @ ${selected_result.entry_price:.2f}",
-                    hoverdistance=1,  # Very tight hover area
                 ))
 
             # Add exit marker (+1 min for end-time display)
@@ -1179,7 +1178,6 @@ else:
                     mode="markers",
                     marker=dict(symbol="x", size=10, color=exit_color, line=dict(width=2)),
                     name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
-                    hoverdistance=1,  # Very tight hover area
                 ))
 
             # Add horizontal lines for entry, TP, SL
