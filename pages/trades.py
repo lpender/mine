@@ -216,17 +216,22 @@ st.sidebar.markdown("[<- Back to Backtest](../)")
 st.sidebar.markdown("[Manage Strategies ->](strategies)")
 st.sidebar.markdown("[View Orders ->](orders)")
 
-# Load trades
-trades = client.get_trades(
-    paper=paper_filter,
-    ticker=ticker_filter,
-    start=start_date,
-    limit=500,
-)
+# Load trades with caching to avoid re-fetching on every widget interaction
+@st.cache_data
+def fetch_trades(paper_filter, ticker_filter, start_date, strategy_name_filter):
+    """Fetch and filter trades. Cache invalidates automatically when filters change."""
+    trades = client.get_trades(
+        paper=paper_filter,
+        ticker=ticker_filter,
+        start=start_date,
+        limit=500,
+    )
+    # Filter by strategy name (client-side since DB query doesn't support it yet)
+    if strategy_name_filter:
+        trades = [t for t in trades if t.strategy_name == strategy_name_filter]
+    return trades
 
-# Filter by strategy name (client-side since DB query doesn't support it yet)
-if strategy_name_filter:
-    trades = [t for t in trades if t.strategy_name == strategy_name_filter]
+trades = fetch_trades(paper_filter, ticker_filter, start_date, strategy_name_filter)
 
 # Stats section
 st.header("Performance Summary")
