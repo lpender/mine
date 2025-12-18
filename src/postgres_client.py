@@ -156,6 +156,7 @@ class PostgresClient:
         # Column filters (all optional)
         countries: Optional[List[str]] = None,
         country_blacklist: Optional[List[str]] = None,
+        ticker_blacklist: Optional[List[str]] = None,
         authors: Optional[List[str]] = None,
         channels: Optional[List[str]] = None,
         directions: Optional[List[str]] = None,
@@ -255,6 +256,8 @@ class PostgresClient:
                 q = q.filter(A.country.in_(countries))
             if country_blacklist:
                 q = q.filter(or_(A.country.is_(None), ~A.country.in_(country_blacklist)))
+            if ticker_blacklist:
+                q = q.filter(~A.ticker.in_(ticker_blacklist))
             if authors:
                 q = q.filter(A.author.in_(authors))
             if channels:

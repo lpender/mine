@@ -206,6 +206,7 @@ def load_sampled_filtered_announcements(
     sessions: tuple,
     countries: tuple,
     country_blacklist: tuple,
+    ticker_blacklist: tuple,
     authors: tuple,
     channels: tuple,
     directions: tuple,
@@ -236,6 +237,7 @@ def load_sampled_filtered_announcements(
         sessions=list(sessions) if sessions else None,
         countries=list(countries) if countries else None,
         country_blacklist=list(country_blacklist) if country_blacklist else None,
+        ticker_blacklist=list(ticker_blacklist) if ticker_blacklist else None,
         authors=list(authors) if authors else None,
         channels=list(channels) if channels else None,
         directions=list(directions) if directions else None,
@@ -376,6 +378,9 @@ def init_session_state():
     # Country blacklist
     country_bl_list = get_param("country_blacklist", "", list)
     set_if_missing("_country_blacklist", [c for c in country_bl_list if c in all_countries])
+    # Ticker blacklist
+    ticker_bl_str = get_param("ticker_blacklist", "")
+    set_if_missing("_ticker_blacklist", ticker_bl_str)
     # NHOD/NSH filters
     set_if_missing("_nhod_filter", get_param("nhod", "Any"))
     set_if_missing("_nsh_filter", get_param("nsh", "Any"))
@@ -442,6 +447,14 @@ with st.sidebar:
         key="_country_blacklist",
         help="Exclude these countries"
     )
+
+    # Ticker blacklist
+    ticker_blacklist_input = st.text_input(
+        "Ticker Blacklist",
+        key="_ticker_blacklist",
+        help="Comma-separated tickers to exclude (e.g., PAVS,XYZ)"
+    )
+    ticker_blacklist = [t.strip().upper() for t in ticker_blacklist_input.split(",") if t.strip()]
 
     # Max intraday mentions filter
     max_mentions = st.number_input(
@@ -720,6 +733,7 @@ with st.sidebar:
     set_param("scanner_lull", scanner_after_lull)
     set_param("max_mentions", max_mentions if max_mentions > 0 else "")
     set_param("country_blacklist", country_blacklist)
+    set_param("ticker_blacklist", ",".join(ticker_blacklist) if ticker_blacklist else "")
     set_param("nhod", nhod_filter if nhod_filter != "Any" else "")
     set_param("nsh", nsh_filter if nsh_filter != "Any" else "")
     set_param("rvol_min", rvol_min if rvol_min > 0 else "")
@@ -844,6 +858,7 @@ with log_time("load_sampled_filtered_announcements"):
         sessions=tuple(sessions) if sessions else tuple(),
         countries=tuple(countries) if countries else tuple(),
         country_blacklist=tuple(country_blacklist) if country_blacklist else tuple(),
+        ticker_blacklist=tuple(ticker_blacklist) if ticker_blacklist else tuple(),
         authors=tuple(authors) if authors else tuple(),
         channels=tuple(channels) if channels else tuple(),
         directions=tuple(directions) if directions else tuple(),
