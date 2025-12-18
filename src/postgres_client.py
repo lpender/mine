@@ -497,6 +497,10 @@ class PostgresClient:
         all bars efficiently (composite IN query, chunked), which is much faster
         than N separate queries or a giant OR(...) chain.
 
+        For announcements that don't have directly linked bars (e.g., duplicate
+        announcements from different channels), falls back to time-range queries
+        to find bars that were linked to nearby announcements of the same ticker.
+
         Args:
             announcement_keys: List of (ticker, timestamp) tuples
 
@@ -564,6 +568,82 @@ class PostgresClient:
                                 vwap=vwap,
                             )
                         )
+
+            # Fallback for announcements that got no bars (likely duplicate announcements
+            # where bars are linked to a nearby announcement of the same ticker)
+            missing_keys = [k for k, bars in result.items() if not bars]
+            if missing_keys:
+                fallback_rows = 0
+
+                # Group missing keys by ticker for efficient batching
+                from collections import defaultdict
+                ticker_to_keys = defaultdict(list)
+                for ticker, ann_ts in missing_keys:
+                    ticker_to_keys[ticker].append(ann_ts)
+
+                # For each ticker, fetch all bars in the union of time ranges
+                for ticker, timestamps in ticker_to_keys.items():
+                    # Find the overall time range that covers all announcements for this ticker
+                    min_ts = min(timestamps)
+                    max_ts = max(timestamps)
+                    pre_start = min_ts - timedelta(minutes=5)
+                    end_time = max_ts + timedelta(minutes=125)
+
+                    stmt = (
+                        select(
+                            OHLCVBarDB.timestamp,
+                            OHLCVBarDB.open,
+                            OHLCVBarDB.high,
+                            OHLCVBarDB.low,
+                            OHLCVBarDB.close,
+                            OHLCVBarDB.volume,
+                            OHLCVBarDB.vwap,
+                        )
+                        .where(
+                            and_(
+                                OHLCVBarDB.ticker == ticker,
+                                OHLCVBarDB.timestamp >= pre_start,
+                                OHLCVBarDB.timestamp <= end_time,
+                            )
+                        )
+                        .order_by(OHLCVBarDB.timestamp)
+                    )
+                    rows = db.execute(stmt).all()
+
+                    if rows:
+                        # Build list of bars once
+                        all_bars = [
+                            OHLCVBar(
+                                timestamp=ts,
+                                open=o,
+                                high=h,
+                                low=l,
+                                close=c,
+                                volume=vol,
+                                vwap=vwap,
+                            )
+                            for ts, o, h, l, c, vol, vwap in rows
+                        ]
+
+                        # Assign bars to each announcement based on its specific time window
+                        for ann_ts in timestamps:
+                            ann_start = ann_ts - timedelta(minutes=5)
+                            ann_end = ann_ts + timedelta(minutes=125)
+                            announcement_bars = [
+                                bar for bar in all_bars
+                                if ann_start <= bar.timestamp <= ann_end
+                            ]
+                            if announcement_bars:
+                                fallback_rows += len(announcement_bars)
+                                result[(ticker, ann_ts)] = announcement_bars
+
+                if log_timing and fallback_rows > 0:
+                    logger.info(
+                        "get_ohlcv_bars_bulk: fallback found %d rows for %d missing keys (%d tickers)",
+                        fallback_rows,
+                        len(missing_keys),
+                        len(ticker_to_keys),
+                    )
 
             if log_timing:
                 dt = (datetime.now() - t0).total_seconds() if t0 else 0.0
