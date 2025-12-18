@@ -78,6 +78,9 @@ class AnnouncementDB(Base):
     # OHLCV fetch status: 'pending' | 'fetched' | 'no_data' | 'error'
     ohlcv_status = Column(String(20), default='pending')
 
+    # Blacklist flag (for excluding problematic announcements like reverse splits)
+    is_blacklisted = Column(Boolean, default=False)
+
     # Metadata
     created_at = Column(DateTime, default=datetime.utcnow)
 

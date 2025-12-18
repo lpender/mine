@@ -156,7 +156,6 @@ class PostgresClient:
         # Column filters (all optional)
         countries: Optional[List[str]] = None,
         country_blacklist: Optional[List[str]] = None,
-        ticker_blacklist: Optional[List[str]] = None,
         authors: Optional[List[str]] = None,
         channels: Optional[List[str]] = None,
         directions: Optional[List[str]] = None,
@@ -190,6 +189,8 @@ class PostgresClient:
         db = self._get_db()
         try:
             base = db.query(AnnouncementDB).filter(AnnouncementDB.source == source)
+            # Exclude blacklisted announcements by default
+            base = base.filter(or_(AnnouncementDB.is_blacklisted.is_(None), AnnouncementDB.is_blacklisted == False))
 
             # Count before sampling (matches previous behavior)
             total_before_sampling = base.count()
@@ -256,8 +257,6 @@ class PostgresClient:
                 q = q.filter(A.country.in_(countries))
             if country_blacklist:
                 q = q.filter(or_(A.country.is_(None), ~A.country.in_(country_blacklist)))
-            if ticker_blacklist:
-                q = q.filter(~A.ticker.in_(ticker_blacklist))
             if authors:
                 q = q.filter(A.author.in_(authors))
             if channels:
@@ -389,6 +388,38 @@ class PostgresClient:
                 )
             ).first()
             return self._db_to_announcement(row) if row else None
+        finally:
+            db.close()
+
+    def toggle_announcement_blacklist(self, ticker: str, timestamp: datetime) -> bool:
+        """Toggle the blacklist status of an announcement. Returns the new status."""
+        db = self._get_db()
+        try:
+            row = db.query(AnnouncementDB).filter(
+                and_(
+                    AnnouncementDB.ticker == ticker,
+                    AnnouncementDB.timestamp == timestamp
+                )
+            ).first()
+            if not row:
+                return False
+            row.is_blacklisted = not (row.is_blacklisted or False)
+            db.commit()
+            return row.is_blacklisted
+        finally:
+            db.close()
+
+    def is_announcement_blacklisted(self, ticker: str, timestamp: datetime) -> bool:
+        """Check if an announcement is blacklisted."""
+        db = self._get_db()
+        try:
+            row = db.query(AnnouncementDB.is_blacklisted).filter(
+                and_(
+                    AnnouncementDB.ticker == ticker,
+                    AnnouncementDB.timestamp == timestamp
+                )
+            ).first()
+            return row[0] if row else False
         finally:
             db.close()
 
