@@ -487,6 +487,8 @@ else:
                 st.markdown("**Filters**")
                 st.write(f"Channels: {', '.join(cfg.channels)}")
                 st.write(f"Directions: {', '.join(cfg.directions)}")
+                if cfg.authors:
+                    st.write(f"Authors: {', '.join(cfg.authors)}")
                 st.write(f"Sessions: {', '.join(cfg.sessions)}")
                 st.write(f"Price: ${cfg.price_min} - ${cfg.price_max}")
                 if cfg.country_blacklist:
