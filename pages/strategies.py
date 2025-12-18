@@ -422,9 +422,18 @@ else:
                     # Log URL params being set
                     logger.info(f"Setting URL params: {filtered_params}")
 
-                    # Navigate to main page with query params
-                    st.query_params.update(filtered_params)
-                    st.switch_page("app.py")
+                    # Construct URL with query params and redirect using JavaScript
+                    # (st.query_params.update + st.switch_page doesn't preserve params)
+                    from urllib.parse import urlencode
+                    query_string = urlencode(filtered_params)
+                    st.components.v1.html(
+                        f"""
+                        <script>
+                            window.parent.location.href = "/?{query_string}";
+                        </script>
+                        """,
+                        height=0,
+                    )
 
             with col3:
                 if st.button("Edit Sizing"):
