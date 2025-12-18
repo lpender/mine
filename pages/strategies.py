@@ -416,11 +416,14 @@ else:
                     # - exclude_financing (types list, only boolean no_fin is saved)
                     # - sort, asc, sample_pct, sample_seed
 
+                    # Filter out empty parameters (empty strings can interfere with URL parsing)
+                    filtered_params = {k: v for k, v in params.items() if v != ""}
+
                     # Log URL params being set
-                    logger.info(f"Setting URL params: {params}")
+                    logger.info(f"Setting URL params: {filtered_params}")
 
                     # Navigate to main page with query params
-                    st.query_params.update(params)
+                    st.query_params.update(filtered_params)
                     st.switch_page("app.py")
 
             with col3:
