@@ -1714,6 +1714,35 @@ class StrategyEngine:
             except Exception as e:
                 logger.warning(f"[{self.strategy_name}] [{ticker}] Could not check broker orders: {e}")
 
+        # Verify broker has the position before trying to sell (prevents 422 errors)
+        try:
+            broker_position = self.trader.get_position(ticker)
+            if broker_position is None or broker_position.shares <= 0:
+                logger.warning(
+                    f"[{self.strategy_name}] [{ticker}] Cannot sell - no position at broker "
+                    f"(trade_id={trade_id[:8]}, trade.shares={trade.shares}). "
+                    f"Removing ghost position from database."
+                )
+                # Remove ghost position from active trades
+                self.active_trades.pop(trade_id, None)
+                # Also delete from database
+                self._active_trade_store.delete_trade(trade_id)
+                # Unsubscribe if no more positions
+                if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
+                    self.on_unsubscribe(ticker)
+                return
+            elif broker_position.shares != trade.shares:
+                logger.warning(
+                    f"[{self.strategy_name}] [{ticker}] Share mismatch: broker has {broker_position.shares}, "
+                    f"we think we have {trade.shares}. Using broker share count."
+                )
+                trade.shares = broker_position.shares
+                # Update database with correct share count
+                self._active_trade_store.save_trade(trade)
+        except Exception as e:
+            logger.warning(f"[{self.strategy_name}] [{ticker}] Could not verify broker position: {e}")
+            # Continue with sell attempt anyway - broker will reject if no position
+
         return_pct = ((price - trade.entry_price) / trade.entry_price) * 100
 
         logger.info(f"[{self.strategy_name}] [{ticker}] EXIT @ ${price:.2f} ({reason}) - Return: {return_pct:+.2f}%")
