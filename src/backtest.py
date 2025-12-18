@@ -189,9 +189,9 @@ def run_single_backtest(
     # Stop loss: either from entry price or from first candle's open
     if config.stop_loss_from_open:
         stop_loss_price = first_candle_open * (1 - config.stop_loss_pct / 100)
-        # Sanity check: stop loss should never be above entry price
-        # (that would be a take profit, not a stop loss)
-        if stop_loss_price > entry_price:
+        # Sanity check: stop loss should never be at or above entry price
+        # (that would cause immediate stop-out or act as a take profit)
+        if stop_loss_price >= entry_price:
             stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)
     else:
         stop_loss_price = entry_price * (1 - config.stop_loss_pct / 100)

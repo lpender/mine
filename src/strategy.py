@@ -1045,8 +1045,9 @@ class StrategyEngine:
         # Calculate stop loss price
         if cfg.stop_loss_from_open and pending.first_price:
             stop_loss_price = pending.first_price * (1 - cfg.stop_loss_pct / 100)
-            # Sanity check: stop should not be above entry
-            if stop_loss_price > price:
+            # Sanity check: stop should not be at or above entry
+            # (that would cause immediate stop-out or act as a take profit)
+            if stop_loss_price >= price:
                 stop_loss_price = price * (1 - cfg.stop_loss_pct / 100)
         else:
             stop_loss_price = price * (1 - cfg.stop_loss_pct / 100)
