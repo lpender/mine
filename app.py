@@ -1082,16 +1082,6 @@ else:
         if ann.source_message:
             st.markdown(f"**Full Message:** {ann.source_message}")
 
-        # Show trade outcome explanation
-        st.info(explain_trigger_type(selected_result.trigger_type, config))
-
-        # Show entry conditions
-        st.info(explain_backtest_entry(config))
-
-        # Show chart legend
-        with st.expander("📖 Chart Legend - What do the colors and markers mean?"):
-            st.markdown(get_backtest_chart_legend())
-
         # Get the bars for this announcement
         key = (ann.ticker, ann.timestamp)
         bars = bars_dict.get(key, [])
