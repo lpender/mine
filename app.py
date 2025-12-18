@@ -363,37 +363,22 @@ def _active_sample_seed(user_seed: int) -> int:
 # This ensures URL params are used on first load, but widget changes aren't overwritten
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
 def init_session_state():
-    """Initialize session state from URL params, allowing URL to override existing values.
+    """Initialize session state from URL params.
 
-    URL params only override on first load OR when the URL query string changes
-    (e.g., when navigating from 'Load in Backtest' link). This prevents URL params
-    from reverting user's widget changes on every Streamlit rerun.
+    URL is the source of truth. Session state is always synced FROM URL params.
+    Widget changes update URL (via set_param calls after widgets), and on the next
+    rerun, those URL values flow back into session state.
     """
-    # Build a fingerprint of current URL params to detect changes
-    current_url_fingerprint = "&".join(f"{k}={v}" for k, v in sorted(st.query_params.items()))
-    previous_url_fingerprint = st.session_state.get("_url_fingerprint", None)
-
-    # Only apply URL params if this is a new URL (first load or navigation)
-    url_changed = current_url_fingerprint != previous_url_fingerprint
-
-    # Store the current fingerprint for next rerun comparison
-    st.session_state["_url_fingerprint"] = current_url_fingerprint
-
-    # Helper to set if missing (used when URL hasn't changed)
-    def set_if_missing(key, value):
-        if key not in st.session_state:
-            st.session_state[key] = value
-
-    # Helper to set value - applies URL param only if URL changed, otherwise keeps existing
-    def set_with_url_override(key, url_param, default, param_type=str, validator=None):
-        if url_changed and url_param in st.query_params:
-            # URL changed and param present - apply it
+    # Helper to always sync session state from URL param
+    def sync_from_url(key, url_param, default, param_type=str, validator=None):
+        if url_param in st.query_params:
             val = get_param(url_param, default, param_type)
             st.session_state[key] = validator(val) if validator else val
         elif key not in st.session_state:
-            # No existing value - use default
+            # No URL param and no session state - use default
             st.session_state[key] = default
-        # Otherwise: keep existing session state (user's widget change)
+        # If no URL param but session state exists, keep session state
+        # (this handles params that aren't in URL yet)
 
     # Slider value validators
     def validate_sl(v): return max(1.0, min(30.0, v)) if v > 0 else 5.0
@@ -409,51 +394,51 @@ def init_session_state():
     def validate_positive_or_zero(v): return v if v > 0 else 0.0
 
     # Trigger config sliders
-    set_with_url_override("_sl", "sl", 5.0, float, validate_sl)
-    set_with_url_override("_tp", "tp", 10.0, float, validate_tp)
-    set_with_url_override("_hold", "hold", 60, int, validate_hold)
-    set_with_url_override("_trailing_stop", "trail", 0.0, float)
-    set_with_url_override("_sl_from_open", "sl_open", False, bool)
-    set_with_url_override("_consec_candles", "consec", 0, int)
-    set_with_url_override("_min_candle_vol", "min_vol", 0, int)
-    set_with_url_override("_entry_window", "entry_window", 5, int, validate_entry_window)
+    sync_from_url("_sl", "sl", 5.0, float, validate_sl)
+    sync_from_url("_tp", "tp", 10.0, float, validate_tp)
+    sync_from_url("_hold", "hold", 60, int, validate_hold)
+    sync_from_url("_trailing_stop", "trail", 0.0, float)
+    sync_from_url("_sl_from_open", "sl_open", False, bool)
+    sync_from_url("_consec_candles", "consec", 0, int)
+    sync_from_url("_min_candle_vol", "min_vol", 0, int)
+    sync_from_url("_entry_window", "entry_window", 5, int, validate_entry_window)
 
     # Filter multiselects
-    set_with_url_override("_sess", "sess", ["premarket", "market"], list, validate_sessions)
-    set_with_url_override("_country", "country", [], list, validate_countries)
-    set_with_url_override("_author", "author", [], list, validate_authors)
-    set_with_url_override("_channel", "channel", [], list, validate_channels)
-    set_with_url_override("_direction", "direction", [], list, validate_directions)
+    sync_from_url("_sess", "sess", ["premarket", "market"], list, validate_sessions)
+    sync_from_url("_country", "country", [], list, validate_countries)
+    sync_from_url("_author", "author", [], list, validate_authors)
+    sync_from_url("_channel", "channel", [], list, validate_channels)
+    sync_from_url("_direction", "direction", [], list, validate_directions)
 
     # Boolean filters
-    set_with_url_override("_no_fin", "no_fin", False, bool)
-    set_with_url_override("_has_hl", "has_hl", False, bool)
-    set_with_url_override("_no_hl", "no_hl", False, bool)
-    set_with_url_override("_scanner_test", "scanner_test", False, bool)
-    set_with_url_override("_scanner_after_lull", "scanner_lull", False, bool)
-    set_with_url_override("_exclude_biotech", "exclude_biotech", False, bool)
+    sync_from_url("_no_fin", "no_fin", False, bool)
+    sync_from_url("_has_hl", "has_hl", False, bool)
+    sync_from_url("_no_hl", "no_hl", False, bool)
+    sync_from_url("_scanner_test", "scanner_test", False, bool)
+    sync_from_url("_scanner_after_lull", "scanner_lull", False, bool)
+    sync_from_url("_exclude_biotech", "exclude_biotech", False, bool)
 
     # Numeric filters
-    set_with_url_override("_float_min", "float_min", 0.0, float)
-    set_with_url_override("_float_max", "float_max", 1000.0, float, validate_positive_or_default(1000.0))
-    set_with_url_override("_mc_min", "mc_min", 0.0, float)
-    set_with_url_override("_mc_max", "mc_max", 10000.0, float, validate_positive_or_default(10000.0))
-    set_with_url_override("_price_min", "price_min", 0.0, float)
-    set_with_url_override("_price_max", "price_max", 100.0, float, validate_positive_or_default(100.0))
-    set_with_url_override("_max_mentions", "max_mentions", 0, int)
-    set_with_url_override("_prior_move_max", "max_prior_move", 0.0, float, validate_positive_or_zero)
+    sync_from_url("_float_min", "float_min", 0.0, float)
+    sync_from_url("_float_max", "float_max", 1000.0, float, validate_positive_or_default(1000.0))
+    sync_from_url("_mc_min", "mc_min", 0.0, float)
+    sync_from_url("_mc_max", "mc_max", 10000.0, float, validate_positive_or_default(10000.0))
+    sync_from_url("_price_min", "price_min", 0.0, float)
+    sync_from_url("_price_max", "price_max", 100.0, float, validate_positive_or_default(100.0))
+    sync_from_url("_max_mentions", "max_mentions", 0, int)
+    sync_from_url("_prior_move_max", "max_prior_move", 0.0, float, validate_positive_or_zero)
 
     # Position sizing
-    set_with_url_override("_stake_mode", "stake_mode", "fixed", str)
-    set_with_url_override("_stake_amount", "stake", 1000.0, float)
-    set_with_url_override("_volume_pct", "vol_pct", 1.0, float)
-    set_with_url_override("_max_stake", "max_stake", 10000.0, float)
+    sync_from_url("_stake_mode", "stake_mode", "fixed", str)
+    sync_from_url("_stake_amount", "stake", 1000.0, float)
+    sync_from_url("_volume_pct", "vol_pct", 1.0, float)
+    sync_from_url("_max_stake", "max_stake", 10000.0, float)
 
     # Sampling
-    set_with_url_override("_sample_pct", "sample_pct", 100, int, lambda v: max(1, min(100, v)))
+    sync_from_url("_sample_pct", "sample_pct", 100, int, lambda v: max(1, min(100, v)))
 
     # Market cap filter from URL (max_mcap is an alias for mc_max from strategy page)
-    if url_changed and "max_mcap" in st.query_params:
+    if "max_mcap" in st.query_params:
         max_mcap_val = get_param("max_mcap", 0.0, float)
         if max_mcap_val > 0:
             st.session_state["_mc_max"] = max_mcap_val
