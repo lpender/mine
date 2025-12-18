@@ -133,6 +133,16 @@ tasks:
     cmds:
       - python refetch_missing_ohlcv.py --refetch
 
+  ohlcv:backfill-pre:
+    desc: Backfill 5 minutes of pre-announcement bars for existing data (one-time)
+    cmds:
+      - python backfill_pre_announcement_bars.py
+
+  ohlcv:backfill-pre:dry-run:
+    desc: Dry run of pre-announcement backfill (shows what would happen)
+    cmds:
+      - python backfill_pre_announcement_bars.py --dry-run
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Testing
   # ─────────────────────────────────────────────────────────────────────────────
