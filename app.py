@@ -429,12 +429,14 @@ with st.sidebar:
     )
 
     # Max intraday mentions filter
+    _max_mentions_key = "_max_mentions"
+    if _max_mentions_key not in st.session_state or st.query_params.get("max_mentions"):
+        st.session_state[_max_mentions_key] = int(get_param("max_mentions", 0) or 0)
     max_mentions = st.number_input(
         "Max Intraday Mentions",
         min_value=0,
         max_value=100,
-        value=int(get_param("max_mentions", 0) or 0),
-        key="_max_mentions",
+        key=_max_mentions_key,
         help="Only alerts with mentions <= this value (0 = no filter)"
     )
 
@@ -529,16 +531,21 @@ with st.sidebar:
     st.subheader("Market Cap (millions)")
     col1, col2 = st.columns(2)
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
-    _mc_max_default = get_param("max_mcap", 0.0, float)
-    mc_max = col2.number_input("Max", min_value=0.0, value=_mc_max_default if _mc_max_default > 0 else 0.0, step=100.0, key="_mc_max")
+    _mc_max_key = "_mc_max"
+    if _mc_max_key not in st.session_state or st.query_params.get("max_mcap"):
+        _mc_max_val = get_param("max_mcap", 0.0, float)
+        st.session_state[_mc_max_key] = _mc_max_val if _mc_max_val > 0 else 0.0
+    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key=_mc_max_key)
 
     # Prior move filter (scanner_gain_pct)
     st.subheader("Prior Move Filter")
     col1, col2 = st.columns(2)
     prior_move_min = col1.number_input("Min %", min_value=0.0, step=5.0, key="_prior_move_min",
                                         help="Only include if stock already moved at least this % before alert")
-    _prior_move_max_default = get_param("max_prior_move", 0.0, float)
-    prior_move_max = col2.number_input("Max %", min_value=0.0, value=_prior_move_max_default, step=10.0, key="_prior_move_max",
+    _prior_move_max_key = "_prior_move_max"
+    if _prior_move_max_key not in st.session_state or st.query_params.get("max_prior_move"):
+        st.session_state[_prior_move_max_key] = get_param("max_prior_move", 0.0, float)
+    prior_move_max = col2.number_input("Max %", min_value=0.0, step=10.0, key=_prior_move_max_key,
                                         help="Exclude if stock already moved more than this % before alert (0 = no limit)")
 
     # Headline type filter (financing)
@@ -550,10 +557,12 @@ with st.sidebar:
         key="_exclude_financing",
         help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
     )
+    _exclude_biotech_key = "_exclude_biotech"
+    if _exclude_biotech_key not in st.session_state or st.query_params.get("exclude_biotech"):
+        st.session_state[_exclude_biotech_key] = get_param("exclude_biotech", False, bool)
     exclude_biotech = st.checkbox(
         "Exclude biotech/pharma (clinical trials)",
-        value=get_param("exclude_biotech", False, bool),
-        key="_exclude_biotech",
+        key=_exclude_biotech_key,
         help="Exclude announcements mentioning 'therapeutics', 'clinical', 'trial', 'phase' (tend to underperform)"
     )
 
