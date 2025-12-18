@@ -10,6 +10,7 @@ Usage:
 Requires TWS or IB Gateway running locally.
 """
 
+import logging
 import os
 import random
 import requests
@@ -17,6 +18,8 @@ from typing import Optional
 from zoneinfo import ZoneInfo
 
 from ib_insync import IB, Stock, MarketOrder, LimitOrder, StopOrder, Contract
+
+logger = logging.getLogger(__name__)
 
 
 def get_yahoo_price(ticker: str) -> Optional[float]:
@@ -239,12 +242,11 @@ class IBTrader:
         take_profit_price = round(current_price * (1 + take_profit_pct / 100), 2)
         stop_loss_price = round(current_price * (1 - stop_loss_pct / 100), 2)
 
-        print(f"Placing bracket order for {ticker}:")
-        print(f"  Shares: {shares}")
-        print(f"  Est. entry: ${current_price:.2f} (from {quote.get('source', 'quote')})")
-        print(f"  Take profit: ${take_profit_price:.2f} (+{take_profit_pct}%)")
-        print(f"  Stop loss: ${stop_loss_price:.2f} (-{stop_loss_pct}%)")
-        print(f"  Total cost: ~${shares * current_price:.2f}")
+        logger.info(f"Placing bracket order for {ticker}: "
+                    f"{shares} shares @ ~${current_price:.2f}, "
+                    f"TP=${take_profit_price:.2f} (+{take_profit_pct}%), "
+                    f"SL=${stop_loss_price:.2f} (-{stop_loss_pct}%), "
+                    f"Total ~${shares * current_price:.2f}")
 
         # Create contract
         contract = Stock(ticker, "SMART", "USD")

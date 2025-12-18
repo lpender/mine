@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta, date as date_type, time as time_type
 from typing import List, Optional
 from .models import (
@@ -8,6 +9,8 @@ from .models import (
     UTC_TZ,
 )
 from .data_providers import get_provider, OHLCVDataProvider
+
+logger = logging.getLogger(__name__)
 
 try:
     import pandas_market_calendars as _mcal  # type: ignore
@@ -95,7 +98,7 @@ class MassiveClient:
 
         # Use provided provider or create one from factory
         self._provider = provider or get_provider(backend)
-        print(f"[MassiveClient] Using {self._provider.name} backend")
+        logger.info(f"Using {self._provider.name} backend")
 
     @property
     def api_key(self) -> Optional[str]:
@@ -166,7 +169,7 @@ class MassiveClient:
         now = datetime.now(tz=ET_TZ)
         now_cmp = now.replace(tzinfo=None) if effective_start.tzinfo is None else now
         if effective_start >= now_cmp:
-            print(
+            logger.debug(
                 f"Skipping OHLCV fetch for {ticker}: effective start {effective_start} is in the future "
                 f"(market likely closed)."
             )
@@ -188,7 +191,7 @@ class MassiveClient:
 
         # If the entire window is too recent for the provider, skip
         if pre_start >= earliest_available:
-            print(
+            logger.debug(
                 f"Skipping OHLCV fetch for {ticker}: data not yet available "
                 f"(provider {self._provider.name} has {min_delay} min delay)."
             )

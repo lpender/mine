@@ -7,10 +7,13 @@ Usage:
     price = get_quote("AAPL")  # Returns current price or None
 """
 
+import logging
 import os
 import requests
 from typing import Optional
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
 
 RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
 BASE_URL = "https://insightsentry.p.rapidapi.com/v3"
@@ -32,7 +35,7 @@ def search_symbol(ticker: str) -> Optional[str]:
         Exchange:symbol code (e.g., "NASDAQ:AAPL") or None
     """
     if not RAPIDAPI_KEY:
-        print("Warning: RAPIDAPI_KEY not set")
+        logger.warning("RAPIDAPI_KEY not set")
         return None
 
     try:
@@ -55,7 +58,7 @@ def search_symbol(ticker: str) -> Optional[str]:
                     return code
         return None
     except Exception as e:
-        print(f"InsightSentry search error: {e}")
+        logger.error(f"InsightSentry search error: {e}", exc_info=True)
         return None
 
 
@@ -87,7 +90,7 @@ def get_quote_details(ticker: str) -> Optional[dict]:
     """
     code = search_symbol(ticker)
     if not code:
-        print(f"Could not find exchange for {ticker}")
+        logger.debug(f"Could not find exchange for {ticker}")
         return None
 
     try:
@@ -107,5 +110,5 @@ def get_quote_details(ticker: str) -> Optional[dict]:
                 return quote
         return None
     except Exception as e:
-        print(f"InsightSentry quote error: {e}")
+        logger.error(f"InsightSentry quote error: {e}", exc_info=True)
         return None

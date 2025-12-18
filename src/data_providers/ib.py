@@ -1,9 +1,12 @@
+import logging
 import os
 import time
 from datetime import datetime, timedelta
 from typing import List, Optional
 from ..models import OHLCVBar
 from .base import OHLCVDataProvider
+
+logger = logging.getLogger(__name__)
 
 
 class IBProvider(OHLCVDataProvider):
@@ -55,9 +58,9 @@ class IBProvider(OHLCVDataProvider):
             self._ib = IB()
 
         if not self._ib.isConnected():
-            print(f"[IB] Connecting to {self.host}:{self.port} (client_id={self.client_id})...")
+            logger.info(f"Connecting to {self.host}:{self.port} (client_id={self.client_id})...")
             self._ib.connect(self.host, self.port, clientId=self.client_id, timeout=self.timeout_s)
-            print(f"[IB] Connected")
+            logger.info("Connected")
 
     def _disconnect(self):
         """Disconnect from IB Gateway."""
@@ -84,7 +87,7 @@ class IBProvider(OHLCVDataProvider):
         }
         bar_size = bar_size_map.get(timespan, "1 min")
 
-        print(f"[IB] Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
+        logger.info(f"Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
 
         try:
             self._sleep_for_rate_limit()
@@ -118,7 +121,7 @@ class IBProvider(OHLCVDataProvider):
             self._bump_next_allowed_time()
 
             if not bars:
-                print(f"[IB] No data for {ticker}")
+                logger.debug(f"No data for {ticker}")
                 return []
 
             result = []
@@ -145,7 +148,7 @@ class IBProvider(OHLCVDataProvider):
             return result
 
         except Exception as e:
-            print(f"[IB] Error fetching {ticker}: {e}")
+            logger.error(f"Error fetching {ticker}: {e}", exc_info=True)
             return []
 
     def __del__(self):
