@@ -68,7 +68,8 @@ class TestTrailingStop:
 
     def test_trailing_stop_checked_before_fixed_stop_loss(self):
         """When both trailing and fixed SL are triggered, trailing stop takes precedence."""
-        base_time = datetime(2025, 1, 1, 10, 0)
+        # Use datetime with second=0 for entry_by_message_second mode
+        base_time = datetime(2025, 1, 1, 10, 0, 0)
 
         announcement = Announcement(
             ticker="TEST",
@@ -79,7 +80,8 @@ class TestTrailingStop:
         )
 
         # Scenario similar to DWTX:
-        # Entry at $9.32 (first bar open), spikes to $10.81 in same bar, then drops to $7.70 next bar
+        # Entry at $9.32 (first bar low, via entry_by_message_second at second=0)
+        # First bar spikes to $10.81, then second bar drops to $7.70
         # Trailing stop (1%): $10.81 * 0.99 = $10.70
         # Fixed SL (13.5%): $9.32 * 0.865 = $8.06
         # Both are hit on second bar, but trailing stop should trigger first
@@ -107,13 +109,15 @@ class TestTrailingStop:
             stop_loss_pct=13.5,
             trailing_stop_pct=1.0,
             window_minutes=30,
-            entry_at_open=True,  # Enter at first bar's open ($9.32)
+            entry_by_message_second=True,  # Enter within first bar based on message second
+            entry_trigger_pct=0.0,  # No trigger requirement
+            volume_threshold=0,  # No volume requirement
         )
 
         result = run_single_backtest(announcement, bars, config)
 
         assert result.entered, "Should have entered"
-        assert result.entry_price == 9.32, "Entry should be at first bar open"
+        assert result.entry_price == 9.32, "Entry should be at first bar low (second=0)"
         assert result.trigger_type == "trailing_stop", \
             f"Trailing stop should take precedence over fixed SL, got {result.trigger_type}"
 

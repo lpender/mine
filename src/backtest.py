@@ -46,20 +46,10 @@ def run_single_backtest(
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
 
-    # Handle "entry at open" mode - most optimistic, enter at first bar's open
-    if config.entry_at_open:
-        entry_price = bars[0].open
-        entry_time = bars[0].timestamp
-        entry_bar_idx = 0
-
-        if entry_price <= 0:
-            result.trigger_type = "invalid_price"
-            return result
-
     # Handle "entry after consecutive candles" mode
     # Wait for X consecutive GREEN candles (close > open) with volume threshold
     # Then enter at the OPEN of the next bar (realistic: can't act until candle closes)
-    elif config.entry_after_consecutive_candles > 0:
+    if config.entry_after_consecutive_candles > 0:
         required = config.entry_after_consecutive_candles
         consecutive_count = 0
         signal_bar_idx = None
@@ -219,21 +209,13 @@ def run_single_backtest(
     # Stage 3: Price rises to high - only if high > close
     # Stage 4: Price settles at close
     for bar in bars[entry_bar_idx:]:
+        # Update highest FIRST before checking stops
+        if bar.high > highest_since_entry:
+            highest_since_entry = bar.high
+
         # Stage 2: Price drops to low (only if low < open)
         if bar.low < bar.open:
-            # Check fixed stop loss first at the low
-            if bar.low <= stop_loss_price:
-                # If entire bar is below stop (gap down through stop), fill at bar.open
-                # because the stop price was never actually traded
-                if bar.high < stop_loss_price:
-                    exit_price = bar.open
-                else:
-                    exit_price = stop_loss_price
-                exit_time = bar.timestamp
-                trigger_type = "stop_loss"
-                break
-
-            # Then check trailing stop
+            # Check trailing stop FIRST (it's typically hit before fixed SL when falling from a high)
             if config.trailing_stop_pct > 0:
                 trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
                 if bar.low <= trailing_stop_price:
@@ -246,11 +228,19 @@ def run_single_backtest(
                     trigger_type = "trailing_stop"
                     break
 
-        # Stage 3: Price rises to high (only if high > close, meaning it comes back down)
-        # But always update highest_since_entry if we reached a new high
-        if bar.high > highest_since_entry:
-            highest_since_entry = bar.high
+            # Then check fixed stop loss
+            if bar.low <= stop_loss_price:
+                # If entire bar is below stop (gap down through stop), fill at bar.open
+                # because the stop price was never actually traded
+                if bar.high < stop_loss_price:
+                    exit_price = bar.open
+                else:
+                    exit_price = stop_loss_price
+                exit_time = bar.timestamp
+                trigger_type = "stop_loss"
+                break
 
+        # Stage 3: Check take profit
         if bar.high >= take_profit_price:
             exit_price = take_profit_price
             exit_time = bar.timestamp
