@@ -2196,11 +2196,11 @@ class StrategyEngine:
 
         except Exception as e:
             logger.error(f"[{self.strategy_name}] [{ticker}] Retry sell failed: {e}")
-            if trade:
-                trade.sell_attempts += 1
-                if trade.sell_attempts >= 3:
-                    trade.needs_manual_exit = True
-                    logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ SELL RETRY FAILED 3 TIMES - needs manual exit!")
+            # Note: sell_attempts was already incremented before the retry attempt
+            # so we don't increment again here (that would cause double-counting)
+            if trade and trade.sell_attempts >= 3:
+                trade.needs_manual_exit = True
+                logger.error(f"[{self.strategy_name}] [{ticker}] ⚠️ SELL RETRY FAILED 3 TIMES - needs manual exit!")
 
     def _check_pending_sell_order_timeouts(self, ticker: str, timestamp: datetime):
         """Check for and cancel/retry sell orders that have exceeded the timeout.
