@@ -60,10 +60,9 @@ class TestIntraCandleVolumeEntry:
         result = run_single_backtest(announcement, bars, config)
 
         assert result.entered, "Should have entered"
-        assert result.entry_time == base_time, "Should enter on first bar"
-        # Entry interpolated: 75k/100k = 75% through bar
-        # low=0.99, high=1.10: 0.99 + (1.10 - 0.99) * 0.75 = 1.0725
-        assert result.entry_price == pytest.approx(1.0725, rel=0.01)
+        assert result.entry_time == base_time + timedelta(minutes=1), "Should enter on next bar after trigger"
+        # Since trigger was met on announcement bar, enter at open of next bar
+        assert result.entry_price == 1.08
 
     def test_no_entry_when_bar_volume_insufficient(self):
         """No entry when individual bar volume doesn't meet threshold (not cumulative)."""
@@ -420,11 +419,11 @@ class TestExitLogic:
         result = run_single_backtest(announcement, bars, config)
 
         assert result.entered
-        assert result.entry_time == base_time
+        assert result.entry_time == base_time + timedelta(minutes=1)  # Entry delayed to next bar
         # With price trigger entry, exit CAN happen on same bar
         # Stop loss at 1.05 * 0.97 = 1.0185, low of 0.99 breaches it
         assert result.trigger_type == "stop_loss"
-        assert result.exit_time == base_time  # Same bar
+        assert result.exit_time == base_time + timedelta(minutes=1)  # Same bar as entry
 
     def test_stop_loss_exit(self):
         """Stop loss triggers correctly."""
@@ -437,10 +436,10 @@ class TestExitLogic:
         ]
 
         config = BacktestConfig(
-            entry_trigger_pct=5.0,  # Entry at 1.05
+            entry_trigger_pct=5.0,  # Trigger met on first bar
             volume_threshold=0,
             take_profit_pct=10.0,
-            stop_loss_pct=3.0,  # Exit at 1.0185 (3% below 1.05)
+            stop_loss_pct=3.0,  # Exit at 1.08 * 0.97 = 1.0476 (3% below entry price)
             window_minutes=30,
         )
 
@@ -448,7 +447,8 @@ class TestExitLogic:
 
         assert result.entered
         assert result.trigger_type == "stop_loss"
-        assert result.exit_price == pytest.approx(1.05 * 0.97, rel=0.01)
+        # Entry now happens at bars[1].open = 1.08, so stop loss is 1.08 * 0.97 = 1.0476
+        assert result.exit_price == pytest.approx(1.08 * 0.97, rel=0.01)
 
     def test_timeout_exit(self):
         """Timeout exit uses last bar's close."""

@@ -407,11 +407,11 @@ with st.sidebar:
 
     sample_seed = st.number_input(
         "Random Seed",
-        value=int(get_param("sample_seed", 0) or 0),
+        value=int(get_param("sample_seed", 1) or 1),
         min_value=0,
         step=1,
         key="_sample_seed",
-        help="0 = different sample each run, >0 = reproducible sample"
+        help="0 = different sample each run, >0 = reproducible sample (default: 1)"
     )
 
     set_param("sample_pct", sample_pct if sample_pct < 100 else "")
