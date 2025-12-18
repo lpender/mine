@@ -667,6 +667,23 @@ class TradingEngine:
         filled_price: float,
         timestamp: datetime,
     ):
+        """Thread-safe wrapper: dispatch partial fill to main event loop."""
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._handle_partial_fill(order_id, ticker, side, shares, filled_price, timestamp)
+            )
+        else:
+            self._handle_partial_fill(order_id, ticker, side, shares, filled_price, timestamp)
+
+    def _handle_partial_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        side: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
         """Handle partial fill - just log, wait for final fill event."""
         # Find strategy name for this order
         strategy_name = None
@@ -678,6 +695,28 @@ class TradingEngine:
         logger.info(f"{strategy_prefix}[{ticker}] Partial fill: {side} {shares} @ ${filled_price:.4f} (order={order_id}) - waiting for full fill")
 
     def _on_order_fill(
+        self,
+        order_id: str,
+        ticker: str,
+        side: str,
+        shares: int,
+        filled_price: float,
+        timestamp: datetime,
+    ):
+        """Thread-safe wrapper: dispatch order fill to main event loop.
+
+        This callback is invoked from the AlpacaTradeStream thread, but needs to
+        access StrategyEngine data structures which live on the main event loop.
+        We use call_soon_threadsafe to ensure thread-safe access.
+        """
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._handle_order_fill(order_id, ticker, side, shares, filled_price, timestamp)
+            )
+        else:
+            self._handle_order_fill(order_id, ticker, side, shares, filled_price, timestamp)
+
+    def _handle_order_fill(
         self,
         order_id: str,
         ticker: str,
@@ -901,6 +940,15 @@ class TradingEngine:
                 logger.warning(f"[{ticker}] Order {order_id} not found in database or missing trade_id/strategy_id")
 
     def _on_order_canceled(self, order_id: str, ticker: str, side: str):
+        """Thread-safe wrapper: dispatch order cancellation to main event loop."""
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._handle_order_canceled(order_id, ticker, side)
+            )
+        else:
+            self._handle_order_canceled(order_id, ticker, side)
+
+    def _handle_order_canceled(self, order_id: str, ticker: str, side: str):
         """Handle order cancellation from Alpaca stream."""
         logger.warning(f"[{ticker}] Order canceled: {side} (order={order_id})")
 
@@ -910,6 +958,15 @@ class TradingEngine:
                 return
 
     def _on_order_rejected(self, order_id: str, ticker: str, side: str, reason: str):
+        """Thread-safe wrapper: dispatch order rejection to main event loop."""
+        if self._loop and self._loop.is_running():
+            self._loop.call_soon_threadsafe(
+                lambda: self._handle_order_rejected(order_id, ticker, side, reason)
+            )
+        else:
+            self._handle_order_rejected(order_id, ticker, side, reason)
+
+    def _handle_order_rejected(self, order_id: str, ticker: str, side: str, reason: str):
         """Handle order rejection from Alpaca stream."""
         logger.error(f"[{ticker}] Order rejected: {side} - {reason} (order={order_id})")
 
