@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1436310400869072906",
+      "content": "20:45  SEC  RUBI - Form 6-K - Link",
+      "timestamp": "2025-11-07T11:04:44.924Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436310662954618954",
+      "content": "21:46  SEC  THAR - Form 424B5 - Link",
+      "timestamp": "2025-11-07T11:05:47.410Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436317370921779253",
+      "content": "BW  < $6  - Babcock & Wilcox Announces It Raised $67.5 Million Through its At-the-Market Equity Offering - Link  ~  :flag_us:  |  Float: 94.5 M  |  IO: 30.86%  |  MC: 515 M",
+      "timestamp": "2025-11-07T11:32:26.714Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436320549906153517",
+      "content": "CTM  < $2  - Castellum, Inc. Reports Breakthrough Q3 2025 Results with First-Ever Positive Net Income - Link  ~  :flag_us:  |  Float: 67.6 M  |  IO: 35.32%  |  MC: 107 M",
+      "timestamp": "2025-11-07T11:45:04.643Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436324436902019226",
+      "content": "07:00  \u2191  TMCI  < $5  ~  :flag_us:  |  Float: 45.3 M  |  IO: 60.49%  |  MC: 250 M\na month ago  AR  BTIG Downgrades Treace Medical Concepts to Neutral,",
+      "timestamp": "2025-11-07T12:00:31.375Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436324441947639838",
+      "content": "07:00  \u2191  ATON  < $6  ~  :flag_gb:  |  Float: 2.4 M  |  IO: 0.32%  |  MC: 29.1 M  |  High CTB\na month ago  PR  Complete Tumor Regressions Observed in Preclinical Models with Co-administration of Cyncado's A2B and A2A Receptor Antagonists and Cancer Vaccines - Link,a month ago  PR  BZ: Anthony Scaramucci Predicts Trend Line Of Memecoins Will Be Toward Zero \u2014 'Not My Business' To Trade In 'Rapid Speculation' - Link,",
+      "timestamp": "2025-11-07T12:00:32.578Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436324658730504262",
+      "content": "07:01  \u2197  WEN  < $10  ~  :flag_us:  |  Float: 173 M  |  IO: 92.54%  |  MC: 1.7 B\na month ago  PR  THE WENDY'S COMPANY REPORTS THIRD QUARTER 2025 RESULTS - Link,",
+      "timestamp": "2025-11-07T12:01:24.263Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436332065908850790",
+      "content": "07:30  \u2191  ZONE  < $2  ~  :flag_us:  |  Float: 171 M  |  IO: 0.16%  |  MC: 218 M  |  High CTB\na month ago  SEC  Form RW - Link,",
+      "timestamp": "2025-11-07T12:30:50.272Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436337845722943579",
+      "content": "07:53  \u2197  CGC  < $2  ~  :flag_ca:  |  Float: 329 M  |  IO: 7.23%  |  MC: 415 M\na month ago  SEC  Form 8-K - Link,a month ago  PR  Canopy Growth Reports Second Quarter Fiscal 2026 Financial Results; Company Continues to Strengthen Financial Performance with Improving Adjusted EBITDA, Disciplined Cost Management, and a Stronger Balance Sheet - Link,a month ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-11-07T12:53:48.287Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436337865037582521",
+      "content": "BFRI  < $2  - BZ: Pelthos Secures Rights To Antimicrobial Drug, Raises $18 Million To Support Commercial Launch - Link  ~  :flag_us:  |  Float: 8.6 M  |  IO: 20.90%  |  MC: 12.5 M",
+      "timestamp": "2025-11-07T12:53:52.892Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436337992804597770",
+      "content": "07:54  \u2197  PHIO  < $2  ~  :flag_us:  |  Float: 4.9 M  |  IO: 4.45%  |  MC: 8.3 M  |  High CTB\na month ago  PR  Phio Pharmaceuticals Announces INTASYL PH-762 is Named Immunomodulatory Solution of the Year in the BioTech Breakthrough Award Program - Link,",
+      "timestamp": "2025-11-07T12:54:23.354Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436339453282222121",
+      "content": "FEAM  < $5  - 5E Advanced Materials Welcomes U.S. Designation of Boron as a Critical Mineral, Strengthening Fort Cady Project  - Link  ~  :flag_us:  |  Float: 6.5 M  |  IO: 2.37%  |  MC: 108 M",
+      "timestamp": "2025-11-07T13:00:11.559Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436339461154930769",
+      "content": "BFRI  < $2  - Biofrontera Inc. announces sale of license to Xepi\u00ae Antibiotic Cream to Pelthos Therapeutics Inc. for up to $10M - Link  ~  :flag_us:  |  Float: 8.6 M  |  IO: 20.90%  |  MC: 12.5 M",
+      "timestamp": "2025-11-07T13:00:13.436Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436344476363915414",
+      "content": "IPDN  < $3  - IPDN Welcomes His Highness Shaikh Ali Sultan Al Nuaimi of the UAE Royal Family as Independent Director - Link  ~  :flag_us:  |  Float: 2.3 M  |  IO: 0.61%  |  MC: 10.8 M  |  High CTB",
+      "timestamp": "2025-11-07T13:20:09.155Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436344749689933897",
+      "content": "08:21  \u2191  HLLY  < $4  ~  :flag_us:  |  Float: 76.1 M  |  IO: 47.52%  |  MC: 329 M\na month ago  SEC  Form 10-Q - Link,a month ago  SEC  Form 8-K - Link,a month ago  PR  Holley Reports Third Quarter 2025 Results - Link,",
+      "timestamp": "2025-11-07T13:21:14.321Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436347002232246305",
+      "content": "OMEX  < $3  - Odyssey Marine Exploration Files U.S. Offshore Critical Minerals Lease Sale Request to Advance America's Resource Security - Link  ~  :flag_us:  |  Float: 32.2 M  |  IO: 30.12%  |  MC: 85.0 M  |  SI: 16.0%",
+      "timestamp": "2025-11-07T13:30:11.369Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436347239986364568",
+      "content": "MTVA  < $1  - MetaVia Presents Positive New Phase 2a Data on Vanoglipel (DA-1241) in Patients with Presumed MASH at the AASLD The Liver Meeting\u00ae 2025 - Link  ~  :flag_us:  |  Float: 9.0 M  |  IO: 1.18%  |  MC: 19.3 M",
+      "timestamp": "2025-11-07T13:31:08.054Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436347331879637023",
+      "content": "NVTS  < $9  - Navitas Announces Private Placement of Common Stock for Proceeds of $100 Million - Link  ~  :flag_us:  |  Float: 172 M  |  IO: 35.09%  |  MC: 1.8 B  |  SI: 26.5%",
+      "timestamp": "2025-11-07T13:31:29.963Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1436354539350524016",
+      "content": "BCAB  < $1  - BioAtla's Mecbotamab Vedotin (Mec-V), an AXL-targeting ADC, Demonstrates a Median Overall Survival (OS) of 21.5 months in Subtypes of Refractory Soft Tissue Sarcomas - Link  ~  :flag_us:  |  Float: 45.4 M  |  IO: 15.39%  |  MC: 37.5 M",
+      "timestamp": "2025-11-07T14:00:08.358Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436354546078056478",
+      "content": "WLDS  < $2  - Wearable Devices Expands into Asia's Tech Powerhouse: Secures Exclusive Distribution Agreement in South Korea - Link  ~  :flag_il:  |  Float: 6.5 M  |  IO: 2.18%  |  MC: 12.5 M  |  High CTB",
+      "timestamp": "2025-11-07T14:00:09.962Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436362115459059732",
+      "content": "DTCK  < $3  - Davis Commodities Evaluates Premium Nutrition Vertical Within USD 97 Billion Specialty Food Ingredients Market - Link  ~  :flag_sg:  |  Float: 8.0 M  |  IO: 0.14%  |  MC: 58.8 M",
+      "timestamp": "2025-11-07T14:30:14.643Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1436362134119514253",
+      "content": "09:30  \u2191  AQN  < $7  ~  :flag_ca:  |  Float: 767 M  |  IO: 63.82%  |  MC: 4.6 B\na month ago  SEC  Form 6-K - Link,a month ago  SEC  Form 6-K - Link,a month ago  PR  Algonquin Power & Utilities Corp. Declares Fourth Quarter 2025 Common Share Dividend of U.S.$0.0650 (C$0.0918), and Declares Fourth Quarter 2025 Preferred Share Dividends - Link,a month ago  PR  Algonquin Power & Utilities Corp. Announces Appointment of Robert Stefani as Chief Financial Officer - Link,... additional news earlier today.",
+      "timestamp": "2025-11-07T14:30:19.092Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436362152674857042",
+      "content": "09:30  \u2191  OPEN  < $6  ~  :flag_us:  |  Float: 588 M  |  IO: 51.22%  |  MC: 4.0 B  |  SI: 27.4%\na month ago  SEC  Form 8-K - Link,a month ago  SEC  Form 424B5 - Link,",
+      "timestamp": "2025-11-07T14:30:23.516Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436362224108310598",
+      "content": "09:30  \u2191  FLGT  < $26  ~  :flag_us:  |  Float: 19.8 M  |  IO: 54.35%  |  MC: 735 M\na month ago  SEC  Form 10-Q - Link,a month ago  SEC  Form 8-K - Link,a month ago  PR  Fulgent Reports Third Quarter 2025 Financial Results - Link,",
+      "timestamp": "2025-11-07T14:30:40.547Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436362559367286909",
+      "content": "09:31  \u2191  SG  < $6  ~  :flag_us:  |  Float: 103 M  |  IO: 90.95%  |  MC: 598 M  |  SI: 23.4%\na month ago  AR  William Blair Downgrades Sweetgreen to Market Perform,a month ago  AR  Piper Sandler Maintains Neutral on Sweetgreen, Lowers Price Target to $9,",
+      "timestamp": "2025-11-07T14:32:00.479Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436363269337256120",
+      "content": "09:34  \u2197  PTON  < $8  ~  :flag_us:  |  Float: 382 M  |  IO: 89.03%  |  MC: 2.8 B  |  SI: 19.6%\na month ago  AR  Telsey Advisory Group Maintains Market Perform on Peloton Interactive, Maintains $9 Price Target,",
+      "timestamp": "2025-11-07T14:34:49.749Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436367098292080741",
+      "content": "09:50  \u2197  NTLA  < $10  ~  :flag_us:  |  Float: 102 M  |  IO: 89.53%  |  MC: 967 M  |  SI: 30.4%\na month ago  AR  Citizens Maintains Market Outperform on Intellia Therapeutics, Lowers Price Target to $21,a month ago  AR  JP Morgan Downgrades Intellia Therapeutics to Underweight, Lowers Price Target to $5,",
+      "timestamp": "2025-11-07T14:50:02.643Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436369634856140870",
+      "content": "10:00  \u2197  ABAT  < $5  ~  :flag_us:  |  Float: 114 M  |  IO: 14.53%  |  MC: 426 M\na month ago  PR  American Battery Technology Company Announces First Quarter Fiscal 2026 Financial Results - Link,",
+      "timestamp": "2025-11-07T15:00:07.407Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436369638966431905",
+      "content": "10:00  \u2197  UAMY  < $8  ~  :flag_us:  |  Float: 111 M  |  IO: 23.90%  |  MC: 924 M  |  SI: 17.7%\na month ago  SEC  Form 8-K - Link,a month ago  PR  United States Antimony Corporation Announces Date For Release of Third Quarter and Nine Months Ended September 30, 2025 Financial and Operating Results - Link,",
+      "timestamp": "2025-11-07T15:00:08.387Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436379756999217224",
+      "content": "10:40  \u2197  AMN  < $19  ~  :flag_us:  |  Float: 38.0 M  |  IO: 103.74%  |  MC: 645 M\na month ago  AR  Citizens Maintains Market Outperform on AMN Healthcare Services, Raises Price Target to $24,",
+      "timestamp": "2025-11-07T15:40:20.714Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436389749735821372",
+      "content": "11:20  \u2197  SSP  < $3  ~  :flag_us:  |  Float: 70.8 M  |  IO: 61.49%  |  MC: 205 M\na month ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-11-07T16:20:03.168Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436430013233893489",
+      "content": "14:00  \u2197  NXXT  < $2  ~  :flag_us:  |  Float: 24.2 M  |  IO: 1.92%  |  MC: 202 M\na month ago  PR  NextNRG Reports Preliminary October 2025 Revenue Growth of 196% Year-Over-Year - Link,",
+      "timestamp": "2025-11-07T19:00:02.734Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436437168049619035",
+      "content": "BKYI  < $2  - Digital Identity and Biometric Solutions Provider BIO-key Hosts Q3 Investor Call Friday, November 14th at 10am ET - Link  ~  :flag_us:  |  Float: 5.6 M  |  IO: 1.24%  |  MC: 7.4 M  |  High CTB",
+      "timestamp": "2025-11-07T19:28:28.575Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436460384314855474",
+      "content": "NCEW  < $.50c  - New Century Logistics (BVI) Limited Announces 1-for-8 Reverse Stock Split - Link  ~  :flag_hk:  |  Float: 4.3 M  |  IO: 1.00%  |  MC: 10.9 M",
+      "timestamp": "2025-11-07T21:00:43.764Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1436461106897092710",
+      "content": "16:03  \u2191  MIGI  < $2  ~  :flag_us:  |  Float: 16.6 M  |  IO: 4.10%  |  MC: 21.8 M\na month ago  SEC  Form 8-K - Link,a month ago  PR  Mawson Infrastructure Group Inc. Announces Lease Extension For Its Bellefonte, PA Facility - Link,",
+      "timestamp": "2025-11-07T21:03:36.041Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436461502029893814",
+      "content": "IFRX  < $2  - InflaRx to Announce Topline Data from Phase 2a Clinical Trial of INF904 in Hidradenitis Suppurativa and Chronic Spontaneous Urticaria - Link  ~  :flag_de:  |  Float: 62.8 M  |  IO: 24.76%  |  MC: 82.8 M",
+      "timestamp": "2025-11-07T21:05:10.248Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436461677808980159",
+      "content": "GORV  < $2  - Lazydays Announces Plan to Delist from Nasdaq - Link  ~  :flag_us:  |  Float: 3.7 M  |  IO: 88.93%  |  MC: 6.0 M",
+      "timestamp": "2025-11-07T21:05:52.157Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1436461720578031757",
+      "content": "YGMZ  < $.15c  - Mingzhu Logistic Limited Announces 1-For-16 Reverse Share Split - Link  ~  :flag_cn:  |  Float: 76.0 M  |  IO: 0.15%  |  MC: 11.2 M",
+      "timestamp": "2025-11-07T21:06:02.354Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1436462924578295950",
+      "content": "16:10  \u2191  CTNT  < $2  ~  :flag_us:  |  Float: 2.4 M  |  IO: 2.53%  |  MC: 4.3 M\na month ago  PR  Cheetah Net Supply Chain Service Inc. Announces Third Quarter 2025 Results - Link,a month ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-11-07T21:10:49.410Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436467518301536387",
+      "content": "16:29  \u2191  TNYA  < $2  ~  :flag_us:  |  Float: 136 M  |  IO: 17.18%  |  MC: 209 M\na month ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-11-07T21:29:04.639Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436468351344971797",
+      "content": "16:31  SEC  AXTI - Form S-3 - Link",
+      "timestamp": "2025-11-07T21:32:23.252Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436468750973927466",
+      "content": "16:33  \u2191  EJH  < $1  ~  :flag_cn:  |  Float: 20.0 M  |  IO: 0.13%  |  MC: 16.2 M\na month ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-11-07T21:33:58.531Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436471766464860170",
+      "content": "16:45  SEC  BKYI - Form 8-K - Link",
+      "timestamp": "2025-11-07T21:45:57.480Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436472319538233393",
+      "content": "GREE  < $2  - Greenidge, New York State Agree on Historic New Air Permit That Will Support Local Power Grid; Includes Required Emissions Reductions That Exceed State's Climate Act Goals - Link  ~  :flag_us:  |  Float: 9.7 M  |  IO: 4.38%  |  MC: 23.7 M",
+      "timestamp": "2025-11-07T21:48:09.343Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436478184618201139",
+      "content": "17:10  SEC  RANI - Form S-3 - Link",
+      "timestamp": "2025-11-07T22:11:27.687Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436478297986043964",
+      "content": "EVAX  < $7  - Evaxion presents new immune data from phase 2 trial with AI-designed personalized cancer vaccine EVX-01 - Link  ~  :flag_dk:  |  Float: 5.1 M  |  IO: 1.89%  |  MC: 40.3 M",
+      "timestamp": "2025-11-07T22:11:54.716Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1436479384230957208",
+      "content": "17:15  SEC  SRXH - Form S-1 - Link",
+      "timestamp": "2025-11-07T22:16:13.697Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1436510574707216446",
+      "content": "$RR  https://t.co/Adk8yusgQ2Quoting @NVIDIARobotics - Check out @RichtechRobots new robot, leveraging NVIDIA robotics technology. \ud83e\udd16- Tweet Link",
+      "timestamp": "2025-11-08T00:20:10.086Z",
+      "author": "TradeHawk"
+    },
+    {
+      "id": "1139240765260836936-1437366246440960043",
+      "content": "04:00  \u2191  RUM  < $7  ~  :flag_us:  |  Float: 148 M  |  IO: 13.28%  |  MC: 2.6 B\na month ago  PR  Rumble Secures $100 Million Advertising Commitment from Tether - Link,a month ago  PR  Tether Doubles Down on Rumble, with an Initial Commitment of up to $150 Million of GPU Services to Fuel AI Plans - Link,a month ago  PR  Rumble to Acquire AI Infrastructure Company Northern Data - Link,a month ago  PR  Rumble Reports Third Quarter 2025 Results - Link,",
+      "timestamp": "2025-11-10T09:00:18.125Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1437392455824576584",
+      "content": "05:44  \u2197  IPHA  < $3  ~  :flag_fr:  |  IO: 0.11%  |  MC: 164 M\na month ago  PR  Innate Pharma Announces FDA Clearance to Proceed With TELLOMAK 3, a Confirmatory Phase 3 Trial of Lacutamab in CTCL - Link,",
+      "timestamp": "2025-11-10T10:44:26.929Z",
+      "author": "NuntioBot"
+    }
+  ],
+  "sent_at": "2025-12-18T04:24:42.715Z"
+}

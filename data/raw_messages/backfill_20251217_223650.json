@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1428850370347667476",
+      "content": "17:00  SEC  WWR - Form 424B5 - Link",
+      "timestamp": "2025-10-17T21:01:15.047Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428851379308335236",
+      "content": "17:05  \u2191  GPUS  < $.50c  ~  :flag_us:  |  IO: 0.36%  |  MC: 60.5 M\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Hyperscale Data Declares Monthly Cash Dividend of $0.2708333 per Share of 13.00% Series D Cumulative Redeemable Perpetual Preferred Stock - Link,",
+      "timestamp": "2025-10-17T21:05:15.602Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428853899569266929",
+      "content": "FPAY  < $.50c  - FlexShopper, Inc. Announces Receipt of Delisting Notification from Nasdaq - Link  ~  :flag_us:  |  Float: 8.1 M  |  IO: 15.53%  |  MC: 6.8 M",
+      "timestamp": "2025-10-17T21:15:16.479Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428854418287104042",
+      "content": "17:16  SEC  DVLT - Form S-3 - Link",
+      "timestamp": "2025-10-17T21:17:20.151Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428857766226694144",
+      "content": "17:30  SEC  AQMS - Form S-3 - Link",
+      "timestamp": "2025-10-17T21:30:38.362Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428874870216851476",
+      "content": "18:38  \u2197  SUGP  < $11  ~  :flag_hk:  |  Float: 400 k  |  IO: 0.72%  |  MC: 11.9 M  |  High CTB\n2 months ago  SEC  Form S-8 - Link,",
+      "timestamp": "2025-10-17T22:38:36.271Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428880918780841995",
+      "content": "19:02  \u2191  SLS  < $3  ~  :flag_us:  |  Float: 103 M  |  IO: 25.58%  |  MC: 225 M  |  SI: 22.4%\n2 months ago  SEC  Form SCHEDULE 13G - Link,",
+      "timestamp": "2025-10-17T23:02:38.361Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428887798743568494",
+      "content": "19:29  \u2197  DCTH  < $16  ~  :flag_us:  |  Float: 32.6 M  |  IO: 48.66%  |  MC: 419 M\n2 months ago  SEC  Form SCHEDULE 13G - Link,",
+      "timestamp": "2025-10-17T23:29:58.672Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1428906554861817976",
+      "content": "20:44  SEC  ARTV - Form 4 - Link",
+      "timestamp": "2025-10-18T00:44:30.479Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429786007825285131",
+      "content": "06:59  \u2197  DVLT  < $3  ~  :flag_us:  |  Float: 134 M  |  IO: 2.57%  |  MC: 366 M  |  SI: 33.5%\n2 months ago  PR  Datavault AI (NASDAQ: DVLT) Partners with Max International AG to Launch Swiss Digital RWA Exchange, Overcoming Barriers to Institutional Tokenization - Link,",
+      "timestamp": "2025-10-20T10:59:08.405Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429786247999787149",
+      "content": "SINT  < $5  - SINTX Technologies Receives FDA Clearance for SINAPTIC\u00ae Foot & Ankle Implant System - Link  ~  :flag_us:  |  Float: 2.6 M  |  IO: 4.73%  |  MC: 14.2 M",
+      "timestamp": "2025-10-20T11:00:05.667Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429786277477089374",
+      "content": "REPL  < $5  - Replimune Announces FDA Acceptance of BLA Resubmission of RP1 for the Treatment of Advanced Melanoma - Link  ~  :flag_us:  |  Float: 66.3 M  |  IO: 96.79%  |  MC: 351 M  |  SI: 27.0%",
+      "timestamp": "2025-10-20T11:00:12.695Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429789115175669842",
+      "content": "07:11  \u2191  IOBT  < $1  ~  :flag_dk:  |  Float: 49.3 M  |  IO: 20.21%  |  MC: 42.8 M\n2 months ago  PR  IO Biotech Presents Phase 3 Results for Cylembio\u00ae plus KEYTRUDA\u00ae (pembrolizumab) in First-line Advanced Melanoma at ESMO 2025 - Link,",
+      "timestamp": "2025-10-20T11:11:29.255Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429790062891106327",
+      "content": "JZXN  < $.50c  - Jiuzi Holdings, Inc Enters Strategic Partnership with BitFi to Advance Bitcoin-Centric Finance - Link  ~  :flag_cn:  |  Float: 54.9 M  |  IO: 7.35%  |  MC: 18.7 M  |  High CTB",
+      "timestamp": "2025-10-20T11:15:15.208Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429792383268163665",
+      "content": "07:20  SEC  REPL - Form 8-K - Link",
+      "timestamp": "2025-10-20T11:24:28.429Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429793868143919215",
+      "content": "07:30  \u2191  ELAB  < $9  ~  :flag_us:  |  IO: 1.13%  |  MC: 4.6 M\n2 months ago  PR  PMGC Holdings Inc. Announces Over $711,000.00 in Sales Backlog at AGA Precision Systems LLC and Provides Corporate Update - Link,",
+      "timestamp": "2025-10-20T11:30:22.451Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429793930358296626",
+      "content": "07:30  \u2191  CRMD  < $12  ~  :flag_us:  |  Float: 70.2 M  |  IO: 44.34%  |  MC: 817 M  |  SI: 22.2%\n2 months ago  PR  CorMedix Inc. Announces Preliminary Third Quarter 2025 Results and Raises 2025 Net Revenue Guidance - Link,",
+      "timestamp": "2025-10-20T11:30:37.284Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429796582546735214",
+      "content": "SPRC  < $5  - Clearmind Medicine Announces Publication of U.S. Patent Application Targeting Binge Behavior Disorders - Link  ~  :flag_il:  |  Float: 1.6 M  |  IO: 0.39%  |  MC: 6.2 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-10-20T11:41:09.615Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429796586535256139",
+      "content": "SPRC  < $5  - SciSparc-Clearmind Collaboration Leads to Publication of U.S. Patent Application Targeting Binge Behavior Disorders - Link  ~  :flag_il:  |  Float: 1.6 M  |  IO: 0.39%  |  MC: 6.2 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-10-20T11:41:10.566Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801365298745419",
+      "content": "FGNX  < $4  - FG Nexus Initiates $200 Million Share Buyback Program - Link  ~  :flag_us:  |  Float: 35.4 M  |  IO: 0.41%  |  MC: 127 M  |  High CTB",
+      "timestamp": "2025-10-20T12:00:09.912Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801381962846330",
+      "content": "BGLC  < $6  - BioNexus Gene Lab Corp Signs Strategic Partnership Term Sheet with BirchBioMed Inc. - Link  ~  :flag_my:  |  Float: 1.3 M  |  IO: 0.53%  |  MC: 9.2 M",
+      "timestamp": "2025-10-20T12:00:13.885Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801485167755315",
+      "content": "AKAN  < $3  - Akanda's 20-Tower Expansion Strengthens Its Legacy Inside Mexico's $7 Billion Telecom Network (NASDAQ: AKAN) - Link  ~  :flag_gb:  |  Float: 730 k  |  IO: 1.31%  |  MC: 1.5 M  |  High CTB",
+      "timestamp": "2025-10-20T12:00:38.491Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801580000972811",
+      "content": "AKAN  < $3  - Akanda Corp. Increasing Its Cannabis Investment - Link  ~  :flag_gb:  |  Float: 730 k  |  IO: 1.31%  |  MC: 1.5 M  |  High CTB",
+      "timestamp": "2025-10-20T12:01:01.101Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801856665784411",
+      "content": "AZTR  < $1  - Azitra, Inc. Announces Positive Preclinical Data for ATR-01 Program, Designed to Treat Ichthyosis Vulgaris - Link  ~  :flag_us:  |  Float: 5.4 M  |  IO: 8.36%  |  MC: 3.7 M",
+      "timestamp": "2025-10-20T12:02:07.063Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801930925801583",
+      "content": "IMMP  < $3  - Primary Endpoint Met in EFTISARC-NEO Phase II Evaluating Neoadjuvant Efti in Soft Tissue Sarcoma and Data Presented at ESMO Congress 2025 - Link  ~  :flag_au:  |  Float: 146 M  |  IO: 1.80%  |  MC: 305 M",
+      "timestamp": "2025-10-20T12:02:24.768Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429801938240798782",
+      "content": "IMMP  < $3  - Two Posters at ESMO Congress 2025 Highlight Immutep's Focus on Changing Treatment Landscape in First Line Non-Small Cell Lung Cancer - Link  ~  :flag_au:  |  Float: 146 M  |  IO: 1.80%  |  MC: 305 M",
+      "timestamp": "2025-10-20T12:02:26.512Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429805108564332634",
+      "content": "08:15  \u2197  ADAP  < $.10c  ~  :flag_gb:  |  Float: 255 M  |  IO: 27.53%  |  MC: 52.5 M  |  Reg SHO\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Adaptimmune Announces Delisting from Nasdaq - Link,",
+      "timestamp": "2025-10-20T12:15:02.376Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429805466812284950",
+      "content": "XBP  < $1  - XBP Global Partners with the New York City Department of Finance for Enhanced Parking Violation Payment Processing - Link  ~  :flag_us:  |  Float: 118 M  |  IO: 51.24%  |  MC: 63.2 M",
+      "timestamp": "2025-10-20T12:16:27.789Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429807633036218470",
+      "content": "08:25  \u2191  MMA  < $2  ~  :flag_au:  |  Float: 11.0 M  |  IO: 2.56%  |  MC: 19.6 M  |  High CTB\n2 months ago  PR  MMA.INC Advances Tokenization with Solana testnet Minting and NVIDIA AI Infrastructure Alignment - Link,",
+      "timestamp": "2025-10-20T12:25:04.257Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429807825579806741",
+      "content": "ANIX  < $5  - Anixa Biosciences Announces Issuance of Chinese Patent Covering Breast Cancer Vaccine Technology - Link  ~  :flag_us:  |  Float: 31.1 M  |  IO: 16.38%  |  MC: 148 M",
+      "timestamp": "2025-10-20T12:25:50.163Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429808897010696282",
+      "content": "NIVF  < $2  - NewGen Announces Strategic Entry into Art Tokenization Market with $2 Million Private Collection Deal, Expandable to $200 Million - Link  ~  :flag_th:  |  Float: 2.1 M  |  IO: 0.10%  |  MC: 2.7 M  |  High CTB",
+      "timestamp": "2025-10-20T12:30:05.612Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429808901288755240",
+      "content": "08:30  \u2191  GNLN  < $5  ~  :flag_us:  |  Float: 1.4 M  |  IO: 1.40%  |  MC: 5.3 M  |  High CTB\n2 months ago  PR  Greenlane Holdings Inc Announces $110 Million Private Placement to Initiate Berachain Cryptocurrency Treasury Strategy; Expected to Become One of the Largest Publicly Traded BERA Holders - Link,",
+      "timestamp": "2025-10-20T12:30:06.632Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429809030355746968",
+      "content": "ACHR  < $12  - Korean Air Selects Archer as its Exclusive Partner to Introduce eVTOL Aircraft in Korea - Link  ~  :flag_us:  |  Float: 544 M  |  IO: 51.77%  |  MC: 7.5 B  |  SI: 17.5%",
+      "timestamp": "2025-10-20T12:30:37.404Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429809453632327720",
+      "content": "SVRE  < $2  - SaverOne Signs Third Distribution Agreement in the United States - Link  ~  :flag_il:  |  IO: 6.16%  |  MC: 1.6 M",
+      "timestamp": "2025-10-20T12:32:18.321Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429809823406620692",
+      "content": "08:33  \u2191  LAES  < $8  ~  :flag_ch:  |  Float: 142 M  |  IO: 15.12%  |  MC: 1.1 B\n2 months ago  PR  SEALSQ Unveils Industry's First  Hardware-Embedded Post-Quantum Chip  at Q+AI 2025 Conference in New York - Link,",
+      "timestamp": "2025-10-20T12:33:46.482Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429810669858979963",
+      "content": "CTOR  < $2  - Citius Oncology Signs U.S. Distribution Agreement with McKesson to Support LYMPHIR\u2122 Commercial Launch - Link  ~  :flag_us:  |  Float: 9.4 M  |  IO: 0.27%  |  MC: 146 M",
+      "timestamp": "2025-10-20T12:37:08.292Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429811011208351775",
+      "content": "08:38  \u2197  COGT  < $20  ~  :flag_us:  |  Float: 113 M  |  IO: 87.66%  |  MC: 2.3 B\n2 months ago  PR  Cogent Biosciences Announces FDA Breakthrough Therapy Designation for Bezuclastinib - Link,",
+      "timestamp": "2025-10-20T12:38:29.676Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429816442332774531",
+      "content": "09:00  \u2197  CLF  < $16  ~  :flag_us:  |  Float: 486 M  |  IO: 77.12%  |  MC: 7.2 B\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Cleveland-Cliffs Reports Third-Quarter 2025 Results - Link,",
+      "timestamp": "2025-10-20T13:00:04.557Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429816509945090138",
+      "content": "SLE  < $4  - Lionsgate Expands The Strangers: Chapter 2 Beyond the Screen with Multi-Game Halloween Activation on Roblox - Link  ~  :flag_us:  |  Float: 1.3 M  |  IO: 0.72%  |  MC: 4.6 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-10-20T13:00:20.677Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429816659308318861",
+      "content": "RDHL  < $2  - RedHill's Talicia\u00ae Secures $4 Million Strategic Investment and U.S. Co-Commercialization Partnership Deal - Link  ~  :flag_il:  |  Float: 3.3 M  |  IO: 2.55%  |  MC: 5.1 M  |  SI: 21.1%  |  High CTB",
+      "timestamp": "2025-10-20T13:00:56.288Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429816829303590942",
+      "content": "GSIT  < $6  - Compute-In-Memory APU Achieves GPU-Class AI Performance at a Fraction of the Energy Cost - Link  ~  :flag_us:  |  Float: 21.7 M  |  IO: 14.47%  |  MC: 148 M",
+      "timestamp": "2025-10-20T13:01:36.818Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429817405282189382",
+      "content": "UHG  < $4  - United Homes Group Announces Conclusion of Review of Strategic Alternatives and Resignation of Directors - Link  ~  :flag_us:  |  Float: 9.5 M  |  IO: 13.21%  |  MC: 250 M",
+      "timestamp": "2025-10-20T13:03:54.142Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429817741963034644",
+      "content": "RDHL  < $3  - CUMBERLAND PHAMACEUTICALS ANNOUNCES THE ADDITION OF AN ESTABLISHED FDA APPROVED PRODUCT TO ITS COMMERCIAL PORTFOLIO - Link  ~  :flag_il:  |  Float: 3.3 M  |  IO: 2.55%  |  MC: 5.1 M  |  SI: 21.1%  |  High CTB",
+      "timestamp": "2025-10-20T13:05:14.413Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429818003616432179",
+      "content": "CPIX  < $4  - CUMBERLAND PHAMACEUTICALS ANNOUNCES THE ADDITION OF AN ESTABLISHED FDA APPROVED PRODUCT TO ITS COMMERCIAL PORTFOLIO - Link  ~  :flag_us:  |  Float: 8.3 M  |  IO: 24.90%  |  MC: 51.5 M",
+      "timestamp": "2025-10-20T13:06:16.796Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429824342388117595",
+      "content": "09:31  \u2191  NVTS  < $16  ~  :flag_us:  |  Float: 170 M  |  IO: 34.68%  |  MC: 3.2 B  |  SI: 28.2%\n2 months ago  AR  Rosenblatt Downgrades Navitas Semiconductor to Neutral, Raises Price Target to $12,",
+      "timestamp": "2025-10-20T13:31:28.077Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429825502159573102",
+      "content": "09:36  \u2197  QSI  < $3  ~  :flag_us:  |  Float: 156 M  |  IO: 28.63%  |  MC: 496 M\n2 months ago  PR  Quantum-Si to Participate in the Canaccord Genuity MedTech, Diagnostics and Digital Health & Services Forum - Link,",
+      "timestamp": "2025-10-20T13:36:04.588Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429827682765377537",
+      "content": "09:44  \u2191  ANRO  < $9  ~  :flag_us:  |  Float: 23.9 M  |  IO: 70.30%  |  MC: 187 M\n2 months ago  PR  Alto Neuroscience Announces $50 Million Private Placement Financing - Link,2 months ago  PR  Alto Neuroscience Announces Plans to Accelerate Development of ALTO-207 in Treatment Resistant Depression Following Successful Outcome from Recent FDA Meeting - Link,",
+      "timestamp": "2025-10-20T13:44:44.485Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429827770472599593",
+      "content": "09:45  \u2197  SMMT  < $21  ~  :flag_us:  |  Float: 112 M  |  IO: 13.36%  |  MC: 14.3 B  |  SI: 32.1%\n2 months ago  AR  JMP Securities Reiterates Market Outperform on Summit Therapeutics, Maintains $40 Price Target,2 months ago  SEC  Form 10-Q - Link,2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Summit Therapeutics Reports Financial Results and Operational Progress for the Third Quarter and Nine Months Ended September 30, 2025 - Link,",
+      "timestamp": "2025-10-20T13:45:05.396Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429835328885096571",
+      "content": "10:15  \u2197  VRME  < $2  ~  :flag_us:  |  Float: 9.7 M  |  IO: 11.00%  |  MC: 14.9 M\n2 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-10-20T14:15:07.462Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1429836571120636007",
+      "content": "10:20  \u2197  OLMA  < $8  ~  :flag_us:  |  Float: 52.9 M  |  IO: 85.68%  |  MC: 544 M\n2 months ago  AR  HC Wainwright & Co. Reiterates Buy on Olema Pharmaceuticals, Maintains $28 Price Target,",
+      "timestamp": "2025-10-20T14:20:03.634Z",
+      "author": ""
+    }
+  ],
+  "sent_at": "2025-12-18T03:36:50.634Z"
+}

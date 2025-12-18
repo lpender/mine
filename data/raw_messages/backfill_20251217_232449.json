@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1435249922852130826",
+      "content": "07:50  \u2191  SCNX  < $1  ~  :flag_us:  |  Float: 25.1 M  |  IO: 3.86%  |  MC: 24.1 M\na month ago  PR  BZ: SCIENTURE HOLDINGS Tells Benzinga 'Arbli Oral Suspension, 10 mg/mL has been added to the formularies of key national payors, expanding access through both multiple commercial coverage and Medicare supplement plans' - Link,a month ago  PR  BZ: SCIENTURE HOLDINGS Tells Benzinga Co. Announces Addition Of Arbli To Formularies Of Major National Health Plans, Says 'Expanded Coverage Reaches Over 100 Million Covered Lives Nationwide' - Link,",
+      "timestamp": "2025-11-04T12:50:47.262Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435252284643737661",
+      "content": "TPET  < $2  - Trio Petroleum Corp. (TPET) Announces Strategic Acquisition of Cash Flow positive production in Alberta - Link  ~  :flag_us:  |  Float: 6.1 M  |  IO: 2.25%  |  MC: 8.4 M",
+      "timestamp": "2025-11-04T13:00:10.357Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435252292441079858",
+      "content": "HTZ  < $6  - Hertz Transformation Drives Record Utilization and Return to EPS Profitability - Link  ~  :flag_us:  |  Float: 298 M  |  IO: 110.97%  |  MC: 1.5 B  |  SI: 18.4%",
+      "timestamp": "2025-11-04T13:00:12.216Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435252347998572555",
+      "content": "STKH  < $4  - Steakholder Foods Announces Acquisition of Twine Solutions - Link  ~  :flag_il:  |  IO: 2.87%  |  MC: 1.6 M",
+      "timestamp": "2025-11-04T13:00:25.462Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435252425144406057",
+      "content": "COYA  < $7  - Coya Therapeutics Announces That Its Combination LD IL-2/GLP-1 RA Candidate (COYA 303) Demonstrated Potent Systemic and Brain Anti-Inflammatory Efficacy In Vivo - Link  ~  :flag_us:  |  Float: 15.6 M  |  IO: 26.79%  |  MC: 102 M",
+      "timestamp": "2025-11-04T13:00:43.855Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435252510733500436",
+      "content": "WSR  < $15  - MCB Real Estate Proposes to Acquire Whitestone REIT for $15.20 Per Share - Link  ~  :flag_us:  |  Float: 44.2 M  |  IO: 64.44%  |  MC: 1.5 B",
+      "timestamp": "2025-11-04T13:01:04.261Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435252535802990694",
+      "content": "MSAI  < $2  - MultiSensor AI Holdings, Inc. Announces Pricing of $14.4 Million Registered Direct Offering - Link  ~  :flag_us:  |  Float: 26.8 M  |  IO: 53.98%  |  MC: 61.9 M  |  High CTB",
+      "timestamp": "2025-11-04T13:01:10.238Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1435253152466210867",
+      "content": "SPAI  < $7  - Safe Pro's Artificial Intelligence Delivers 800+% Productivity Surge in Ukraine Demining Surveys According to Independent Research Presented at Leading Global Conference - Link  ~  :flag_us:  |  Float: 7.4 M  |  IO: 9.22%  |  MC: 114 M",
+      "timestamp": "2025-11-04T13:03:37.262Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435253515353329815",
+      "content": "SCNX  < $1  - SCIENTURE Announces Addition of Arbli\u2122 (Losartan Potassium) to Formularies of Major National Health Plans - Link  ~  :flag_us:  |  Float: 25.1 M  |  IO: 3.86%  |  MC: 27.0 M",
+      "timestamp": "2025-11-04T13:05:03.781Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435254286513602743",
+      "content": "VSEE  < $2  - VSee Health Secures Three-Year Platform Services Agreement with the Region's Sole Level 1 Trauma Center and Academic Health System - Link  ~  :flag_us:  |  Float: 6.3 M  |  IO: 9.03%  |  MC: 17.4 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-11-04T13:08:07.640Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435259822860796119",
+      "content": "CRML  < $11  - Critical Metal Corp Obtains Crucial Environmental Approvals for the Tanbreez Project - Link  ~  :flag_gb:  |  Float: 45.0 M  |  IO: 7.77%  |  MC: 1.2 B  |  SI: 25.5%",
+      "timestamp": "2025-11-04T13:30:07.608Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435259969623691474",
+      "content": "LUCY  < $2  - Innovative Eyewear Unveils Four New Lucyd Armor\u00ae ChatGPT-enabled Smart Safety Glasses & New ANSI Certification - Link  ~  :flag_us:  |  Float: 3.0 M  |  IO: 4.12%  |  MC: 7.8 M",
+      "timestamp": "2025-11-04T13:30:42.599Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435260047939604500",
+      "content": "08:30  \u2191  ARTL  < $4  ~  :flag_us:  |  Float: 1.1 M  |  IO: 1.45%  |  MC: 3.4 M\na month ago  PR  Artelo Biosciences Announces Publication of Peer-Reviewed Article on Role of Fatty Acid Binding Proteins in Cancer - Link,",
+      "timestamp": "2025-11-04T13:31:01.271Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435261096897548298",
+      "content": "08:35  \u2191  KNDI  < $2  ~  :flag_cn:  |  Float: 71.5 M  |  IO: 1.02%  |  MC: 97.2 M\na month ago  PR  Kandi Unveils Intelligent Delivery Robot Dog Solution, Advancing the Future of Smart Logistics - Link,",
+      "timestamp": "2025-11-04T13:35:11.362Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435261470215770344",
+      "content": "CIFR  < $21  - Cipher Mining Inc. Announces Proposed Offering of $1.4 Billion of Senior Secured Notes - Link  ~  :flag_us:  |  Float: 307 M  |  IO: 51.42%  |  MC: 8.4 B  |  SI: 21.3%",
+      "timestamp": "2025-11-04T13:36:40.368Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1435262326650437725",
+      "content": "PHGE  < $1  - BiomX Announces Positive FDA Feedback Supporting Next-Generation Phage Cocktail Program for Diabetic Foot Infections - Link  ~  :flag_il:  |  Float: 13.6 M  |  IO: 18.54%  |  MC: 13.2 M",
+      "timestamp": "2025-11-04T13:40:04.558Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435266472237731952",
+      "content": "SNOA  < $5  - Sonoma Pharmaceuticals Reports Second Fiscal Quarter 2026 Financial Results - Link  ~  :flag_us:  |  Float: 1.6 M  |  IO: 5.17%  |  MC: 6.2 M",
+      "timestamp": "2025-11-04T13:56:32.943Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435267365162975417",
+      "content": "NIXX  < $2  - Nixxy Signs $12 Million Annual Contract Increase, Extending Telecom Growth Momentum - Link  ~  :flag_us:  |  Float: 18.2 M  |  IO: 2.96%  |  MC: 27.9 M",
+      "timestamp": "2025-11-04T14:00:05.833Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435267369055289458",
+      "content": "WOK  < $4  - WORK Medical Technology Group LTD's Subsidiary Retains a US$114,000 Service Contract from GemPharmatech Corporation - Link  ~  :flag_cn:  |  Float: 680 k  |  IO: 9.22%  |  MC: 3.4 M  ~  1 for 100  R/S  Oct. 21",
+      "timestamp": "2025-11-04T14:00:06.761Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435267397866098842",
+      "content": "WYY  < $8  - WidePoint Secures an Estimated $40 Million to $45 Million SaaS Contract to Deliver FedRAMP-Authorized ITMS\u2122 Command Center Platform for Leading Global Telecom Carrier - Link  ~  :flag_us:  |  Float: 8.1 M  |  IO: 14.27%  |  MC: 66.5 M",
+      "timestamp": "2025-11-04T14:00:13.630Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435267434528378943",
+      "content": "OSCR  < $18  - Hy-Vee Health and Oscar Health's New Concierge Care Plan Redefines Healthcare for the Des Moines Business Community - Link  ~  :flag_us:  |  Float: 189 M  |  IO: 54.76%  |  MC: 4.5 B  |  SI: 20.3%",
+      "timestamp": "2025-11-04T14:00:22.371Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435270299628343337",
+      "content": "09:11  \u2191  CAPT  < $1  ~  :flag_gb:  |  Float: 29.4 M  |  IO: 8.22%  |  MC: 17.8 M  |  High CTB\na month ago  PR  Captivision, Inc. Announces Additional Extension Granted by Nasdaq to Regain Compliance with Periodic Filing Requirement - Link,",
+      "timestamp": "2025-11-04T14:11:45.464Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435271661476909056",
+      "content": "ABP  < $7  - Abpro and Celltrion to Present Preclinical Data for CT-P72/ABP-102 at SITC 2025, Highlighting a Next-Generation HER2\u00d7CD3 T-Cell Engager - Link  ~  :flag_us:  |  Float: 1.1 M  |  IO: 1.72%  |  MC: 16.0 M  ~  1 for 30  R/S  Nov. 03",
+      "timestamp": "2025-11-04T14:17:10.154Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435273683873697812",
+      "content": "09:25  \u2191  NRGV  < $4  ~  :flag_us:  |  Float: 90.6 M  |  IO: 17.66%  |  MC: 523 M\na month ago  PR  Energy Vault, EU Green Energy Sign Framework Agreement for Deployment of up to $250 Million of Battery Energy Storage Systems, Totaling 1.8 GWh, to Accelerate Renewable Deployment - Link,",
+      "timestamp": "2025-11-04T14:25:12.331Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435274965967569057",
+      "content": "WETH  < $3  - WeTouch Expands Global Presence: Secures Siemens Supply Contracts for Industrial HMI and PLC High-End Series - Link  ~  :flag_cn:  |  Float: 11.9 M  |  IO: 2.45%  |  MC: 26.4 M",
+      "timestamp": "2025-11-04T14:30:18.006Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435275028613824606",
+      "content": "09:30  \u2191  TCMD  < $23  ~  :flag_us:  |  Float: 21.4 M  |  IO: 95.59%  |  MC: 443 M\na month ago  AR  BTIG Upgrades Tactile Systems Tech to Buy, Announces $28 Price Target,",
+      "timestamp": "2025-11-04T14:30:32.942Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275054823903362",
+      "content": "09:30  \u2191  NVTS  < $11  ~  :flag_us:  |  Float: 170 M  |  IO: 34.79%  |  MC: 2.2 B  |  SI: 26.7%\na month ago  AR  Rosenblatt Maintains Neutral on Navitas Semiconductor, Lowers Price Target to $8,a month ago  AR  Needham Maintains Buy on Navitas Semiconductor, Raises Price Target to $13,",
+      "timestamp": "2025-11-04T14:30:39.191Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275098058784908",
+      "content": "RDHL  < $2  - RedHill Announces $10.5 Million New York Supreme Court Judgment Win Now Final for Enforcement - Link  ~  :flag_il:  |  Float: 3.0 M  |  IO: 2.55%  |  MC: 4.2 M  |  High CTB",
+      "timestamp": "2025-11-04T14:30:49.499Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435275102450356254",
+      "content": "09:30  \u2191  UUUU  < $17  ~  :flag_us:  |  Float: 225 M  |  IO: 64.37%  |  MC: 3.7 B  |  SI: 18.6%\na month ago  AR  HC Wainwright & Co. Maintains Buy on Energy Fuels, Lowers Price Target to $26.75,",
+      "timestamp": "2025-11-04T14:30:50.546Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275110486376538",
+      "content": "DTCK  < $3  - Davis Commodities Expands into the FMCG Market: A Bold Step Towards a Dynamic Future - Link  ~  :flag_sg:  |  Float: 8.0 M  |  IO: 0.14%  |  MC: 73.3 M",
+      "timestamp": "2025-11-04T14:30:52.462Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1435275127754326191",
+      "content": "09:30  \u2191  BYND  < $2  ~  :flag_us:  |  Float: 378 M  |  IO: 14.28%  |  MC: 497 M  |  Reg SHO\na month ago  PR  Beyond Meat\u00ae Teams Up With Hard Rock Cafe to Bring the Latest Beyond Burger\u00ae to Fans Nationwide - Link,",
+      "timestamp": "2025-11-04T14:30:56.579Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275186609066046",
+      "content": "09:31  \u2191  TERN  < $17  ~  :flag_us:  |  Float: 69.6 M  |  IO: 83.20%  |  MC: 1.4 B\na month ago  AR  BMO Capital Maintains Outperform on Terns Pharma, Raises Price Target to $22,a month ago  AR  Barclays Maintains Overweight on Terns Pharma, Raises Price Target to $27,a month ago  AR  HC Wainwright & Co. Upgrades Terns Pharma to Buy, Announces $20 Price Target,",
+      "timestamp": "2025-11-04T14:31:10.611Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275195316174868",
+      "content": "09:31  \u2191  AUPH  < $15  ~  :flag_ca:  |  Float: 119 M  |  IO: 43.90%  |  MC: 1.8 B\na month ago  SEC  Form 8-K - Link,a month ago  SEC  Form 10-Q - Link,a month ago  PR  Aurinia Pharmaceuticals Reports Financial Results for the Three and Nine Months Ended September 30, 2025 and Provides Update on Recent Business Progress - Link,",
+      "timestamp": "2025-11-04T14:31:12.687Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435275499294298133",
+      "content": "DTCK  < $4  - Davis Commodities Expands into the FMCG Market: A Bold Step Towards a Dynamic Future - Link  ~  :flag_sg:  |  Float: 8.0 M  |  IO: 0.14%  |  MC: 73.3 M",
+      "timestamp": "2025-11-04T14:32:25.161Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435275765301121045",
+      "content": "09:33  \u2197  STIM  < $3  ~  :flag_us:  |  Float: 40.4 M  |  IO: 27.63%  |  MC: 157 M\na month ago  SEC  Form 10-Q - Link,a month ago  SEC  Form 8-K - Link,a month ago  PR  Neuronetics Reports Third Quarter 2025 Financial and Operating Results and Announces CEO Transition Plan - Link,",
+      "timestamp": "2025-11-04T14:33:28.582Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435276173180538880",
+      "content": "TGE  < $2  - TGE Confirms Plan to Build the World's First The Art Newspaper Hotel in 2026/27 - Link  ~  :flag_fr:  |  Float: 7.5 M  |  IO: 1.29%  |  MC: 71.7 M",
+      "timestamp": "2025-11-04T14:35:05.828Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1435276183385276539",
+      "content": "HKD  < $3  - TGE Confirms Plan to Build the World's First The Art Newspaper Hotel in 2026/27 - Link  ~  :flag_fr:  |  Float: 27.3 M  |  IO: 0.23%  |  MC: 200 M",
+      "timestamp": "2025-11-04T14:35:08.261Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1435279934976294923",
+      "content": "09:50  \u2197  PLUG  < $3  ~  :flag_us:  |  Float: 1.1 B  |  IO: 35.60%  |  MC: 3.2 B  |  SI: 28.9%\na month ago  PR  Plug To Announce 2025 Third Quarter Results on November 10, 2025 - Link,",
+      "timestamp": "2025-11-04T14:50:02.710Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435279989644853268",
+      "content": "09:50  \u2197  UNIT  < $7  ~  :flag_us:  |  Float: 236 M  |  IO: 70.20%  |  MC: 1.5 B\na month ago  SEC  Form 8-K - Link,a month ago  PR  Uniti Group Inc. Reports Third Quarter 2025 Results - Link,",
+      "timestamp": "2025-11-04T14:50:15.744Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435280468034715648",
+      "content": "09:52  \u2197  MYGN  < $8  ~  :flag_us:  |  Float: 88.4 M  |  IO: 98.15%  |  MC: 721 M\na month ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-11-04T14:52:09.801Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435282452984762381",
+      "content": "10:00  \u2197  ONDS  < $7  ~  :flag_us:  |  Float: 342 M  |  IO: 15.70%  |  MC: 2.1 B\na month ago  SEC  Form 8-K - Link,a month ago  PR  Ondas to Acquire Sentrycs, a Global Leader in Counter-UAS Cyber Technology, Expanding Global Reach to Tier-1 Defense and Security Agencies Across 25+ Countries  - Link,",
+      "timestamp": "2025-11-04T15:00:03.050Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435282457988563015",
+      "content": "10:00  \u2197  LQDA  < $29  ~  :flag_us:  |  Float: 67.9 M  |  IO: 67.26%  |  MC: 2.1 B  |  SI: 26.2%\na month ago  AR  Needham Maintains Buy on Liquidia, Raises Price Target to $52,a month ago  AR  BTIG Reiterates Buy on Liquidia, Maintains $49 Price Target,",
+      "timestamp": "2025-11-04T15:00:04.243Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435291259060097288",
+      "content": "10:35  \u2197  NUVB  < $5  ~  :flag_us:  |  Float: 232 M  |  IO: 53.65%  |  MC: 1.4 B  |  SI: 34.2%\na month ago  AR  Citizens Maintains Market Outperform on Nuvation Bio, Raises Price Target to $8,",
+      "timestamp": "2025-11-04T15:35:02.582Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435317517999538206",
+      "content": "DVLT  < $2  - Datavault AI Inc. Announces a $10M Worldwide Exclusive License Agreement with Scilex Holding Company for Tokenization and Monetization of Real-World Assets (RWA) in Genomic, DNA Data, Diagnostics, Therapeutics, Genetic, and Drug Information - Link  ~  :flag_us:  |  Float: 208 M  |  IO: 1.76%  |  MC: 497 M",
+      "timestamp": "2025-11-04T17:19:23.201Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435323368629997700",
+      "content": "12:42  SEC  BQ - Form 424B5 - Link",
+      "timestamp": "2025-11-04T17:42:38.100Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1435371804561510460",
+      "content": "$LGCL Lucas GC has been granted U.S. Patent No. 12,462,167 on November 4, 2025 titled \u201cUnified Platform of an Artificial Intelligence (AI) Based Test Generator and Test Training System.\u201d\nhttps://t.co/CLGGO5vtXr https://t.co/ICJNJqapDu- Tweet Link",
+      "timestamp": "2025-11-04T20:55:06.126Z",
+      "author": "PatentAlerts4"
+    },
+    {
+      "id": "1139240765260836936-1435371877630607361",
+      "content": "$LGCL Lucas GC Ltd (Hong Kong) has been granted US patent number 12,462,167 titled \"Unified platform of an artificial intelligence based test generator and test training system\". https://t.co/7yGfoR4zLF.- Tweet Link",
+      "timestamp": "2025-11-04T20:55:23.547Z",
+      "author": "PatentGrants"
+    },
+    {
+      "id": "1139240765260836936-1435371945699840010",
+      "content": "$LGCL Granted US Patent #12462167 Today For \"UNIFIED PLATFORM OF AN ARTIFICIAL INTELLIGENCE (AI) BASED TEST GENERATOR AND TEST TRAINING SYSTEM\". Low float 390K shares per Finviz and Marketwatch.\nhttps://t.co/V8V3tdt0aJ https://t.co/LzrHZxKUJs- Tweet Link",
+      "timestamp": "2025-11-04T20:55:39.776Z",
+      "author": "US_Patent_Plays"
+    },
+    {
+      "id": "1139240765260836936-1435373206725853315",
+      "content": "LSTA  < $3  - Lisata Therapeutics Highlights Positive Preclinical Data of Certepetide as Part of Antibody-Drug Conjugate Combinations as Reported by Licensing Partner Catalent - Link  ~  :flag_us:  |  Float: 7.2 M  |  IO: 8.94%  |  MC: 21.8 M",
+      "timestamp": "2025-11-04T21:00:40.428Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1435373242041892894",
+      "content": "16:00  \u2191  AKTX  < $1  ~  :flag_us:  |  Float: 32.5 M  |  IO: 1.72%  |  MC: 26.7 M\na month ago  PR  Akari Therapeutics' Accepted Abstract Showcasing its Novel Splicing-Targeted ADC Payload Driving Immune Activation Now Available - Link,",
+      "timestamp": "2025-11-04T21:00:48.848Z",
+      "author": "NuntioBot"
+    }
+  ],
+  "sent_at": "2025-12-18T04:24:49.824Z"
+}

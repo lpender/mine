@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1433570251332911288",
+      "content": "17:36  \u2191  DLHC  < $8  ~  :flag_us:  |  Float: 12.1 M  |  IO: 67.88%  |  MC: 87.8 M\n2 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-10-30T21:36:22.365Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433583240383434794",
+      "content": "18:27  \u2191  WTO  < $.10c  ~  :flag_cn:  |  Float: 119 M  |  IO: 0.04%  |  MC: 5.4 M  |  Reg SHO\n2 months ago  SEC  Form 6-K - Link,2 months ago  PR  UTime Limited Releases Smart Ring, Focusing on Sleep and Continuous Health Monitoring - Link,",
+      "timestamp": "2025-10-30T22:27:59.196Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433588638934896782",
+      "content": "18:49  \u2191  WBD  < $23  ~  :flag_us:  |  Float: 2.3 B  |  IO: 72.00%  |  MC: 53.5 B\n2 months ago  AR  Rothschild & Co Upgrades Warner Bros. Discovery to Buy, Announces $28 Price Target,",
+      "timestamp": "2025-10-30T22:49:26.311Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433591347675136131",
+      "content": "MNOV  < $2  - MediciNova Compounds Demonstrate Novel Therapeutic Approach for Atherosclerosis in Peer-Reviewed Publication - Link  ~  :flag_us:  |  Float: 46.5 M  |  IO: 19.51%  |  MC: 58.4 M",
+      "timestamp": "2025-10-30T23:00:12.125Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433592575448580299",
+      "content": "MOBX  < $1  - Mobix Labs Granted 180-Day Extension by Nasdaq to Regain Compliance with Minimum Bid Price Requirement - Link  ~  :flag_us:  |  Float: 34.1 M  |  IO: 13.98%  |  MC: 42.0 M",
+      "timestamp": "2025-10-30T23:05:04.849Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433727361638989865",
+      "content": "04:00  \u2191  NBTX  < $22  ~  :flag_fr:  |  Float: 37.8 M  |  IO: 0.04%  |  MC: 884 M\n2 months ago  PR  NANOBIOTIX Announces Strategic Royalty Monetization Agreement With Healthcare Royalty for up to $71 Million and Extends Cash Runway Toward Long-Term Growth - Link,",
+      "timestamp": "2025-10-31T08:00:40.381Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433734760949223494",
+      "content": "VCIG  < $2  - VCI Global Announces $5 Million Registered Direct Offering Priced At-the-Market Under Nasdaq Rules - Link  ~  :flag_my:  |  Float: 1.2 M  |  IO: 0.16%  |  MC: 2.2 M",
+      "timestamp": "2025-10-31T08:30:04.514Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433758089060024320",
+      "content": "06:02  \u2191  IMRN  < $3  ~  :flag_au:  |  Float: 3.2 M  |  IO: 0.34%  |  MC: 13.6 M\n2 months ago  PR  Immuron Announces Clinical Trial Update - Link,",
+      "timestamp": "2025-10-31T10:02:46.369Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433768755120443503",
+      "content": "06:45  \u2191  CTM  < $2  ~  :flag_us:  |  Float: 67.6 M  |  IO: 35.39%  |  MC: 95.8 M\n2 months ago  PR  Castellum, Inc. Announces the Award of a $66.2 million Full and Open Contract to its SSI Subsidiary - Link,",
+      "timestamp": "2025-10-31T10:45:09.356Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433772507504050206",
+      "content": "07:00  \u2197  EPWK  < $.15c  ~  :flag_cn:  |  IO: 0.48%  |  MC: 6.2 M\n2 months ago  SEC  Form NT 20-F - Link,",
+      "timestamp": "2025-10-31T11:00:03.994Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433772511153356841",
+      "content": "MESA  < $2  - Mesa Air Group enters into an Amendment to its Loan Agreement with the United States Treasury and Provides Update to its Pending Merger with Republic Airways - Link  ~  :flag_us:  |  Float: 32.2 M  |  IO: 17.40%  |  MC: 55.9 M",
+      "timestamp": "2025-10-31T11:00:04.864Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433772654396969002",
+      "content": "BURU  < $.50c  - NUBURU Completes First Phase of Orbit Acquisition, Advancing Software-Driven Defense & Security Platform Into Multi-Billion-Dollar Market - Link  ~  :flag_us:  |  Float: 132 M  |  IO: 0.58%  |  MC: 45.8 M",
+      "timestamp": "2025-10-31T11:00:39.016Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433781443980427354",
+      "content": "CMND  < $1  - Clearmind Medicine Advances Fight Against Cocaine Addiction with Publication of U.S. Patent Application for Its Non-Hallucinogenic Neuroplastogen MEAI Therapy - Link  ~  :flag_ca:  |  Float: 3.1 M  |  IO: 18.60%  |  MC: 5.0 M",
+      "timestamp": "2025-10-31T11:35:34.616Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433787609620156436",
+      "content": "GETY  < $3  - Getty Images and Perplexity strike multi-year image partnership - Link  ~  :flag_us:  |  Float: 116 M  |  IO: 27.64%  |  MC: 834 M",
+      "timestamp": "2025-10-31T12:00:04.619Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433787627026518086",
+      "content": "FLUX  < $4  - Flux Power Announces Pricing of $9.6 Million Underwritten Public Offering - Link  ~  :flag_us:  |  Float: 12.3 M  |  IO: 37.81%  |  MC: 61.6 M",
+      "timestamp": "2025-10-31T12:00:08.769Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433787715136262286",
+      "content": "INTS  < $1  - Intensity Therapeutics, Inc. Announces Pricing of $4 Million Registered Direct Offering of Common Stock - Link  ~  :flag_us:  |  Float: 43.8 M  |  IO: 4.11%  |  MC: 40.6 M",
+      "timestamp": "2025-10-31T12:00:29.776Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433791976754647192",
+      "content": "08:17  \u2197  BFLY  < $3  ~  :flag_us:  |  Float: 188 M  |  IO: 42.48%  |  MC: 534 M\n2 months ago  SEC  Form S-8 - Link,2 months ago  SEC  Form 10-Q - Link,2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Butterfly Network Reports Third Quarter 2025 Financial Results - Link,",
+      "timestamp": "2025-10-31T12:17:25.825Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433795157177794650",
+      "content": "NIVF  < $2  - NewGen Enters Into an Innovative Digital Assets Purchase Agreement with White Lion to Acquire up to 600,000 Solana Tokens Valued at Over $110 Million - Link  ~  :flag_th:  |  Float: 2.1 M  |  IO: 0.10%  |  MC: 2.5 M  |  High CTB",
+      "timestamp": "2025-10-31T12:30:04.097Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433795283367755827",
+      "content": "HTCR  < $1  - HeartCore Divests Software Business Subsidiary, HeartCore Co., Ltd - Link  ~  :flag_jp:  |  Float: 6.0 M  |  IO: 0.82%  |  MC: 17.3 M",
+      "timestamp": "2025-10-31T12:30:34.183Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433795713778716764",
+      "content": "ASNS  < $1  - Actelis Receives Notice from Nasdaq Confirming Compliance with Stockholders Equity Requirement - Link  ~  :flag_us:  |  Float: 15.0 M  |  IO: 0.94%  |  MC: 10.8 M  |  High CTB",
+      "timestamp": "2025-10-31T12:32:16.801Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433798933850882123",
+      "content": "VVPR  < $6  - VivoPower's Tembo to Accelerate Africa Expansion in Definitive Agreement with AVA, East Africa's Largest Vehicle Assembler - Link  ~  :flag_gb:  |  Float: 6.7 M  |  IO: 13.22%  |  MC: 45.9 M",
+      "timestamp": "2025-10-31T12:45:04.526Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433802720921518283",
+      "content": "09:00  \u2191  LNKS  < $1  ~  :flag_my:  |  IO: 0.97%  |  MC: 6.8 M\n2 months ago  PR  Linkers Industries Limited Announces Closing of the Transaction with LPW Electronics Co., Ltd. - Link,",
+      "timestamp": "2025-10-31T13:00:07.434Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433802777657606196",
+      "content": "FFAI  < $2  - Faraday X Announces that its FX Super One Received Non-Binding Non-Refundable Paid B2B Preorders for over 200 Units Within 24 Hours of its Middle East Final Launch Event Held on October 28 - Link  ~  :flag_us:  |  Float: 137 M  |  IO: 13.65%  |  MC: 205 M  |  SI: 23.2%",
+      "timestamp": "2025-10-31T13:00:20.961Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433803059158454514",
+      "content": "HKD  < $2  - AMTD Digital Inc. Reports on Half Year Performance with a 1,085.9% Increase in Revenue - Link  ~  :flag_fr:  |  Float: 27.3 M  |  IO: 0.23%  |  MC: 138 M",
+      "timestamp": "2025-10-31T13:01:28.076Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433804025978945570",
+      "content": "CAN  < $2  - Canaan Inc. Provides Updates to At-the-Market Offering Program - Link  ~  :flag_sg:  |  Float: 267 M  |  IO: 17.50%  |  MC: 592 M",
+      "timestamp": "2025-10-31T13:05:18.584Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433805228981096520",
+      "content": "09:10  \u2191  EOSE  < $15  ~  :flag_us:  |  Float: 269 M  |  IO: 49.37%  |  MC: 4.0 B  |  SI: 30.7%\n2 months ago  PR  Eos Energy Secures Strategic 228 MWh Order from Frontier Power Under Existing 5 GWh Framework Agreement & Achieves Final Cerberus Milestone - Link,",
+      "timestamp": "2025-10-31T13:10:05.402Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433808117514240224",
+      "content": "09:21  SEC  HKD - Form 6-K - Link",
+      "timestamp": "2025-10-31T13:21:34.082Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433809167184826469",
+      "content": "09:25  \u2191  LAZR  < $2  ~  :flag_us:  |  Float: 57.3 M  |  IO: 19.32%  |  MC: 95.6 M  |  Reg SHO  |  SI: 22.4%  |  High CTB\n2 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-10-31T13:25:44.343Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433810268592406548",
+      "content": "RCT  < $2  - RedCloud Holds Signing Ceremony for Saudi Joint Venture, Targeting $61Bn Market with December 2025 Launch - Link  ~  :flag_gb:  |  Float: 44.2 M  |  IO: 2.48%  |  MC: 78.2 M  |  High CTB",
+      "timestamp": "2025-10-31T13:30:06.939Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433810669244780584",
+      "content": "09:31  \u2191  AXTI  < $9  ~  :flag_us:  |  Float: 42.4 M  |  IO: 31.37%  |  MC: 387 M\n2 months ago  AR  Needham Maintains Buy on AXT, Raises Price Target to $10,",
+      "timestamp": "2025-10-31T13:31:42.462Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433810992327823502",
+      "content": "IMG  < $.50c  - CIMG Inc's Subsidiary Becomes Authorized Distributor for Inspur Information, in a Strategic Move to Expand Into the High-Growth Computing Power Industry - Link  ~  :flag_hk:  |  Float: 197 M  |  IO: 0.13%  |  MC: 47.2 M",
+      "timestamp": "2025-10-31T13:32:59.491Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433814080988123220",
+      "content": "AIXI  < $2  - Xiao-I Corporation Renews Strategic Partnership with Premier Multinational Insurer to Elevate Customer Experience with AI-Powered Conversational Platform - Link  ~  :flag_cn:  |  IO: 0.66%  |  MC: 12.0 M",
+      "timestamp": "2025-10-31T13:45:15.885Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433814601652506644",
+      "content": "IMTE  < $1  - IMTE Announces Receipt of Delisting Determination Letter from Nasdaq - Link  ~  :flag_my:  |  Float: 2.9 M  |  IO: 2.20%  |  MC: 3.3 M",
+      "timestamp": "2025-10-31T13:47:20.021Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433814669902086254",
+      "content": "TRNR  < $3  - Interactive Strength Inc. (Nasdaq: TRNR) Updates FAQ's In Response to Shareholder Questions About CFO Hire and the Sportstech Acquisition Closing - Link  ~  :flag_us:  |  Float: 2.1 M  |  IO: 0.87%  |  MC: 4.8 M",
+      "timestamp": "2025-10-31T13:47:36.293Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433815042817658930",
+      "content": "IMTE  < $2  - IMTE Announces Receipt of Delisting Determination Letter from Nasdaq - Link  ~  :flag_my:  |  Float: 2.9 M  |  IO: 2.20%  |  MC: 3.3 M",
+      "timestamp": "2025-10-31T13:49:05.203Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433820160774635840",
+      "content": "10:09  \u2191  AMTD  < $2  ~  :flag_fr:  |  Float: 24.0 M  |  IO: 1.17%  |  MC: 48.1 M\n2 months ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-10-31T14:09:25.419Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433824593927344129",
+      "content": "10:27  \u2197  TGE  < $3  ~  :flag_fr:  |  Float: 7.5 M  |  IO: 1.29%  |  MC: 109 M\n2 months ago  PR  AMTD Digital Inc. Reports on Half Year Performance with a 1,085.9% Increase in Revenue - Link,",
+      "timestamp": "2025-10-31T14:27:02.365Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433827867137019964",
+      "content": "10:40  \u2197  CABA  < $3  ~  :flag_us:  |  Float: 79.0 M  |  IO: 68.26%  |  MC: 251 M\n2 months ago  AR  Cantor Fitzgerald Maintains Overweight on Cabaletta Bio, Raises Price Target to $30,",
+      "timestamp": "2025-10-31T14:40:02.759Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433848014979465438",
+      "content": "12:00  \u2197  MNOV  < $2  ~  :flag_us:  |  Float: 46.5 M  |  IO: 19.51%  |  MC: 61.3 M\n2 months ago  AR  D. Boral Capital Maintains Buy on MediciNova, Maintains $9 Price Target,",
+      "timestamp": "2025-10-31T16:00:06.379Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433850709144633446",
+      "content": "12:10  \u2191  ACCL  < $5  ~  :flag_hk:  |  MC: 56.1 M  |  Reg SHO\n2 months ago  SEC  Form NT 20-F - Link,",
+      "timestamp": "2025-10-31T16:10:48.718Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433863148913561751",
+      "content": "BQ  < $6  - Boqii Holding Limited Provides Response to Unusual Market Action - Link  ~  :flag_cn:  |  Float: 2.8 M  |  IO: 0.01%  |  MC: 16.1 M  |  High CTB",
+      "timestamp": "2025-10-31T17:00:14.590Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433885764948852757",
+      "content": "IDAI  < $5  - Trust Stamp Enters into $4.3 Million Warrant Inducement Transaction - Link  ~  :flag_us:  |  Float: 2.0 M  |  IO: 22.29%  |  MC: 10.9 M",
+      "timestamp": "2025-10-31T18:30:06.673Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433896180022247586",
+      "content": "15:11  SEC  VIVK - Form 424B5 - Link",
+      "timestamp": "2025-10-31T19:11:29.820Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433909726747299881",
+      "content": "16:05  \u2191  NOMA  < $31  ~  :flag_us:\n2 months ago  PR  Nomadar Begins Trading on Nasdaq Under Ticker Symbol \"NOMA\" - Link,",
+      "timestamp": "2025-10-31T20:05:19.611Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433909877968863282",
+      "content": "ECX  < $3  - ECARX Announces Board Change - Link  ~  :flag_gb:  |  Float: 126 M  |  IO: 4.46%  |  MC: 932 M",
+      "timestamp": "2025-10-31T20:05:55.665Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433910107808206899",
+      "content": "TAIT  < $3  - Taitron Announces Quarterly Cash Dividend - Link  ~  :flag_us:  |  Float: 3.2 M  |  IO: 14.03%  |  MC: 14.3 M",
+      "timestamp": "2025-10-31T20:06:50.463Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433910597963223218",
+      "content": "16:08  \u2191  NVVE  < $.50c  ~  :flag_us:  |  Float: 18.5 M  |  IO: 3.30%  |  MC: 4.3 M\n2 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-10-31T20:08:47.325Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433910972036415499",
+      "content": "ECX  < $3  - ECARX Secured up to $150 Million to Advance Strategic Growth Initiatives and Strengthen Liquidity - Link  ~  :flag_gb:  |  Float: 126 M  |  IO: 4.46%  |  MC: 932 M",
+      "timestamp": "2025-10-31T20:10:16.511Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433913650309234718",
+      "content": "GLE  < $1  - Global Engine Group Holding Limited Receives Nasdaq Minimum Bid Price Deficiency Notice - Link  ~  :flag_hk:  |  Float: 4.2 M  |  IO: 0.36%  |  MC: 12.3 M  |  High CTB",
+      "timestamp": "2025-10-31T20:20:55.061Z",
+      "author": ""
+    },
+    {
+      "id": "1139240765260836936-1433915862313734255",
+      "content": "16:29  \u2191  SEED  < $2  ~  :flag_cn:  |  Float: 4.1 M  |  IO: 1.99%  |  MC: 12.2 M\n2 months ago  SEC  Form SCHEDULE 13D - Link,",
+      "timestamp": "2025-10-31T20:29:42.444Z",
+      "author": ""
+    }
+  ],
+  "sent_at": "2025-12-18T03:36:33.175Z"
+}

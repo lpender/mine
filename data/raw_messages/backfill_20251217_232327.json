@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1447596794057064601",
+      "content": "IMG  < $3  - CIMG Inc. Announces Execution of Computing Power Product Sales Contracts Totaling Approximately USD 1.779 Million via Subsidiaries - Link  ~  :flag_hk:  |  Float: 6.6 M  |  IO: 0.10%  |  MC: 40.9 M  |  High CTB  ~  1 for 20  R/S  Dec. 05\u25b6 IMG",
+      "timestamp": "2025-12-08T14:32:50.751Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447599817030238342",
+      "content": "PAVS  < $.10c  - Turnarounds and 18,000% Growth - Link  ~  :flag_us:  |  Float: 6.7 M  |  IO: 0.09%  |  MC: 4.1 M\u25b6 PAVS",
+      "timestamp": "2025-12-08T14:44:51.484Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447599827427790942",
+      "content": "TWG  < $10  - Turnarounds and 18,000% Growth - Link  ~  :flag_hk:  |  Float: 410 k  |  IO: 0.02%  |  MC: 6.3 M\u25b6 TWG",
+      "timestamp": "2025-12-08T14:44:53.963Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447601277096951919",
+      "content": "CETX  < $8  - Architectural Transformation, Not Add-Ons - Link  ~  :flag_us:  |  Float: 670 k  |  IO: 5.15%  |  MC: 6.4 M\u25b6 CETX",
+      "timestamp": "2025-12-08T14:50:39.591Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447611204498358487",
+      "content": "10:30  \u2197  CAPR  < $30  ~  :flag_us:  |  Float: 40.2 M  |  IO: 37.87%  |  MC: 1.3 B  |  Reg SHO  |  SI: 35.2%  |  High CTB\n10 days ago  AR  Oppenheimer Maintains Outperform on Capricor Therapeutics, Raises Price Target to $54,\u25b6 CAPR",
+      "timestamp": "2025-12-08T15:30:06.468Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447611615158599712",
+      "content": "CGEM  < $12  - Cullinan Therapeutics Showcases Compelling Clinical Data in AML for CLN-049, Novel FLT3xCD3 T Cell Engager, in Oral Presentation at the 67th ASH Meeting - Link  ~  :flag_us:  |  Float: 39.5 M  |  IO: 77.35%  |  MC: 645 M  |  SI: 16.9%\u25b6 CGEM",
+      "timestamp": "2025-12-08T15:31:44.377Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447613200374693909",
+      "content": "10:38  \u2197  MSPR  < $.50c  ~  :flag_us:  |  Float: 9.1 M  |  IO: 0.57%  |  MC: 4.9 M  |  SI: 28.5%  |  High CTB\n10 days ago  SEC  Form 424B3 - Link,10 days ago  SEC  Form 424B3 - Link,10 days ago  SEC  Form 424B3 - Link,10 days ago  SEC  Form 424B3 - Link,... additional news earlier today.\u25b6 MSPR",
+      "timestamp": "2025-12-08T15:38:02.322Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447621103869628436",
+      "content": "YCBD  < $1  - cbdMD, Inc. Regains Compliance with NYSE American Listing Standards - Link  ~  :flag_us:  |  Float: 8.3 M  |  IO: 4.89%  |  MC: 5.4 M\u25b6 YCBD",
+      "timestamp": "2025-12-08T16:09:26.662Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447649005638123582",
+      "content": "13:00  \u2191  ATON  < $2  ~  :flag_gb:  |  Float: 2.8 M  |  IO: 0.52%  |  MC: 12.5 M  |  High CTB\n9 days ago  PR  AlphaTON Capital Deploys First H200 GPUs on Cocoon AI Network, Launches Revolutionary #OwnYourNode Program to Democratize AI Infrastructure Ownership - Link,\u25b6 ATON",
+      "timestamp": "2025-12-08T18:00:18.962Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447671593663987761",
+      "content": "14:30  \u2197  ALT  < $6  ~  :flag_us:  |  Float: 104 M  |  IO: 40.01%  |  MC: 536 M  |  SI: 22.5%\n10 days ago  SEC  Form EFFECT - Link,\u25b6 ALT",
+      "timestamp": "2025-12-08T19:30:04.367Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447674128130642020",
+      "content": "14:40  \u2191  RELI  < $1  ~  :flag_us:  |  Float: 4.6 M  |  IO: 1.75%  |  MC: 7.0 M\n9 days ago  PR  Reliance Global Group (RELI) Adds to Zcash (ZEC) Position, and Continues Implementing Its Institutional ZEC Adoption Strategy - Link,\u25b6 RELI",
+      "timestamp": "2025-12-08T19:40:08.631Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447676773843075072",
+      "content": "TVGN  < $.50c  - Tevogen Recognized on 2025 NJBIZ Power List Amid Growth and Multi-Billion-Dollar Revenue Outlook - Link  ~  :flag_us:  |  Float: 53.7 M  |  IO: 2.43%  |  MC: 81.1 M\u25b6 TVGN",
+      "timestamp": "2025-12-08T19:50:39.418Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447694500238594099",
+      "content": "WVE  < $18  - Wave Life Sciences Announces Proposed $250 Million Public Offering of Ordinary Shares and Pre-Funded Warrants - Link  ~  :flag_sg:  |  Float: 135 M  |  IO: 82.42%  |  MC: 3.1 B\u25b6 WVE",
+      "timestamp": "2025-12-08T21:01:05.720Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447694510065848546",
+      "content": "FULC  < $13  - Fulcrum Therapeutics Announces Proposed $150.0 Million Public Offering of Common Stock - Link  ~  :flag_us:  |  Float: 48.0 M  |  IO: 89.92%  |  MC: 779 M\u25b6 FULC",
+      "timestamp": "2025-12-08T21:01:08.063Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447694750667899080",
+      "content": "DYN  < $22  - Dyne Therapeutics Announces Proposed Public Offering of Common Stock - Link  ~  :flag_us:  |  Float: 105 M  |  IO: 83.58%  |  MC: 3.2 B  |  SI: 16.3%\u25b6 DYN",
+      "timestamp": "2025-12-08T21:02:05.427Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447694996852703314",
+      "content": "16:03  \u2197  PHR  < $22  ~  :flag_us:  |  Float: 55.5 M  |  IO: 100.68%  |  MC: 1.2 B\n9 days ago  PR  Phreesia Announces Third Quarter Fiscal 2026 Results and Introduces Fiscal 2027 Outlook - Link,10 days ago  AR  Needham Reiterates Buy on Phreesia, Maintains $35 Price Target,\u25b6 PHR",
+      "timestamp": "2025-12-08T21:03:04.122Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447696027569094758",
+      "content": "16:07  \u2197  MAMA  < $13  ~  :flag_us:  |  Float: 36.4 M  |  IO: 73.68%  |  MC: 455 M\n9 days ago  PR  Mama's Creations Reports Third Quarter Fiscal 2026 Financial Results - Link,\u25b6 MAMA",
+      "timestamp": "2025-12-08T21:07:09.864Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447696306817470625",
+      "content": "16:07  SEC  VERA - Form 424B5 - Link",
+      "timestamp": "2025-12-08T21:08:16.442Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447697417171501056",
+      "content": "16:12  SEC  BDRX - Form F-1/A - Link",
+      "timestamp": "2025-12-08T21:12:41.171Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447697468933538013",
+      "content": "16:12  \u2191  ATMC  < $25  ~  :flag_us:  |  Float: 420 k  |  IO: 69.22%  |  MC: 36.1 M\n9 days ago  SEC  Form 425 - Link,9 days ago  SEC  Form 8-K - Link,\u25b6 ATMC",
+      "timestamp": "2025-12-08T21:12:53.512Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447699212753178717",
+      "content": "16:19  SEC  DYN - Form 424B5 - Link",
+      "timestamp": "2025-12-08T21:19:49.271Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447700159826890894",
+      "content": "16:23  SEC  KYMR - Form 424B5 - Link",
+      "timestamp": "2025-12-08T21:23:35.071Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447701796863869142",
+      "content": "16:30  \u2191  XCUR  < $7  ~  :flag_us:  |  Float: 1.8 M  |  IO: 1.73%  |  MC: 33.6 M\n9 days ago  PR  Exicure Presents Positive Topline Phase 2 Data for Burixafor in Multiple Myeloma at 2025 ASH Annual Meeting - Link,\u25b6 XCUR",
+      "timestamp": "2025-12-08T21:30:05.371Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447702031195439116",
+      "content": "16:30  \u2191  AFJK  < $12  ~  :flag_us:  |  Float: 4.1 M  |  IO: 56.29%  |  MC: 50.3 M\n9 days ago  SEC  Form 8-K - Link,\u25b6 AFJK",
+      "timestamp": "2025-12-08T21:31:01.240Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447703965260189838",
+      "content": "16:38  \u2191  BDRX  < $8  ~  :flag_gb:  |  IO: 1.36%  |  MC: 5.5 M  |  High CTB\n9 days ago  SEC  Form F-1/A - Link,\u25b6 BDRX",
+      "timestamp": "2025-12-08T21:38:42.357Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447704786597056625",
+      "content": "16:41  \u2191  GRI  < $2  ~  :flag_us:  |  Float: 3.3 M  |  IO: 4.11%  |  MC: 4.4 M\n10 days ago  SEC  Form S-1 - Link,10 days ago  SEC  Form 424B3 - Link,10 days ago  SEC  Form 8-K - Link,10 days ago  AR  Ascendiant Capital Maintains Buy on GRI Bio, Raises Price Target to $36,\u25b6 GRI",
+      "timestamp": "2025-12-08T21:41:58.179Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447708207203090462",
+      "content": "16:54  SEC  FULC - Form 424B5 - Link",
+      "timestamp": "2025-12-08T21:55:33.715Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447709523136610360",
+      "content": "$BOLT Bolt Biotherapeutics has received a Notice of Allowance for a US patent titled \"MACROMOLECULE-SUPPORTED AMINOBENZAZEPINE COMPOUNDS (FOR THE TREATMENT OF CANCER)\". https://t.co/rDWmkX0nP2 https://t.co/21ON16FCwJ- Tweet Link",
+      "timestamp": "2025-12-08T22:00:47.458Z",
+      "author": "PatentGrants"
+    },
+    {
+      "id": "1139240765260836936-1447710612535775434",
+      "content": "17:04  SEC  WVE - Form 424B5 - Link",
+      "timestamp": "2025-12-08T22:05:07.191Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447712995252637797",
+      "content": "17:14  \u2191  NCPL  < $1  ~  :flag_us:  |  Float: 4.1 M  |  IO: 8.63%  |  MC: 3.2 M\n9 days ago  PR  Netcapital Inc. Announces Appointment of Rich Wheeless as CEO - Link,10 days ago  SEC  Form 3 - Link,10 days ago  SEC  Form SCHEDULE 13G - Link,\u25b6 NCPL",
+      "timestamp": "2025-12-08T22:14:35.275Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447716456140767262",
+      "content": "17:27  SEC  IMMX - Form 424B5 - Link",
+      "timestamp": "2025-12-08T22:28:20.415Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447716627331289178",
+      "content": "17:28  SEC  GPCR - Form 424B5 - Link",
+      "timestamp": "2025-12-08T22:29:01.230Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447716922048249908",
+      "content": "ALEX  < $21  - Alexander & Baldwin to be Taken Private in $2.3 Billion Transaction - Link  ~  :flag_us:  |  Float: 72.0 M  |  IO: 86.43%  |  MC: 1.1 B\u25b6 ALEX",
+      "timestamp": "2025-12-08T22:30:11.496Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447718674352832736",
+      "content": "ALM  < $8  - Almonty Announces Launch of Public Offering of Common Shares in the United States - Link  ~  :flag_ca:  |  Float: 146 M  |  IO: 7.97%  |  MC: 1.8 B\u25b6 ALM",
+      "timestamp": "2025-12-08T22:37:09.278Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447907910192463936",
+      "content": "06:08  SEC  TERN - Form S-3ASR - Link",
+      "timestamp": "2025-12-09T11:09:06.618Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447920768674566266",
+      "content": "07:00  \u2191  SNTI  < $3  ~  :flag_us:  |  Float: 6.7 M  |  IO: 6.98%  |  MC: 66.0 M\n9 days ago  PR  Senti Bio Receives FDA Regenerative Medicine Advanced Therapy (RMAT) Designation for SENTI-202 in the Treatment of Adults with Relapsed or Refractory Acute Myeloid Leukemia - Link,9 days ago  PR  Senti Bio Announces Updated SENTI-202 Clinical Data from Ongoing Phase 1 Trial in Relapsed or Refractory Acute Myeloid Leukemia Patients, Demonstrating Deep, MRD Negative, Durable Complete Remissions and a Favorable Safety Profile - Link,\u25b6 SNTI",
+      "timestamp": "2025-12-09T12:00:12.319Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447920813591236608",
+      "content": "CRML  < $11  - CRML Executes Term-Sheet for 50/50 Joint Venture With EU and NATO Member, Romania, Creating a Fully Integrated Mine-to-Processing Supply Chain for Long-Term Security for the European Manufacturing & National Security Sectors - Link  ~  :flag_gb:  |  Float: 52.9 M  |  IO: 9.70%  |  MC: 1.2 B  |  SI: 21.8%\u25b6 CRML",
+      "timestamp": "2025-12-09T12:00:23.028Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447920901546049566",
+      "content": "CYPH  < $2  - Cypherpunk Taps Zcash Founder Zooko as Strategic Advisor - Link  ~  :flag_us:  |  Float: 35.6 M  |  IO: 13.02%  |  MC: 69.1 M  |  SI: 20.0%\u25b6 CYPH",
+      "timestamp": "2025-12-09T12:00:43.998Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447920937717469226",
+      "content": "07:00  \u2191  VNCE  < $4  ~  :flag_us:  |  Float: 4.0 M  |  IO: 5.29%  |  MC: 44.2 M  |  High CTB\n9 days ago  PR  Vince Holding Corp. Reports Third Quarter 2025 Results - Link,\u25b6 VNCE",
+      "timestamp": "2025-12-09T12:00:52.622Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447921258535714907",
+      "content": "PBM  < $2  - Psyence BioMed CEO Letter Highlights Clinical Progress, Ethical Sourcing of Ibogaine, Strong Cash Position and Expanding Leadership in Longevity Science - Link  ~  :flag_ca:  |  IO: 9.37%  |  MC: 3.2 M  |  High CTB\u25b6 PBM",
+      "timestamp": "2025-12-09T12:02:09.111Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447928729312559205",
+      "content": "EDBL  < $2  - Edible Garden Preliminary Sales Results During Key Thanksgiving Time Period Increased 26.9% in 2025 - Link  ~  :flag_us:  |  Float: 4.7 M  |  IO: 0.92%  |  MC: 6.4 M\u25b6 EDBL",
+      "timestamp": "2025-12-09T12:31:50.283Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447932097611301047",
+      "content": "LNAI  < $2  - Lunai Bioworks Identifies Three Parkinson's Subtypes and Prioritized Drug Targets to Accelerate Proof-of-Concept Programs and Strategic Partnerships in a $13B Market - Link  ~  :flag_us:  |  Float: 12.8 M  |  IO: 4.96%  |  MC: 32.3 M  |  High CTB\u25b6 LNAI",
+      "timestamp": "2025-12-09T12:45:13.348Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447932586948165672",
+      "content": "07:46  SEC  TERN - Form 424B5 - Link",
+      "timestamp": "2025-12-09T12:47:10.015Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447935657451327559",
+      "content": "07:58  SEC  VOR - Form 8-K - Link",
+      "timestamp": "2025-12-09T12:59:22.080Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1447935856106274876",
+      "content": "ENSC  < $3  - Ensysce Biosciences Achieves Major Milestone with Initiation of Enrollment in Pivotal Phase 3 Trial of PF614, Its Next-Generation Opioid - Link  ~  :flag_us:  |  Float: 3.6 M  |  IO: 9.68%  |  MC: 5.8 M\u25b6 ENSC",
+      "timestamp": "2025-12-09T13:00:09.443Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447935934573314121",
+      "content": "ENVB  < $7  - Enveric Biosciences Receives Notice of Allowance for EVM301 Series of Drug Candidates - Link  ~  :flag_us:  |  Float: 600 k  |  IO: 54.00%  |  MC: 3.6 M\u25b6 ENVB",
+      "timestamp": "2025-12-09T13:00:28.151Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447935959084564541",
+      "content": "GXAI  < $2  - Gaxos Enters Multibillion-Dollar Digital Faith Market with Launch of Bible Pray AI - Link  ~  :flag_us:  |  Float: 6.5 M  |  IO: 8.64%  |  MC: 8.4 M\u25b6 GXAI",
+      "timestamp": "2025-12-09T13:00:33.995Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447936068027551866",
+      "content": "SLI  < $6  - Smackover Lithium Receives Indications of Interest for Over $1 Billion in Project Finance for the SWA Project - Link  ~  :flag_ca:  |  Float: 212 M  |  IO: 9.36%  |  MC: 1.1 B\u25b6 SLI",
+      "timestamp": "2025-12-09T13:00:59.969Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1447936110599733413",
+      "content": "BNKK  < $.50c  - Bonk, Inc. Completes Strategic Capital Structure Optimization to Support Institutional Growth and Digital Asset Strategy - Link  ~  :flag_us:  |  Float: 139 M  |  IO: 6.04%  |  MC: 41.3 M\u25b6 BNKK",
+      "timestamp": "2025-12-09T13:01:10.119Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1447936130736721920",
+      "content": "LUCD  < $2  - Lucid Diagnostics Announces Positive Data from the Largest Reported Real-World Experience of Esophageal Precancer Detection - Link  ~  :flag_us:  |  Float: 98.8 M  |  IO: 26.45%  |  MC: 145 M\u25b6 LUCD",
+      "timestamp": "2025-12-09T13:01:14.920Z",
+      "author": "PR - Spike"
+    }
+  ],
+  "sent_at": "2025-12-18T04:23:27.670Z"
+}

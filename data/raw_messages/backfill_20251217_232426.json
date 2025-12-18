@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1440827739690238113",
+      "content": "17:15  \u2197  APLD  < $27  ~  :flag_us:  |  Float: 230 M  |  IO: 61.44%  |  MC: 6.5 B  |  SI: 34.4%\na month ago  SEC  Form 424B3 - Link,a month ago  SEC  Form S-8 - Link,\u25b6 APLD",
+      "timestamp": "2025-11-19T22:15:02.427Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1440830911653347453",
+      "content": "17:26  SEC  STEX - Form S-3 - Link",
+      "timestamp": "2025-11-19T22:27:38.682Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1440990503058280458",
+      "content": "ALVO  < $7  - Alvotech and Advanz Pharma Receive Marketing Approval Across the European Economic Area for Gobivaz\u00ae, a First-in-Market Biosimilar to Simponi\u00ae (golimumab) - Link  ~  :flag_lu:  |  Float: 109 M  |  IO: 5.47%  |  MC: 1.6 B\u25b6 ALVO",
+      "timestamp": "2025-11-20T09:01:48.238Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441020686201257994",
+      "content": "CMND  < $.50c  - Clearmind Medicine Accelerate FDA-Approved Alcohol Use Disorder Clinical Trial by Activating Fifth Elite Global Medical Site - Link  ~  :flag_ca:  |  Float: 3.1 M  |  IO: 8.87%  |  MC: 2.2 M  |  Reg SHO  |  High CTB\u25b6 CMND",
+      "timestamp": "2025-11-20T11:01:44.460Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441035416055713886",
+      "content": "07:00  \u2191  PBM  < $4  ~  :flag_ca:  |  IO: 9.37%  |  MC: 5.2 M  |  High CTB\na month ago  PR  Psyence BioMed Reaches Major Breakthrough in Pharmaceutical-Grade Ibogaine Supply for Worldwide Clinical and Therapeutic Markets - Link,\u25b6 PBM",
+      "timestamp": "2025-11-20T12:00:16.331Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441042179643543624",
+      "content": "TC  < $22  - Due to Strong Demand, Token Cat Limited Announced the Signing of a $1 Billion Cross-border Sales Cooperation Agreement with Ouyi Industrial CO.,Limited. - Link  ~  :flag_cn:  |  IO: 2.86%  |  MC: 2.8 M\u25b6 TC",
+      "timestamp": "2025-11-20T12:27:08.896Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441043232526958732",
+      "content": "PSTV  < $1  - Plus Therapeutics Secures National Coverage Agreement with Humana for CNSide\u00ae Cerebrospinal Fluid Assay for Metastatic CNS Cancer - Link  ~  :flag_us:  |  Float: 137 M  |  IO: 5.82%  |  MC: 67.4 M\u25b6 PSTV",
+      "timestamp": "2025-11-20T12:31:19.923Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441044402591109200",
+      "content": "07:35  \u2191  CIFR  < $17  ~  :flag_us:  |  Float: 322 M  |  IO: 56.52%  |  MC: 6.3 B  |  SI: 19.5%\na month ago  PR  Cipher Mining Signs Additional 56 MW, 10-Year AI Hosting Agreement with Fluidstack - Link,\u25b6 CIFR",
+      "timestamp": "2025-11-20T12:35:58.888Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441048971903766548",
+      "content": "07:54  \u2197  SGBX  < $7  ~  :flag_us:  |  IO: 0.88%  |  MC: 34.4 M  |  Reg SHO  |  High CTB\na month ago  PR  Safe & Green Holdings Outlines New Integrated Energy Strategy Following First Year Under Olenox Leadership - Link,\u25b6 SGBX",
+      "timestamp": "2025-11-20T12:54:08.297Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441050483841302569",
+      "content": "ENSC  < $3  - Ensysce Biosciences Receives Positive FDA Feedback on PF614 Manufacturing Approach - Link  ~  :flag_us:  |  IO: 11.85%  |  MC: 6.5 M\u25b6 ENSC",
+      "timestamp": "2025-11-20T13:00:08.771Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441050494834577481",
+      "content": "AUID  < $3  - authID Joins NVIDIA Connect to Advance Enterprise and AI Agent Security Innovation and Opportunities - Link  ~  :flag_us:  |  Float: 11.7 M  |  IO: 20.14%  |  MC: 21.8 M\u25b6 AUID",
+      "timestamp": "2025-11-20T13:00:11.392Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441050526740643941",
+      "content": "FBLG  < $.50c  - FibroBiologics Receives HREC Approval for Phase 1/2 Clinical Trial for CYWC628 for the Treatment of Refractory Diabetic Foot Ulcers - Link  ~  :flag_us:  |  Float: 38.8 M  |  IO: 10.48%  |  MC: 17.7 M\u25b6 FBLG",
+      "timestamp": "2025-11-20T13:00:18.999Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441050566305386518",
+      "content": "HUSA  < $5  - Houston American Energy Corp. Announces $8.0 Million Registered Direct Offering - Link  ~  :flag_us:  |  Float: 3.6 M  |  IO: 2.80%  |  MC: 171 M\u25b6 HUSA",
+      "timestamp": "2025-11-20T13:00:28.432Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441050680281530429",
+      "content": "COCH  < $1  - Envoy Medical Secures New U.S. Patent for Innovative Cochlear Implant System Featuring a Removable Earplug Sensor and an Implanted Battery - Link  ~  :flag_us:  |  Float: 16.8 M  |  IO: 5.74%  |  MC: 20.4 M\u25b6 COCH",
+      "timestamp": "2025-11-20T13:00:55.606Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441053737199206441",
+      "content": "HOTH  < $2  - Hoth Therapeutics Accepted Into NVIDIA Connect Program, Expanding Its AI and Accelerated Computing Capabilities - Link  ~  :flag_us:  |  Float: 14.9 M  |  IO: 8.61%  |  MC: 17.8 M\u25b6 HOTH",
+      "timestamp": "2025-11-20T13:13:04.432Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441058107693465762",
+      "content": "VIVK  < $.15c  - Vivakor Announces 7% Revenue Growth to $17.0 Million and $60 Million in Debt Reduction for Q3 2025; Raises $11.2 Million in Equity Subsequent to Quarter End - Link  ~  :flag_us:  |  Float: 108 M  |  IO: 3.80%  |  MC: 18.7 M\u25b6 VIVK",
+      "timestamp": "2025-11-20T13:30:26.439Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441058128685830236",
+      "content": "NVTS  < $9  - GlobalFoundries and Navitas Semiconductor Partner to Accelerate U.S. GaN Technology and Manufacturing for AI Datacenters and Critical Power Applications - Link  ~  :flag_us:  |  Float: 172 M  |  IO: 38.64%  |  MC: 1.8 B  |  SI: 23.3%\u25b6 NVTS",
+      "timestamp": "2025-11-20T13:30:31.444Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441058136906535054",
+      "content": "08:30  \u2191  BNKK  < $.50c  ~  :flag_us:  |  Float: 129 M  |  IO: 6.16%  |  MC: 25.4 M\na month ago  PR  Bonk, Inc. Reports Q3 Financial Results: Emerges Debt-Free with $9 Million in Cash and 1,200% Revenue Growth - Link,\u25b6 BNKK",
+      "timestamp": "2025-11-20T13:30:33.404Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441058378796367872",
+      "content": "ONDS  < $8  - Ondas Announces $35 Million Strategic Investment in Performance Drone Works (\"PDW\") to Expand Production of Next Generation of Combat Robotics - Link  ~  :flag_us:  |  Float: 361 M  |  IO: 30.68%  |  MC: 2.8 B\u25b6 ONDS",
+      "timestamp": "2025-11-20T13:31:31.075Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441058602923196498",
+      "content": "AVX  < $2  - AVAX One Announces Authorization of $40 Million Share Repurchase Program - Link  ~  :flag_ca:  |  IO: 48.44%  |  MC: 138 M  |  High CTB\u25b6 AVX",
+      "timestamp": "2025-11-20T13:32:24.511Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441060401860313199",
+      "content": "08:39  \u2191  CDTG  < $1  ~  :flag_cn:  |  Float: 6.0 M  |  IO: 1.46%  |  MC: 5.4 M\na month ago  PR  CDT Environmental Technology Announces New Strategic Growth Initiatives, Enters Clean Energy Market with Waste-to-Hydrogen Technology - Link,\u25b6 CDTG",
+      "timestamp": "2025-11-20T13:39:33.411Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441068300594450434",
+      "content": "AREB  < $2  - Champion Safe Celebrates Over 80% Year-over-Year Growth at Flagship American Rebel Store in Lenexa, KS - Link  ~  :flag_us:  |  Float: 6.1 M  |  IO: 0.36%  |  MC: 6.3 M  |  Reg SHO  |  High CTB\u25b6 AREB",
+      "timestamp": "2025-11-20T14:10:56.616Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441069350340788257",
+      "content": "NXXT  < $2  - NextNRG Secures 28-Year Microgrid Power Purchase Agreement with California Healthcare Facility, Expanding into a Multi-Billion-Dollar Healthcare Resilience Market - Link  ~  :flag_us:  |  Float: 37.0 M  |  IO: 2.98%  |  MC: 182 M\u25b6 NXXT",
+      "timestamp": "2025-11-20T14:15:06.895Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441069475914055772",
+      "content": "CETX  < $3  - Cemtrex Enters into Agreement to Acquire Invocon, Adding Proven Aerospace & Defense Engineering Capabilities - Link  ~  :flag_us:  |  Float: 670 k  |  IO: 5.15%  |  MC: 2.1 M  |  SI: 18.8%  |  High CTB\u25b6 CETX",
+      "timestamp": "2025-11-20T14:15:36.834Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441070610179428387",
+      "content": "09:20  \u2197  NNOX  < $4  ~  :flag_il:  |  Float: 63.5 M  |  IO: 19.86%  |  MC: 223 M\na month ago  SEC  Form 6-K - Link,a month ago  PR  Nanox Announces Third Quarter of 2025 Financial Results and Provides Business Update - Link,\u25b6 NNOX",
+      "timestamp": "2025-11-20T14:20:07.264Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441072539936886975",
+      "content": "09:27  \u2191  FRGT  < $2  ~  :flag_us:  |  Float: 2.7 M  |  IO: 0.49%  |  MC: 2.6 M  |  SI: 23.2%\na month ago  SEC  Form 6-K - Link,\u25b6 FRGT",
+      "timestamp": "2025-11-20T14:27:47.354Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441073400628903946",
+      "content": "09:31  \u2191  FOSL  < $3  ~  :flag_us:  |  Float: 49.9 M  |  IO: 51.95%  |  MC: 126 M\na month ago  SEC  Form 4 - Link,\u25b6 FOSL",
+      "timestamp": "2025-11-20T14:31:12.559Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441077267869602010",
+      "content": "FRGT  < $1  - Freight Technologies Announces Strategic Agreement to Advance Agentic AI Initiative - Link  ~  :flag_us:  |  Float: 2.7 M  |  IO: 0.49%  |  MC: 2.6 M  |  SI: 23.2%\u25b6 FRGT",
+      "timestamp": "2025-11-20T14:46:34.581Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441080660218351779",
+      "content": "10:00  \u2197  CRNC  < $12  ~  :flag_us:  |  Float: 40.6 M  |  IO: 70.76%  |  MC: 431 M  |  SI: 17.6%\na month ago  AR  Goldman Sachs Maintains Neutral on Cerence, Raises Price Target to $11,\u25b6 CRNC",
+      "timestamp": "2025-11-20T15:00:03.380Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441083178436530328",
+      "content": "10:10  \u2197  API  < $4  ~  :flag_cn:  |  Float: 73.7 M  |  IO: 33.67%  |  MC: 253 M\na month ago  SEC  Form 6-K - Link,\u25b6 API",
+      "timestamp": "2025-11-20T15:10:03.770Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441083235898753158",
+      "content": "TGL  < $1  - Treasure Global Acquires Quarters Elite to Accelerate OXI Wallet Scale-Up, Unlocking Up to USD 150 Million Revenue Opportunity - Link  ~  :flag_us:  |  IO: 1.60%  |  MC: 11.9 M  |  High CTB\u25b6 TGL",
+      "timestamp": "2025-11-20T15:10:17.470Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441084434656002148",
+      "content": "10:15  \u2197  DVLT  < $2  ~  :flag_us:  |  Float: 233 M  |  IO: 2.59%  |  MC: 549 M\na month ago  PR  Wellgistics Health Reports Third Quarter 2025 Financial Results and Provides Business Update - Link,\u25b6 DVLT",
+      "timestamp": "2025-11-20T15:15:03.276Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441092023259107359",
+      "content": "10:45  \u2197  JACK  < $17  ~  :flag_us:  |  Float: 17.1 M  |  IO: 102.24%  |  MC: 305 M  |  SI: 29.2%\na month ago  AR  RBC Capital Maintains Outperform on Jack In The Box, Lowers Price Target to $16,a month ago  AR  Stifel Maintains Hold on Jack In The Box, Lowers Price Target to $18,a month ago  AR  Truist Securities Maintains Hold on Jack In The Box, Lowers Price Target to $16,a month ago  AR  Oppenheimer Maintains Outperform on Jack In The Box, Lowers Price Target to $24,... additional news earlier today.\u25b6 JACK",
+      "timestamp": "2025-11-20T15:45:12.540Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441106865923690576",
+      "content": "INKT  < $12  - MiNK Therapeutics Announces New Data Showing MiNK-215 Drives Potent Anti-Tumor Activity in Treatment-resistant Solid Tumors - Link  ~  :flag_us:  |  Float: 1.6 M  |  IO: 1.97%  |  MC: 52.6 M\u25b6 INKT",
+      "timestamp": "2025-11-20T16:44:11.307Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441122185103282206",
+      "content": "12:45  \u2197  CYPH  < $4  ~  :flag_us:  |  Float: 40.9 M  |  IO: 13.01%  |  MC: 171 M  |  Reg SHO  |  High CTB\na month ago  SEC  Form 8-K - Link,\u25b6 CYPH",
+      "timestamp": "2025-11-20T17:45:03.684Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441163729625415680",
+      "content": "15:30  \u2197  VSA  < $.50c  ~  :flag_cn:  |  Float: 39.1 M  |  IO: 0.37%  |  MC: 6.8 M  |  High CTB\na month ago  SEC  Form 6-K - Link,\u25b6 VSA",
+      "timestamp": "2025-11-20T20:30:08.670Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441171514128072864",
+      "content": "KTTA  < $.50c  - Pasithea Therapeutics Announces Positive Phase 1 Data Including Partial Response, Demonstrating Monotherapy Clinical Activity and Favorable Safety Profile for PAS-004 in Advanced Cancer Study - Link  ~  :flag_us:  |  Float: 7.0 M  |  IO: 8.23%  |  MC: 3.1 M\u25b6 KTTA",
+      "timestamp": "2025-11-20T21:01:04.640Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441171600836919458",
+      "content": "IKT  < $2  - Inhibikase Therapeutics Advancing IKT-001 to Global Phase 3 Study in Pulmonary Arterial Hypertension - Link  ~  :flag_us:  |  Float: 53.4 M  |  IO: 58.58%  |  MC: 115 M\u25b6 IKT",
+      "timestamp": "2025-11-20T21:01:25.313Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441172146880647280",
+      "content": "DCTH  < $9  - Delcath Systems Board of Directors Authorizes $25 Million Share Repurchase Program - Link  ~  :flag_us:  |  Float: 32.9 M  |  IO: 49.75%  |  MC: 290 M\u25b6 DCTH",
+      "timestamp": "2025-11-20T21:03:35.500Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441172571071709386",
+      "content": "16:05  \u2191  NVVE  < $.50c  ~  :flag_us:  |  Float: 30.6 M  |  IO: 4.28%  |  MC: 5.8 M\na month ago  PR  City of Socorro, Socorro Electric Cooperative, Inc., and Nuvve New Mexico Sign Landmark Agreement to Advance Electrification and Grid Resilience - Link,\u25b6 NVVE",
+      "timestamp": "2025-11-20T21:05:16.635Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441173806877118575",
+      "content": "SMTK  < $2  - Smartkem and Jericho Energy Ventures Extend Letter Of Intent for Proposed All-Stock Merger to Form U.S.-Owned, AI-Focused Infrastructure Company - Link  ~  :flag_gb:  |  Float: 3.9 M  |  IO: 18.25%  |  MC: 7.6 M  |  High CTB\u25b6 SMTK",
+      "timestamp": "2025-11-20T21:10:11.274Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441174431245537421",
+      "content": "IKT  < $2  - Inhibikase Therapeutics Announces Proposed Public Offering of Common Stock and Pre-Funded Warrants - Link  ~  :flag_us:  |  Float: 53.4 M  |  IO: 58.58%  |  MC: 115 M\u25b6 IKT",
+      "timestamp": "2025-11-20T21:12:40.135Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441178880143659069",
+      "content": "NCRA  < $2  - Nocera Announces Closing of Initial $8 Million Funding Round - Link  ~  :flag_tw:  |  Float: 6.0 M  |  IO: 1.53%  |  MC: 14.7 M\u25b6 NCRA",
+      "timestamp": "2025-11-20T21:30:20.835Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441180158357671966",
+      "content": "16:35  SEC  IKT - Form 424B5 - Link",
+      "timestamp": "2025-11-20T21:35:25.585Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441183667937480886",
+      "content": "16:49  \u2191  AHT  < $5  ~  :flag_us:  |  Float: 6.3 M  |  IO: 20.16%  |  MC: 22.0 M\na month ago  PR  ASHFORD HOSPITALITY TRUST ANNOUNCES AGREEMENTS TO SELL THREE ASSETS - Link,a month ago  SEC  Form 8-K - Link,\u25b6 AHT",
+      "timestamp": "2025-11-20T21:49:22.334Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441186856602439854",
+      "content": "SMTK  < $2  - Jericho Energy and Smartkem Extend LOI for Proposed All-Stock Merger to Form a U.S.-Owned, Nasdaq-Listed AI Infrastructure Company - Link  ~  :flag_gb:  |  Float: 3.9 M  |  IO: 18.25%  |  MC: 7.2 M  |  High CTB\u25b6 SMTK",
+      "timestamp": "2025-11-20T22:02:02.571Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441187208521318563",
+      "content": "17:03  \u2191  CRSR  < $7  ~  :flag_us:  |  Float: 45.9 M  |  IO: 35.73%  |  MC: 574 M\na month ago  SEC  Form 8-K - Link,a month ago  PR  Corsair Announces CFO Transition as Part of Long-Term Growth Strategy - Link,\u25b6 CRSR",
+      "timestamp": "2025-11-20T22:03:26.475Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441192897146781756",
+      "content": "SLMT  < $3  - Solmate Infrastructure (Brera Holdings, PLC, NASDAQ: SLMT) Announces Strategic Partnership with Abu Dhabi Finance Week 2025 - Link  ~  :flag_ie:  |  Float: 43.2 M  |  IO: 44.49%  |  MC: 174 M  |  High CTB\u25b6 SLMT",
+      "timestamp": "2025-11-20T22:26:02.749Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441196586070708315",
+      "content": "17:40  \u2191  GPUS  < $.50c  ~  :flag_us:  |  Float: 189 M  |  IO: 0.35%  |  MC: 39.4 M\na month ago  SEC  Form 4 - Link,\u25b6 GPUS",
+      "timestamp": "2025-11-20T22:40:42.257Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441211497933049906",
+      "content": "18:39  \u2191  NFE  < $2  ~  :flag_us:  |  Float: 189 M  |  IO: 60.15%  |  MC: 415 M  |  SI: 32.1%  |  High CTB\na month ago  SEC  Form 8-K - Link,\u25b6 NFE",
+      "timestamp": "2025-11-20T23:39:57.522Z",
+      "author": "NuntioBot"
+    }
+  ],
+  "sent_at": "2025-12-18T04:24:26.722Z"
+}

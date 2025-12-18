@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1450611388178235392",
+      "content": "17:11  SEC  RADX - Form F-3 - Link",
+      "timestamp": "2025-12-16T22:11:45.998Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450615933017133158",
+      "content": "17:29  \u2191  GSUN  < $2  ~  :flag_cn:  |  Float: 1.5 M  |  IO: 0.14%  |  MC: 2.4 M\na day ago  SEC  Form S-8 - Link,",
+      "timestamp": "2025-12-16T22:29:49.572Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450623934964957306",
+      "content": "18:01  \u2191  VSME  < $.15c  ~  :flag_hk:  |  Float: 48.5 M  |  IO: 0.09%  |  MC: 3.8 M\n2 days ago  SEC  Form 6-K - Link,2 days ago  PR  VS MEDIA Holdings Limited Announces Receipt of Nasdaq Notification Letter Regarding Minimum Bid Price Deficiency - Link,",
+      "timestamp": "2025-12-16T23:01:37.385Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450807795950686260",
+      "content": "06:12  \u2191  TRAW  < $3  ~  :flag_us:  |  Float: 7.0 M  |  IO: 16.14%  |  MC: 17.6 M\n17 hours ago  SEC  Form 8-K - Link,17 hours ago  PR  Traws Pharma Reports Positive Interim Clinical Data with Ratutrelvir Versus PAXLOVID\u2122, Shows Activity in PAXLOVID-Ineligible COVID-19 Patients - Link,",
+      "timestamp": "2025-12-17T11:12:13.260Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450812365007224872",
+      "content": "VERU  < $3  - Veru Reports Fiscal Year 2025 Financial Results and Clinical Program Progress - Link  ~  :flag_us:  |  Float: 14.0 M  |  IO: 21.99%  |  MC: 39.2 M",
+      "timestamp": "2025-12-17T11:30:22.608Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450818758708039771",
+      "content": "QS  < $12  - QuantumScape Successfully Accomplishes Annual Commercial Engagement Goal - Link  ~  :flag_us:  |  Float: 452 M  |  IO: 25.92%  |  MC: 6.6 B",
+      "timestamp": "2025-12-17T11:55:46.985Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450820158942609512",
+      "content": "CGEN  < $2  - Compugen Monetizes Portion of Rilvegostomig Future Royalties to AstraZeneca for Up to $90 Million - Link  ~  :flag_il:  |  Float: 91.6 M  |  IO: 13.62%  |  MC: 139 M",
+      "timestamp": "2025-12-17T12:01:20.827Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450823623240716309",
+      "content": "TC  < $21  - AZI Plans to Subscribe for US$100 Million of Token Cat Limited Shares at US$30 per Share, Strengthening Automotive Group-Buying Channels and Supporting AZI's Global Expansion Strategy - Link  ~  :flag_cn:  |  IO: 2.86%  |  MC: 2.1 M  |  High CTB",
+      "timestamp": "2025-12-17T12:15:06.780Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450823629477515264",
+      "content": "07:15  \u2191  AZI  < $3  ~  :flag_cn:  |  Float: 2.6 M  |  IO: 0.00%  |  MC: 5.8 M  ~  1 for 50  R/S  Dec. 12\n16 hours ago  PR  AZI Plans to Subscribe for US$100 Million of Token Cat Limited Shares at US$30 per Share, Strengthening Automotive Group-Buying Channels and Supporting AZI's Global Expansion Strategy - Link,",
+      "timestamp": "2025-12-17T12:15:08.267Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450827391407489189",
+      "content": "XAIR  < $2  - Beyond Air\u00ae Signs New International LungFit PH\u00ae Distribution Agreements, Most Notably in Germany and Brazil - Link  ~  :flag_us:  |  Float: 7.5 M  |  IO: 21.50%  |  MC: 7.3 M",
+      "timestamp": "2025-12-17T12:30:05.181Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450827664339374167",
+      "content": "ELAB  < $4  - NorthStrive Biosciences Advances to Phase III of AI-Driven Drug Discovery Program Toward Validation of Multiple Potential Drug Compounds & Discoveries - Link  ~  :flag_us:  |  Float: 680 k  |  IO: 0.10%  |  MC: 2.5 M  |  High CTB",
+      "timestamp": "2025-12-17T12:31:10.253Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450831005236597032",
+      "content": "JFBR  < $2  - Jeffs' Brands: KeepZone AI Successfully Completes Live Pilot Demonstrating Checkpoint-Free Weapon Screening at High-Profile Event - Link  ~  :flag_il:  |  Float: 490 k  |  IO: 0.01%  |  MC: 22.8 M  |  High CTB",
+      "timestamp": "2025-12-17T12:44:26.785Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450835006195765399",
+      "content": "JOBY  < $15  - Joby Announces Plans to Double Manufacturing Capacity in United States - Link  ~  :flag_us:  |  Float: 545 M  |  IO: 32.71%  |  MC: 12.9 B",
+      "timestamp": "2025-12-17T13:00:20.688Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450836216990666817",
+      "content": "KULR  < $4  - KULR Technology Group Enters Joint Development Collaboration for $100M AI Server Rack Battery Backup Unit Opportunity - Link  ~  :flag_us:  |  Float: 42.8 M  |  IO: 18.88%  |  MC: 153 M  |  SI: 17.1%",
+      "timestamp": "2025-12-17T13:05:09.364Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450836286473502741",
+      "content": "08:05  \u2197  COUR  < $8  ~  :flag_us:  |  Float: 141 M  |  IO: 72.22%  |  MC: 1.2 B\n15 hours ago  SEC  Form 8-K - Link,16 hours ago  PR  Coursera to Combine with Udemy to Empower the Global Workforce with Skills for the AI Era - Link,",
+      "timestamp": "2025-12-17T13:05:25.930Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450836774715920504",
+      "content": "08:07  \u2191  UDMY  < $7  ~  :flag_us:  |  Float: 91.5 M  |  IO: 56.25%  |  MC: 786 M\n16 hours ago  SEC  Form 425 - Link,16 hours ago  SEC  Form 8-K - Link,16 hours ago  PR  Coursera to Combine with Udemy to Empower the Global Workforce with Skills for the AI Era - Link,",
+      "timestamp": "2025-12-17T13:07:22.336Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450838715885686908",
+      "content": "KAPA  < $1  - Kairos Pharma Wins 2025 Clinical Trials Arena Research and Development Excellence Award for Advanced Prostate Cancer - Link  ~  :flag_us:  |  Float: 12.3 M  |  IO: 2.14%  |  MC: 15.4 M",
+      "timestamp": "2025-12-17T13:15:05.147Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450842490063032360",
+      "content": "TWO  < $11  - UWMC Announces Strategic Acquisition of TWO - Link  ~  :flag_us:  |  Float: 103 M  |  IO: 69.64%  |  MC: 1.0 B",
+      "timestamp": "2025-12-17T13:30:04.981Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450842500058185940",
+      "content": "08:30  \u2191  VYNE  < $1  ~  :flag_us:  |  Float: 31.1 M  |  IO: 10.18%  |  MC: 13.3 M\n15 hours ago  SEC  Form 425 - Link,15 hours ago  SEC  Form 8-K - Link,15 hours ago  PR  VYNE Therapeutics and Yarrow Bioscience Announce Merger Agreement - Link,",
+      "timestamp": "2025-12-17T13:30:07.364Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450842804204081213",
+      "content": "MBRX  < $6  - Moleculin Announces Positive Results from Phase 1 Clinical Trial Evaluating WP1066 for the Treatment of Pediatric Recurrent Malignant Brain Tumors - Link  ~  :flag_us:  |  Float: 2.0 M  |  IO: 1.51%  |  MC: 9.7 M  |  High CTB  ~  1 for 25  R/S  Dec. 01",
+      "timestamp": "2025-12-17T13:31:19.878Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450842815725830205",
+      "content": "UWMC  < $5  - UWMC Announces Strategic Acquisition of TWO - Link  ~  :flag_us:  |  Float: 211 M  |  IO: 66.15%  |  MC: 8.2 B",
+      "timestamp": "2025-12-17T13:31:22.625Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450850058559029348",
+      "content": "09:00  \u2191  IVF  < $2  ~  :flag_us:  |  IO: 2.11%  |  MC: 2.8 M  |  High CTB  ~  1 for 8  R/S  Nov. 28\n14 hours ago  PR  INVO Fertility Signs Definitive Purchase Agreement to Acquire Indiana-Based Fertility Clinic \"Family Beginnings\" - Link,",
+      "timestamp": "2025-12-17T14:00:09.451Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450850196769476608",
+      "content": "09:00  \u2191  PCSA  < $5  ~  :flag_us:  |  Float: 50.1 M  |  IO: 3.14%  |  MC: 8.0 M  ~  1 for 25  R/S  Dec. 17\n15 hours ago  PR  Processa Pharmaceuticals Provides Clinical Update on Phase 2 Study in Metastatic Breast Cancer - Link,",
+      "timestamp": "2025-12-17T14:00:42.403Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450851090601087007",
+      "content": "09:04  \u2191  ISPO  < $4  ~  :flag_us:  |  Float: 4.6 M  |  IO: 7.06%  |  MC: 35.9 M\n14 hours ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-12-17T14:04:15.509Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450851375041740984",
+      "content": "CAN  < $1  - Canaan Inc. Renews Its US$30 Million Share Buyback Program - Link  ~  :flag_sg:  |  Float: 267 M  |  IO: 17.79%  |  MC: 433 M",
+      "timestamp": "2025-12-17T14:05:23.325Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450853813350174803",
+      "content": "LGVN  < $1  - Longeveron Granted U.S. Patent for Method of Treating Female Sexual Dysfunction Using its Proprietary Stem Cell Therapy - Link  ~  :flag_us:  |  Float: 11.3 M  |  IO: 6.88%  |  MC: 11.4 M",
+      "timestamp": "2025-12-17T14:15:04.663Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450855126750204055",
+      "content": "IMG  < $2  - CIMG Inc. Acquires 230 Bitcoin, Bringing Total Holdings to 730 - Link  ~  :flag_hk:  |  Float: 10.9 M  |  IO: 0.08%  |  MC: 19.4 M  |  High CTB  ~  1 for 20  R/S  Dec. 05",
+      "timestamp": "2025-12-17T14:20:17.802Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450855692004102324",
+      "content": "09:22  \u2197  VNRX  < $.50c  ~  :flag_us:  |  Float: 97.4 M  |  IO: 21.27%  |  MC: 34.1 M\n15 hours ago  PR  Volition Issues Business Review 2025 - Link,",
+      "timestamp": "2025-12-17T14:22:32.569Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450856577723666532",
+      "content": "AMCI  < $12  - AMC Robotics Establishes Supplier Framework to Enable Robotics Deployment in Japan - Link  ~  :flag_us:  |  Float: 1.1 M  |  IO: 28.79%  |  MC: 38.5 M  |  High CTB",
+      "timestamp": "2025-12-17T14:26:03.741Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450857894072553534",
+      "content": "ASPI  < $7  - ASP Isotopes Inc. Announces Receipt of Regulatory Approvals for Acquisition of Renergen Limited - Link  ~  :flag_us:  |  Float: 97.8 M  |  IO: 52.61%  |  MC: 641 M  |  SI: 19.2%",
+      "timestamp": "2025-12-17T14:31:17.583Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450858035714195466",
+      "content": "09:31  \u2191  PLUG  < $3  ~  :flag_us:  |  Float: 1.3 B  |  IO: 39.29%  |  MC: 3.2 B  |  SI: 25.3%\n14 hours ago  SEC  Form DEFA14A - Link,15 hours ago  PR  Plug Power Installs 5MW GenEco Electrolyzer with Cleanergy Solutions Namibia for Africa's First Fully Integrated Green Hydrogen Facility - Link,",
+      "timestamp": "2025-12-17T14:31:51.353Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450858103569645670",
+      "content": "09:32  \u2197  RXRX  < $5  ~  :flag_us:  |  Float: 432 M  |  IO: 48.82%  |  MC: 2.3 B  |  SI: 35.2%\n15 hours ago  AR  JP Morgan Upgrades Recursion Pharmaceuticals to Overweight, Raises Price Target to $11,",
+      "timestamp": "2025-12-17T14:32:07.531Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450861684766802034",
+      "content": "AMCI  < $10  - Update - AMC Robotics Establishes Supplier Framework to Enable Robotics Deployment in Japan - Link  ~  :flag_us:  |  Float: 1.1 M  |  IO: 28.79%  |  MC: 38.5 M  |  High CTB",
+      "timestamp": "2025-12-17T14:46:21.355Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450863942199935149",
+      "content": "RCT  < $2  - RedCloud Delivers Record 2025, Executes $50m Turkiye License and Accelerates Toward $100m Revenue in 2026 - Link  ~  :flag_gb:  |  Float: 44.2 M  |  IO: 3.37%  |  MC: 60.1 M",
+      "timestamp": "2025-12-17T14:55:19.569Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450865131385782443",
+      "content": "10:00  \u2197  NFE  < $2  ~  :flag_us:  |  Float: 190 M  |  IO: 60.03%  |  MC: 390 M  |  SI: 33.8%\n14 hours ago  PR  New Fortress Energy Extends Forbearance Agreement - Link,",
+      "timestamp": "2025-12-17T15:00:03.093Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450868042065121327",
+      "content": "WORX  < $.50c  - SCWorx Announces New Academic Hospital Customer - Link  ~  :flag_us:  |  Float: 15.8 M  |  IO: 2.68%  |  MC: 3.2 M",
+      "timestamp": "2025-12-17T15:11:37.053Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450871924048789697",
+      "content": "10:27  \u2197  MIGI  < $6  ~  :flag_us:  |  Float: 950 k  |  IO: 2.33%  |  MC: 5.6 M  |  High CTB  ~  1 for 20  R/S  Nov. 21\n17 hours ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-12-17T15:27:02.590Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450872679933673544",
+      "content": "10:30  \u2197  HKIT  < $3  ~  :flag_cn:  |  Float: 6.2 M  |  IO: 0.26%  |  MC: 58.6 M\n16 hours ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-12-17T15:30:02.807Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450890281674080518",
+      "content": "11:39  \u2191  TGL  < $9  ~  :flag_us:  |  Float: 680 k  |  IO: 1.19%  |  MC: 10.8 M  |  High CTB  ~  1 for 20  R/S  Dec. 05\n12 hours ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-12-17T16:39:59.389Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450901368616521838",
+      "content": "12:24  \u2197  VTGN  < $1  ~  :flag_us:  |  Float: 33.7 M  |  IO: 44.98%  |  MC: 30.9 M\n15 hours ago  PR  Vistagen Announces Topline Results from PALISADE-3 Phase 3 Public Speaking Challenge Study of Fasedienol for the Acute Treatment of Social Anxiety Disorder - Link,",
+      "timestamp": "2025-12-17T17:24:02.722Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450947701364490241",
+      "content": "15:28  \u2191  ANDG  < $23  ~  :flag_us:\n12 hours ago  PR  Andersen Rings the Opening Bell at the New York Stock Exchange - Link,14 hours ago  PR  NYSE Content Advisory: Pre-Market update + Tax Firm Andersen Raises $176 Million in NYSE IPO - Link,",
+      "timestamp": "2025-12-17T20:28:09.310Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450955531127885834",
+      "content": "$NERV Granted EU Patent #4479049 Today For \"USE OF ROLUPERIDONE IN PREVENTING RELAPSE IN SCHIZOPHRENIA PATIENTS\"\nhttps://t.co/tuVIbNMIgQ https://t.co/tGhPJ6ysAi- Tweet Link",
+      "timestamp": "2025-12-17T20:59:16.071Z",
+      "author": "US_Patent_Plays"
+    },
+    {
+      "id": "1139240765260836936-1450955985849024583",
+      "content": "ASNS  < $2  - VITEC and Actelis Networks Announce Partnership to Bring IPTV to RF-Only Facilities - Link  ~  :flag_us:  |  Float: 1.7 M  |  IO: 7.09%  |  MC: 1.9 M  |  High CTB  ~  1 for 10  R/S  Nov. 18",
+      "timestamp": "2025-12-17T21:01:04.485Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450957290898456678",
+      "content": "16:05  SEC  RADX - Form F-3 - Link",
+      "timestamp": "2025-12-17T21:06:15.633Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450958180291973211",
+      "content": "16:09  \u2191  FTFT  < $2  ~  :flag_us:  |  Float: 9.0 M  |  IO: 0.41%  |  MC: 19.3 M\n7 hours ago  SEC  Form 8-K - Link,7 hours ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-12-17T21:09:47.681Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450965774729613343",
+      "content": "16:39  \u2191  SBDS  < $11  ~  :flag_us:  |  Float: 390 k  |  IO: 4.90%  |  MC: 23.0 M\n7 hours ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-12-17T21:39:58.336Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450972195206467675",
+      "content": "RVYL  < $.50c  - RYVYL Announces Stockholder Approval of Annual Meeting Proposals; Reverse Stock Split Process Commences to Remedy Nasdaq Delisting Notice - Link  ~  :flag_us:  |  Float: 19.8 M  |  IO: 11.20%  |  MC: 9.8 M",
+      "timestamp": "2025-12-17T22:05:29.097Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450977907282284566",
+      "content": "17:27  SEC  KOD - Form 424B5 - Link",
+      "timestamp": "2025-12-17T22:28:10.962Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450978093316444181",
+      "content": "17:28  \u2191  SOC  < $7  ~  :flag_us:  |  Float: 123 M  |  IO: 48.55%  |  MC: 765 M  |  SI: 24.9%\n6 hours ago  SEC  Form 8-K - Link,a day ago  SEC  Form EFFECT - Link,",
+      "timestamp": "2025-12-17T22:28:55.316Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450985728774246554",
+      "content": "KLRS  < $11  - Kalaris Therapeutics Announces Oversubscribed $50.0 Million Private Placement - Link  ~  :flag_us:  |  Float: 5.0 M  |  IO: 7.83%  |  MC: 174 M",
+      "timestamp": "2025-12-17T22:59:15.751Z",
+      "author": "PR - Spike"
+    }
+  ],
+  "sent_at": "2025-12-18T04:20:49.656Z"
+}

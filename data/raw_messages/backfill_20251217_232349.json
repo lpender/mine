@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1450236635013841078",
+      "content": "16:22  \u2191  HSCS  < $3  ~  :flag_us:  |  Float: 2.6 M  |  IO: 6.62%  |  MC: 6.5 M\n2 days ago  SEC  Form 8-K - Link,2 days ago  PR  HeartSciences Reports Fiscal Second Quarter 2026 Financial Results and Provides Business Update - Link,2 days ago  SEC  Form 10-Q - Link,3 days ago  PR  HeartSciences Announces FDA 510(k) Submission for MyoVista\u00ae wavECG\u2122 Device - Link,\u25b6 HSCS",
+      "timestamp": "2025-12-15T21:22:37.881Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450237300452757605",
+      "content": "16:25  \u2191  ORGO  < $6  ~  :flag_us:  |  Float: 58.9 M  |  IO: 54.13%  |  MC: 609 M  |  SI: 18.4%\n2 days ago  PR  Organogenesis Announces Successful FDA Meeting and Plan to File BLA for ReNu\u00ae for Knee Osteoarthritis Pain - Link,\u25b6 ORGO",
+      "timestamp": "2025-12-15T21:25:16.534Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450237474260520991",
+      "content": "16:24  SEC  IMNM - Form 424B5 - Link",
+      "timestamp": "2025-12-15T21:25:57.973Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450239818868068423",
+      "content": "WKHS  < $7  - Workhorse Group and Motiv Electric Trucks Complete Merger, Creating a Leading North American Medium-Duty Electric Truck OEM - Link  ~  :flag_us:  |  Float: 2.2 M  |  IO: 2.58%  |  MC: 12.9 M  ~  1 for 12  R/S  Dec. 08\u25b6 WKHS",
+      "timestamp": "2025-12-15T21:35:16.971Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450239837087993979",
+      "content": "16:35  \u2191  VERO  < $3  ~  :flag_ca:  |  Float: 1.6 M  |  IO: 2.16%  |  MC: 3.1 M\n2 days ago  SEC  Form SCHEDULE 13D/A - Link,\u25b6 VERO",
+      "timestamp": "2025-12-15T21:35:21.315Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450249821398241450",
+      "content": "17:13  SEC  SVRE - Form F-1 - Link",
+      "timestamp": "2025-12-15T22:15:01.760Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450251141265887245",
+      "content": "17:19  SEC  FBLG - Form 424B5 - Link",
+      "timestamp": "2025-12-15T22:20:16.441Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450251565926580336",
+      "content": "17:21  \u2191  NAMI  < $2  ~  :flag_cn:  |  IO: 0.16%  |  MC: 56.1 M\n3 days ago  PR  Namibox Unveils World's First AI-Powered Learning Glasses, Set for December 31, 2025 Release - AI Powered Education Hardware Opens Up New Growth Curve - Link,\u25b6 NAMI",
+      "timestamp": "2025-12-15T22:21:57.688Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450253558632026209",
+      "content": "17:29  SEC  KYTX - Form 424B5 - Link",
+      "timestamp": "2025-12-15T22:29:52.786Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450254245264887970",
+      "content": "17:31  SEC  SMX - Form F-1 - Link",
+      "timestamp": "2025-12-15T22:32:36.492Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450254427242889216",
+      "content": "17:32  SEC  DBGI - Form S-1/A - Link",
+      "timestamp": "2025-12-15T22:33:19.879Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450259454405644392",
+      "content": "17:53  \u2191  CLIK  < $9  ~  :flag_hk:  |  Float: 490 k  |  IO: 0.18%  |  MC: 8.2 M  |  High CTB\n3 days ago  SEC  Form F-1 - Link,\u25b6 CLIK",
+      "timestamp": "2025-12-15T22:53:18.448Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450283113560277022",
+      "content": "19:26  SEC  QIPT - Form 4 - Link",
+      "timestamp": "2025-12-16T00:27:19.230Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450284321851047976",
+      "content": "ALDX  < $4  - Aldeyra Therapeutics Announces PDUFA Extension of the New Drug Application of Reproxalap for the Treatment of Dry Eye Disease - Link  ~  :flag_us:  |  Float: 58.2 M  |  IO: 65.69%  |  MC: 240 M\u25b6 ALDX",
+      "timestamp": "2025-12-16T00:32:07.309Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450285756483633338",
+      "content": "19:37  \u2197  RZLT  < $2  ~  :flag_us:  |  Float: 74.1 M  |  IO: 87.39%  |  MC: 151 M\n2 days ago  SEC  Form 4 - Link,2 days ago  SEC  Form 4 - Link,2 days ago  SEC  Form 4 - Link,\u25b6 RZLT",
+      "timestamp": "2025-12-16T00:37:49.352Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450311479969579018",
+      "content": "21:19  SEC  ARTV - Form 4 - Link",
+      "timestamp": "2025-12-16T02:20:02.309Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450456946879758509",
+      "content": "JFBR  < $2  - Jeffs' Brands Strengthens Strategic Partnership with Scanary Through Expanded Distribution Agreements Covering Key Global Territories and Israeli Stadiums - Link  ~  :flag_il:  |  Float: 490 k  |  IO: 0.01%  |  MC: 21.4 M  |  High CTB\u25b6 JFBR",
+      "timestamp": "2025-12-16T11:58:04.323Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450457575136034948",
+      "content": "CYN  < $4  - Cyngn Secures Additional Autonomous Vehicle Deployment with Largest Independent Pepsi Bottler, G&J Pepsi - Link  ~  :flag_us:  |  Float: 7.5 M  |  IO: 7.08%  |  MC: 25.8 M\u25b6 CYN",
+      "timestamp": "2025-12-16T12:00:34.111Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450461274109378641",
+      "content": "AZI  < $3  - AZI Announces Signing of Approximately $980 Million Memorandum of Intent for Sales with Multiple Potential Buyers - Link  ~  :flag_cn:  |  Float: 2.6 M  |  IO: 0.16%  |  MC: 5.0 M  |  High CTB  ~  1 for 50  R/S  Dec. 12\u25b6 AZI",
+      "timestamp": "2025-12-16T12:15:16.015Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450461279603916852",
+      "content": "JZXN  < $3  - JZXN Announces Talks with an AI Trading Firm for Cooperation; Plans to Acquire Approximately $1 Billion in Tokens at a 30% Discount, Which Would Generate Considerable Book Gains Upon Completion, With the Tokens Scheduled to Be Listed on Binance Soon - Link  ~  :flag_cn:  |  Float: 1.3 M  |  IO: 8.39%  |  MC: 3.3 M  |  High CTB  ~  1 for 40  R/S  Dec. 11\u25b6 JZXN",
+      "timestamp": "2025-12-16T12:15:17.325Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450465011649478667",
+      "content": "EVTV  < $2  - Envirotech Vehicles Unveils Exclusive AI Infrastructure Expansion Framework With AZIO AI - Link  ~  :flag_us:  |  Float: 4.5 M  |  IO: 1.91%  |  MC: 4.5 M\u25b6 EVTV",
+      "timestamp": "2025-12-16T12:30:07.114Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450465058969751759",
+      "content": "DFLI  < $1  - Dragonfly Energy Announces 1-For-10 Reverse Stock Split - Link  ~  :flag_us:  |  Float: 119 M  |  IO: 2.37%  |  MC: 84.6 M\u25b6 DFLI",
+      "timestamp": "2025-12-16T12:30:18.396Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450471312236613632",
+      "content": "VBIX  < $2  - Viewbix Signs Definitive Agreement to Acquire Quantum X Labs- A Hub for Quantum Algorithms, Navigation and Atomic Clocks - Link  ~  :flag_il:  |  Float: 5.1 M  |  IO: 4.48%  |  MC: 16.0 M\u25b6 VBIX",
+      "timestamp": "2025-12-16T12:55:09.291Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450472688262054081",
+      "content": "08:00  \u2191  MNTS  < $1  ~  :flag_us:  |  Float: 23.9 M  |  IO: 1.06%  |  MC: 12.1 M\n2 days ago  PR  Momentus Completes Key Milestone for Next Launch of Spacecraft with Customer Payloads - Link,\u25b6 MNTS",
+      "timestamp": "2025-12-16T13:00:37.361Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450472774786351206",
+      "content": "ZYXI  < $.50c  - Zynex Financial Restructuring Puts Company on Path to Long-Term Success - Link  ~  :flag_us:  |  Float: 15.8 M  |  IO: 13.47%  |  MC: 11.9 M  |  SI: 34.5%  |  High CTB\u25b6 ZYXI",
+      "timestamp": "2025-12-16T13:00:57.990Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450476318171861042",
+      "content": "08:15  \u2197  RZLV  < $3  ~  :flag_gb:  |  Float: 186 M  |  IO: 24.31%  |  MC: 738 M\n2 days ago  PR  Rezolve Ai Shatters Year-End Expectations: December Revenue Expected to Exceed $17 Million, ARR Expected to Exceed $200 Million - Link,\u25b6 RZLV",
+      "timestamp": "2025-12-16T13:15:02.799Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450476356507926550",
+      "content": "OPTX  < $2  - Syntec Optics (Nasdaq: OPTX) to Make Advanced Optics for US Soldiers' Next Generation Augmented Reality (AR) Systems - Link  ~  :flag_us:  |  Float: 6.2 M  |  IO: 0.88%  |  MC: 51.7 M\u25b6 OPTX",
+      "timestamp": "2025-12-16T13:15:11.939Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450480103782875196",
+      "content": "SRXH  < $.50c  - SRx Health Enters into Definitive Agreement to Acquire EMJX to Establish Next-Generation Digital Asset Treasury Operating System and Platform Led by Eric M. Jackson - Link  ~  :flag_us:  |  Float: 11.8 M  |  IO: 1.21%  |  MC: 8.4 M\u25b6 SRXH",
+      "timestamp": "2025-12-16T13:30:05.359Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450480116852461721",
+      "content": "DEVS  < $2  - DevvStream, Southern Energy, and XCF Global Announce Plan to Pursue Strategic Collaboration to Build Integrated Low-Carbon Fuels Platform and Advance Multi-Pathway SAF Strategy - Link  ~  :flag_us:  |  Float: 2.4 M  |  IO: 5.52%  |  MC: 6.5 M\u25b6 DEVS",
+      "timestamp": "2025-12-16T13:30:08.475Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450483932721320027",
+      "content": "CMND  < $3  - Clearmind Medicine Announces Successful Completion of Second Cohort Enrollment in Ongoing FDA-Approved Phase I/IIa Trial for CMND-100 - Link  ~  :flag_ca:  |  Float: 70.0 k  |  IO: 8.87%  |  MC: 4.1 M  |  Reg SHO  ~  1 for 40  R/S  Dec. 15\u25b6 CMND",
+      "timestamp": "2025-12-16T13:45:18.249Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450484867258384557",
+      "content": "08:47  SEC  SRXH - Form 8-K - Link",
+      "timestamp": "2025-12-16T13:49:01.060Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450485090751746079",
+      "content": "08:49  \u2191  MAMO  < $5  ~  :flag_us:  |  Float: 4.9 M  |  IO: 0.26%  |  MC: 184 M\n2 days ago  PR  Massimo Group Announces Plans to Introduce Sentinel 1500 UTV With Fully Enclosed Cab and Integrated HVAC in Q1 2026 - Link,\u25b6 MAMO",
+      "timestamp": "2025-12-16T13:49:54.345Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450487659419144202",
+      "content": "ATON  < $2  - AlphaTON Capital Corp Announces Historic Strategic $30 Million Investment in Anduril Industries - Link  ~  :flag_gb:  |  Float: 2.8 M  |  IO: 0.52%  |  MC: 8.2 M  |  SI: 16.3%  |  High CTB\u25b6 ATON",
+      "timestamp": "2025-12-16T14:00:06.763Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450487689303560292",
+      "content": "RBNE  < $1  - Robin Energy Announces Share Buyback Program - Link  ~  :flag_cy:  |  Float: 13.4 M  |  IO: 4.24%  |  MC: 11.2 M\u25b6 RBNE",
+      "timestamp": "2025-12-16T14:00:13.888Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450487696387608606",
+      "content": "FRGT  < $3  - Freight Technologies Announces Deal to Acquire JAK Solar - Link  ~  :flag_us:  |  Float: 1.1 M  |  IO: 0.23%  |  MC: 2.9 M  ~  1 for 5  R/S  Dec. 15\u25b6 FRGT",
+      "timestamp": "2025-12-16T14:00:15.577Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450488357376360541",
+      "content": "PAVS  < $.05c  - Paranovus Entertainment Technology Limited Announces 1-For-100 Reverse Share Split - Link  ~  :flag_us:  |  Float: 6.7 M  |  IO: 0.09%  |  MC: 2.2 M\u25b6 PAVS",
+      "timestamp": "2025-12-16T14:02:53.169Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450488593389850706",
+      "content": "09:03  \u2191  NTWK  < $4  ~  :flag_us:  |  Float: 10.0 M  |  IO: 21.52%  |  MC: 36.9 M\n2 days ago  PR  NETSOL Technologies signs $50 million, four-year contract extension with tier-one global auto captive - Link,\u25b6 NTWK",
+      "timestamp": "2025-12-16T14:03:49.439Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450494726678515812",
+      "content": "RNW  < $6  - ReNew Announces Long-Term Agreement With Google to Enable 150 MW Solar Project in Rajasthan - Link  ~  :flag_in:  |  Float: 147 M  |  IO: 44.63%  |  MC: 2.0 B\u25b6 RNW",
+      "timestamp": "2025-12-16T14:28:11.729Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450495053523980429",
+      "content": "AKTX  < $.50c  - Akari Therapeutics Announces $5 Million Financing, Including Concurrent Registered Direct Offering and Private Placement Priced At-Market - Link  ~  :flag_us:  |  Float: 32.5 M  |  IO: 3.62%  |  MC: 13.4 M\u25b6 AKTX",
+      "timestamp": "2025-12-16T14:29:29.655Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450498991589691575",
+      "content": "09:45  \u2191  CPAC  < $11  ~  :flag_pe:  |  Float: 84.6 M  |  IO: 1.16%  |  MC: 763 M\n2 days ago  PR  Cementos Pacasmayo S.A.A. Announced Today That the Swiss Company Holcim, the World's Leading Cement Company, Has Signed an Agreement to Purchase Inversiones Aspi, of the Hochschild Group, Which Controls 50.01% of Cementos PACASMAYO - Link,2 days ago  SEC  Form 6-K - Link,\u25b6 CPAC",
+      "timestamp": "2025-12-16T14:45:08.563Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450499162062983339",
+      "content": "SRXH  < $1  - Platforms, Proof, and Momentum - Link  ~  :flag_us:  |  Float: 11.8 M  |  IO: 1.21%  |  MC: 25.8 M\u25b6 SRXH",
+      "timestamp": "2025-12-16T14:45:49.207Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450499237396611173",
+      "content": "AMCI  < $13  - Platforms, Proof, and Momentum - Link  ~  :flag_us:  |  Float: 1.1 M  |  IO: 28.79%  |  MC: 35.9 M  |  High CTB\u25b6 AMCI",
+      "timestamp": "2025-12-16T14:46:07.168Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450499394943324340",
+      "content": "RILY  < $5  - Platforms, Proof, and Momentum - Link  ~  :flag_us:  |  Float: 20.5 M  |  IO: 20.62%  |  MC: 144 M  |  SI: 25.1%\u25b6 RILY",
+      "timestamp": "2025-12-16T14:46:44.730Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1450517895451906183",
+      "content": "IHRT  < $5  - Netflix and iHeartMedia Announce Exclusive Video Podcast Partnership for Top iHeartPodcasts - Link  ~  :flag_us:  |  Float: 116 M  |  IO: 73.86%  |  MC: 603 M\u25b6 IHRT",
+      "timestamp": "2025-12-16T16:00:15.595Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450533964354682921",
+      "content": "PETS  < $4  - Cardone Ventures Announces Unsolicited $4.25 Per Share All-Cash Proposal to Acquire PetMed Express - Link  ~  :flag_us:  |  Float: 15.1 M  |  IO: 33.27%  |  MC: 62.4 M\u25b6 PETS",
+      "timestamp": "2025-12-16T17:04:06.720Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1450593651850875023",
+      "content": "$INTS Intensity Therapeutics has been granted US patent number 12,496,345 titled \"Method of treating cancer\". https://t.co/BaZSzCoANf.- Tweet Link",
+      "timestamp": "2025-12-16T21:01:17.328Z",
+      "author": "PatentGrants"
+    },
+    {
+      "id": "1139240765260836936-1450595195497349371",
+      "content": "16:07  \u2191  UOKA  < $4  ~  :flag_gb:  |  Float: 650 k  |  IO: 1.17%  |  MC: 3.0 M\n2 days ago  PR  MDJM LTD Wholly-Owned Subsidiary MD Local Global Announces Major Business Upgrade and Cultural Expansion -- Launching International \"Journey to the West\" Animated Short Film and Developing Fernie Castle Anime Art Gallery and Cultural IP Ecosystem - Link,\u25b6 UOKA",
+      "timestamp": "2025-12-16T21:07:25.362Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450604590402896015",
+      "content": "16:44  \u2191  HSCS  < $3  ~  :flag_us:  |  Float: 2.6 M  |  IO: 6.62%  |  MC: 6.1 M\na day ago  SEC  Form 8-K - Link,\u25b6 HSCS",
+      "timestamp": "2025-12-16T21:44:45.282Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450604808452177972",
+      "content": "16:45  \u2191  GOGO  < $6  ~  :flag_us:  |  Float: 77.2 M  |  IO: 60.20%  |  MC: 630 M  |  SI: 26.3%\na day ago  SEC  Form 4 - Link,\u25b6 GOGO",
+      "timestamp": "2025-12-16T21:45:37.269Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1450610898791174287",
+      "content": "17:09  \u2191  ADTX  < $2  ~  :flag_us:  |  IO: 0.08%  |  MC: 800 k  |  Reg SHO  |  High CTB\na day ago  SEC  Form DEF 14A - Link,\u25b6 ADTX",
+      "timestamp": "2025-12-16T22:09:49.319Z",
+      "author": "NuntioBot"
+    }
+  ],
+  "sent_at": "2025-12-18T04:23:49.707Z"
+}

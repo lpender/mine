@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1443232464024768552",
+      "content": "08:30  \u2191  FBLG  < $.50c  ~  :flag_us:  |  Float: 38.8 M  |  IO: 10.48%  |  MC: 13.9 M\n22 days ago  PR  FibroBiologics Announces Payoff of Outstanding Debt - Link,\u25b6 FBLG",
+      "timestamp": "2025-11-26T13:30:33.386Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443232491845582920",
+      "content": "AMZE  < $.50c  - Amaze Discloses Significant Insider Share Purchase - Link  ~  :flag_us:  |  Float: 16.8 M  |  IO: 0.96%  |  MC: 9.0 M  |  High CTB\u25b6 AMZE",
+      "timestamp": "2025-11-26T13:30:40.019Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443232585303199927",
+      "content": "VSEE  < $1  - VSee Health, Inc. Announces Pricing of $6.0 Million Private Placement Priced At-the-Market Under Nasdaq Rules with a Single Institutional Investor - Link  ~  :flag_us:  |  Float: 13.2 M  |  IO: 4.88%  |  MC: 19.0 M  |  Reg SHO  |  High CTB\u25b6 VSEE",
+      "timestamp": "2025-11-26T13:31:02.301Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443234533062348862",
+      "content": "08:38  \u2197  MBOT  < $3  ~  :flag_us:  |  Float: 67.0 M  |  IO: 13.54%  |  MC: 128 M\n22 days ago  SEC  Form 8-K - Link,22 days ago  PR  Microbot Medical\u00ae Announces Emory University Hospital as the First Hospital in the World to Adopt the New LIBERTY\u00ae Endovascular Robotic System - Link,\u25b6 MBOT",
+      "timestamp": "2025-11-26T13:38:46.683Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443235973252251759",
+      "content": "08:43  SEC  CMND - Form 424B5 - Link",
+      "timestamp": "2025-11-26T13:44:30.051Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443236914634293361",
+      "content": "08:46  SEC  AMBR - Form 6-K - Link",
+      "timestamp": "2025-11-26T13:48:14.494Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443239943408451725",
+      "content": "MBRX  < $.50c  - Moleculin Announces Reverse Stock Split - Link  ~  :flag_us:  |  Float: 49.8 M  |  IO: 1.53%  |  MC: 18.4 M\u25b6 MBRX",
+      "timestamp": "2025-11-26T14:00:16.610Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1443244086394884258",
+      "content": "09:16  \u2191  ATON  < $3  ~  :flag_gb:  |  Float: 2.4 M  |  IO: 0.62%  |  MC: 12.7 M  |  High CTB\n22 days ago  PR  AlphaTON Capital Announces $82.5 Million Strategic GPU Infrastructure Investment to Power Privacy-First Decentralized AI after Successful Pilot Launch of Telegram's Cocoon AI - Link,\u25b6 ATON",
+      "timestamp": "2025-11-26T14:16:44.375Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443247976762839180",
+      "content": "QNTM  < $10  - Quantum Biopharma's USD $700 Million Lawsuit Alleging Stock Market Manipulation Subject of 3-part Series Investigative News Program W5 - Link  ~  :flag_ca:  |  Float: 2.6 M\u25b6 QNTM",
+      "timestamp": "2025-11-26T14:32:11.911Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443257588207714478",
+      "content": "10:10  \u2197  NUKK  < $7  ~  :flag_us:  |  Float: 13.2 M  |  IO: 4.30%  |  MC: 99.5 M\n22 days ago  SEC  Form 8-K - Link,22 days ago  PR  Nukkleus Inc. Announces Pricing of SC II, its Corporate-Sponsored SPAC, at $10.00 per Unit - Link,\u25b6 NUKK",
+      "timestamp": "2025-11-26T15:10:23.458Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443261278704636079",
+      "content": "10:25  \u2197  IRWD  < $4  ~  :flag_us:  |  Float: 157 M  |  IO: 91.65%  |  MC: 545 M\n22 days ago  SEC  Form 8-K - Link,\u25b6 IRWD",
+      "timestamp": "2025-11-26T15:25:03.341Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443265920872091829",
+      "content": "10:43  \u2197  SMX  < $10  ~  :flag_ie:  |  Float: 830 k  |  IO: 0.04%  |  MC: 8.5 M  |  Reg SHO  |  High CTB  ~  1 for 8  R/S  Nov. 18\n22 days ago  PR  DMCC 2025 Metals Conference Just Released the Next Chapter of Gold, and SMX Was its Author - Link,22 days ago  PR  SMX's 2025 DMCC Precious Metals Conference Presentation Just Reframed the Global PROOF Narrative - Link,\u25b6 SMX",
+      "timestamp": "2025-11-26T15:43:30.120Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443270455078158399",
+      "content": "SMX  < $10  - How SMX Turned Dubai's Most Powerful Room Into a Preview of the Next Global Standard - Link  ~  :flag_ie:  |  Float: 830 k  |  IO: 0.04%  |  MC: 8.5 M  |  Reg SHO  |  High CTB  ~  1 for 8  R/S  Nov. 18\u25b6 SMX",
+      "timestamp": "2025-11-26T16:01:31.159Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1443280765990469652",
+      "content": "11:42  \u2191  LRHC  < $3  ~  :flag_us:  |  Float: 1.0 M  |  IO: 1.00%  |  MC: 3.0 M  |  SI: 16.6%  |  High CTB\n21 days ago  SEC  Form D - Link,\u25b6 LRHC",
+      "timestamp": "2025-11-26T16:42:29.472Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443334261628207164",
+      "content": "15:15  \u2197  KALA  < $1  ~  :flag_us:  |  Float: 7.9 M  |  IO: 12.72%  |  MC: 6.3 M  |  High CTB\n21 days ago  SEC  Form 4 - Link,21 days ago  SEC  Form 3 - Link,\u25b6 KALA",
+      "timestamp": "2025-11-26T20:15:03.826Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443338459648622793",
+      "content": "15:31  \u2191  YGMZ  < $.15c  ~  :flag_cn:  |  Float: 4.8 M  |  IO: 0.11%  |  MC: 550 k  ~  1 for 16  R/S  Nov. 12\n22 days ago  SEC  Form 424B5 - Link,\u25b6 YGMZ",
+      "timestamp": "2025-11-26T20:31:44.712Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443346180225630322",
+      "content": "16:01  SEC  NXTC - Form S-3 - Link",
+      "timestamp": "2025-11-26T21:02:25.441Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443346693100667012",
+      "content": "16:03  SEC  ATCH - Form S-1/A - Link",
+      "timestamp": "2025-11-26T21:04:27.720Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443347548809990174",
+      "content": "16:06  SEC  KWM - Form F-1/A - Link",
+      "timestamp": "2025-11-26T21:07:51.737Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443347635934072993",
+      "content": "16:07  SEC  KWM - Form F-1 - Link",
+      "timestamp": "2025-11-26T21:08:12.509Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443348104089960669",
+      "content": "TLRY  < $1  - Tilray Brands Announces Implementation of Previously Approved 1-for-10 Reverse Stock Split - Link  ~  :flag_ca:  |  Float: 1.1 B  |  IO: 11.08%  |  MC: 1.2 B\u25b6 TLRY",
+      "timestamp": "2025-11-26T21:10:04.126Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1443349715226726575",
+      "content": "16:16  SEC  CMND - Form F-1 - Link",
+      "timestamp": "2025-11-26T21:16:28.251Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443353714357305508",
+      "content": "BEAT  < $1  - HeartBeam Provides Update on Regulatory Path Following FDA Decision on 12-Lead ECG Synthesis Software Application - Link  ~  :flag_us:  |  Float: 27.3 M  |  IO: 9.72%  |  MC: 20.8 M\u25b6 BEAT",
+      "timestamp": "2025-11-26T21:32:21.718Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443360576607748117",
+      "content": "16:59  SEC  EZGO - Form F-3 - Link",
+      "timestamp": "2025-11-26T21:59:37.806Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443361957225693374",
+      "content": "17:04  SEC  KTTA - Form S-1/A - Link",
+      "timestamp": "2025-11-26T22:05:06.971Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443368359394672780",
+      "content": "17:30  \u2197  CODI  < $8  ~  :flag_us:  |  Float: 66.7 M  |  IO: 64.97%  |  MC: 520 M\n21 days ago  PR  Compass Diversified Announces Conference Call to Discuss the Restatement of Financial Results - Link,\u25b6 CODI",
+      "timestamp": "2025-11-26T22:30:33.367Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443371476265730100",
+      "content": "17:42  \u2191  KTTA  < $2  ~  :flag_us:  |  Float: 7.0 M  |  IO: 8.23%  |  MC: 7.9 M\n21 days ago  SEC  Form S-1/A - Link,\u25b6 KTTA",
+      "timestamp": "2025-11-26T22:42:56.487Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443923533553078292",
+      "content": "06:15  SEC  THH - Form 424B5 - Link",
+      "timestamp": "2025-11-28T11:16:37.201Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443949850243629189",
+      "content": "STAI  < $.50c  - ScanTech AI Systems Announces Restated Q1 and Reviewed Q2 2025 Financial Statements Under New Auditor \u2014 Key Step in Nasdaq Re-Compliance Program - Link  ~  :flag_us:  |  Float: 60.7 M  |  IO: 28.65%  |  MC: 28.0 M\u25b6 STAI",
+      "timestamp": "2025-11-28T13:01:11.589Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443957634817593415",
+      "content": "RUBI  < $.50c  - Rubico Inc. Announces Reverse Stock Split - Link  ~  :flag_us:  |  Reg SHO  |  High CTB\u25b6 RUBI",
+      "timestamp": "2025-11-28T13:32:07.576Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1443958511930310657",
+      "content": "08:35  \u2191  DRCT  < $.15c  ~  :flag_us:  |  Float: 19.5 M  |  IO: 1.54%  |  MC: 3.8 M  |  Reg SHO  |  SI: 21.9%\n20 days ago  SEC  Form EFFECT - Link,\u25b6 DRCT",
+      "timestamp": "2025-11-28T13:35:36.696Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443964728161341533",
+      "content": "YGMZ  < $.15c  - MingZhu's Tech Subsidiary Secures Major Robot Dog Deal - Link  ~  :flag_cn:  |  Float: 4.8 M  |  IO: 0.11%  |  MC: 590 k  ~  1 for 16  R/S  Nov. 12\u25b6 YGMZ",
+      "timestamp": "2025-11-28T14:00:18.761Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1443965927141015704",
+      "content": "IMPP  < $6  - Imperial Petroleum Inc. Announces Pricing of $60.0 Million Registered Direct Offering - Link  ~  :flag_gr:  |  Float: 21.9 M  |  IO: 20.69%  |  MC: 214 M\u25b6 IMPP",
+      "timestamp": "2025-11-28T14:05:04.620Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1443966942514774096",
+      "content": "09:09  \u2197  ABVE  < $3  ~  :flag_ca:  |  Float: 47.9 M  |  IO: 1.89%  |  MC: 136 M\n20 days ago  PR  Above Food Ingredients Inc. Announces Major Strategic Milestones, Merger Advancement with Palm Global, and Expected Profit Exceeding $30 Million for Fiscal Year Ended January 31, 2026 - Link,\u25b6 ABVE",
+      "timestamp": "2025-11-28T14:09:06.704Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1443969701809229997",
+      "content": "KTTA  < $2  - Pasithea Therapeutics Announces Pricing of $60 Million Public Offering of Common Stock - Link  ~  :flag_us:  |  Float: 7.0 M  |  IO: 8.23%  |  MC: 8.5 M  |  Reg SHO\u25b6 KTTA",
+      "timestamp": "2025-11-28T14:20:04.571Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1444003411904430100",
+      "content": "11:33  \u2191  IMG  < $.50c  ~  :flag_hk:  |  Float: 197 M  |  IO: 0.12%  |  MC: 33.7 M\n19 days ago  PR  CIMG Inc.'s Tokenized Stock to Launch Publicly on FlowStocks - Link,\u25b6 IMG",
+      "timestamp": "2025-11-28T16:34:01.684Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444026334119596213",
+      "content": "IVF  < $3  - INVO Fertility Announces Intent to Acquire Indiana-Based Fertility Clinic \"Family Beginnings\" - Link  ~  :flag_us:  |  Float: 1.8 M  |  IO: 2.11%  |  MC: 4.1 M  ~  1 for 8  R/S  Nov. 28\u25b6 IVF",
+      "timestamp": "2025-11-28T18:05:06.766Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1444026471101370469",
+      "content": "13:05  \u2191  AREB  < $2  ~  :flag_us:  |  Float: 6.1 M  |  IO: 0.36%  |  MC: 6.7 M  |  Reg SHO  |  High CTB\n20 days ago  SEC  Form EFFECT - Link,\u25b6 AREB",
+      "timestamp": "2025-11-28T18:05:39.425Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444029319713390652",
+      "content": "13:16  \u2191  WBUY  < $2  ~  :flag_sg:  |  Float: 1.8 M  |  IO: 0.05%  |  MC: 3.0 M\n19 days ago  SEC  Form 6-K - Link,\u25b6 WBUY",
+      "timestamp": "2025-11-28T18:16:58.587Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444037721667670016",
+      "content": "MTEK  < $2  - Maris-Tech Ltd. Secures $2 Million Financing to Strengthen its Capital Structure and Support Commercial and U.S. Market Initiatives - Link  ~  :flag_il:  |  Float: 4.4 M  |  IO: 9.03%  |  MC: 10.7 M\u25b6 MTEK",
+      "timestamp": "2025-11-28T18:50:21.769Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1444040588453482697",
+      "content": "14:01  \u2191  GLBS  < $2  ~  :flag_gr:  |  Float: 15.1 M  |  IO: 11.87%  |  MC: 28.0 M\n19 days ago  PR  Globus Maritime Limited Reports Financial Results for the Third Quarter and Nine-Month Period Ended September 30, 2025 - Link,\u25b6 GLBS",
+      "timestamp": "2025-11-28T19:01:45.264Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444070928219770984",
+      "content": "16:01  SEC  GANX - Form 424B5 - Link",
+      "timestamp": "2025-11-28T21:02:18.828Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444072184564678862",
+      "content": "16:07  \u2191  NXXT  < $2  ~  :flag_us:  |  Float: 37.9 M  |  IO: 2.91%  |  MC: 164 M\n19 days ago  SEC  Form 8-K - Link,\u25b6 NXXT",
+      "timestamp": "2025-11-28T21:07:18.364Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1444080965629771957",
+      "content": "VMAR  < $2  - Vision Marine Technologies Reports FY 2025 Results and Highlights Strategic Expansion Following Nautical Ventures Acquisition - Link  ~  :flag_ca:  |  Float: 2.5 M  |  IO: 9.75%  |  MC: 4.0 M\u25b6 VMAR",
+      "timestamp": "2025-11-28T21:42:11.933Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1445006356355481743",
+      "content": "05:59  \u2191  CNEY  < $2  ~  :flag_cn:  |  Float: 3.0 M  |  IO: 1.72%  |  MC: 4.5 M\n17 days ago  PR  CN Energy Group. Inc. Announces Launch of PATHENBOT Robotics Solutions Platform and PATHENBOT's Official Website - Link,\u25b6 CNEY",
+      "timestamp": "2025-12-01T10:59:22.275Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1445014114400337971",
+      "content": "LEG  < $12  - Somnigroup Proposes to Acquire Leggett & Platt in All-Stock Transaction - Link  ~  :flag_us:  |  Float: 132 M  |  IO: 82.40%  |  MC: 1.4 B\u25b6 LEG",
+      "timestamp": "2025-12-01T11:30:11.937Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1445018991163867200",
+      "content": "EXK  < $10  - Endeavour Silver Launches Offering of Convertible Senior Notes - Link  ~  :flag_ca:  |  Float: 294 M  |  IO: 48.33%  |  MC: 3.0 B\u25b6 EXK",
+      "timestamp": "2025-12-01T11:49:34.648Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1445019067000815699",
+      "content": "KPRX  < $3  - Kiora Pharmaceuticals Granted U.S. Patent Covering Additional Formulations for the KIO-100 Family of Anti-Inflammatory Compounds - Link  ~  :flag_us:  |  Float: 3.3 M  |  IO: 16.75%  |  MC: 7.3 M\u25b6 KPRX",
+      "timestamp": "2025-12-01T11:49:52.729Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1445021644916789279",
+      "content": "KALA  < $2  - KALA BIO Enters Into $6 Million Securities Purchase Agreement with Investor David E. Lazar - Link  ~  :flag_us:  |  Float: 7.9 M  |  IO: 12.72%  |  MC: 7.9 M\u25b6 KALA",
+      "timestamp": "2025-12-01T12:00:07.352Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1445025062678691974",
+      "content": "07:13  \u2191  QTTB  < $3  ~  :flag_us:  |  Float: 4.5 M  |  IO: 10.86%  |  MC: 26.9 M\n17 days ago  PR  Q32 Bio Sells Complement Inhibitor ADX-097 - Link,17 days ago  PR  Akebia Announces Establishment of Rare Kidney Disease Pipeline - Link,\u25b6 QTTB",
+      "timestamp": "2025-12-01T12:13:42.210Z",
+      "author": "NuntioBot"
+    }
+  ],
+  "sent_at": "2025-12-18T04:24:19.219Z"
+}

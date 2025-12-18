@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1441352557636096224",
+      "content": "04:00  \u2191  NVRI  < $19  ~  :flag_us:  |  Float: 76.2 M  |  IO: 106.08%  |  MC: 1.1 B\na month ago  PR  Enviri Corporation Announces Sale of Clean Earth to Veolia for $3.04 Billion and Taxable Spin-Off of Harsco Environmental and Rail Businesses (\"New Enviri\") to Shareholders - Link,",
+      "timestamp": "2025-11-21T09:00:28.776Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441383059072090234",
+      "content": "STI  < $13  - Solidion Technology Awarded Grant From The U.S. Department of Energy - Link  ~  :flag_us:  |  Float: 750 k  |  IO: 4.10%  |  MC: 28.1 M  |  SI: 27.4%  |  High CTB",
+      "timestamp": "2025-11-21T11:01:40.885Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441397767489454081",
+      "content": "POLA  < $3  - Polar Power Inc. Receives Purchase Order for Mobile Electric Vehicle Fast Chargers to Address the Growing Need for Emergency Roadside Assistance - Link  ~  :flag_us:  |  Float: 1.7 M  |  IO: 19.01%  |  MC: 6.1 M",
+      "timestamp": "2025-11-21T12:00:07.645Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441398252250468423",
+      "content": "CLWT  < $2  - Euro Tech Holdings Company Reports Contract Awarded to PACT - Link  ~  :flag_hk:  |  Float: 3.3 M  |  IO: 2.54%  |  MC: 8.4 M",
+      "timestamp": "2025-11-21T12:02:03.221Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441405374006820904",
+      "content": "TELO  < $2  - Telomir Pharmaceuticals Announces Telomir-1 Kills Aggressive Human Leukemia Cells - Link  ~  :flag_us:  |  Float: 15.4 M  |  IO: 6.79%  |  MC: 46.4 M",
+      "timestamp": "2025-11-21T12:30:21.180Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441412633965232228",
+      "content": "VCIG  < $2  - VCI Global CEO Purchases Shares on the Open Market, Reinforcing Confidence in the Company's Growth - Link  ~  :flag_my:  |  Float: 6.4 M  |  IO: 0.03%  |  MC: 7.4 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-11-21T12:59:12.089Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441413095527547090",
+      "content": "IVDA  < $1  - Iveda Advances Egyptian Localization Strategy, Signing Major New Manufacturing Partnership for Local Production of the Latest in 360 Camera Technology - Link  ~  :flag_us:  |  Float: 5.8 M  |  IO: 4.15%  |  MC: 3.8 M",
+      "timestamp": "2025-11-21T13:01:02.134Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441414118950305865",
+      "content": "SGMO  < $.50c  - Sangamo Therapeutics Announces FDA Acceptance of BLA Rolling Submission Request for ST-920 in Fabry Disease - Link  ~  :flag_us:  |  Float: 329 M  |  IO: 18.71%  |  MC: 136 M",
+      "timestamp": "2025-11-21T13:05:06.137Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441421438492868630",
+      "content": "08:33  SEC  BCAB - Form 424B5 - Link",
+      "timestamp": "2025-11-21T13:34:11.252Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441422610649972747",
+      "content": "CTOR  < $2  - Citius Oncology to Advance Commercial Launch of LYMPHIR\u2122 with Verix AI Integration - Link  ~  :flag_us:  |  Float: 9.4 M  |  IO: 9.99%  |  MC: 97.7 M",
+      "timestamp": "2025-11-21T13:38:50.716Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441430578531401748",
+      "content": "09:10  \u2191  MFI  < $13  ~  :flag_hk:  |  Float: 530 k  |  IO: 1.34%  |  MC: 18.2 M\na month ago  PR  mF International Announces Private Placement of $500.0 Million to Launch a Digital Asset Treasury Strategy - Link,",
+      "timestamp": "2025-11-21T14:10:30.407Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441432986741637181",
+      "content": "AUID  < $2  - authID Announces Pricing of Approximately $3,675,000 Registered Direct Offering - Link  ~  :flag_us:  |  Float: 11.7 M  |  IO: 20.14%  |  MC: 23.5 M",
+      "timestamp": "2025-11-21T14:20:04.569Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441433011668259010",
+      "content": "OSRH  < $1  - Vaximm AG, an OSR Company, Enters Term Sheet With BCM Europe for Potential VXM01 License with $20M Upfront and Up to $815M in Milestones - Link  ~  :flag_us:  |  Float: 10.1 M  |  IO: 0.88%  |  MC: 11.8 M",
+      "timestamp": "2025-11-21T14:20:10.512Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441436076039344339",
+      "content": "SHPH  < $2  - Shuttle Pharmaceuticals Acquires AI Health Platform - Link  ~  :flag_us:  |  Float: 1.4 M  |  IO: 9.01%  |  MC: 3.4 M",
+      "timestamp": "2025-11-21T14:32:21.115Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441436095224217622",
+      "content": "09:32  \u2197  CIFR  < $15  ~  :flag_us:  |  Float: 322 M  |  IO: 56.54%  |  MC: 5.8 B  |  SI: 19.5%\na month ago  PR  REX Shares Launches New T-REX 2X Long CIFR Daily Target ETF (CBOE: CIFU) - Link,",
+      "timestamp": "2025-11-21T14:32:25.689Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441437021863284866",
+      "content": "09:36  \u2197  UPXI  < $3  ~  :flag_us:  |  Float: 52.8 M  |  IO: 26.80%  |  MC: 150 M  |  SI: 20.6%\na month ago  SEC  Form 4 - Link,a month ago  SEC  Form 4 - Link,",
+      "timestamp": "2025-11-21T14:36:06.617Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441443707965669431",
+      "content": "NVVE  < $.50c  - Electrify, Simplify, Spin-Off & Scale - Link  ~  :flag_us:  |  Float: 30.6 M  |  IO: 4.28%  |  MC: 9.3 M",
+      "timestamp": "2025-11-21T15:02:40.708Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1441444305418977350",
+      "content": "10:05  \u2197  MNDR  < $5  ~  :flag_sg:  |  Float: 780 k  |  IO: 8.50%  |  MC: 4.9 M\na month ago  PR  Electrify, Simplify, Spin-Off & Scale - Link,a month ago  PR  Mobile-health Network Solutions Signs MOU to Secure Two Malaysian AI Data Center Projects; Facilities Intended to Power Expansion of Company's AI Digital Health Platform - Link,",
+      "timestamp": "2025-11-21T15:05:03.152Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441449343289790519",
+      "content": "10:25  \u2197  AIIO  < $1  ~  :flag_ae:  |  Float: 221 M  |  IO: 1.69%  |  MC: 295 M  |  High CTB\na month ago  PR  Robo.ai Partners with Zand Bank, the Middle East's First Fully Digital Bank, to Pioneer a New Paradigm in Machine Economy Fintech - Link,",
+      "timestamp": "2025-11-21T15:25:04.274Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441455647064326154",
+      "content": "CRML  < $8  - CRML Secures One of the Largest Strategic Stockpiles of Ultra-High-Purity Copper Powder in a US$20M All-Share Acquisition Issued at a 40% Premium to Market - Link  ~  :flag_gb:  |  Float: 52.9 M  |  IO: 9.71%  |  MC: 836 M  |  SI: 17.1%",
+      "timestamp": "2025-11-21T15:50:07.211Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441456981675085968",
+      "content": "10:55  \u2191  OKYO  < $3  ~  :flag_gb:  |  Float: 22.5 M  |  IO: 6.84%  |  MC: 75.2 M\na month ago  SEC  Form 6-K - Link,a month ago  PR  OKYO Pharma Announces Chairman and Founder Acquires Shares - Link,",
+      "timestamp": "2025-11-21T15:55:25.407Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441478296608047275",
+      "content": "12:20  \u2191  ONFO  < $1  ~  :flag_us:  |  Float: 4.2 M  |  IO: 1.18%  |  MC: 4.1 M\na month ago  PR  Onfolio Holdings Receives $4.75M in Investment Proceeds - Link,",
+      "timestamp": "2025-11-21T17:20:07.283Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441482081124352033",
+      "content": "KTTA  < $.50c  - Pasithea Therapeutics Announces Positive PAS-004 Tablet Pharmacokinetic (PK) Data in Ongoing Phase 1/1b Trial in Adult NF1 Patients - Link  ~  :flag_us:  |  Float: 7.0 M  |  IO: 8.23%  |  MC: 2.5 M",
+      "timestamp": "2025-11-21T17:35:09.582Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441484839260913735",
+      "content": "RICK  < $24  - RCI Acquires 821,000 Shares from ADW Capital Partners, L.P. - Link  ~  :flag_us:  |  Float: 8.0 M  |  IO: 52.47%  |  MC: 200 M",
+      "timestamp": "2025-11-21T17:46:07.173Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441487049931882718",
+      "content": "$SNOA Sonoma Pharmaceuticals and partner MicroSafe Care have received Australian Therapeutic Goods Administration approval for its Nanocyn Advanced Disinfectant & Sanitizer. https://t.co/0wLaZPv2Uz- Tweet Link",
+      "timestamp": "2025-11-21T17:54:54.238Z",
+      "author": "TradeHawk"
+    },
+    {
+      "id": "1139240765260836936-1441488356146938019",
+      "content": "13:00  \u2197  BEAT  < $1  ~  :flag_us:  |  Float: 27.3 M  |  IO: 9.72%  |  MC: 21.8 M\na month ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-11-21T18:00:05.664Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441533874357276714",
+      "content": "16:00  \u2191  AIXI  < $1  ~  :flag_cn:  |  IO: 0.24%  |  MC: 8.0 M\na month ago  PR  Xiao-I Corporation Renews Contract with Major Automotive Joint Venture for Cognitive AI Services - Link,",
+      "timestamp": "2025-11-21T21:00:58.051Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441534061616041984",
+      "content": "DVLT  < $3  - Scilex Holding Company Announces Update Regarding Distribution of Dream Bowl 2026 Meme Coin by Datavault AI Inc. - Link  ~  :flag_us:  |  Float: 233 M  |  IO: 2.59%  |  MC: 719 M",
+      "timestamp": "2025-11-21T21:01:42.697Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441534928365027388",
+      "content": "RVYL  < $.50c  - Court Provisionally Approves Settlement of RYVYL Derivative Litigation - Link  ~  :flag_us:  |  Float: 25.4 M  |  IO: 11.20%  |  MC: 10.1 M",
+      "timestamp": "2025-11-21T21:05:09.346Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1441537833298034710",
+      "content": "16:16  SEC  NVVE - Form 8-K - Link",
+      "timestamp": "2025-11-21T21:16:41.936Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441539804046295122",
+      "content": "16:23  SEC  IKT - Form 424B5 - Link",
+      "timestamp": "2025-11-21T21:24:31.799Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441539973827530903",
+      "content": "16:24  SEC  NVVE - Form 4 - Link",
+      "timestamp": "2025-11-21T21:25:12.278Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441540230342508554",
+      "content": "16:25  SEC  NVVE - Form 4 - Link",
+      "timestamp": "2025-11-21T21:26:13.436Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441540632488181760",
+      "content": "16:27  \u2191  BLMZ  < $2  ~  :flag_jp:  |  Float: 620 k  |  IO: 0.09%  |  MC: 1.4 M  |  SI: 61.5%  ~  1 for 10  R/S  Nov. 21\na month ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-11-21T21:27:49.315Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441541526462267412",
+      "content": "16:31  SEC  NVVE - Form 4 - Link",
+      "timestamp": "2025-11-21T21:31:22.455Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441546035141939260",
+      "content": "16:49  \u2191  PLUG  < $3  ~  :flag_us:  |  Float: 1.3 B  |  IO: 39.22%  |  MC: 2.8 B  |  SI: 23.5%\na month ago  SEC  Form 8-K - Link,a month ago  SEC  Form DEFA14A - Link,a month ago  PR  Plug Power Announces Special Meeting of Stockholders and Filing of Preliminary Proxy Statement - Link,a month ago  PR  Plug Power Nets $399 Million in Cash Following Successful Financing; Eliminates First Lien and Fully Funds Current Business Plan - Link,",
+      "timestamp": "2025-11-21T21:49:17.408Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441551201966620797",
+      "content": "17:09  \u2191  SDOT  < $4  ~  :flag_us:  |  Float: 990 k  |  IO: 4.64%  |  MC: 3.4 M\na month ago  SEC  Form RW - Link,",
+      "timestamp": "2025-11-21T22:09:49.275Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1441557917038809221",
+      "content": "17:36  \u2191  BFLY  < $3  ~  :flag_us:  |  Float: 189 M  |  IO: 34.78%  |  MC: 669 M\na month ago  SEC  Form 4 - Link,a month ago  PR  Butterfly Network to Participate at the 8th Annual Evercore Healthcare Conference - Link,",
+      "timestamp": "2025-11-21T22:36:30.273Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1442479892045238417",
+      "content": "06:40  \u2191  ENLV  < $2  ~  :flag_il:  |  Float: 22.8 M  |  IO: 4.58%  |  MC: 22.4 M\n24 days ago  PR  Enlivex Announces Positive 6-Month Topline Data \u2013Demonstrating Durable and Persistent Pain Reduction and Improved Function in Primary Age-Related Patients with Moderate to Severe Knee Osteoarthritis - Link,",
+      "timestamp": "2025-11-24T11:40:06.244Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1442481453181964298",
+      "content": "GDOT  < $13  - Green Dot Corp. Announces Strategic Transactions with Smith Ventures and CommerceOne Financial Corp. - Link  ~  :flag_us:  |  Float: 48.7 M  |  IO: 90.17%  |  MC: 654 M",
+      "timestamp": "2025-11-24T11:46:18.448Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442485210209062912",
+      "content": "ATON  < $4  - AlphaTON Capital Submits Strategic Offer to Acquire Majority Stake in Forbes Media Holdings - Link  ~  :flag_gb:  |  Float: 2.4 M  |  IO: 0.62%  |  MC: 19.1 M  |  High CTB",
+      "timestamp": "2025-11-24T12:01:14.193Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442486238740218090",
+      "content": "CLSD  < $1  - Clearside Biomedical to Pursue Strategic Sale of its Business Through Voluntary Chapter 11 Process - Link  ~  :flag_us:  |  Float: 4.2 M  |  IO: 12.59%  |  MC: 6.3 M",
+      "timestamp": "2025-11-24T12:05:19.414Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1442489454953500754",
+      "content": "07:18  \u2191  CJET  < $4  ~  :flag_ky:  |  Float: 850 k  |  IO: 0.05%  |  MC: 1.7 M  ~  1 for 100  R/S  Nov. 03\n24 days ago  PR  Chijet Motor Company Enters Strategic Partnership with EdgeAI Frontier Technology Ltd. to Acquire Up to $1 Billion in EdgeAI Tokens at a 20% Discount - Link,",
+      "timestamp": "2025-11-24T12:18:06.219Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1442492480187535513",
+      "content": "DFLI  < $1  - Dragonfly Energy to Supply Werner Enterprises with Advanced Idle-Reduction Power Systems - Link  ~  :flag_us:  |  Float: 119 M  |  IO: 2.37%  |  MC: 89.2 M",
+      "timestamp": "2025-11-24T12:30:07.491Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442496428542005272",
+      "content": "ENLV  < $1  - BZ: Enlivex Therapeutics Tells Benzinga 'Enlivex to continue clinical development of Allocetra TM, a potentially game-changing knee osteoarthritis therapeutic, a growing market with significant unmet medical need' - Link  ~  :flag_il:  |  Float: 22.8 M  |  IO: 4.58%  |  MC: 22.4 M",
+      "timestamp": "2025-11-24T12:45:48.852Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442497038049607711",
+      "content": "ENLV  < $1  - BZ: Enlivex Raises Over $200 Million To Launch First Public Company Prediction Markets Play - Link  ~  :flag_il:  |  Float: 22.8 M  |  IO: 4.58%  |  MC: 22.4 M",
+      "timestamp": "2025-11-24T12:48:14.170Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442498781026193548",
+      "content": "ENLV  < $2  - Enlivex Announces $212,000,000 Private Placement to Initiate World's First Prediction Markets Digital Asset Treasury Strategy, via RAIN token Accumulation, and the Appointment of Matteo Renzi, Former Prime Minister of Italy, to its Board - Link  ~  :flag_il:  |  Float: 22.8 M  |  IO: 4.58%  |  MC: 22.4 M",
+      "timestamp": "2025-11-24T12:55:09.728Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442500055368995060",
+      "content": "PMN  < $.50c  - ProMIS Neurosciences Announces Reverse Stock Split - Link  ~  :flag_ca:  |  Float: 21.0 M  |  IO: 12.17%  |  MC: 22.6 M",
+      "timestamp": "2025-11-24T13:00:13.555Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1442500071139704884",
+      "content": "VRCA  < $5  - Verrica Pharmaceuticals Announces Private Placement Financing of $50 Million to Retire Debt and Extend Cash Runway - Link  ~  :flag_us:  |  Float: 3.8 M  |  IO: 29.45%  |  MC: 40.0 M",
+      "timestamp": "2025-11-24T13:00:17.315Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1442500189675061361",
+      "content": "STAI  < $.50c  - ScanTech AI Systems Signs Term Sheet for $20 Million Financing with ARC Group to Enhance Liquidity and Strategic Flexibility - Link  ~  :flag_us:  |  Float: 60.7 M  |  IO: 28.65%  |  MC: 27.1 M",
+      "timestamp": "2025-11-24T13:00:45.576Z",
+      "author": "PR - Spike"
+    }
+  ],
+  "sent_at": "2025-12-18T04:21:15.539Z"
+}

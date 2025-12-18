@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1419670122393636906",
+      "content": "LUMN  < $6  - Lumen Accelerates Multi-Billion-Dollar Network Expansion to Meet Soaring AI Demand - Link  ~  :flag_us:  |  Float: 941 M  |  IO: 71.04%  |  MC: 5.8 B",
+      "timestamp": "2025-09-22T13:02:13.374Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1419673367111405579",
+      "content": "RELI  < $1  - Reliance Global Group (RELI) Completes Initial Cardano (ADA) Purchase Under Digital Asset Treasury Initiative - Link  ~  :flag_us:  |  Float: 2.6 M  |  IO: 4.92%  |  MC: 3.3 M  |  High CTB",
+      "timestamp": "2025-09-22T13:15:06.975Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1419680928745394236",
+      "content": "IDAI  < $4  - Trust Stamp announces Registration of Identity-Related Blockchain Token - Link  ~  :flag_us:  |  Float: 2.0 M  |  IO: 1.86%  |  MC: 7.6 M",
+      "timestamp": "2025-09-22T13:45:09.809Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1419683416043032748",
+      "content": "09:55  \u2197  GPUS  < $.50c  ~  :flag_us:  |  Float: 26.4 M  |  IO: 0.35%  |  MC: 12.5 M\n3 months ago  PR  Hyperscale Data Announces a Special Dividend of Class B Common Stock - Link,",
+      "timestamp": "2025-09-22T13:55:02.827Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419684036976312401",
+      "content": "09:57  \u2197  PLUG  < $3  ~  :flag_us:  |  Float: 1.1 B  |  IO: 37.98%  |  MC: 2.5 B  |  SI: 32.4%\n3 months ago  SEC  Form 424B7 - Link,",
+      "timestamp": "2025-09-22T13:57:30.869Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419684707498590278",
+      "content": "10:00  \u2197  LWLG  < $5  ~  :flag_us:  |  Float: 128 M  |  IO: 19.27%  |  MC: 538 M\n3 months ago  SEC  Form 4 - Link,",
+      "timestamp": "2025-09-22T14:00:10.734Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419685448929771660",
+      "content": "10:03  \u2197  SKBL  < $3  ~  :flag_hk:  |  Float: 9.3 M  |  IO: 1.23%  |  MC: 73.5 M  |  SI: 16.5%  |  High CTB\n3 months ago  SEC  Form SCHEDULE 13D - Link,",
+      "timestamp": "2025-09-22T14:03:07.505Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419687189788229653",
+      "content": "10:10  \u2197  GPRO  < $3  ~  :flag_us:  |  Float: 116 M  |  IO: 58.67%  |  MC: 380 M\n3 months ago  PR  GoPro Named to Newsweek's World's Most Trustworthy Companies 2025 List - Link,",
+      "timestamp": "2025-09-22T14:10:02.558Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419687194968457399",
+      "content": "10:10  \u2197  SPWR  < $2  ~  :flag_us:  |  Float: 52.6 M  |  IO: 19.68%  |  MC: 135 M  |  SI: 21.3%\n3 months ago  SEC  Form 8-K - Link,3 months ago  PR  SPWR to Acquire Sunder Energy to Gain U.S. No. 5 Spot - Link,",
+      "timestamp": "2025-09-22T14:10:03.793Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419709867429724221",
+      "content": "11:40  \u2197  FLNC  < $11  ~  :flag_us:  |  Float: 75.9 M  |  IO: 63.65%  |  MC: 2.0 B  |  SI: 21.9%\n3 months ago  PR  DTEK subsidiary, DRI, picks Fluence to deliver Trzebinia battery project - Link,",
+      "timestamp": "2025-09-22T15:40:09.329Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419711114467610787",
+      "content": "11:45  \u2197  KOD  < $14  ~  :flag_us:  |  Float: 48.7 M  |  IO: 81.57%  |  MC: 705 M\n3 months ago  AR  Jefferies Initiates Coverage On Kodiak Sciences with Buy Rating, Announces Price Target of $15,",
+      "timestamp": "2025-09-22T15:45:06.646Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419717404925100133",
+      "content": "12:10  \u2197  WCT  < $.50c  ~  :flag_hk:  |  Float: 8.7 M  |  IO: 0.44%  |  MC: 17.9 M\n3 months ago  PR  Chaince Securities LLC Serves as Exclusive Placement Agent in Wellchange Holdings' (NASDAQ: WCT) $4 Million Private Placement - Link,",
+      "timestamp": "2025-09-22T16:10:06.408Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419726944676876399",
+      "content": "12:47  \u2191  PLTS  < $13  ~  :flag_us:\n3 months ago  SEC  Form 424B4 - Link,",
+      "timestamp": "2025-09-22T16:48:00.862Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419745969146167309",
+      "content": "14:03  \u2191  MFH  < $13  ~  :flag_us:  |  Float: 36.5 M  |  IO: 25.34%  |  MC: 777 M\n3 months ago  PR  Chaince Securities LLC Serves as Exclusive Placement Agent in Wellchange Holdings' (NASDAQ: WCT) $4 Million Private Placement - Link,",
+      "timestamp": "2025-09-22T18:03:36.649Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419747649657245727",
+      "content": "14:10  \u2197  VUZI  < $4  ~  :flag_us:  |  Float: 63.9 M  |  IO: 31.01%  |  MC: 225 M  |  SI: 26.3%\n3 months ago  PR  Vuzix Achieves Waveguide Production Milestones and Receives Additional $5 Million Quanta Investment, Bringing Total Funding to $20 Million - Link,",
+      "timestamp": "2025-09-22T18:10:17.314Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419769736647938150",
+      "content": "15:38  \u2191  LDI  < $4  ~  :flag_us:  |  Float: 90.2 M  |  IO: 14.23%  |  MC: 1.1 B\n3 months ago  PR  loanDepot Appoints Adam Saab as Executive Vice President of Servicing - Link,",
+      "timestamp": "2025-09-22T19:38:03.263Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419774528996774049",
+      "content": "$AIM AIM ImmunoTech has been granted European patent number EP4096675 titled \"COMPOSITIONS FOR TREATING LONG COVID\". https://t.co/zfEOgosEMR- Tweet Link",
+      "timestamp": "2025-09-22T19:57:05.848Z",
+      "author": "PatentGrants"
+    },
+    {
+      "id": "1139240765260836936-1419775795773308938",
+      "content": "16:02  \u2191  CPSH  < $5  ~  :flag_us:  |  Float: 11.3 M  |  IO: 22.99%  |  MC: 52.3 M\n3 months ago  PR  CPS Technologies Secures Phase II Army STTR Contract to Continue Controlled Fragmentation Warhead Development - Link,",
+      "timestamp": "2025-09-22T20:02:07.871Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419777299917570170",
+      "content": "16:08  \u2191  SAVA  < $3  ~  :flag_us:  |  Float: 42.0 M  |  IO: 25.36%  |  MC: 114 M\n3 months ago  SEC  Form 4 - Link,",
+      "timestamp": "2025-09-22T20:08:06.487Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419778493339664414",
+      "content": "16:12  SEC  MBX - Form S-1 - Link",
+      "timestamp": "2025-09-22T20:12:51.021Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419778901823062219",
+      "content": "16:14  \u2197  ELWS  < $3  ~  :flag_jp:  |  IO: 0.59%  |  MC: 6.9 M\n3 months ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-09-22T20:14:28.411Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419779184854827031",
+      "content": "MBX  < $19  - MBX Biosciences Announces Proposed Public Offering - Link  ~  :flag_us:  |  Float: 16.2 M  |  IO: 57.15%  |  MC: 672 M  |  SI: 23.7%",
+      "timestamp": "2025-09-22T20:15:35.891Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1419782854749061153",
+      "content": "CLSK  < $15  - CleanSpark Expands Capital Strategy with Additional $100M Bitcoin-Backed Credit Capacity from Coinbase Prime - Link  ~  :flag_us:  |  Float: 272 M  |  IO: 61.97%  |  MC: 3.9 B  |  SI: 19.6%",
+      "timestamp": "2025-09-22T20:30:10.862Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1419784143419736127",
+      "content": "SLE  < $4  - Pioneering Digital Asset Treasury Investor Evo Fund to Invest in Super League, Positioning Company to Increase Shareholder Value and Satisfy Nasdaq Shareholders Equity Requirement - Link  ~  :flag_us:  |  Float: 1.0 M  |  IO: 0.89%  |  MC: 3.6 M  |  High CTB",
+      "timestamp": "2025-09-22T20:35:18.105Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1419788578015416350",
+      "content": "16:52  \u2191  IPDN  < $4  ~  :flag_us:  |  Float: 1.3 M  |  IO: 0.99%  |  MC: 7.2 M  |  Reg SHO  |  High CTB\n3 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-09-22T20:52:55.395Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419789144158371870",
+      "content": "16:55  \u2191  NCPL  < $3  ~  :flag_us:  |  Float: 4.2 M  |  IO: 6.92%  |  MC: 11.3 M\n3 months ago  PR  Netcapital Announces First Quarter Fiscal 2026 Financial Results - Link,3 months ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-09-22T20:55:10.374Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1419790473546961078",
+      "content": "17:00  \u2191  MSS  < $2  ~  :flag_us:  |  Float: 2.9 M  |  IO: 2.50%  |  MC: 16.7 M\n3 months ago  PR  Maison Solutions Reports First Quarter 2026 Financial Results - Link,3 months ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-09-22T21:00:27.325Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420001805852479619",
+      "content": "STSS  < $9  - Sharps Technology and Jupiter Exchange Announce Staking Partnership to Accelerate Solana Adoption - Link  ~  :flag_us:  |  Float: 26.5 M  |  IO: 0.15%  |  MC: 212 M  |  Reg SHO  |  High CTB",
+      "timestamp": "2025-09-23T11:00:12.873Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420002012145258597",
+      "content": "JZXN  < $2  - JZXN Appoints Dr. Doug Buerger as Chief Operating Officer to Advance Digital Currency Treasury Strategy - Link  ~  :flag_cn:  |  Float: 54.8 M  |  IO: 0.09%  |  MC: 86.4 M",
+      "timestamp": "2025-09-23T11:01:02.057Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420002335840534580",
+      "content": "AIIO  < $2  - Presenting on Emerging Growth Conference 86 Day 1 on September 24; Register to live stream - Link  ~  :flag_ae:  |  Float: 175 M  |  IO: 0.09%  |  MC: 520 M  |  High CTB",
+      "timestamp": "2025-09-23T11:02:19.232Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1420002528925581363",
+      "content": "07:03  \u2197  CWD  < $7  ~  :flag_us:  |  Float: 2.0 M  |  IO: 0.20%  |  MC: 27.6 M  |  SI: 66.3%  |  High CTB\n3 months ago  PR  Caliber Selects Coinbase Prime to Power Trading and Custody for LINK Treasury - Link,",
+      "timestamp": "2025-09-23T11:03:05.267Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420009345869025282",
+      "content": "SNGX  < $3  - Soligenix Announces Appointment of Former White House Economic Adviser Tomas J. Philipson, PhD as Strategic Advisor - Link  ~  :flag_us:  |  Float: 4.3 M  |  IO: 4.43%  |  MC: 9.9 M  |  High CTB",
+      "timestamp": "2025-09-23T11:30:10.553Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420016908035559527",
+      "content": "UAMY  < $8  - United States Antimony Corporation Awarded $245 Million Sole-Source Five-Year Contract by the U.S. Defense Logistics Agency for the Purchase of Antimony Ingots to Replenish the U.S. National Defense Stockpile - Link  ~  :flag_us:  |  Float: 105 M  |  IO: 25.31%  |  MC: 927 M",
+      "timestamp": "2025-09-23T12:00:13.514Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420016913018257510",
+      "content": "PRPH  < $.50c  - PROPHASE LABS, INC. ANNOUNCES COMPLETION OF IMPORTANT NEXT STEP FOR CROWN MEDICAL COLLECTIONS $50 MILLION A/R INITIATIVE - Link  ~  :flag_us:  |  Float: 36.9 M  |  IO: 6.57%  |  MC: 18.7 M",
+      "timestamp": "2025-09-23T12:00:14.702Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420017028579983442",
+      "content": "SOAR  < $2  - Vaunt Projects 35% to 50% Sequential Growth in Q3 Subscription Sales, Expands Operator Network with PrismJet and Centurion Flight Services - Link  ~  :flag_us:  |  Float: 2.7 M  |  IO: 0.50%  |  MC: 9.3 M  |  SI: 23.9%",
+      "timestamp": "2025-09-23T12:00:42.254Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420017111090073663",
+      "content": "08:00  SEC  SLNH - Form 424B5 - Link",
+      "timestamp": "2025-09-23T12:01:01.926Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420017122217558146",
+      "content": "MYNZ  < $2  - Mainz Biomed Announces Commercial Launch of ColoAlert\u00ae in Switzerland - Link  ~  :flag_de:  |  Float: 4.5 M  |  IO: 8.42%  |  MC: 7.5 M",
+      "timestamp": "2025-09-23T12:01:04.579Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420017126386700378",
+      "content": "BOXL  < $4  - Boxlight Announces Pricing of $4 Million Registered Direct Offering of Common Stock Priced At-The-Market Under Nasdaq Rules - Link  ~  :flag_us:  |  Float: 2.2 M  |  IO: 20.85%  |  MC: 10.6 M",
+      "timestamp": "2025-09-23T12:01:05.573Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1420017345430294600",
+      "content": "MNDR  < $1  - Mobile-health Network Solutions Announces Reverse Stock Split - Link  ~  :flag_sg:  |  Float: 3.4 M  |  IO: 6.93%  |  MC: 4.4 M",
+      "timestamp": "2025-09-23T12:01:57.797Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1420017450342154321",
+      "content": "NXPL  < $1  - NextPlat's ClearMetrx Subsidiary to Launch Artificial Intelligence-Powered ClearMetrX 4.0 Software for Modernized Healthcare Analytics and Reporting - Link  ~  :flag_us:  |  Float: 14.0 M  |  IO: 4.57%  |  MC: 23.3 M",
+      "timestamp": "2025-09-23T12:02:22.810Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420017454603833485",
+      "content": "FLD  < $5  - Stripe and Visa to Power Fold's New Bitcoin Rewards Credit Card - Link  ~  :flag_us:  |  Float: 10.7 M  |  IO: 15.28%  |  MC: 175 M",
+      "timestamp": "2025-09-23T12:02:23.826Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420018475996545044",
+      "content": "IOBT  < $2  - IO Biotech Announces Late-Breaking Abstract in Advanced Melanoma Selected for Oral Presentation at ESMO Congress 2025 - Link  ~  :flag_dk:  |  Float: 49.3 M  |  IO: 20.21%  |  MC: 98.2 M",
+      "timestamp": "2025-09-23T12:06:27.345Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420018803600916692",
+      "content": "08:07  \u2191  ZSPC  < $3  ~  :flag_us:  |  Float: 4.7 M  |  IO: 7.97%  |  MC: 37.2 M\n3 months ago  PR  zSpace Launches New Industrial Robotics Applications for Training, Maintenance, and Operations - Link,",
+      "timestamp": "2025-09-23T12:07:45.452Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420020770498941000",
+      "content": "08:15  \u2191  SILO  < $1  ~  :flag_us:  |  Float: 9.0 M  |  IO: 4.30%  |  MC: 7.4 M\n3 months ago  PR  BZ: SILO Pharmaceuticals Tells Benzinga Co. Signs Strategic Agreement With Fireblocks To Advance Crypto Treasury Strategy Acquisition And Security - Link,",
+      "timestamp": "2025-09-23T12:15:34.397Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420021374575054908",
+      "content": "SILO  < $1  - BZ: Silo Pharma Partners With Fireblocks To Advance Crypto Treasury Strategy Acquisition And Security - Link  ~  :flag_us:  |  Float: 9.0 M  |  IO: 4.30%  |  MC: 7.4 M",
+      "timestamp": "2025-09-23T12:17:58.420Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420022711903588383",
+      "content": "BURU  < $.50c  - Nuburu Signs Agreement to Evaluate Potential Acquisition for Accelerated Growth in Defense Applications of Blue Laser Technology - Link  ~  :flag_us:  |  Float: 132 M  |  IO: 0.56%  |  MC: 19.2 M",
+      "timestamp": "2025-09-23T12:23:17.264Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420024428057854024",
+      "content": "08:30  \u2191  IBG  < $1  ~  :flag_au:  |  Float: 5.5 M  |  IO: 1.90%  |  MC: 3.4 M\n3 months ago  PR  Innovation Beverage Group Enters into Letter of Intent for Potential Merger with BlockFuel Energy, Inc. - Link,3 months ago  PR  Innovation Beverage Group Announces Reverse Stock Split - Link,",
+      "timestamp": "2025-09-23T12:30:06.427Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420024435884425226",
+      "content": "08:30  \u2191  IPW  < $1  ~  :flag_us:  |  Float: 12.7 M  |  IO: 3.46%  |  MC: 17.1 M\n3 months ago  PR  iPower and TCL Announce Partnership to Expand Smart Tech Access via iPower's Authorized Channel - Link,",
+      "timestamp": "2025-09-23T12:30:08.293Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1420024491567874128",
+      "content": "APDN  < $4  - Applied DNA Abstracts Selected for Poster Presentations Showcasing LineaDNA and LineaIVT Platforms at Upcoming mRNA and CAR T Industry Conferences - Link  ~  :flag_us:  |  Float: 1.3 M  |  IO: 7.14%  |  MC: 3.9 M",
+      "timestamp": "2025-09-23T12:30:21.569Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1420025034529046589",
+      "content": "VERU  < $4  - Veru Announces Successful FDA Meeting Providing Regulatory Clarity for Enobosarm for Muscle Preservation in Combination with GLP-1 RA for Greater Weight Loss in the Treatment of Obesity - Link  ~  :flag_us:  |  Float: 12.6 M  |  IO: 21.97%  |  MC: 52.3 M",
+      "timestamp": "2025-09-23T12:32:31.021Z",
+      "author": "PR - Spike"
+    }
+  ],
+  "sent_at": "2025-12-18T04:38:57.966Z"
+}

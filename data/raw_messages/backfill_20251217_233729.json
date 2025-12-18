@@ -1,0 +1,306 @@
+{
+  "channel": "\ud83c\udf52-select-news",
+  "messages": [
+    {
+      "id": "1139240765260836936-1433427860542197760",
+      "content": "08:10  \u2191  IXHL  < $.50c  ~  :flag_au:  |  Float: 271 M  |  IO: 0.31%  |  MC: 119 M\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Incannex Provides Shareholder Update Highlighting Clinical Progress, Capital Discipline, and EOY 2025 Strategic Focus - Link,",
+      "timestamp": "2025-10-30T12:10:33.755Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433432766736891967",
+      "content": "NXL  < $2  - Nexalin Technology Announces Regulatory Approval to Sell Gen 2 SYNC, 15 mA Neurostimulation DIFS\u2122 Device in Israel - Link  ~  :flag_us:  |  Float: 13.8 M  |  IO: 7.15%  |  MC: 28.4 M",
+      "timestamp": "2025-10-30T12:30:03.483Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433432778652909589",
+      "content": "08:30  \u2191  MNTS  < $2  ~  :flag_us:  |  Float: 10.8 M  |  IO: 8.02%  |  MC: 13.7 M  |  SI: 18.5%\n2 months ago  PR  Momentus Signs New Contract for Partnership with DPhi Space to Fly Edge Computing Payload on Next Mission and for Future Revenue Sharing - Link,",
+      "timestamp": "2025-10-30T12:30:06.324Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433432821338210416",
+      "content": "VIVK  < $.50c  - Vivakor's Trading Platform Launches Full-Scale Operations with $24 Million Commodity Transaction - Link  ~  :flag_us:  |  Float: 17.8 M  |  IO: 10.47%  |  MC: 29.3 M",
+      "timestamp": "2025-10-30T12:30:16.501Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433432836299554826",
+      "content": "SEGG  < $5  - SEGG Media Charts a Bold Course into Web3 with $300M Digital Asset Initiative - Link  ~  :flag_us:  |  Float: 3.6 M  |  IO: 1.54%  |  MC: 18.1 M",
+      "timestamp": "2025-10-30T12:30:20.068Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433435319478255728",
+      "content": "MBRX  < $.50c  - Moleculin to Highlight its Ongoing Phase 3 Acute Myeloid Leukemia \"MIRACLE\" Clinical Trial at the 14th Annual Acute Leukemia Meeting - Link  ~  :flag_us:  |  Float: 45.1 M  |  IO: 0.89%  |  MC: 23.8 M",
+      "timestamp": "2025-10-30T12:40:12.104Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433440347597307914",
+      "content": "SGD  < $2  - Safe and Green Development Corporation Announces Satisfaction of All Outstanding Convertible Debt - Link  ~  :flag_us:  |  Float: 1.4 M  |  IO: 6.84%  |  MC: 4.8 M  |  SI: 25.3%  |  High CTB",
+      "timestamp": "2025-10-30T13:00:10.901Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433440368237613139",
+      "content": "CVU  < $3  - CPI Aerostructures Awarded Contract of Structural Assemblies by Raytheon Missiles & Defense - Link  ~  :flag_us:  |  Float: 9.2 M  |  IO: 15.61%  |  MC: 30.8 M",
+      "timestamp": "2025-10-30T13:00:15.822Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433441629225877524",
+      "content": "CAN  < $2  - Canaan Inc. Wins 4.5 MW Mining Server Contract Supporting Japan's Power Grid Stability - Link  ~  :flag_sg:  |  Float: 267 M  |  IO: 17.33%  |  MC: 583 M",
+      "timestamp": "2025-10-30T13:05:16.465Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433442279095537736",
+      "content": "09:07  \u2191  PACK  < $6  ~  :flag_us:  |  Float: 76.9 M  |  IO: 76.92%  |  MC: 450 M\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Ranpak Holdings Corp. Reports Third Quarter 2025 Financial Results - Link,",
+      "timestamp": "2025-10-30T13:07:51.406Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433442497761382452",
+      "content": "09:08  \u2191  XLO  < $1  ~  :flag_us:  |  Float: 18.4 M  |  IO: 19.26%  |  MC: 41.6 M  |  SI: 28.6%\n2 months ago  PR  Xilio Therapeutics to Present Phase 2 Data for Vilastobart Highlighting Response Rate in Patients with MSS mCRC and High Plasma Tumor Mutational Burden as a Late-Breaking Presentation at SITC 40th Annual Meeting - Link,",
+      "timestamp": "2025-10-30T13:08:43.540Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433444001285148836",
+      "content": "RCAT  < $12  - Red Cat's FANG\u2122 FPV Drone for Defense and Security Operations Receives Blue UAS Cleared List Certification - Link  ~  :flag_us:  |  Float: 97.9 M  |  IO: 26.13%  |  MC: 1.3 B  |  SI: 18.3%",
+      "timestamp": "2025-10-30T13:14:42.008Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433444125050540093",
+      "content": "09:15  \u2191  QCLS  < $5  ~  :flag_us:  |  Float: 3.0 M  |  IO: 0.17%  |  MC: 11.2 M  |  SI: 16.1%  |  High CTB\n2 months ago  PR  Q/C Technologies Introduces Proprietary qc-LPU100\u2122 Brand of Quantum-Class Laser Processing Units - Link,",
+      "timestamp": "2025-10-30T13:15:11.516Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433444226137456661",
+      "content": "CPOP  < $1  - POP Culture and Fu Xiang Culture Form Strategic Partnership to Co-build Two Sides Greater Bay Area Hualiu Music, Film and Television Cultural Center - Link  ~  :flag_cn:  |  Float: 29.6 M  |  IO: 0.02%  |  MC: 60.6 M",
+      "timestamp": "2025-10-30T13:15:35.617Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433446624377704559",
+      "content": "09:25  \u2191  NITO  < $5  ~  :flag_il:  |  Float: 950 k  |  IO: 1.34%  |  MC: 3.2 M  |  High CTB\n2 months ago  PR  N2OFF Completed Merger with Cancer Drug Discovery Company Targeting Tough-to-Treat Pancreatic and Lung Cancers - Link,",
+      "timestamp": "2025-10-30T13:25:07.402Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433448281853136897",
+      "content": "09:31  \u2191  VIAV  < $17  ~  :flag_us:  |  Float: 219 M  |  IO: 98.24%  |  MC: 3.4 B\n2 months ago  AR  Needham Maintains Buy on Viavi Solutions, Raises Price Target to $20,2 months ago  AR  Rosenblatt Maintains Buy on Viavi Solutions, Raises Price Target to $19,",
+      "timestamp": "2025-10-30T13:31:42.575Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433448417446727750",
+      "content": "LNAI  < $2  - Lunai Bioworks Harnesses AI and Zebrafish Data to Advance Early Detection of Neurotoxic Compounds - Link  ~  :flag_us:  |  Float: 14.7 M  |  IO: 6.21%  |  MC: 22.2 M",
+      "timestamp": "2025-10-30T13:32:14.903Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433449321415839926",
+      "content": "09:35  \u2191  PRM  < $25  ~  :flag_us:  |  Float: 138 M  |  IO: 87.73%  |  MC: 3.3 B\n2 months ago  SEC  Form 10-Q - Link,2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Perimeter Solutions Reports Third Quarter 2025 Financial Results - Link,",
+      "timestamp": "2025-10-30T13:35:50.426Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433449876578107527",
+      "content": "09:38  \u2197  PHAT  < $16  ~  :flag_us:  |  Float: 39.8 M  |  IO: 46.35%  |  MC: 1.0 B  |  SI: 35.5%\n2 months ago  SEC  Form 10-Q - Link,2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Phathom Pharmaceuticals Reports Third Quarter 2025 Financial Results and Provides Business Update - Link,",
+      "timestamp": "2025-10-30T13:38:02.787Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433450113639911505",
+      "content": "09:38  \u2197  PUMP  < $12  ~  :flag_us:  |  Float: 79.1 M  |  IO: 84.67%  |  MC: 1.1 B\n2 months ago  SEC  Form 10-Q - Link,",
+      "timestamp": "2025-10-30T13:38:59.307Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433450132078202931",
+      "content": "09:39  \u2197  AKBA  < $3  ~  :flag_us:  |  Float: 255 M  |  IO: 41.67%  |  MC: 559 M\n2 months ago  PR  Akebia Therapeutics to Report Third Quarter 2025 Financial Results and Discuss Recent Business Highlights - Link,2 months ago  AR  HC Wainwright & Co. Maintains Buy on Akebia Therapeutics, Lowers Price Target to $6,",
+      "timestamp": "2025-10-30T13:39:03.703Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433453617289101382",
+      "content": "09:52  \u2191  HBIO  < $1  ~  :flag_us:  |  Float: 38.1 M  |  IO: 43.87%  |  MC: 25.2 M\n2 months ago  PR  Harvard Bioscience Schedules Third Quarter 2025 Earnings Conference Call for November 6, 2025 at 8:00 AM ET - Link,",
+      "timestamp": "2025-10-30T13:52:54.642Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433455424006521003",
+      "content": "10:00  \u2197  DGXX  < $6  ~  :flag_us:  |  Float: 35.0 M  |  IO: 7.59%  |  MC: 205 M\n2 months ago  PR  Digi Power X to Announce 2025 Q3 Financial Results on November 13th - Link,",
+      "timestamp": "2025-10-30T14:00:05.397Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433456557219119225",
+      "content": "LIMN  < $2  - Liminatus Pharma, Inc. (NASDAQ: LIMN) Signs MOU with Capital Trust Group for USD 30 Million Equity Investment via an earn-out mechanism and Future Strategic Cooperation - Link  ~  :flag_us:  |  Float: 5.6 M  |  IO: 1.13%  |  MC: 39.0 M  |  High CTB",
+      "timestamp": "2025-10-30T14:04:35.576Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433459607799337021",
+      "content": "CORZ  < $22  - Core Scientific Announces Preliminary Results of Special Meeting of Stockholders - Link  ~  :flag_us:  |  Float: 291 M  |  IO: 93.95%  |  MC: 6.4 B  |  SI: 20.2%",
+      "timestamp": "2025-10-30T14:16:42.891Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433471270929956885",
+      "content": "11:03  \u2197  FLWS  < $4  ~  :flag_us:  |  Float: 31.2 M  |  IO: 47.79%  |  MC: 216 M  |  SI: 36.5%\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  1-800-FLOWERS.COM, Inc. Reports Fiscal 2026 First Quarter Results - Link,",
+      "timestamp": "2025-10-30T15:03:03.598Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433510686184575129",
+      "content": "13:39  \u2197  NUAI  < $7  ~  :flag_us:  |  Float: 24.1 M  |  IO: 2.57%  |  MC: 295 M\n2 months ago  PR  New Era Energy & Digital's Texas Critical Data Centers Selects EYP Mission Critical Facilities, for Full-Scope Engineering of 438-Acre AI Campus in Odessa, Texas - Link,",
+      "timestamp": "2025-10-30T17:39:40.927Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433525897859825678",
+      "content": "VIVK  < $.50c  - Vivakor Announces Pricing of $2.7 Million Registered Direct Offering of Common Stock and Pre-Funded Warrants - Link  ~  :flag_us:  |  Float: 17.8 M  |  IO: 10.47%  |  MC: 36.1 M",
+      "timestamp": "2025-10-30T18:40:07.673Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1433527142829785129",
+      "content": "14:45  \u2197  YYAI  < $3  ~  :flag_us:  |  Float: 30.0 k  |  IO: 101.55%  |  MC: 46.7 M  |  SI: 121.4%  ~  1 for 50  R/S  Oct. 27\n2 months ago  SEC  Form SCHEDULE 13D/A - Link,",
+      "timestamp": "2025-10-30T18:45:04.497Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433534659761012736",
+      "content": "15:14  \u2191  LZMH  < $4  ~  :flag_cn:  |  Float: 2.9 M  |  IO: 0.19%  |  MC: 442 M  |  High CTB\n2 months ago  PR  CEO's Letter of LZ Technology Holdings Limited - Link,",
+      "timestamp": "2025-10-30T19:14:56.673Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433538273833390254",
+      "content": "15:29  \u2191  IPDN  < $4  ~  :flag_us:  |  Float: 2.9 M  |  IO: 0.60%  |  MC: 12.3 M  |  High CTB\n2 months ago  SEC  Form RW - Link,",
+      "timestamp": "2025-10-30T19:29:18.335Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433538922528636990",
+      "content": "15:31  \u2191  NXPL  < $2  ~  :flag_us:  |  Float: 18.2 M  |  IO: 4.46%  |  MC: 25.7 M\n2 months ago  SEC  Form 8-K - Link,",
+      "timestamp": "2025-10-30T19:31:52.996Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433546420920651910",
+      "content": "16:01  \u2197  ALHC  < $19  ~  :flag_us:  |  Float: 158 M  |  IO: 80.61%  |  MC: 3.4 B\n2 months ago  PR  Alignment Healthcare Reports Third Quarter 2025 Results, Surpasses High-End of Guidance Across All Key Metrics - Link,",
+      "timestamp": "2025-10-30T20:01:40.752Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433546644598558850",
+      "content": "16:02  \u2197  ARDX  < $6  ~  :flag_us:  |  Float: 231 M  |  IO: 69.80%  |  MC: 1.2 B\n2 months ago  PR  Ardelyx Reports Third Quarter 2025 Financial Results and Provides Corporate Update - Link,",
+      "timestamp": "2025-10-30T20:02:34.081Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433547335673053295",
+      "content": "SLDP  < $6  - Solid Power Partners with Samsung SDI and BMW to Advance All-Solid-State Battery Technology - Link  ~  :flag_us:  |  Float: 147 M  |  IO: 24.81%  |  MC: 965 M",
+      "timestamp": "2025-10-30T20:05:18.846Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433547443001360566",
+      "content": "16:05  \u2191  ATEC  < $19  ~  :flag_us:  |  Float: 112 M  |  IO: 69.18%  |  MC: 2.4 B\n2 months ago  PR  ATEC Reports Third Quarter 2025 Financial Results And Raises Full-Year Guidance - Link,",
+      "timestamp": "2025-10-30T20:05:44.435Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433547450571821167",
+      "content": "16:05  \u2191  LUMN  < $12  ~  :flag_us:  |  Float: 939 M  |  IO: 70.62%  |  MC: 10.5 B\n2 months ago  PR  Lumen Technologies Reports Strong Third Quarter Results; Signed Additional $1B in PCF Deals, Delivered on Key Transformation Milestones - Link,",
+      "timestamp": "2025-10-30T20:05:46.240Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433548756195868683",
+      "content": "16:10  \u2191  MRM  < $3  ~  :flag_jp:  |  IO: 0.98%  |  MC: 17.8 M  |  High CTB\n2 months ago  SEC  Form 6-K - Link,",
+      "timestamp": "2025-10-30T20:10:57.525Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433549887341068511",
+      "content": "16:15  \u2191  NLSP  < $1  ~  :flag_ch:  |  Float: 2.7 M  |  IO: 3.85%  |  MC: 3.3 M\n2 months ago  SEC  Form 6-K - Link,2 months ago  PR  NLS Pharmaceutics Expands CNS Pipeline With AEX-6xx Series Developed by Aexon Labs - Link,",
+      "timestamp": "2025-10-30T20:15:27.211Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433549925953572884",
+      "content": "NLSP  < $1  - NLS Pharmaceutics Ltd. and Kadimastem Ltd. Announce Completion of Merger - Link  ~  :flag_ch:  |  Float: 2.7 M  |  IO: 3.85%  |  MC: 3.3 M",
+      "timestamp": "2025-10-30T20:15:36.417Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433553657714184402",
+      "content": "CVU  < $3  - CPI Aerostructures Comments on Unusual Trading Activity - Link  ~  :flag_us:  |  Float: 9.2 M  |  IO: 15.61%  |  MC: 34.5 M",
+      "timestamp": "2025-10-30T20:30:26.138Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433553960727216189",
+      "content": "CRBP  < $16  - Corbus Pharmaceuticals Announces Proposed Public Offering - Link  ~  :flag_us:  |  Float: 11.0 M  |  IO: 65.16%  |  MC: 201 M",
+      "timestamp": "2025-10-30T20:31:38.382Z",
+      "author": "PR \u2193 DROP"
+    },
+    {
+      "id": "1139240765260836936-1433554631941816462",
+      "content": "16:34  \u2197  AXTI  < $9  ~  :flag_us:  |  Float: 42.4 M  |  IO: 31.37%  |  MC: 338 M\n2 months ago  SEC  Form 8-K - Link,2 months ago  PR  AXT, Inc. Announces Third Quarter 2025 Financial Results - Link,2 months ago  SEC  Form 4 - Link,2 months ago  SEC  Form 4 - Link,",
+      "timestamp": "2025-10-30T20:34:18.412Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433554841703284876",
+      "content": "16:35  \u2191  ALIT  < $4  ~  :flag_us:  |  Float: 466 M  |  IO: 97.07%  |  MC: 1.5 B\n2 months ago  PR  Alight Expands AI Collaboration With IBM to Advance Benefits Administration and Employee Experiences - Link,",
+      "timestamp": "2025-10-30T20:35:08.423Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433561117560541245",
+      "content": "MRM  < $3  - MEDIROM MOTHER Labs Inc. Receives Capital Investment from Internal Investors - Link  ~  :flag_jp:  |  IO: 0.98%  |  MC: 17.6 M  |  High CTB",
+      "timestamp": "2025-10-30T21:00:04.704Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433561158341890180",
+      "content": "LUNR  < $13  - Intuitive Machines Secures $8.2 Million AFRL Contract Extension to Advance In-Space Nuclear Power Technology - Link  ~  :flag_us:  |  Float: 107 M  |  IO: 57.50%  |  MC: 2.0 B  |  SI: 26.7%",
+      "timestamp": "2025-10-30T21:00:14.427Z",
+      "author": "PR - Spike"
+    },
+    {
+      "id": "1139240765260836936-1433561208665018458",
+      "content": "17:00  \u2191  SNSE  < $13  ~  :flag_us:  |  Float: 830 k  |  IO: 5.58%  |  MC: 11.9 M\n2 months ago  AR  HC Wainwright & Co. Downgrades Sensei Biotherapeutics to Neutral,2 months ago  SEC  Form 8-K - Link,2 months ago  PR  Sensei Biotherapeutics Announces Initiation of Strategic Review to Maximize Shareholder Value - Link,",
+      "timestamp": "2025-10-30T21:00:26.425Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433563613947232276",
+      "content": "17:09  \u2191  CERO  < $.15c  ~  :flag_us:  |  Float: 1.1 M  |  IO: 18.61%  |  MC: 110 k  |  Reg SHO  |  SI: 16.9%\n2 months ago  SEC  Form 424B3 - Link,2 months ago  SEC  Form 424B3 - Link,2 months ago  AR  D. Boral Capital Maintains Buy on CERo Therapeutics Hldgs, Maintains $30 Price Target,",
+      "timestamp": "2025-10-30T21:09:59.889Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433565916033192059",
+      "content": "17:19  \u2197  OLMA  < $11  ~  :flag_us:  |  Float: 52.9 M  |  IO: 85.67%  |  MC: 603 M\n2 months ago  PR  Olema Oncology to Present Trial-in-Progress Poster for Phase 3 OPERA-02 Trial of Palazestrant Plus Ribociclib at SABCS 2025 - Link,",
+      "timestamp": "2025-10-30T21:19:08.749Z",
+      "author": "NuntioBot"
+    },
+    {
+      "id": "1139240765260836936-1433568699054424075",
+      "content": "BENF  < $1  - Beneficient Regains Compliance with Nasdaq Periodic Filing Requirement and Market Value of Listed Securities Requirement - Link  ~  :flag_us:  |  Float: 8.0 M  |  IO: 13.42%  |  MC: 5.4 M  |  High CTB",
+      "timestamp": "2025-10-30T21:30:12.273Z",
+      "author": "PR - Spike"
+    }
+  ],
+  "sent_at": "2025-12-18T04:37:29.938Z"
+}
