@@ -1544,7 +1544,29 @@ class StrategyEngine:
                 )
 
             if side == "buy":
-                # Buy canceled - just unsubscribe
+                # Check if there were any partial fills before cancellation
+                if pending.db_order_id:
+                    events = self._order_store.get_events_for_order(pending.db_order_id)
+                    filled_shares = 0
+                    filled_price = None
+                    for event in events:
+                        if event.event_type in ["partial_fill", "fill"]:
+                            filled_shares = event.cumulative_filled or 0
+                            filled_price = event.fill_price
+
+                    if filled_shares > 0 and filled_price is not None:
+                        # Partial fill exists - save as active trade instead of just canceling
+                        logger.warning(
+                            f"[{self.strategy_name}] [{ticker}] Order canceled but {filled_shares} shares "
+                            f"filled @ ${filled_price:.4f} - saving as active trade"
+                        )
+                        # Put the order back in pending_orders so on_buy_fill can find it
+                        self.pending_orders[order_id] = pending
+                        # Call on_buy_fill with the filled shares
+                        self.on_buy_fill(order_id, ticker, filled_shares, filled_price, event_time)
+                        return  # Don't unsubscribe since we have an active position
+
+                # No fills - just unsubscribe as normal
                 if self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
             else:
@@ -1573,7 +1595,29 @@ class StrategyEngine:
                 )
 
             if side == "buy":
-                # Buy rejected - just unsubscribe
+                # Check if there were any partial fills before rejection
+                if pending.db_order_id:
+                    events = self._order_store.get_events_for_order(pending.db_order_id)
+                    filled_shares = 0
+                    filled_price = None
+                    for event in events:
+                        if event.event_type in ["partial_fill", "fill"]:
+                            filled_shares = event.cumulative_filled or 0
+                            filled_price = event.fill_price
+
+                    if filled_shares > 0 and filled_price is not None:
+                        # Partial fill exists - save as active trade instead of just rejecting
+                        logger.warning(
+                            f"[{self.strategy_name}] [{ticker}] Order rejected but {filled_shares} shares "
+                            f"filled @ ${filled_price:.4f} - saving as active trade"
+                        )
+                        # Put the order back in pending_orders so on_buy_fill can find it
+                        self.pending_orders[order_id] = pending
+                        # Call on_buy_fill with the filled shares
+                        self.on_buy_fill(order_id, ticker, filled_shares, filled_price, event_time)
+                        return  # Don't unsubscribe since we have an active position
+
+                # No fills - just unsubscribe as normal
                 if self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
             else:
