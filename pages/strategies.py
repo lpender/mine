@@ -360,44 +360,42 @@ else:
                         st.rerun()
 
             with col2:
-                # Load in Backtest - direct navigation with strategy params
-                cfg = strategy.config
-                params = {
-                    "_load": str(int(time.time())),  # Unique ID signals fresh load to app.py
-                    "channel": ",".join(cfg.channels),
-                    "direction": ",".join(cfg.directions),
-                    "sess": ",".join(cfg.sessions),
-                    "price_min": str(cfg.price_min),
-                    "price_max": str(cfg.price_max),
-                    "consec": str(cfg.consec_green_candles),
-                    "min_vol": str(cfg.min_candle_volume),
-                    "tp": str(cfg.take_profit_pct),
-                    "sl": str(cfg.stop_loss_pct),
-                    "trail": str(cfg.trailing_stop_pct),
-                    "sl_open": "1" if cfg.stop_loss_from_open else "0",
-                    "hold": str(cfg.timeout_minutes),
-                    "stake_mode": cfg.stake_mode,
-                    "stake": str(cfg.stake_amount),
-                    "vol_pct": str(cfg.volume_pct),
-                    "max_stake": str(cfg.max_stake),
-                    "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "0",
-                    "no_fin": "1" if cfg.exclude_financing_headlines else "0",
-                    "exclude_biotech": "1" if cfg.exclude_biotech else "0",
-                    "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "0",
-                    "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "0",
-                    "sample_pct": "1",  # Default to 1% sample for faster iteration
-                }
-                query_string = "&".join(f"{k}={v}" for k, v in params.items())
-                # Use markdown link styled as button - opens in same tab
-                st.markdown(
-                    f'<a href="../?{query_string}" target="_self" style="'
-                    'display: inline-block; padding: 0.25rem 0.75rem; '
-                    'background-color: rgb(49, 51, 63); color: white; '
-                    'border-radius: 0.25rem; text-decoration: none; '
-                    'font-size: 14px; font-weight: 400; text-align: center;">'
-                    'Load in Backtest</a>',
-                    unsafe_allow_html=True
-                )
+                # Load in Backtest - button that clears session state then navigates
+                if st.button("Load in Backtest", key=f"load_backtest_{strategy_id}"):
+                    # Clear all filter/config session state to force URL params to apply
+                    keys_to_clear = [k for k in list(st.session_state.keys()) if k.startswith("_")]
+                    for k in keys_to_clear:
+                        del st.session_state[k]
+
+                    # Build URL with strategy params
+                    cfg = strategy.config
+                    params = {
+                        "channel": ",".join(cfg.channels),
+                        "direction": ",".join(cfg.directions),
+                        "sess": ",".join(cfg.sessions),
+                        "price_min": str(cfg.price_min),
+                        "price_max": str(cfg.price_max),
+                        "consec": str(cfg.consec_green_candles),
+                        "min_vol": str(cfg.min_candle_volume),
+                        "tp": str(cfg.take_profit_pct),
+                        "sl": str(cfg.stop_loss_pct),
+                        "trail": str(cfg.trailing_stop_pct),
+                        "sl_open": "1" if cfg.stop_loss_from_open else "0",
+                        "hold": str(cfg.timeout_minutes),
+                        "stake_mode": cfg.stake_mode,
+                        "stake": str(cfg.stake_amount),
+                        "vol_pct": str(cfg.volume_pct),
+                        "max_stake": str(cfg.max_stake),
+                        "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "0",
+                        "no_fin": "1" if cfg.exclude_financing_headlines else "0",
+                        "exclude_biotech": "1" if cfg.exclude_biotech else "0",
+                        "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "0",
+                        "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "0",
+                        "sample_pct": "1",  # Default to 1% sample for faster iteration
+                    }
+                    # Navigate to main page with query params
+                    st.query_params.update(params)
+                    st.switch_page("app.py")
 
             with col3:
                 if st.button("Edit Sizing"):

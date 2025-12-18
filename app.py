@@ -310,13 +310,9 @@ all_directions = opts.get("directions", [])
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
 def init_session_state():
     """Initialize session state from URL params only for missing keys."""
-    # If _load param is present, always force-apply URL params
-    # This allows "Load in Backtest" to override existing values
-    force_from_url = "_load" in st.query_params
-
-    # Helper to set from URL - force if _load param exists, otherwise only if missing
+    # Helper to set if missing
     def set_if_missing(key, value):
-        if force_from_url or key not in st.session_state:
+        if key not in st.session_state:
             st.session_state[key] = value
 
     # Validate slider values against their min/max ranges
@@ -371,27 +367,10 @@ def init_session_state():
     # Prior move filter
     prior_move_val = get_param("max_prior_move", 0.0, float)
     set_if_missing("_prior_move_max", prior_move_val if prior_move_val > 0 else 0.0)
-    set_if_missing("_prior_move_min", get_param("prior_move_min", 0.0, float))
     # Market cap filter from URL (convert to the mc_max widget if provided)
     max_mcap_val = get_param("max_mcap", 0.0, float)
     if max_mcap_val > 0:
         set_if_missing("_mc_max", max_mcap_val)
-    # Sampling
-    set_if_missing("_sample_pct", int(get_param("sample_pct", 100) or 100))
-    set_if_missing("_sample_seed", int(get_param("sample_seed", 0) or 0))
-    # Country blacklist
-    country_bl_list = get_param("country_blacklist", "", list)
-    set_if_missing("_country_blacklist", [c for c in country_bl_list if c in all_countries])
-    # Headline type filter
-    fin_types_list = get_param("exclude_financing", "", list)
-    valid_types = ["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"]
-    set_if_missing("_exclude_financing", [t for t in fin_types_list if t in valid_types] or ["offering", "warrants", "convertible"])
-    # NHOD/NSH filters
-    set_if_missing("_nhod_filter", get_param("nhod", "Any"))
-    set_if_missing("_nsh_filter", get_param("nsh", "Any"))
-    # RVol filter
-    set_if_missing("_rvol_min", get_param("rvol_min", 0.0, float))
-    set_if_missing("_rvol_max", get_param("rvol_max", 0.0, float))
 
 init_session_state()
 
@@ -405,6 +384,7 @@ with st.sidebar:
         "Sample Size %",
         min_value=1,
         max_value=100,
+        value=int(get_param("sample_pct", 100) or 100),
         step=1,
         key="_sample_pct",
         help="Test on random subset for faster iteration (100% = all data)"
@@ -412,6 +392,7 @@ with st.sidebar:
 
     sample_seed = st.number_input(
         "Random Seed",
+        value=int(get_param("sample_seed", 0) or 0),
         min_value=0,
         step=1,
         key="_sample_seed",
@@ -448,12 +429,14 @@ with st.sidebar:
     )
 
     # Max intraday mentions filter
+    _max_mentions_key = "_max_mentions"
+    if _max_mentions_key not in st.session_state or st.query_params.get("max_mentions"):
+        st.session_state[_max_mentions_key] = int(get_param("max_mentions", 0) or 0)
     max_mentions = st.number_input(
         "Max Intraday Mentions",
         min_value=0,
         max_value=100,
-        value=0,
-        key="_max_mentions",
+        key=_max_mentions_key,
         help="Only alerts with mentions <= this value (0 = no filter)"
     )
 
@@ -548,14 +531,21 @@ with st.sidebar:
     st.subheader("Market Cap (millions)")
     col1, col2 = st.columns(2)
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
-    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
+    _mc_max_key = "_mc_max"
+    if _mc_max_key not in st.session_state or st.query_params.get("max_mcap"):
+        _mc_max_val = get_param("max_mcap", 0.0, float)
+        st.session_state[_mc_max_key] = _mc_max_val if _mc_max_val > 0 else 0.0
+    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key=_mc_max_key)
 
     # Prior move filter (scanner_gain_pct)
     st.subheader("Prior Move Filter")
     col1, col2 = st.columns(2)
     prior_move_min = col1.number_input("Min %", min_value=0.0, step=5.0, key="_prior_move_min",
                                         help="Only include if stock already moved at least this % before alert")
-    prior_move_max = col2.number_input("Max %", min_value=0.0, value=0.0, step=10.0, key="_prior_move_max",
+    _prior_move_max_key = "_prior_move_max"
+    if _prior_move_max_key not in st.session_state or st.query_params.get("max_prior_move"):
+        st.session_state[_prior_move_max_key] = get_param("max_prior_move", 0.0, float)
+    prior_move_max = col2.number_input("Max %", min_value=0.0, step=10.0, key=_prior_move_max_key,
                                         help="Exclude if stock already moved more than this % before alert (0 = no limit)")
 
     # Headline type filter (financing)
@@ -563,12 +553,16 @@ with st.sidebar:
     exclude_financing_types = st.multiselect(
         "Exclude financing types",
         options=["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"],
+        default=["offering", "warrants", "convertible"],
         key="_exclude_financing",
         help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
     )
+    _exclude_biotech_key = "_exclude_biotech"
+    if _exclude_biotech_key not in st.session_state or st.query_params.get("exclude_biotech"):
+        st.session_state[_exclude_biotech_key] = get_param("exclude_biotech", False, bool)
     exclude_biotech = st.checkbox(
         "Exclude biotech/pharma (clinical trials)",
-        key="_exclude_biotech",
+        key=_exclude_biotech_key,
         help="Exclude announcements mentioning 'therapeutics', 'clinical', 'trial', 'phase' (tend to underperform)"
     )
 
@@ -811,9 +805,6 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-# Remove _load param after widgets have rendered (so widget changes work normally)
-if "_load" in st.query_params:
-    del st.query_params["_load"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Filter Announcements
