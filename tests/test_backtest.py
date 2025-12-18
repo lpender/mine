@@ -521,11 +521,15 @@ class TestFourStageIntraCandleModel:
         assert result.trigger_type == "stop_loss"
         assert result.exit_price == pytest.approx(9.70, rel=0.01)  # Stop price, not close
 
-    def test_stop_loss_priority_over_trailing_stop_at_low(self):
+    def test_trailing_stop_triggers_before_fixed_stop_when_both_breached(self):
         """
-        Fixed stop loss should be checked before trailing stop at stage 2.
+        When both trailing stop and fixed stop loss are breached, trailing stop triggers first.
 
-        If both would trigger at the low, stop loss wins.
+        As price falls from $10.00 to $9.50:
+        1. At $9.90, trailing stop (1% from entry) is hit FIRST
+        2. At $9.70, fixed stop loss (3% from entry) would be hit (but we're already out)
+
+        Trailing stop is hit first because it's closer to the current price.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
         announcement = make_announcement(timestamp=base_time)
@@ -547,8 +551,9 @@ class TestFourStageIntraCandleModel:
         result = run_single_backtest(announcement, bars, config)
 
         assert result.entered
-        assert result.trigger_type == "stop_loss"  # Not trailing_stop
-        assert result.exit_price == pytest.approx(9.70, rel=0.01)
+        # Trailing stop triggers first because it's at a higher price (closer to entry)
+        assert result.trigger_type == "trailing_stop"
+        assert result.exit_price == pytest.approx(9.90, rel=0.01)
 
     def test_trailing_stop_triggers_at_low_when_stop_loss_not_breached(self):
         """
@@ -1167,6 +1172,82 @@ class TestStopLossEdgeCases:
         assert result.trigger_type == "stop_loss"
         # Normal stop (no gap): fill at stop price
         assert result.exit_price == pytest.approx(9.50, rel=0.01)
+
+    def test_gap_down_with_rally_above_stop_fills_at_open(self):
+        """
+        Gap-down scenario: bar opens below stop but rallies above it.
+
+        Entry at $10, stop at 5% = $9.50
+        Next bar: open=$9.40 (below stop), high=$10.00 (above stop), low=$9.30, close=$9.80
+
+        The OLD (buggy) code checks: if bar.high < stop_price
+        This fails because $10.00 > $9.50, so it fills at stop ($9.50)
+
+        CORRECT: Should fill at bar.open ($9.40) because the price gapped through
+        the stop level. The stop price was never actually traded on the way down.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Gap down through stop, but rallies back above
+            # open=$9.40 < stop=$9.50 (gapped through)
+            # high=$10.00 > stop=$9.50 (rallied above)
+            make_bar(base_time + timedelta(minutes=1), open_=9.40, high=10.00, low=9.30, close=9.80, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=20.0,
+            stop_loss_pct=5.0,  # Stop at $9.50
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.entry_price == 10.00
+        assert result.trigger_type == "stop_loss"
+        # Gap through stop: fill at bar.open ($9.40), NOT stop ($9.50)
+        # The stop price was never traded - price gapped through it
+        assert result.exit_price == pytest.approx(9.40, rel=0.01)
+
+    def test_gap_down_trailing_stop_with_rally_above_fills_at_open(self):
+        """
+        Gap-down through trailing stop, but bar rallies above the trailing stop level.
+
+        Entry at $10, peaks at $12, trailing 10% = $10.80
+        Next bar: open=$10.50 (below trailing $10.80), high=$11.50 (above trailing), low=$10.40
+
+        Should fill at bar.open ($10.50), not trailing stop ($10.80)
+        The trailing stop price was never actually traded - it gapped through.
+        """
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time)
+
+        bars = [
+            make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
+            # Bar peaks at $12
+            make_bar(base_time + timedelta(minutes=1), open_=10.00, high=12.00, low=10.00, close=11.50, volume=50_000),
+            # Gap down below trailing stop ($10.80), but rallies back above
+            make_bar(base_time + timedelta(minutes=2), open_=10.50, high=11.50, low=10.40, close=11.00, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_at_candle_close=True,
+            take_profit_pct=30.0,
+            stop_loss_pct=20.0,
+            trailing_stop_pct=10.0,  # From $12: $10.80
+            window_minutes=30,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "trailing_stop"
+        # Gap through trailing stop: fill at bar.open ($10.50), not trailing ($10.80)
+        assert result.exit_price == pytest.approx(10.50, rel=0.01)
 
 
 class TestEntryWindowMinutes:

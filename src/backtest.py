@@ -208,19 +208,24 @@ def run_single_backtest(
     # Stage 2: Price drops to low - only if low < open
     # Stage 3: Price rises to high - only if high > close
     # Stage 4: Price settles at close
+    is_first_bar = True
     for bar in bars[entry_bar_idx:]:
-        # Update highest FIRST before checking stops
-        if bar.high > highest_since_entry:
-            highest_since_entry = bar.high
-
         # Stage 2: Price drops to low (only if low < open)
+        # IMPORTANT: Use highest_since_entry from PREVIOUS bars, not current bar's high
+        # because in the 4-stage model, low happens BEFORE high
         if bar.low < bar.open:
+            # For gap detection: on entry bar with intra-bar entry, don't use gap logic.
+            # The "gap" concept only applies to SUBSEQUENT bars, not the entry bar itself.
+            # On the entry bar, we entered somewhere in the middle, not at the open.
+            skip_gap_detection = is_first_bar and not config.entry_at_candle_close
+
             # Check trailing stop FIRST (it's typically hit before fixed SL when falling from a high)
             if config.trailing_stop_pct > 0:
                 trailing_stop_price = highest_since_entry * (1 - config.trailing_stop_pct / 100)
                 if bar.low <= trailing_stop_price:
-                    # Same gap handling for trailing stop
-                    if bar.high < trailing_stop_price:
+                    # Gap handling: if bar opens below stop, fill at open (gapped through)
+                    # Skip gap detection on entry bar for intra-bar entries
+                    if not skip_gap_detection and bar.open < trailing_stop_price:
                         exit_price = bar.open
                     else:
                         exit_price = trailing_stop_price
@@ -230,15 +235,19 @@ def run_single_backtest(
 
             # Then check fixed stop loss
             if bar.low <= stop_loss_price:
-                # If entire bar is below stop (gap down through stop), fill at bar.open
-                # because the stop price was never actually traded
-                if bar.high < stop_loss_price:
+                # Gap handling: if bar opens below stop, fill at open (gapped through)
+                # Skip gap detection on entry bar for intra-bar entries
+                if not skip_gap_detection and bar.open < stop_loss_price:
                     exit_price = bar.open
                 else:
                     exit_price = stop_loss_price
                 exit_time = bar.timestamp
                 trigger_type = "stop_loss"
                 break
+
+        # Update highest AFTER stage 2 checks (low happens before high in 4-stage model)
+        if bar.high > highest_since_entry:
+            highest_since_entry = bar.high
 
         # Stage 3: Check take profit
         if bar.high >= take_profit_price:
@@ -258,14 +267,16 @@ def run_single_backtest(
 
         # Stage 4: Check fixed stop loss at close
         if bar.close <= stop_loss_price:
-            # If entire bar is below stop (gap down scenario), fill at bar.open
-            if bar.high < stop_loss_price:
+            # Gap handling: if bar opens below stop, fill at open (gapped through)
+            if bar.open < stop_loss_price:
                 exit_price = bar.open
             else:
                 exit_price = stop_loss_price
             exit_time = bar.timestamp
             trigger_type = "stop_loss"
             break
+
+        is_first_bar = False
 
     # If no exit triggered, use last bar's close
     if exit_price is None:
