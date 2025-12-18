@@ -361,6 +361,16 @@ def init_session_state():
     set_if_missing("_stake_amount", get_param("stake", 1000.0, float))
     set_if_missing("_volume_pct", get_param("vol_pct", 1.0, float))
     set_if_missing("_max_stake", get_param("max_stake", 10000.0, float))
+    # New filters from strategy
+    set_if_missing("_max_mentions", get_param("max_mentions", 0, int))
+    set_if_missing("_exclude_biotech", get_param("exclude_biotech", False, bool))
+    # Prior move filter
+    prior_move_val = get_param("max_prior_move", 0.0, float)
+    set_if_missing("_prior_move_max", prior_move_val if prior_move_val > 0 else 0.0)
+    # Market cap filter from URL (convert to the mc_max widget if provided)
+    max_mcap_val = get_param("max_mcap", 0.0, float)
+    if max_mcap_val > 0:
+        set_if_missing("_mc_max", max_mcap_val)
 
 init_session_state()
 

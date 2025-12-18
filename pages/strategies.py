@@ -381,6 +381,9 @@ else:
                     "max_stake": str(cfg.max_stake),
                     "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "0",
                     "exclude_headlines": "1" if cfg.exclude_financing_headlines else "0",
+                    "exclude_biotech": "1" if cfg.exclude_biotech else "0",
+                    "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "0",
+                    "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "0",
                 }
                 query_string = "&".join(f"{k}={v}" for k, v in params.items())
                 # Use markdown link styled as button - opens in same tab
