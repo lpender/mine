@@ -384,6 +384,7 @@ else:
                     "exclude_biotech": "1" if cfg.exclude_biotech else "0",
                     "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "0",
                     "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "0",
+                    "sample_pct": "1",  # Default to 1% sample for faster iteration
                 }
                 query_string = "&".join(f"{k}={v}" for k, v in params.items())
                 # Use markdown link styled as button - opens in same tab
