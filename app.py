@@ -1146,7 +1146,7 @@ else:
                     x=[entry_time_aligned],
                     y=[selected_result.entry_price],
                     mode="markers",
-                    marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
+                    marker=dict(symbol="circle", size=6, color="blue", line=dict(width=1, color="white")),
                     name=f"Entry @ ${selected_result.entry_price:.2f}",
                 ))
 
@@ -1159,7 +1159,7 @@ else:
                     x=[exit_time_aligned],
                     y=[selected_result.exit_price],
                     mode="markers",
-                    marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
+                    marker=dict(symbol="x", size=6, color=exit_color, line=dict(width=2)),
                     name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
                 ))
 

@@ -548,7 +548,7 @@ else:
                     x=[entry_time_rounded],
                     y=[selected_trade.entry_price],
                     mode="markers",
-                    marker=dict(symbol="circle", size=12, color="blue", line=dict(width=2, color="white")),
+                    marker=dict(symbol="circle", size=6, color="blue", line=dict(width=1, color="white")),
                     name=f"Entry @ {format_price(selected_trade.entry_price)}",
                     hoverinfo="name",
                 ))
@@ -560,7 +560,7 @@ else:
                     x=[exit_time_rounded],
                     y=[selected_trade.exit_price],
                     mode="markers",
-                    marker=dict(symbol="x", size=12, color=exit_color, line=dict(width=3)),
+                    marker=dict(symbol="x", size=6, color=exit_color, line=dict(width=2)),
                     name=f"Exit @ {format_price(selected_trade.exit_price)} ({selected_trade.exit_reason})",
                     hoverinfo="name",
                 ))
