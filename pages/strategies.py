@@ -367,6 +367,7 @@ else:
                     # Filters
                     "channel": ",".join(cfg.channels) if cfg.channels else "",
                     "direction": ",".join(cfg.directions) if cfg.directions else "",
+                    "author": ",".join(cfg.authors) if cfg.authors else "",
                     "sess": ",".join(cfg.sessions) if cfg.sessions else "premarket,market",
                     "country_blacklist": ",".join(cfg.country_blacklist) if cfg.country_blacklist else "",
                     "price_min": str(cfg.price_min),
@@ -393,7 +394,7 @@ else:
                     "max_stake": str(cfg.max_stake),
                 }
                 # Note: The following dashboard filters are NOT saved in strategy:
-                # - author, country (whitelist), has_hl, no_hl
+                # - country (whitelist), has_hl, no_hl
                 # - float_min, float_max, mc_min, mc_max (separate from max_mcap)
                 # - nhod, nsh, rvol_min, rvol_max, prior_move_min
                 # - exclude_financing (types list, only boolean no_fin is saved)
