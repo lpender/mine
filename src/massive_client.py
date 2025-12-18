@@ -138,10 +138,11 @@ class MassiveClient:
         ticker: str,
         announcement_time: datetime,
         window_minutes: int = 120,
+        pre_window_minutes: int = 5,
         use_cache: bool = True,  # Deprecated, kept for backwards compat
     ) -> List[OHLCVBar]:
         """
-        Fetch OHLCV data for a window after an announcement.
+        Fetch OHLCV data for a window before and after an announcement.
 
         For postmarket announcements, starts from the announcement time.
         For premarket announcements, starts from market open of the same day.
@@ -150,27 +151,33 @@ class MassiveClient:
         Args:
             ticker: Stock ticker symbol
             announcement_time: When the announcement was made
-            window_minutes: How many minutes of data to fetch
+            window_minutes: How many minutes of data to fetch AFTER announcement
+            pre_window_minutes: How many minutes of data to fetch BEFORE announcement (default: 5)
             use_cache: Deprecated, ignored. Use PostgresClient for caching.
 
         Returns:
             List of OHLCVBar objects
         """
 
-        start_time = self.get_effective_start_time(announcement_time)
+        effective_start = self.get_effective_start_time(announcement_time)
 
         # If the effective start time is in the future (e.g. premarket before 9:30,
         # postmarket pointing to next session, weekend), skip the API call.
         now = datetime.now(tz=ET_TZ)
-        now_cmp = now.replace(tzinfo=None) if start_time.tzinfo is None else now
-        if start_time >= now_cmp:
+        now_cmp = now.replace(tzinfo=None) if effective_start.tzinfo is None else now
+        if effective_start >= now_cmp:
             print(
-                f"Skipping OHLCV fetch for {ticker}: effective start {start_time} is in the future "
+                f"Skipping OHLCV fetch for {ticker}: effective start {effective_start} is in the future "
                 f"(market likely closed)."
             )
             return []
 
-        end_time = start_time + timedelta(minutes=window_minutes)
+        # Calculate pre-window start: fetch N minutes before the announcement time
+        # (not before the effective start, since we want actual pre-announcement bars)
+        pre_start = announcement_time - timedelta(minutes=pre_window_minutes)
+
+        # End time is after the effective start (handles premarket -> market open logic)
+        end_time = effective_start + timedelta(minutes=window_minutes)
 
         # Clip end time based on provider's data availability
         # (e.g., Alpaca: 15 min delay, Polygon free tier: end of previous day)
@@ -180,7 +187,7 @@ class MassiveClient:
             end_time = earliest_available
 
         # If the entire window is too recent for the provider, skip
-        if start_time >= earliest_available:
+        if pre_start >= earliest_available:
             print(
                 f"Skipping OHLCV fetch for {ticker}: data not yet available "
                 f"(provider {self._provider.name} has {min_delay} min delay)."
@@ -191,7 +198,7 @@ class MassiveClient:
         if end_time > now_cmp:
             end_time = now_cmp
 
-        return self.fetch_ohlcv(ticker, start_time, end_time)
+        return self.fetch_ohlcv(ticker, pre_start, end_time)
 
     def get_effective_start_time(self, announcement_time: datetime) -> datetime:
         """

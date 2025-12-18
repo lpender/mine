@@ -313,8 +313,9 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
                 logger.info(f"Saved: {new_count} new announcements")
 
                 # Optionally fetch OHLCV data
+                # Fetches bars from 5 minutes BEFORE to 120 minutes AFTER each announcement
                 if UnifiedAlertHandler.fetch_ohlcv:
-                    logger.info("Fetching OHLCV data...")
+                    logger.info("Fetching OHLCV data (5min pre + 120min post)...")
                     for ann in new_announcements:
                         try:
                             bars = client.fetch_after_announcement(

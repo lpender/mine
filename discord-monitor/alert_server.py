@@ -280,8 +280,9 @@ class AlertHandler(BaseHTTPRequestHandler):
                 print(f"  Saved: {new_count} new announcements ({len(new_announcements) - new_count} already existed)")
 
                 # Optionally fetch OHLCV data
+                # Fetches bars from 5 minutes BEFORE to 120 minutes AFTER each announcement
                 if AlertHandler.fetch_ohlcv:
-                    print(f"  Fetching OHLCV data...")
+                    print(f"  Fetching OHLCV data (5min pre + 120min post)...")
                     for ann in new_announcements:
                         try:
                             bars = client.fetch_after_announcement(

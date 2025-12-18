@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Identify and refetch missing OHLCV data for announcements."""
+"""Identify and refetch missing OHLCV data for announcements.
+
+This script fetches OHLCV bars starting from 5 minutes BEFORE each announcement
+up to 120 minutes after (configurable). This allows for pre-announcement
+price action analysis.
+"""
 
 import sys
 import json

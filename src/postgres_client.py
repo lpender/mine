@@ -151,6 +151,7 @@ class PostgresClient:
         source: str = "backfill",
         sample_pct: int = 100,
         sample_seed: int = 0,
+        sample_ids: Optional[List[int]] = None,  # If provided, sampling is fixed to these IDs
         sessions: Optional[List[str]] = None,  # premarket|market|postmarket|closed (computed from timestamp)
         # Column filters (all optional)
         countries: Optional[List[str]] = None,
@@ -192,33 +193,40 @@ class PostgresClient:
             # Count before sampling (matches previous behavior)
             total_before_sampling = base.count()
 
-            # Sampling (subquery)
-            pct = int(sample_pct or 100)
-            pct = 1 if pct < 1 else 100 if pct > 100 else pct
-            if total_before_sampling <= 0:
-                return 0, []
-
-            sample_size = max(1, int(total_before_sampling * pct / 100))
-            if pct < 100:
-                if sample_seed and int(sample_seed) > 0:
-                    # Deterministic pseudo-random ordering based on (ticker, timestamp, seed)
-                    seed_str = str(int(sample_seed))
-                    order_expr = func.md5(
-                        func.concat(
-                            AnnouncementDB.ticker,
-                            cast(AnnouncementDB.timestamp, String),
-                            literal(seed_str),
-                        )
-                    )
-                else:
-                    order_expr = func.random()
-
-                sampled_subq = base.order_by(order_expr).limit(sample_size).subquery()
-                A = aliased(AnnouncementDB, sampled_subq)
-                q = db.query(A)
-            else:
+            # If a fixed sample is provided, use it (stable across UI tweaks).
+            if sample_ids is not None:
+                if not sample_ids:
+                    return total_before_sampling, []
                 A = AnnouncementDB
-                q = base
+                q = base.filter(AnnouncementDB.id.in_(sample_ids))
+            else:
+                # Sampling (subquery)
+                pct = int(sample_pct or 100)
+                pct = 1 if pct < 1 else 100 if pct > 100 else pct
+                if total_before_sampling <= 0:
+                    return 0, []
+
+                sample_size = max(1, int(total_before_sampling * pct / 100))
+                if pct < 100:
+                    if sample_seed and int(sample_seed) > 0:
+                        # Deterministic pseudo-random ordering based on (ticker, timestamp, seed)
+                        seed_str = str(int(sample_seed))
+                        order_expr = func.md5(
+                            func.concat(
+                                AnnouncementDB.ticker,
+                                cast(AnnouncementDB.timestamp, String),
+                                literal(seed_str),
+                            )
+                        )
+                    else:
+                        order_expr = func.random()
+
+                    sampled_subq = base.order_by(order_expr).limit(sample_size).subquery()
+                    A = aliased(AnnouncementDB, sampled_subq)
+                    q = db.query(A)
+                else:
+                    A = AnnouncementDB
+                    q = base
 
             # Apply filters to sampled rows
             # Session filter: compute ET time-of-day from UTC timestamp (matches src.models.get_market_session).
@@ -325,6 +333,45 @@ class PostgresClient:
 
             rows = q.all()
             return total_before_sampling, [self._db_to_announcement(r) for r in rows]
+        finally:
+            db.close()
+
+    def get_sampled_announcement_ids(
+        self,
+        *,
+        source: str = "backfill",
+        sample_pct: int = 100,
+        sample_seed: int = 1,
+    ) -> tuple[int, List[int]]:
+        """
+        Return a stable list of announcement IDs representing the sample.
+        Intended to be persisted by the dashboard so changing backtest params doesn't resample.
+        """
+        db = self._get_db()
+        try:
+            base = db.query(AnnouncementDB.id).filter(AnnouncementDB.source == source)
+            total_before_sampling = db.query(func.count(AnnouncementDB.id)).filter(AnnouncementDB.source == source).scalar() or 0
+
+            pct = int(sample_pct or 100)
+            pct = 1 if pct < 1 else 100 if pct > 100 else pct
+            if total_before_sampling <= 0:
+                return 0, []
+            if pct >= 100:
+                # Full dataset: no sampling
+                ids = [r[0] for r in base.order_by(AnnouncementDB.timestamp.desc()).all()]
+                return total_before_sampling, ids
+
+            sample_size = max(1, int(total_before_sampling * pct / 100))
+            seed_str = str(int(sample_seed or 1))
+            order_expr = func.md5(
+                func.concat(
+                    AnnouncementDB.ticker,
+                    cast(AnnouncementDB.timestamp, String),
+                    literal(seed_str),
+                )
+            )
+            rows = base.order_by(order_expr).limit(sample_size).all()
+            return total_before_sampling, [r[0] for r in rows]
         finally:
             db.close()
 
@@ -605,14 +652,16 @@ class PostgresClient:
 
     def fetch_after_announcement(self, ticker: str, announcement_time: datetime,
                                   window_minutes: int = 120,
+                                  pre_window_minutes: int = 5,
                                   use_cache: bool = True,
                                   update_status: bool = True) -> Optional[List[OHLCVBar]]:
-        """Fetch OHLCV data starting from announcement time.
+        """Fetch OHLCV data starting from before announcement time.
 
         Args:
             ticker: Stock ticker
             announcement_time: Naive datetime in UTC (from database)
-            window_minutes: How many minutes of data to fetch
+            window_minutes: How many minutes of data to fetch AFTER announcement
+            pre_window_minutes: How many minutes of data to fetch BEFORE announcement (default: 5)
             use_cache: Whether to use cached data
             update_status: Whether to update the announcement's ohlcv_status
 
@@ -632,11 +681,16 @@ class PostgresClient:
             logger.debug(f"Skipping {ticker}: trading window is today/future ({effective_start.date()})")
             return []
 
+        # Calculate pre-window start: fetch 5 minutes before the announcement time
+        # (not before the effective start, since we want actual pre-announcement bars)
+        pre_start = announcement_time - timedelta(minutes=pre_window_minutes)
+
+        # End time is after the effective start (handles premarket -> market open logic)
         end_time = effective_start + timedelta(minutes=window_minutes)
 
         try:
             bars = self.fetch_ohlcv(
-                ticker, effective_start, end_time,
+                ticker, pre_start, end_time,
                 use_cache=use_cache,
                 announcement_ticker=ticker,
                 announcement_timestamp=announcement_time
