@@ -244,13 +244,67 @@ class AlpacaTradingClient(TradingClient):
             ))
         return orders
 
-    def cancel_order(self, order_id: str) -> bool:
-        """Cancel a specific order by ID."""
+    def get_order(self, order_id: str) -> Optional[Order]:
+        """Get order details by ID."""
         try:
+            data = self._request("GET", f"/v2/orders/{order_id}")
+
+            # Parse created_at timestamp
+            created_at = None
+            created_at_str = data.get("created_at")
+            if created_at_str:
+                if created_at_str.endswith("Z"):
+                    created_at = datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                else:
+                    created_at = datetime.fromisoformat(created_at_str)
+                created_at = created_at.astimezone(UTC_TZ).replace(tzinfo=None)
+
+            limit_price = None
+            if "limit_price" in data and data["limit_price"]:
+                limit_price = float(data["limit_price"])
+
+            return Order(
+                order_id=data["id"],
+                ticker=data["symbol"],
+                side=data["side"],
+                shares=int(data["qty"]),
+                order_type=data["type"],
+                status=data["status"],
+                created_at=created_at,
+                limit_price=limit_price,
+            )
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                return None
+            raise
+
+    def cancel_order(self, order_id: str) -> bool:
+        """Cancel a specific order by ID.
+
+        Checks order status first to avoid race conditions where the order
+        fills between timeout detection and cancel attempt.
+        """
+        try:
+            # Check order status first to avoid race condition
+            order = self.get_order(order_id)
+            if order is None:
+                logger.warning(f"Order {order_id} not found - may have been canceled already")
+                return False
+            if order.status == "filled":
+                logger.info(f"Order {order_id} already filled - skipping cancel")
+                return False
+            if order.status in ("canceled", "expired", "replaced"):
+                logger.info(f"Order {order_id} already {order.status} - skipping cancel")
+                return False
+
             self._request("DELETE", f"/v2/orders/{order_id}")
             logger.info(f"Canceled order {order_id}")
             return True
         except requests.HTTPError as e:
+            # Handle race condition: order filled/canceled between status check and cancel
+            if e.response.status_code == 422:
+                logger.info(f"Order {order_id} already filled/canceled (422)")
+                return False
             logger.error(f"Failed to cancel order {order_id}: {e}")
             return False
 
