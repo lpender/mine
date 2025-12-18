@@ -380,13 +380,15 @@ with st.sidebar:
     # ─────────────────────────────────────────────────────────────────────────
     st.header("Sampling")
 
+    _sample_pct_key = "_sample_pct"
+    if _sample_pct_key not in st.session_state or st.query_params.get("sample_pct"):
+        st.session_state[_sample_pct_key] = int(get_param("sample_pct", 100) or 100)
     sample_pct = st.slider(
         "Sample Size %",
         min_value=1,
         max_value=100,
-        value=int(get_param("sample_pct", 100) or 100),
         step=1,
-        key="_sample_pct",
+        key=_sample_pct_key,
         help="Test on random subset for faster iteration (100% = all data)"
     )
 
