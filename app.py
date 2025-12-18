@@ -1205,7 +1205,7 @@ event = st.dataframe(
 )
 
 # Show filter summary at bottom
-st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing}")
+st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing_headlines}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Row Selection & OHLCV Chart
