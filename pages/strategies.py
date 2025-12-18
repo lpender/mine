@@ -362,10 +362,8 @@ else:
             with col2:
                 # Load in Backtest - direct navigation with strategy params
                 cfg = strategy.config
-                # Use timestamp as unique load ID to signal fresh navigation
-                load_id = str(int(time.time() * 1000))
                 params = {
-                    "_load_id": load_id,  # Signals to app.py this is a fresh load
+                    "_load": "1",  # Signals to app.py to clear session state and apply URL params
                     "channel": ",".join(cfg.channels),
                     "direction": ",".join(cfg.directions),
                     "sess": ",".join(cfg.sessions),
