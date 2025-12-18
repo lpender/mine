@@ -371,10 +371,27 @@ def init_session_state():
     # Prior move filter
     prior_move_val = get_param("max_prior_move", 0.0, float)
     set_if_missing("_prior_move_max", prior_move_val if prior_move_val > 0 else 0.0)
+    set_if_missing("_prior_move_min", get_param("prior_move_min", 0.0, float))
     # Market cap filter from URL (convert to the mc_max widget if provided)
     max_mcap_val = get_param("max_mcap", 0.0, float)
     if max_mcap_val > 0:
         set_if_missing("_mc_max", max_mcap_val)
+    # Sampling
+    set_if_missing("_sample_pct", int(get_param("sample_pct", 100) or 100))
+    set_if_missing("_sample_seed", int(get_param("sample_seed", 0) or 0))
+    # Country blacklist
+    country_bl_list = get_param("country_blacklist", "", list)
+    set_if_missing("_country_blacklist", [c for c in country_bl_list if c in all_countries])
+    # Headline type filter
+    fin_types_list = get_param("exclude_financing", "", list)
+    valid_types = ["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"]
+    set_if_missing("_exclude_financing", [t for t in fin_types_list if t in valid_types] or ["offering", "warrants", "convertible"])
+    # NHOD/NSH filters
+    set_if_missing("_nhod_filter", get_param("nhod", "Any"))
+    set_if_missing("_nsh_filter", get_param("nsh", "Any"))
+    # RVol filter
+    set_if_missing("_rvol_min", get_param("rvol_min", 0.0, float))
+    set_if_missing("_rvol_max", get_param("rvol_max", 0.0, float))
 
 init_session_state()
 
@@ -388,7 +405,6 @@ with st.sidebar:
         "Sample Size %",
         min_value=1,
         max_value=100,
-        value=int(get_param("sample_pct", 100) or 100),
         step=1,
         key="_sample_pct",
         help="Test on random subset for faster iteration (100% = all data)"
@@ -396,7 +412,6 @@ with st.sidebar:
 
     sample_seed = st.number_input(
         "Random Seed",
-        value=int(get_param("sample_seed", 0) or 0),
         min_value=0,
         step=1,
         key="_sample_seed",
@@ -548,7 +563,6 @@ with st.sidebar:
     exclude_financing_types = st.multiselect(
         "Exclude financing types",
         options=["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"],
-        default=["offering", "warrants", "convertible"],
         key="_exclude_financing",
         help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
     )
