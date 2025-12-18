@@ -1132,8 +1132,15 @@ else:
             bar_close = [b.close for b in bars]
             bar_volume = [b.volume for b in bars]
 
-            # Create candlestick chart
-            fig = go.Figure()
+            # Create chart with subplots (price + volume)
+            from plotly.subplots import make_subplots
+            fig = make_subplots(
+                rows=2, cols=1,
+                shared_xaxes=True,
+                vertical_spacing=0.03,
+                row_heights=[0.7, 0.3],
+                subplot_titles=('Price', 'Volume')
+            )
 
             # Build hover text with volume (vertical layout)
             hover_text = [
@@ -1141,7 +1148,7 @@ else:
                 for o, h, l, c, v in zip(bar_open, bar_high, bar_low, bar_close, bar_volume)
             ]
 
-            # Add candlestick
+            # Add candlestick to first subplot
             fig.add_trace(go.Candlestick(
                 x=bar_times,
                 open=bar_open,
@@ -1153,7 +1160,18 @@ else:
                 decreasing_line_color="red",
                 text=hover_text,
                 hoverinfo="text+x",
-            ))
+            ), row=1, col=1)
+
+            # Add volume bars to second subplot (green for green candles, red for red candles)
+            volume_colors = ['green' if c >= o else 'red' for c, o in zip(bar_close, bar_open)]
+            fig.add_trace(go.Bar(
+                x=bar_times,
+                y=bar_volume,
+                name="Volume",
+                marker_color=volume_colors,
+                marker_line_width=0,
+                hovertemplate='Volume: %{y:,.0f}<extra></extra>',
+            ), row=2, col=1)
 
             # Add entry marker (entry at close of first candle, +1 min for end-time display)
             if selected_result.entry_price and selected_result.entry_time:
@@ -1165,7 +1183,7 @@ else:
                     mode="markers",
                     marker=dict(symbol="circle", size=10, color="blue", line=dict(width=1, color="white")),
                     name=f"Entry @ ${selected_result.entry_price:.2f}",
-                ))
+                ), row=1, col=1)
 
             # Add exit marker (+1 min for end-time display)
             if selected_result.exit_price and selected_result.exit_time:
@@ -1178,7 +1196,7 @@ else:
                     mode="markers",
                     marker=dict(symbol="x", size=10, color=exit_color, line=dict(width=2)),
                     name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
-                ))
+                ), row=1, col=1)
 
             # Add horizontal lines for entry, TP, SL
             if selected_result.entry_price:
@@ -1192,19 +1210,21 @@ else:
                     sl_price = entry * (1 - stop_loss / 100)
 
                 fig.add_hline(y=entry, line_dash="solid", line_color="blue", opacity=0.5,
-                              annotation_text=f"Entry ${entry:.2f}")
+                              annotation_text=f"Entry ${entry:.2f}", row=1, col=1)
                 fig.add_hline(y=tp_price, line_dash="dash", line_color="green", opacity=0.5,
-                              annotation_text=f"TP ${tp_price:.2f}")
+                              annotation_text=f"TP ${tp_price:.2f}", row=1, col=1)
                 fig.add_hline(y=sl_price, line_dash="dash", line_color="red", opacity=0.5,
-                              annotation_text=f"SL ${sl_price:.2f}")
+                              annotation_text=f"SL ${sl_price:.2f}", row=1, col=1)
 
             # Layout
             fig.update_layout(
-                xaxis_title="Time (EST)",
-                yaxis_title="Price",
                 xaxis_rangeslider_visible=False,
-                height=500,
+                height=700,
+                showlegend=True,
             )
+            fig.update_xaxes(title_text="Time (EST)", row=2, col=1)
+            fig.update_yaxes(title_text="Price", row=1, col=1)
+            fig.update_yaxes(title_text="Volume", row=2, col=1)
 
             st.plotly_chart(fig, width="stretch")
 
