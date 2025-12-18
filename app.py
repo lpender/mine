@@ -363,31 +363,37 @@ def _active_sample_seed(user_seed: int) -> int:
 # This ensures URL params are used on first load, but widget changes aren't overwritten
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
 def init_session_state():
-    """Initialize session state from URL params, allowing URL to override existing values."""
-    # Helper to set from URL param or use default
-    # If URL param is present, always use it (to support "Load in Backtest" links)
-    # Otherwise, keep existing session state value or use default
-    def set_from_url_or_default(key, url_param, default, param_type=str):
-        if url_param in st.query_params:
-            # URL param present - use it
-            st.session_state[key] = get_param(url_param, default, param_type)
-        elif key not in st.session_state:
-            # No URL param and no session state - use default
-            st.session_state[key] = default
-        # Otherwise: keep existing session state value
+    """Initialize session state from URL params, allowing URL to override existing values.
 
-    # Legacy helper for backwards compatibility
+    URL params only override on first load OR when the URL query string changes
+    (e.g., when navigating from 'Load in Backtest' link). This prevents URL params
+    from reverting user's widget changes on every Streamlit rerun.
+    """
+    # Build a fingerprint of current URL params to detect changes
+    current_url_fingerprint = "&".join(f"{k}={v}" for k, v in sorted(st.query_params.items()))
+    previous_url_fingerprint = st.session_state.get("_url_fingerprint", None)
+
+    # Only apply URL params if this is a new URL (first load or navigation)
+    url_changed = current_url_fingerprint != previous_url_fingerprint
+
+    # Store the current fingerprint for next rerun comparison
+    st.session_state["_url_fingerprint"] = current_url_fingerprint
+
+    # Helper to set if missing (used when URL hasn't changed)
     def set_if_missing(key, value):
         if key not in st.session_state:
             st.session_state[key] = value
 
-    # Helper to set value, checking URL param first
+    # Helper to set value - applies URL param only if URL changed, otherwise keeps existing
     def set_with_url_override(key, url_param, default, param_type=str, validator=None):
-        if url_param in st.query_params:
+        if url_changed and url_param in st.query_params:
+            # URL changed and param present - apply it
             val = get_param(url_param, default, param_type)
             st.session_state[key] = validator(val) if validator else val
         elif key not in st.session_state:
+            # No existing value - use default
             st.session_state[key] = default
+        # Otherwise: keep existing session state (user's widget change)
 
     # Slider value validators
     def validate_sl(v): return max(1.0, min(30.0, v)) if v > 0 else 5.0
@@ -443,8 +449,11 @@ def init_session_state():
     set_with_url_override("_volume_pct", "vol_pct", 1.0, float)
     set_with_url_override("_max_stake", "max_stake", 10000.0, float)
 
+    # Sampling
+    set_with_url_override("_sample_pct", "sample_pct", 100, int, lambda v: max(1, min(100, v)))
+
     # Market cap filter from URL (max_mcap is an alias for mc_max from strategy page)
-    if "max_mcap" in st.query_params:
+    if url_changed and "max_mcap" in st.query_params:
         max_mcap_val = get_param("max_mcap", 0.0, float)
         if max_mcap_val > 0:
             st.session_state["_mc_max"] = max_mcap_val
@@ -457,9 +466,9 @@ with st.sidebar:
     # ─────────────────────────────────────────────────────────────────────────
     st.header("Sampling")
 
-    _sample_pct_key = "_sample_pct"
-    if _sample_pct_key not in st.session_state or st.query_params.get("sample_pct"):
-        st.session_state[_sample_pct_key] = int(get_param("sample_pct", 100) or 100)
+    # sample_pct is initialized by init_session_state if URL changed, otherwise keeps user's value
+    if "_sample_pct" not in st.session_state:
+        st.session_state["_sample_pct"] = int(get_param("sample_pct", 100) or 100)
     sample_pct = st.slider(
         "Sample Size %",
         min_value=1,
