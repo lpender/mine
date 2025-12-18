@@ -314,6 +314,7 @@ def init_session_state():
     def set_if_missing(key, value):
         if key not in st.session_state:
             st.session_state[key] = value
+            LOGGER.debug(f"init_session_state: Set {key} = {value}")
 
     # Validate slider values against their min/max ranges
     sl_val = get_param("sl", 5.0, float)
@@ -1091,7 +1092,11 @@ else:
         ann = selected_result.announcement
 
         # Show full headline and message
-        st.subheader(f"{ann.ticker} - {to_est(ann.timestamp).strftime('%Y-%m-%d %H:%M')} EST")
+        ann_time = to_est(ann.timestamp)
+        # Format with seconds and tenths of a second
+        time_str = ann_time.strftime('%Y-%m-%d %H:%M:%S')
+        tenths = ann_time.microsecond // 100000
+        st.subheader(f"{ann.ticker} - {time_str}.{tenths} EST")
         if ann.headline:
             st.markdown(f"**Headline:** {ann.headline}")
         if ann.source_message:
