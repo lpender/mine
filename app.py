@@ -530,7 +530,7 @@ with st.sidebar:
     col1, col2 = st.columns(2)
     rvol_min = col1.number_input("Min RVol", min_value=0.0, step=1.0, key="_rvol_min",
                                   help="Minimum relative volume")
-    rvol_max = col2.number_input("Max RVol", min_value=0.0, value=0.0, step=5.0, key="_rvol_max",
+    rvol_max = col2.number_input("Max RVol", min_value=0.0, step=5.0, key="_rvol_max",
                                   help="Maximum relative volume (0 = no limit). Note: Lower RVol may perform better!")
 
     # Float range
