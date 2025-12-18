@@ -627,12 +627,6 @@ with st.sidebar:
         help="How long to wait for entry conditions after alert"
     )
 
-    entry_at_open = st.checkbox(
-        "Entry at first bar OPEN (optimistic)",
-        key="_entry_at_open",
-        help="Enter at first candle's open price. Most optimistic - ignores green candle/volume filters."
-    )
-
     sl_from_open = st.checkbox(
         "SL from first candle open",
         key="_sl_from_open",
@@ -893,10 +887,9 @@ config = BacktestConfig(
     stop_loss_from_open=sl_from_open,
     window_minutes=hold_time,
     entry_window_minutes=entry_window,
-    entry_at_open=entry_at_open,  # Most optimistic - enter at first bar's open
-    entry_at_candle_close=(consec_candles == 0 and not entry_at_open),  # Only use candle close if not waiting for consecutive candles
-    entry_after_consecutive_candles=consec_candles if not entry_at_open else 0,
-    min_candle_volume=int(min_candle_vol) if not entry_at_open else 0,
+    entry_at_candle_close=(consec_candles == 0),  # Only use candle close if not waiting for consecutive candles
+    entry_after_consecutive_candles=consec_candles,
+    min_candle_volume=int(min_candle_vol),
     trailing_stop_pct=trailing_stop,
 )
 
