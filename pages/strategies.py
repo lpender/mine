@@ -360,80 +360,53 @@ else:
                         st.rerun()
 
             with col2:
-                # Load in Backtest - button that clears session state then navigates
-                if st.button("Load in Backtest", key=f"load_backtest_{strategy_id}"):
-                    # Clear all filter/config session state to force URL params to apply
-                    # This ensures init_session_state() in app.py will use URL params
-                    keys_to_clear = [k for k in list(st.session_state.keys()) if k.startswith("_")]
-                    for k in keys_to_clear:
-                        del st.session_state[k]
+                # Load in Backtest - show link button with query params
+                cfg = strategy.config
 
-                    # Build URL with ALL strategy config params
-                    cfg = strategy.config
+                params = {
+                    # Filters
+                    "channel": ",".join(cfg.channels) if cfg.channels else "",
+                    "direction": ",".join(cfg.directions) if cfg.directions else "",
+                    "sess": ",".join(cfg.sessions) if cfg.sessions else "premarket,market",
+                    "country_blacklist": ",".join(cfg.country_blacklist) if cfg.country_blacklist else "",
+                    "price_min": str(cfg.price_min),
+                    "price_max": str(cfg.price_max),
+                    "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "",
+                    "no_fin": "1" if cfg.exclude_financing_headlines else "0",
+                    "exclude_biotech": "1" if cfg.exclude_biotech else "0",
+                    "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "",
+                    "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "",
+                    # Entry rules
+                    "consec": str(cfg.consec_green_candles),
+                    "min_vol": str(cfg.min_candle_volume),
+                    "entry_window": str(cfg.entry_window_minutes),
+                    # Exit rules
+                    "tp": str(cfg.take_profit_pct),
+                    "sl": str(cfg.stop_loss_pct),
+                    "trail": str(cfg.trailing_stop_pct),
+                    "sl_open": "1" if cfg.stop_loss_from_open else "0",
+                    "hold": str(cfg.timeout_minutes),
+                    # Position sizing
+                    "stake_mode": cfg.stake_mode,
+                    "stake": str(cfg.stake_amount),
+                    "vol_pct": str(cfg.volume_pct),
+                    "max_stake": str(cfg.max_stake),
+                }
+                # Note: The following dashboard filters are NOT saved in strategy:
+                # - author, country (whitelist), has_hl, no_hl
+                # - float_min, float_max, mc_min, mc_max (separate from max_mcap)
+                # - nhod, nsh, rvol_min, rvol_max, prior_move_min
+                # - exclude_financing (types list, only boolean no_fin is saved)
+                # - sort, asc, sample_pct, sample_seed
 
-                    # Debug: Log what we're restoring
-                    import logging
-                    logger = logging.getLogger("dashboard")
-                    logger.info(f"Loading strategy '{strategy.name}' into backtest with config:")
-                    logger.info(f"  stop_loss={cfg.stop_loss_pct}, take_profit={cfg.take_profit_pct}, timeout={cfg.timeout_minutes}")
-                    logger.info(f"  consec_green={cfg.consec_green_candles}, min_vol={cfg.min_candle_volume}, entry_window={cfg.entry_window_minutes}")
-                    logger.info(f"  price_min={cfg.price_min}, price_max={cfg.price_max}")
-                    logger.info(f"  stake_mode={cfg.stake_mode}, stake={cfg.stake_amount}, vol_pct={cfg.volume_pct}, max_stake={cfg.max_stake}")
+                # Filter out empty parameters
+                filtered_params = {k: v for k, v in params.items() if v != ""}
 
-                    params = {
-                        # Filters
-                        "channel": ",".join(cfg.channels) if cfg.channels else "",
-                        "direction": ",".join(cfg.directions) if cfg.directions else "",
-                        "sess": ",".join(cfg.sessions) if cfg.sessions else "premarket,market",
-                        "country_blacklist": ",".join(cfg.country_blacklist) if cfg.country_blacklist else "",
-                        "price_min": str(cfg.price_min),
-                        "price_max": str(cfg.price_max),
-                        "max_mentions": str(cfg.max_intraday_mentions) if cfg.max_intraday_mentions else "",
-                        "no_fin": "1" if cfg.exclude_financing_headlines else "0",
-                        "exclude_biotech": "1" if cfg.exclude_biotech else "0",
-                        "max_prior_move": str(cfg.max_prior_move_pct) if cfg.max_prior_move_pct else "",
-                        "max_mcap": str(cfg.max_market_cap_millions) if cfg.max_market_cap_millions else "",
-                        # Entry rules
-                        "consec": str(cfg.consec_green_candles),
-                        "min_vol": str(cfg.min_candle_volume),
-                        "entry_window": str(cfg.entry_window_minutes),
-                        # Exit rules
-                        "tp": str(cfg.take_profit_pct),
-                        "sl": str(cfg.stop_loss_pct),
-                        "trail": str(cfg.trailing_stop_pct),
-                        "sl_open": "1" if cfg.stop_loss_from_open else "0",
-                        "hold": str(cfg.timeout_minutes),
-                        # Position sizing
-                        "stake_mode": cfg.stake_mode,
-                        "stake": str(cfg.stake_amount),
-                        "vol_pct": str(cfg.volume_pct),
-                        "max_stake": str(cfg.max_stake),
-                    }
-                    # Note: The following dashboard filters are NOT saved in strategy:
-                    # - author, country (whitelist), has_hl, no_hl
-                    # - float_min, float_max, mc_min, mc_max (separate from max_mcap)
-                    # - nhod, nsh, rvol_min, rvol_max, prior_move_min
-                    # - exclude_financing (types list, only boolean no_fin is saved)
-                    # - sort, asc, sample_pct, sample_seed
+                # Construct URL with query params
+                from urllib.parse import urlencode
+                query_string = urlencode(filtered_params)
 
-                    # Filter out empty parameters (empty strings can interfere with URL parsing)
-                    filtered_params = {k: v for k, v in params.items() if v != ""}
-
-                    # Log URL params being set
-                    logger.info(f"Setting URL params: {filtered_params}")
-
-                    # Construct URL with query params and redirect using JavaScript
-                    # (st.query_params.update + st.switch_page doesn't preserve params)
-                    from urllib.parse import urlencode
-                    query_string = urlencode(filtered_params)
-                    st.components.v1.html(
-                        f"""
-                        <script>
-                            window.parent.location.href = "/?{query_string}";
-                        </script>
-                        """,
-                        height=0,
-                    )
+                st.link_button("Load in Backtest", f"/?{query_string}", use_container_width=True)
 
             with col3:
                 if st.button("Edit Sizing"):
