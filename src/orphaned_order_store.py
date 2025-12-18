@@ -28,7 +28,7 @@ class OrphanedOrderStore:
     ) -> Optional[int]:
         """
         Record an orphaned order found in the broker.
-        
+
         Returns:
             Record ID if successful, None otherwise.
         """
@@ -38,11 +38,11 @@ class OrphanedOrderStore:
             existing = session.query(OrphanedOrderDB).filter(
                 OrphanedOrderDB.broker_order_id == broker_order_id
             ).first()
-            
+
             if existing:
                 logger.debug(f"[{ticker}] Orphaned order {broker_order_id} already recorded")
                 return existing.id
-            
+
             orphaned_order = OrphanedOrderDB(
                 broker_order_id=broker_order_id,
                 ticker=ticker,
@@ -74,15 +74,15 @@ class OrphanedOrderStore:
             orphaned_order = session.query(OrphanedOrderDB).filter(
                 OrphanedOrderDB.broker_order_id == broker_order_id
             ).first()
-            
+
             if not orphaned_order:
                 logger.warning(f"Orphaned order {broker_order_id} not found in database")
                 return False
-            
+
             orphaned_order.cancelled_at = datetime.utcnow()
             if reason:
                 orphaned_order.reason = reason
-            
+
             session.commit()
             logger.info(f"Marked orphaned order {broker_order_id} as cancelled")
             return True
