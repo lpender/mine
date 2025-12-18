@@ -1850,6 +1850,8 @@ class StrategyEngine:
                     # Position exists but with different quantity - update our tracking
                     logger.warning(f"[{self.strategy_name}] [{ticker}] Broker has {broker_position.shares} shares, we tracked {trade.shares} - updating")
                     trade.shares = broker_position.shares
+                    # Persist the corrected share count to database
+                    self._active_trade_store.save_trade(trade)
 
                 # If we canceled an order, fetch fresh price and retry immediately
                 if canceled_order:
