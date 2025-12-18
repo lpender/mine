@@ -310,16 +310,11 @@ all_directions = opts.get("directions", [])
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
 def init_session_state():
     """Initialize session state from URL params only for missing keys."""
-    # If _load param is present and we haven't processed it yet, force-apply URL params
+    # If _load param is present, always force-apply URL params
     # This allows "Load in Backtest" to override existing values
-    current_load_id = st.query_params.get("_load", "")
-    last_load_id = st.session_state.get("_last_load_id", "")
-    force_from_url = current_load_id and current_load_id != last_load_id
+    force_from_url = "_load" in st.query_params
 
-    if force_from_url:
-        st.session_state["_last_load_id"] = current_load_id
-
-    # Helper to set from URL - force if _load is new, otherwise only if missing
+    # Helper to set from URL - force if _load param exists, otherwise only if missing
     def set_if_missing(key, value):
         if force_from_url or key not in st.session_state:
             st.session_state[key] = value
@@ -802,6 +797,9 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
+# Remove _load param after widgets have rendered (so widget changes work normally)
+if "_load" in st.query_params:
+    del st.query_params["_load"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Filter Announcements
