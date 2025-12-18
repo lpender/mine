@@ -1,7 +1,7 @@
 /**
  * @name StockAlertMonitor
  * @description Monitors Discord channels for stock alerts (TICKER < $X pattern) and provides backfill widget
- * @version 2.2.0
+ * @version 2.4.1
  * @author lpender
  */
 
@@ -677,19 +677,57 @@ Full message: ${fullContent.substring(0, 200)}
             if (content && timestamp) {
                 // Best-effort author extraction from DOM
                 // Try multiple selectors - Discord's class names can vary
-                const authorEl = msgEl.querySelector('[class*="username_"], [class*="headerText_"] [class*="username"], h3[class*="header_"] span');
-                const authorFromDom = authorEl?.textContent?.trim() || "";
+                let authorFromDom = "";
+
+                // Strategy 1: Look for header element with author info
+                // Discord typically shows: <h3><span class="header*"><span class="username*">AuthorName</span>...
+                const headerEl = msgEl.querySelector('h3[class*="header"]');
+                if (headerEl) {
+                    const usernameSpan = headerEl.querySelector('span[class*="username"]');
+                    if (usernameSpan) {
+                        authorFromDom = usernameSpan.textContent?.trim() || "";
+                    }
+                }
+
+                // Strategy 2: Direct username class search (fallback)
+                if (!authorFromDom) {
+                    const usernameEl = msgEl.querySelector('[class*="username_"]');
+                    if (usernameEl) {
+                        authorFromDom = usernameEl.textContent?.trim() || "";
+                    }
+                }
+
+                // Strategy 3: Look in headerText container (another fallback)
+                if (!authorFromDom) {
+                    const headerTextEl = msgEl.querySelector('[class*="headerText"]');
+                    if (headerTextEl) {
+                        const usernameEl = headerTextEl.querySelector('[class*="username"]');
+                        if (usernameEl) {
+                            authorFromDom = usernameEl.textContent?.trim() || "";
+                        }
+                    }
+                }
 
                 // Use author from DOM if present, otherwise use last seen author
                 if (authorFromDom) {
+                    // Log author changes for debugging
+                    if (authorFromDom !== lastAuthor) {
+                        console.log(`[StockAlertMonitor] Author change: "${lastAuthor}" -> "${authorFromDom}"`);
+                    }
                     lastAuthor = authorFromDom;
                 }
                 const author = lastAuthor;
+
+                // Log first few messages with author info for debugging
+                if (messages.length < 3) {
+                    console.log(`[StockAlertMonitor] Message ${messages.length + 1}: author="${author}", content="${content.substring(0, 50)}..."`);
+                }
 
                 messages.push({ id, content, timestamp, author });
             }
         });
 
+        console.log(`[StockAlertMonitor] Extracted ${messages.length} messages, unique authors: ${new Set(messages.map(m => m.author)).size}`);
         return messages;
     }
 
@@ -722,6 +760,14 @@ Full message: ${fullContent.substring(0, 200)}
             }
             return;
         }
+
+        // Log author distribution for debugging
+        const authorCounts = messages.reduce((acc, msg) => {
+            acc[msg.author || "(empty)"] = (acc[msg.author || "(empty)"] || 0) + 1;
+            return acc;
+        }, {});
+        console.log(`[StockAlertMonitor] Sending backfill - ${messages.length} messages from channel: ${channel}`);
+        console.log(`[StockAlertMonitor] Author distribution:`, authorCounts);
 
         if (statusEl) {
             statusEl.textContent = `Sending ${messages.length} messages...`;
@@ -901,9 +947,38 @@ Full message: ${fullContent.substring(0, 200)}
     }
 
     clearSentHistory() {
-        this.sentMessageIds.clear();
-        BdApi.Data.save("StockAlertMonitor", "sentMessageIds", []);
-        BdApi.UI.showToast("Cleared sent message history", { type: "info" });
+        const channel = this.getCurrentChannelName();
+
+        // Get all visible messages in current channel
+        const messages = this.getVisibleMessages();
+
+        // Remove only these message IDs from sent history
+        let clearedCount = 0;
+        for (const msg of messages) {
+            if (this.sentMessageIds.has(msg.id)) {
+                this.sentMessageIds.delete(msg.id);
+                clearedCount++;
+            }
+        }
+
+        // Save updated history
+        this.saveSentMessageIds();
+
+        // Show status in widget
+        const statusEl = this.widgetContainer?.querySelector("#backfill-status");
+        if (statusEl) {
+            statusEl.textContent = `Cleared ${clearedCount} messages from #${channel}`;
+            statusEl.style.color = "#faa61a";
+            setTimeout(() => {
+                if (statusEl) statusEl.textContent = "";
+            }, 3000);
+        }
+
+        BdApi.UI.showToast(`Cleared ${clearedCount} messages from #${channel}`, { type: "success" });
+        console.log(`[StockAlertMonitor] Cleared ${clearedCount} message IDs from #${channel}`);
+        console.log(`[StockAlertMonitor] ${messages.length} messages in channel, ${clearedCount} were previously sent`);
+        console.log(`[StockAlertMonitor] Total sent history: ${this.sentMessageIds.size.toLocaleString()} messages`);
+
         this.updateAutoSendStatus();
     }
 
@@ -1067,6 +1142,7 @@ Full message: ${fullContent.substring(0, 200)}
             </div>
             <button class="widget-btn" id="backfill-send">Send Data</button>
             <button class="widget-btn" id="auto-send-btn" style="margin-top: 6px; background: #40444b;">○ Auto-Send OFF</button>
+            <button class="widget-btn" id="clear-history-btn" style="margin-top: 6px; background: #f04747; font-size: 12px;">Clear Channel History</button>
             <div class="widget-status" id="backfill-status"></div>
         `;
 
@@ -1088,6 +1164,10 @@ Full message: ${fullContent.substring(0, 200)}
         // Auto-send toggle button
         const autoSendBtn = this.widgetContainer.querySelector("#auto-send-btn");
         autoSendBtn?.addEventListener("click", () => this.toggleAutoSend());
+
+        // Clear history button
+        const clearHistoryBtn = this.widgetContainer.querySelector("#clear-history-btn");
+        clearHistoryBtn?.addEventListener("click", () => this.clearSentHistory());
 
         // Update button when channel changes
         this.updateChannelToggleButton();
