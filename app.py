@@ -436,6 +436,14 @@ with st.sidebar:
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
     mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
 
+    # Prior move filter (scanner_gain_pct)
+    st.subheader("Prior Move Filter")
+    col1, col2 = st.columns(2)
+    prior_move_min = col1.number_input("Min %", min_value=0.0, step=5.0, key="_prior_move_min",
+                                        help="Only include if stock already moved at least this % before alert")
+    prior_move_max = col2.number_input("Max %", min_value=0.0, value=0.0, step=10.0, key="_prior_move_max",
+                                        help="Exclude if stock already moved more than this % before alert (0 = no limit)")
+
     # Price range (filters by actual entry price from OHLCV, not announcement price)
     st.subheader("Entry Price ($)")
     col1, col2 = st.columns(2)
@@ -743,6 +751,12 @@ filtered = [a for a in filtered if a.float_shares is None or
 # Market cap filter (stored in dollars, filter in millions)
 filtered = [a for a in filtered if a.market_cap is None or
             (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
+
+# Prior move filter (scanner_gain_pct = how much stock moved before alert)
+if prior_move_min > 0:
+    filtered = [a for a in filtered if a.scanner_gain_pct is not None and a.scanner_gain_pct >= prior_move_min]
+if prior_move_max > 0:
+    filtered = [a for a in filtered if a.scanner_gain_pct is None or a.scanner_gain_pct <= prior_move_max]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 

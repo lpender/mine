@@ -202,6 +202,9 @@ class BacktestConfig:
     entry_after_consecutive_candles: int = 0  # Wait for X consecutive candles with low > first candle open
     min_candle_volume: int = 0  # Minimum volume per candle for consecutive candles entry
     trailing_stop_pct: float = 0.0  # Exit if price drops X% from highest point since entry (0 = disabled)
+    # Lookback filter - skip stocks that have already moved too much
+    max_prior_move_pct: float = 0.0  # Skip if stock moved more than X% in lookback period (0 = disabled)
+    lookback_minutes: int = 30  # How far back to look for prior move calculation
 
 
 @dataclass

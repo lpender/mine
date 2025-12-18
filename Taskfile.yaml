@@ -33,18 +33,21 @@ tasks:
     desc: Run the Streamlit dashboard
     cmds:
       # Use exec so Ctrl+C is delivered directly to Streamlit (cleaner/faster shutdown)
-      - sh -c 'exec streamlit run app.py'
+      # Disable file watching: the trading engine updates data/.trading*.json frequently and can cause rerun-thrash.
+      - sh -c 'exec streamlit run app.py --server.fileWatcherType none'
 
   dashboard:venv:
     desc: Run dashboard using venv
     cmds:
       # Use exec so Ctrl+C is delivered directly to Streamlit (cleaner/faster shutdown)
-      - sh -c 'exec "{{.VENV}}/bin/streamlit" run app.py'
+      # Disable file watching: the trading engine updates data/.trading*.json frequently and can cause rerun-thrash.
+      - sh -c 'exec "{{.VENV}}/bin/streamlit" run app.py --server.fileWatcherType none'
 
   dashboard:debug:
     desc: Run the Streamlit dashboard with verbose logging (writes logs/dashboard.log)
     cmds:
-      - sh -c 'export DASHBOARD_LOG_LEVEL=DEBUG; export POSTGRESCLIENT_LOG_TIMING=1; export POSTGRESCLIENT_BULK_CHUNK_SIZE=${POSTGRESCLIENT_BULK_CHUNK_SIZE:-2000}; exec streamlit run app.py --logger.level=debug'
+      # Keep Streamlit's own logger at INFO to avoid drowning dashboard.log in watchdog/fsevents spam.
+      - sh -c 'export DASHBOARD_LOG_LEVEL=DEBUG; export POSTGRESCLIENT_LOG_TIMING=1; export POSTGRESCLIENT_BULK_CHUNK_SIZE=${POSTGRESCLIENT_BULK_CHUNK_SIZE:-2000}; exec streamlit run app.py --server.fileWatcherType none --logger.level=info'
 
   # ─────────────────────────────────────────────────────────────────────────────
   # Discord Plugin
