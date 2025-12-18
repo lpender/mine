@@ -424,6 +424,29 @@ with st.sidebar:
         help="Only show announcements detected by the 'after-lull' scanner"
     )
 
+    # NHOD / NSH filters
+    st.subheader("Price Action Filters")
+    nhod_filter = st.selectbox(
+        "NHOD (New High of Day)",
+        options=["Any", "Yes", "No"],
+        key="_nhod_filter",
+        help="Filter by New High of Day status"
+    )
+    nsh_filter = st.selectbox(
+        "NSH (New Session High)",
+        options=["Any", "Yes", "No"],
+        key="_nsh_filter",
+        help="Filter by New Session High status. Note: NSH=No may perform better!"
+    )
+
+    # RVol filter
+    st.subheader("Relative Volume")
+    col1, col2 = st.columns(2)
+    rvol_min = col1.number_input("Min RVol", min_value=0.0, step=1.0, key="_rvol_min",
+                                  help="Minimum relative volume")
+    rvol_max = col2.number_input("Max RVol", min_value=0.0, value=0.0, step=5.0, key="_rvol_max",
+                                  help="Maximum relative volume (0 = no limit). Note: Lower RVol may perform better!")
+
     # Float range
     st.subheader("Float (millions)")
     col1, col2 = st.columns(2)
@@ -757,6 +780,24 @@ if prior_move_min > 0:
     filtered = [a for a in filtered if a.scanner_gain_pct is not None and a.scanner_gain_pct >= prior_move_min]
 if prior_move_max > 0:
     filtered = [a for a in filtered if a.scanner_gain_pct is None or a.scanner_gain_pct <= prior_move_max]
+
+# NHOD filter
+if nhod_filter == "Yes":
+    filtered = [a for a in filtered if a.is_nhod == True]
+elif nhod_filter == "No":
+    filtered = [a for a in filtered if a.is_nhod == False]
+
+# NSH filter
+if nsh_filter == "Yes":
+    filtered = [a for a in filtered if a.is_nsh == True]
+elif nsh_filter == "No":
+    filtered = [a for a in filtered if a.is_nsh == False]
+
+# RVol filter
+if rvol_min > 0:
+    filtered = [a for a in filtered if a.rvol is not None and a.rvol >= rvol_min]
+if rvol_max > 0:
+    filtered = [a for a in filtered if a.rvol is None or a.rvol <= rvol_max]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 
