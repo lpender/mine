@@ -10,9 +10,30 @@ todo
 
 *** Trading Issues ***
 
-[ ] orphaned unfilled buy orders
+[x] orphaned unfilled buy orders
 
-[ ] orphaned unfilled sell orders
+[x] orphaned unfilled sell orders
+
+[x] timeout for both buy and sell as env vars
+
+[ ] min intraday mentions?
+
+[ ] Entry at the first green candle only if in the first 3 seconds of the minute.
+
+Could we build a prediction AI model classifier thing and train it on all the data
+  and learns to predict what a new piece of data will do? Or would it be helpful to
+  have a cache of all the companies with bull/bear cases on them? What if we looked
+  back at how the same company reacted to similar news in the past? I'm looking for
+  sustained pops.
+
+[ ] Could we build a prediction AI model classifier thing and train it on all the data
+  so it learns to predict what a new piece of data will do?
+
+[ ] Would it be helpful to have a cache of all the companies with bull / bear cases for each of them and
+
+[ ] date range filter
+
+[x] pre-fetch data from 5 minutes before?
 
 [ ] liquidate all positions at end of day
 
