@@ -1634,8 +1634,19 @@ class StrategyEngine:
         cfg = self.config
 
         # Update highest price for trailing stop
+        price_changed = False
         if price > trade.highest_since_entry:
             trade.highest_since_entry = price
+            price_changed = True
+
+        # Persist price updates to database (for recovery after restart)
+        if price_changed or trade.last_price != price:
+            self._active_trade_store.update_price(
+                trade_id=trade_id,
+                last_price=trade.last_price,
+                highest_since_entry=trade.highest_since_entry,
+                last_quote_time=trade.last_quote_time or timestamp,
+            )
 
         exit_reason = None
         exit_price = price

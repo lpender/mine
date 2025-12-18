@@ -16,15 +16,20 @@ todo
 
 [x] timeout for both buy and sell as env vars
 
+[ ] taking a long time to load strategy detail
+
 [ ] min intraday mentions?
 
-[ ] Entry at the first green candle only if in the first 3 seconds of the minute.
+[ ] Entry at the first green candle only if in the first 3 seconds of the minute?
 
 Could we build a prediction AI model classifier thing and train it on all the data
   and learns to predict what a new piece of data will do? Or would it be helpful to
   have a cache of all the companies with bull/bear cases on them? What if we looked
   back at how the same company reacted to similar news in the past? I'm looking for
   sustained pops.
+
+Create stocks table (with finviz data), add bull bear case from X and analyze news
+with bull / bear from X when it comes in.
 
 [ ] Could we build a prediction AI model classifier thing and train it on all the data
   so it learns to predict what a new piece of data will do?
