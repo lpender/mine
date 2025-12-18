@@ -11,10 +11,13 @@ Requires TRADIER_API_KEY and TRADIER_ACCOUNT_ID environment variables.
 Set TRADIER_SANDBOX=true for paper trading (default).
 """
 
+import logging
 import os
 import requests
 from typing import Optional
 from zoneinfo import ZoneInfo
+
+logger = logging.getLogger(__name__)
 
 
 class TradierTrader:
@@ -58,6 +61,15 @@ class TradierTrader:
             "Authorization": f"Bearer {self.api_key}",
             "Accept": "application/json",
         })
+
+    def close(self):
+        """Close the underlying HTTP session."""
+        if self._session:
+            self._session.close()
+
+    def __del__(self):
+        """Cleanup on garbage collection."""
+        self.close()
 
     def _request(self, method: str, endpoint: str, **kwargs) -> dict:
         """Make an API request."""
@@ -207,12 +219,11 @@ class TradierTrader:
         take_profit_price = round(current_price * (1 + take_profit_pct / 100), 2)
         stop_loss_price = round(current_price * (1 - stop_loss_pct / 100), 2)
 
-        print(f"Placing bracket order for {ticker}:")
-        print(f"  Shares: {shares}")
-        print(f"  Est. entry: ${current_price:.2f} (from {quote.get('source', 'quote')})")
-        print(f"  Take profit: ${take_profit_price:.2f} (+{take_profit_pct}%)")
-        print(f"  Stop loss: ${stop_loss_price:.2f} (-{stop_loss_pct}%)")
-        print(f"  Total cost: ~${shares * current_price:.2f}")
+        logger.info(f"Placing bracket order for {ticker}: "
+                    f"{shares} shares @ ~${current_price:.2f}, "
+                    f"TP=${take_profit_price:.2f} (+{take_profit_pct}%), "
+                    f"SL=${stop_loss_price:.2f} (-{stop_loss_pct}%), "
+                    f"Total ~${shares * current_price:.2f}")
 
         # Place OTOCO bracket order (One-Triggers-OCO)
         # Primary order triggers two linked exit orders (OCO = one-cancels-other)

@@ -59,7 +59,7 @@ class LiveBarStore(BaseStore):
                 return True
 
         except Exception as e:
-            logger.error(f"Failed to save live bar: {e}")
+            logger.error(f"Failed to save live bar: {e}", exc_info=True)
             return False
 
     def save_bars_batch(self, bars: List[dict]) -> int:
@@ -96,7 +96,7 @@ class LiveBarStore(BaseStore):
                 return count
 
         except Exception as e:
-            logger.error(f"Failed to save bar batch: {e}")
+            logger.error(f"Failed to save bar batch: {e}", exc_info=True)
             return 0
 
     def get_bars(
@@ -152,7 +152,7 @@ class LiveBarStore(BaseStore):
                 ).delete()
                 return count
         except Exception as e:
-            logger.error(f"Failed to delete bars: {e}")
+            logger.error(f"Failed to delete bars: {e}", exc_info=True)
             return 0
 
     def delete_old_bars(self, before: datetime) -> int:
@@ -165,7 +165,7 @@ class LiveBarStore(BaseStore):
                 logger.info(f"Deleted {count} old live bars")
                 return count
         except Exception as e:
-            logger.error(f"Failed to delete old bars: {e}")
+            logger.error(f"Failed to delete old bars: {e}", exc_info=True)
             return 0
 
 

@@ -1,3 +1,4 @@
+import logging
 import os
 import time
 import random
@@ -6,6 +7,8 @@ from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from ..models import OHLCVBar
 from .base import OHLCVDataProvider
+
+logger = logging.getLogger(__name__)
 
 
 class AlpacaProvider(OHLCVDataProvider):
@@ -31,6 +34,15 @@ class AlpacaProvider(OHLCVDataProvider):
 
         self._session = requests.Session()
         self._next_allowed_time = 0.0
+
+    def close(self):
+        """Close the underlying HTTP session."""
+        if self._session:
+            self._session.close()
+
+    def __del__(self):
+        """Cleanup on garbage collection."""
+        self.close()
 
     @property
     def rate_limit_delay(self) -> float:
@@ -89,7 +101,7 @@ class AlpacaProvider(OHLCVDataProvider):
         start_str = start_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
         end_str = end_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-        print(f"[Alpaca] Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
+        logger.info(f"Fetching {ticker} from {start.strftime('%Y-%m-%d %H:%M')} to {end.strftime('%Y-%m-%d %H:%M')}")
 
         url = f"{self.BASE_URL}/v2/stocks/{ticker}/bars"
         params = {
@@ -126,17 +138,17 @@ class AlpacaProvider(OHLCVDataProvider):
                     wait_time = exp_backoff + random.uniform(0.0, 1.0)
 
                     if attempt < self.max_retries - 1:
-                        print(f"[Alpaca] Rate limited for {ticker}, waiting {wait_time:.1f}s... (attempt {attempt+1}/{self.max_retries})")
+                        logger.warning(f"Rate limited for {ticker}, waiting {wait_time:.1f}s... (attempt {attempt+1}/{self.max_retries})")
                         self._bump_next_allowed_time(wait_time)
                         continue
 
-                    print(f"[Alpaca] Rate limit exceeded for {ticker} after {self.max_retries} retries")
+                    logger.error(f"Rate limit exceeded for {ticker} after {self.max_retries} retries")
                     return None  # None = retry later
 
                 if response.status_code != 200:
-                    print(f"[Alpaca] Error fetching {ticker}: {response.status_code} {response.reason}")
+                    logger.error(f"Error fetching {ticker}: {response.status_code} {response.reason}")
                     if response.text:
-                        print(f"[Alpaca] Response: {response.text[:200]}")
+                        logger.debug(f"Response: {response.text[:200]}")
                     return None  # None = retry later
 
                 data = response.json()
@@ -144,7 +156,7 @@ class AlpacaProvider(OHLCVDataProvider):
 
                 if not bars_data:
                     if not all_bars:
-                        print(f"[Alpaca] No data for {ticker}")
+                        logger.debug(f"No data for {ticker}")
                     return all_bars
 
                 for bar in bars_data:
@@ -181,10 +193,10 @@ class AlpacaProvider(OHLCVDataProvider):
                 if attempt < self.max_retries - 1:
                     exp_backoff = min(self.backoff_cap_s, self.backoff_base_s * (2 ** attempt))
                     wait_time = exp_backoff + random.uniform(0.0, 1.0)
-                    print(f"[Alpaca] Request error for {ticker}: {e} (retrying in {wait_time:.1f}s)")
+                    logger.warning(f"Request error for {ticker}: {e} (retrying in {wait_time:.1f}s)")
                     self._bump_next_allowed_time(wait_time)
                     continue
-                print(f"[Alpaca] Error fetching {ticker}: {e}")
+                logger.error(f"Error fetching {ticker}: {e}")
                 return None  # None = retry later
 
         return None  # None = retry later (exhausted retries)

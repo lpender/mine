@@ -16,6 +16,11 @@ ET_TZ = ZoneInfo("America/New_York")
 UTC_TZ = ZoneInfo("UTC")
 
 
+class AlpacaAuthenticationError(Exception):
+    """Raised when Alpaca WebSocket authentication fails."""
+    pass
+
+
 class AlpacaTradeStream:
     """WebSocket client for Alpaca trade updates (order fills, cancellations, etc.)."""
 
@@ -133,7 +138,7 @@ class AlpacaTradeStream:
                 self._authenticated = True
                 logger.info("Alpaca stream authenticated")
             else:
-                raise Exception(f"Auth failed: {data}")
+                raise AlpacaAuthenticationError(f"Alpaca auth failed: {data}")
 
     async def _subscribe(self, ws):
         """Subscribe to trade updates stream."""

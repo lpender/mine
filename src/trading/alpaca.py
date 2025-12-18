@@ -59,6 +59,15 @@ class AlpacaTradingClient(TradingClient):
                 "Set ALPACA_API_KEY and ALPACA_SECRET_KEY in .env"
             )
 
+    def close(self):
+        """Close the underlying HTTP session."""
+        if self._session:
+            self._session.close()
+
+    def __del__(self):
+        """Cleanup on garbage collection."""
+        self.close()
+
     def _get_headers(self) -> dict:
         return {
             "APCA-API-KEY-ID": self.api_key,
