@@ -156,9 +156,9 @@ def get_param(key: str, default, param_type=str):
     """Get a query parameter with type conversion."""
     val = st.query_params.get(key, default)
     if param_type == float:
-        return float(val)
+        return float(val) if val and val != "" else default
     elif param_type == int:
-        return int(val)
+        return int(val) if val and val != "" else default
     elif param_type == bool:
         return val == "1" or val == "true"
     elif param_type == list:
