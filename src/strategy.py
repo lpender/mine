@@ -2,6 +2,7 @@
 
 import logging
 import os
+import threading
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -62,6 +63,88 @@ class StrategyConfig:
     stake_amount: float = 50.0  # Dollar amount for fixed stake
     volume_pct: float = 1.0  # Percentage of prev candle volume (e.g., 1.0 = 1%)
     max_stake: float = 10000.0  # Max dollar amount for volume-based sizing
+
+    def __post_init__(self):
+        """Validate and clamp config parameters to reasonable ranges."""
+        # Price range validation
+        if self.price_min < 0:
+            logger.warning(f"price_min={self.price_min} is negative, setting to 0")
+            self.price_min = 0
+        if self.price_max < self.price_min:
+            logger.warning(f"price_max={self.price_max} < price_min={self.price_min}, swapping")
+            self.price_min, self.price_max = self.price_max, self.price_min
+        if self.price_max > 100000:
+            logger.warning(f"price_max={self.price_max} is unrealistic, capping at 100000")
+            self.price_max = 100000
+
+        # Stop loss validation (must be positive)
+        if self.stop_loss_pct <= 0:
+            logger.warning(f"stop_loss_pct={self.stop_loss_pct} must be positive, setting to 5%")
+            self.stop_loss_pct = 5.0
+        if self.stop_loss_pct > 100:
+            logger.warning(f"stop_loss_pct={self.stop_loss_pct} > 100%, capping at 100%")
+            self.stop_loss_pct = 100.0
+
+        # Take profit validation
+        if self.take_profit_pct <= 0:
+            logger.warning(f"take_profit_pct={self.take_profit_pct} must be positive, setting to 10%")
+            self.take_profit_pct = 10.0
+        if self.take_profit_pct > 1000:
+            logger.warning(f"take_profit_pct={self.take_profit_pct} > 1000%, capping at 1000%")
+            self.take_profit_pct = 1000.0
+
+        # Trailing stop validation (0 = disabled, must not be negative)
+        if self.trailing_stop_pct < 0:
+            logger.warning(f"trailing_stop_pct={self.trailing_stop_pct} is negative, setting to 0 (disabled)")
+            self.trailing_stop_pct = 0.0
+        if self.trailing_stop_pct > 100:
+            logger.warning(f"trailing_stop_pct={self.trailing_stop_pct} > 100%, capping at 100%")
+            self.trailing_stop_pct = 100.0
+
+        # Entry window validation
+        if self.entry_window_minutes <= 0:
+            logger.warning(f"entry_window_minutes={self.entry_window_minutes} must be positive, setting to 1")
+            self.entry_window_minutes = 1
+        if self.entry_window_minutes > 1440:  # Max 24 hours
+            logger.warning(f"entry_window_minutes={self.entry_window_minutes} > 24h, capping at 1440")
+            self.entry_window_minutes = 1440
+
+        # Timeout validation
+        if self.timeout_minutes <= 0:
+            logger.warning(f"timeout_minutes={self.timeout_minutes} must be positive, setting to 1")
+            self.timeout_minutes = 1
+        if self.timeout_minutes > 1440:
+            logger.warning(f"timeout_minutes={self.timeout_minutes} > 24h, capping at 1440")
+            self.timeout_minutes = 1440
+
+        # Stake validation
+        if self.stake_amount <= 0:
+            logger.warning(f"stake_amount={self.stake_amount} must be positive, setting to 50")
+            self.stake_amount = 50.0
+        if self.max_stake <= 0:
+            logger.warning(f"max_stake={self.max_stake} must be positive, setting to 10000")
+            self.max_stake = 10000.0
+
+        # Volume percent validation
+        if self.volume_pct < 0:
+            logger.warning(f"volume_pct={self.volume_pct} is negative, setting to 0")
+            self.volume_pct = 0.0
+        if self.volume_pct > 100:
+            logger.warning(f"volume_pct={self.volume_pct} > 100%, capping at 100%")
+            self.volume_pct = 100.0
+
+        # Stake mode validation
+        if self.stake_mode not in ("fixed", "volume_pct"):
+            logger.warning(f"stake_mode={self.stake_mode} is invalid, setting to 'fixed'")
+            self.stake_mode = "fixed"
+
+        # Min candle volume validation
+        if self.min_candle_volume < 0:
+            self.min_candle_volume = 0
+
+        # Consecutive green candles validation
+        if self.consec_green_candles < 0:
+            self.consec_green_candles = 0
 
     def get_shares(self, price: float, prev_candle_volume: Optional[int] = None) -> int:
         """
@@ -272,10 +355,15 @@ class StrategyEngine:
         self.strategy_name = strategy_name or "default"
 
         # Keyed by trade_id (UUID) - allows multiple positions per ticker
+        # Protected by _state_lock for thread-safe access from multiple threads
         self.pending_entries: Dict[str, PendingEntry] = {}  # trade_id -> PendingEntry
         self.pending_orders: Dict[str, PendingOrder] = {}   # order_id -> PendingOrder
         self.active_trades: Dict[str, ActiveTrade] = {}     # trade_id -> ActiveTrade
         self.completed_trades: List[dict] = []
+
+        # Lock for thread-safe access to state dicts (pending_entries, pending_orders, active_trades)
+        # Accessed from: asyncio event loop (quotes), trading callbacks (order fills), HTTP thread (Streamlit)
+        self._state_lock = threading.RLock()
 
         # Shared candle data per ticker (not per pending entry)
         self._ticker_candles: Dict[str, List[CandleBar]] = {}  # ticker -> completed candles
@@ -289,6 +377,43 @@ class StrategyEngine:
 
         # Recover any open positions from database and broker
         self._recover_positions()
+
+    # ========== Thread-safe accessors for external callers (e.g., Streamlit) ==========
+
+    def get_active_trades_snapshot(self) -> Dict[str, "ActiveTrade"]:
+        """
+        Return a thread-safe copy of active_trades.
+
+        Use this from external threads (like Streamlit) to avoid race conditions.
+        """
+        with self._state_lock:
+            return dict(self.active_trades)
+
+    def get_pending_entries_snapshot(self) -> Dict[str, "PendingEntry"]:
+        """Return a thread-safe copy of pending_entries."""
+        with self._state_lock:
+            return dict(self.pending_entries)
+
+    def get_pending_orders_snapshot(self) -> Dict[str, "PendingOrder"]:
+        """Return a thread-safe copy of pending_orders."""
+        with self._state_lock:
+            return dict(self.pending_orders)
+
+    def get_state_summary(self) -> dict:
+        """
+        Return a thread-safe summary of current state.
+
+        Useful for status displays without exposing mutable state.
+        """
+        with self._state_lock:
+            return {
+                "active_trades": len(self.active_trades),
+                "pending_entries": len(self.pending_entries),
+                "pending_orders": len(self.pending_orders),
+                "completed_trades": len(self.completed_trades),
+                "active_tickers": list({t.ticker for t in self.active_trades.values()}),
+                "pending_tickers": list({e.ticker for e in self.pending_entries.values()}),
+            }
 
     def _recover_positions(self):
         """Recover open positions from database and broker on startup."""
@@ -1152,7 +1277,7 @@ class StrategyEngine:
                 trace_store.update_trace_status(trace_id, status='buy_submitted')
 
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Buy order failed: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Buy order failed: {e}", exc_info=True)
             # Update order status to rejected
             if db_order_id:
                 self._order_store.update_order_status(order_id=db_order_id, status="rejected")
@@ -1480,7 +1605,7 @@ class StrategyEngine:
                 trade_id=pending.trade_id,
             )
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record trade: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record trade: {e}", exc_info=True)
 
         # Remove from in-memory and database active trades using trade_id
         trade_id = pending.trade_id
@@ -1491,7 +1616,7 @@ class StrategyEngine:
             try:
                 self._active_trade_store.delete_trade(trade_id)
             except Exception as e:
-                logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete trade_id={trade_id[:8]} from active_trades: {e}")
+                logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete trade_id={trade_id[:8]} from active_trades: {e}", exc_info=True)
         else:
             logger.warning(f"[{self.strategy_name}] [{ticker}] No trade_id on sell order - skipping active_trade_store delete")
 
@@ -1814,7 +1939,7 @@ class StrategyEngine:
 
         except Exception as e:
             error_msg = str(e).lower()
-            logger.error(f"[{self.strategy_name}] [{ticker}] Sell order failed: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Sell order failed: {e}", exc_info=True)
 
             # Update order status to rejected
             if db_order_id:
@@ -1978,7 +2103,7 @@ class StrategyEngine:
             self.trader.cancel_order(order_id)
             logger.info(f"[{self.strategy_name}] [{ticker}] Buy order {order_id} canceled at broker")
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to cancel order {order_id} at broker: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to cancel order {order_id} at broker: {e}", exc_info=True)
             # Still continue with cleanup - order may have already filled or been canceled
 
         # Update order status in database
@@ -2197,7 +2322,7 @@ class StrategyEngine:
                 )
 
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Retry sell failed: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Retry sell failed: {e}", exc_info=True)
             # Note: sell_attempts was already incremented before the retry attempt
             # so we don't increment again here (that would cause double-counting)
             if trade and trade.sell_attempts >= 3:
@@ -2267,7 +2392,7 @@ class StrategyEngine:
                 trade_id=trade_id,
             )
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record orphaned trade: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to record orphaned trade: {e}", exc_info=True)
 
         # Remove from active trades
         self.active_trades.pop(trade_id, None)
@@ -2276,7 +2401,7 @@ class StrategyEngine:
         try:
             self._active_trade_store.delete_trade(trade_id)
         except Exception as e:
-            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete orphaned trade from database: {e}")
+            logger.error(f"[{self.strategy_name}] [{ticker}] Failed to delete orphaned trade from database: {e}", exc_info=True)
 
         # Only unsubscribe if no more positions for this ticker
         if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:

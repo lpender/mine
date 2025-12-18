@@ -13,7 +13,23 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/backtest")
 
-engine = create_engine(DATABASE_URL)
+# Database connection configuration with timeouts and pooling
+# - pool_pre_ping: Test connections before use (detect stale connections)
+# - pool_size: Number of persistent connections to keep
+# - pool_timeout: Seconds to wait for a connection from pool before raising error
+# - connect_args.connect_timeout: Seconds to wait for initial TCP connection
+# - connect_args.options: Statement timeout to prevent runaway queries
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,  # Verify connection is alive before use
+    pool_size=5,  # Max persistent connections
+    max_overflow=10,  # Additional connections when pool exhausted
+    pool_timeout=30,  # Wait 30s for connection from pool
+    connect_args={
+        "connect_timeout": 10,  # 10s to establish TCP connection
+        "options": "-c statement_timeout=30000",  # 30s max query time
+    },
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

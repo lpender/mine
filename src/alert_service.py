@@ -12,6 +12,7 @@ import logging
 import re
 import threading
 import uuid
+from collections import OrderedDict
 from datetime import date, datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from pathlib import Path
@@ -48,8 +49,9 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
     alert_callback: Optional[Callable] = None  # Called for each alert when trading active
     include_today: bool = False
     fetch_ohlcv: bool = False
-    seen_alerts: set = set()
-    seen_backfill: set = set()
+    # Use OrderedDict for LRU-style eviction (maintains insertion order)
+    seen_alerts: OrderedDict = OrderedDict()  # key -> True for deduplication
+    seen_backfill: OrderedDict = OrderedDict()  # key -> True for deduplication
 
     def log_message(self, format, *args):
         logger.debug(f"HTTP: {format % args}")
@@ -142,11 +144,11 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
                         event_timestamp=datetime.utcnow(),
                     )
                 return
-            UnifiedAlertHandler.seen_alerts.add(alert_key)
+            UnifiedAlertHandler.seen_alerts[alert_key] = True
 
-            # Limit seen alerts size
-            if len(UnifiedAlertHandler.seen_alerts) > 500:
-                UnifiedAlertHandler.seen_alerts = set(list(UnifiedAlertHandler.seen_alerts)[-250:])
+            # Limit seen alerts size with proper LRU eviction (OrderedDict maintains insertion order)
+            while len(UnifiedAlertHandler.seen_alerts) > 500:
+                UnifiedAlertHandler.seen_alerts.popitem(last=False)  # Remove oldest
 
             # Parse price from the alert
             price_match = re.search(r'\$([0-9.]+)', price_info)
@@ -254,7 +256,7 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
             if msg_id in UnifiedAlertHandler.seen_backfill:
                 skipped += 1
                 continue
-            UnifiedAlertHandler.seen_backfill.add(msg_id)
+            UnifiedAlertHandler.seen_backfill[msg_id] = True
 
             # Parse timestamp
             try:
@@ -270,9 +272,9 @@ class UnifiedAlertHandler(BaseHTTPRequestHandler):
                 ann.author = inferred_author or ann.author
                 parsed_announcements.append(ann)
 
-        # Limit seen_backfill size
-        if len(UnifiedAlertHandler.seen_backfill) > 5000:
-            UnifiedAlertHandler.seen_backfill = set(list(UnifiedAlertHandler.seen_backfill)[-2500:])
+        # Limit seen_backfill size with proper LRU eviction
+        while len(UnifiedAlertHandler.seen_backfill) > 5000:
+            UnifiedAlertHandler.seen_backfill.popitem(last=False)  # Remove oldest
 
         logger.info(f"Parsed: {len(parsed_announcements)} | Skipped: {skipped}")
 

@@ -89,44 +89,67 @@ class TradingEngine:
         self._cache_ttl: float = 30.0  # Cache for 30 seconds
 
     def _acquire_lock(self) -> bool:
-        """Try to acquire the trading lock file. Returns True if acquired."""
-        import os
-        import time
+        """
+        Try to acquire the trading lock file using OS-level locking.
+
+        Uses fcntl.flock() for atomic lock acquisition, preventing race conditions
+        where multiple processes could acquire the lock simultaneously.
+        """
+        import fcntl
 
         try:
             TRADING_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
 
-            # Check if lock file exists and is recent (within 30 seconds)
-            if TRADING_LOCK_FILE.exists():
+            # Open file for writing (creates if doesn't exist)
+            self._lock_fd = open(TRADING_LOCK_FILE, "w")
+
+            try:
+                # Try to acquire exclusive lock (non-blocking)
+                fcntl.flock(self._lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except (IOError, OSError):
+                # Lock is held by another process
+                self._lock_fd.close()
+                self._lock_fd = None
+
+                # Try to read who has the lock
                 try:
-                    lock_data = TRADING_LOCK_FILE.read_text().strip().split("\n")
-                    lock_pid = int(lock_data[0])
-                    lock_time = float(lock_data[1])
-
-                    # Check if the process is still alive
-                    try:
-                        os.kill(lock_pid, 0)  # Doesn't kill, just checks
-                        # Process exists - check if lock is stale (>60s old)
-                        if time.time() - lock_time < 60:
+                    with open(TRADING_LOCK_FILE, "r") as f:
+                        lock_data = f.read().strip().split("\n")
+                        if len(lock_data) >= 1:
+                            lock_pid = lock_data[0]
                             logger.warning(f"Trading already running (PID {lock_pid})")
-                            return False
-                    except OSError:
-                        # Process is dead, lock is stale
-                        logger.info("Found stale lock file, removing...")
-                except (ValueError, IndexError):
-                    pass  # Invalid lock file, overwrite it
+                except Exception:
+                    logger.warning("Trading already running (unknown PID)")
 
-            # Write our lock
-            TRADING_LOCK_FILE.write_text(f"{os.getpid()}\n{time.time()}")
+                return False
+
+            # We have the lock - write our PID and timestamp
+            self._lock_fd.truncate(0)
+            self._lock_fd.seek(0)
+            self._lock_fd.write(f"{os.getpid()}\n{time.time()}")
+            self._lock_fd.flush()
+
             return True
 
         except Exception as e:
-            logger.error(f"Error acquiring lock: {e}")
+            logger.error(f"Error acquiring lock: {e}", exc_info=True)
+            if hasattr(self, "_lock_fd") and self._lock_fd:
+                self._lock_fd.close()
+                self._lock_fd = None
             return True  # Proceed anyway if lock check fails
 
     def _release_lock(self):
         """Release the trading lock file."""
+        import fcntl
+
         try:
+            if hasattr(self, "_lock_fd") and self._lock_fd:
+                # Release the lock and close the file
+                fcntl.flock(self._lock_fd.fileno(), fcntl.LOCK_UN)
+                self._lock_fd.close()
+                self._lock_fd = None
+
+            # Remove the lock file
             if TRADING_LOCK_FILE.exists():
                 TRADING_LOCK_FILE.unlink()
         except Exception as e:
@@ -134,10 +157,12 @@ class TradingEngine:
 
     def _update_lock(self):
         """Update lock file timestamp (heartbeat)."""
-        import os
-        import time
         try:
-            TRADING_LOCK_FILE.write_text(f"{os.getpid()}\n{time.time()}")
+            if hasattr(self, "_lock_fd") and self._lock_fd:
+                self._lock_fd.truncate(0)
+                self._lock_fd.seek(0)
+                self._lock_fd.write(f"{os.getpid()}\n{time.time()}")
+                self._lock_fd.flush()
         except Exception:
             pass
 
@@ -351,7 +376,7 @@ class TradingEngine:
                     order = self.trader.sell(ticker, shares, limit_price=current_price)
                     logger.warning(f"[{ticker}] Orphan liquidated: {shares} shares @ ${current_price:.4f} ({order.status})")
                 except Exception as e:
-                    logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}")
+                    logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}", exc_info=True)
 
         # 2. Find positions in DB that aren't at broker - DELETE from DB
         db_ghosts = []
@@ -373,7 +398,7 @@ class TradingEngine:
                     trade_store.delete_trade(trade.trade_id)
                     logger.warning(f"[{trade.ticker}] Ghost position removed from DB: {trade.shares} shares (trade_id={trade.trade_id[:8]})")
                 except Exception as e:
-                    logger.error(f"[{trade.ticker}] Failed to remove ghost position: {e}")
+                    logger.error(f"[{trade.ticker}] Failed to remove ghost position: {e}", exc_info=True)
 
     def _fetch_current_price(self, ticker: str) -> Optional[float]:
         """Fetch the current price for a ticker from InsightSentry REST API."""
@@ -501,7 +526,7 @@ class TradingEngine:
         try:
             await self.quote_provider.connect()
         except Exception as e:
-            logger.error(f"Quote provider error: {e}")
+            logger.error(f"Quote provider error: {e}", exc_info=True)
             raise
 
     def _on_alert_received(self, data: dict):
@@ -865,7 +890,7 @@ class TradingEngine:
                             )
                             logger.info(f"[{ticker}] ✅ Trade recorded: {return_pct:+.2f}% (${pnl:+.2f})")
                         except Exception as e:
-                            logger.error(f"[{ticker}] Failed to record trade: {e}")
+                            logger.error(f"[{ticker}] Failed to record trade: {e}", exc_info=True)
 
                         # Remove from database and in-memory tracking
                         trade_store.delete_trade(trade.trade_id)
@@ -1184,7 +1209,7 @@ class TradingEngine:
             if "429" in str(e):
                 logger.warning("Rate limited by broker - skipping position reconciliation (will still reconcile subscriptions)")
             else:
-                logger.error(f"Failed to fetch positions for reconciliation: {e}")
+                logger.error(f"Failed to fetch positions for reconciliation: {e}", exc_info=True)
 
         # Pass pre-fetched positions to each strategy (if we got them)
         if broker_positions is not None:
@@ -1809,6 +1834,6 @@ def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
             logger.info(f"[{ticker}] Submitted sell for {shares} orphaned shares @ ${current_price:.4f}")
         except Exception as e:
             results[ticker] = f"failed: {e}"
-            logger.error(f"[{ticker}] Failed to sell orphaned position: {e}")
+            logger.error(f"[{ticker}] Failed to sell orphaned position: {e}", exc_info=True)
 
     return results
