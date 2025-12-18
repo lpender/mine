@@ -9,7 +9,7 @@ import threading
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Callable, Dict, List, Tuple
+from typing import Optional, Callable, Dict, List, Tuple, Any
 
 from .strategy import StrategyConfig, StrategyEngine
 from .trading import get_trading_client, TradingClient
@@ -43,6 +43,150 @@ def _get_max_positions_from_jwt() -> int:
 # Maximum number of open positions across all strategies (0 = unlimited)
 # Derived from InsightSentry JWT token's websocket_symbols limit
 MAX_OPEN_POSITIONS = _get_max_positions_from_jwt()
+
+
+class SafeSellResult:
+    """Result of a safe_sell() operation."""
+
+    def __init__(
+        self,
+        success: bool,
+        ticker: str,
+        shares_sold: int = 0,
+        order_status: Optional[str] = None,
+        error: Optional[str] = None,
+        was_ghost: bool = False,
+    ):
+        self.success = success
+        self.ticker = ticker
+        self.shares_sold = shares_sold
+        self.order_status = order_status
+        self.error = error
+        self.was_ghost = was_ghost  # Position didn't exist at broker
+
+
+def safe_sell(
+    trader: "TradingClient",
+    ticker: str,
+    expected_shares: int,
+    limit_price: Optional[float] = None,
+    strategy_id: Optional[str] = None,
+    trade_id: Optional[str] = None,
+    cleanup_db: bool = True,
+) -> SafeSellResult:
+    """
+    Safely sell a position with broker verification.
+
+    CRITICAL: This is the ONLY function that should be used to sell positions.
+    It verifies the position exists at the broker before attempting to sell,
+    preventing 422 errors from trying to sell shares we don't have.
+
+    Args:
+        trader: TradingClient instance
+        ticker: Stock ticker to sell
+        expected_shares: Number of shares we think we have
+        limit_price: Optional limit price for sell order
+        strategy_id: Optional strategy ID for database cleanup
+        trade_id: Optional trade ID for database cleanup
+        cleanup_db: If True, remove ghost positions from database
+
+    Returns:
+        SafeSellResult with success status, shares sold, and any error info
+    """
+    from .active_trade_store import get_active_trade_store
+
+    # Step 1: Verify position exists at broker
+    try:
+        broker_position = trader.get_position(ticker)
+    except Exception as e:
+        logger.warning(f"[{ticker}] Could not verify broker position: {e}")
+        # Continue with sell attempt - broker will reject if no position
+        broker_position = None
+
+    # Step 2: Handle ghost positions (in DB/memory but not at broker)
+    if broker_position is None or broker_position.shares <= 0:
+        logger.warning(
+            f"[{ticker}] Cannot sell - no position at broker "
+            f"(expected {expected_shares} shares). Position is a ghost."
+        )
+
+        # Clean up database record if requested
+        if cleanup_db:
+            trade_store = get_active_trade_store()
+            if trade_id:
+                trade_store.delete_trade(trade_id)
+                logger.info(f"[{ticker}] Deleted ghost trade from DB (trade_id={trade_id[:8] if trade_id else 'N/A'})")
+            elif strategy_id:
+                trade_store.delete_trade(ticker, strategy_id)
+                logger.info(f"[{ticker}] Deleted ghost trade from DB (strategy_id={strategy_id[:8] if strategy_id else 'N/A'})")
+
+        return SafeSellResult(
+            success=False,
+            ticker=ticker,
+            shares_sold=0,
+            error="Position does not exist at broker",
+            was_ghost=True,
+        )
+
+    # Step 3: Handle share count mismatch
+    # When multiple strategies share a ticker, broker has combined position.
+    # We should sell min(expected, broker) to avoid over-selling.
+    broker_shares = broker_position.shares
+    shares_to_sell = expected_shares
+
+    if broker_shares < expected_shares:
+        # Broker has fewer than expected - sell what's available
+        logger.warning(
+            f"[{ticker}] Share mismatch: broker has {broker_shares}, "
+            f"we expected {expected_shares}. Selling available shares only."
+        )
+        shares_to_sell = broker_shares
+    elif broker_shares > expected_shares:
+        # Broker has more (likely combined from multiple strategies) - sell only our portion
+        logger.debug(
+            f"[{ticker}] Broker has {broker_shares} total, selling our {expected_shares}."
+        )
+
+    # Step 4: Execute the sell with verified share count
+    try:
+        order = trader.sell(ticker, shares_to_sell, limit_price=limit_price)
+        logger.info(f"[{ticker}] Sell order submitted: {shares_to_sell} shares ({order.status})")
+
+        return SafeSellResult(
+            success=True,
+            ticker=ticker,
+            shares_sold=shares_to_sell,
+            order_status=order.status,
+        )
+
+    except Exception as e:
+        error_str = str(e)
+        logger.error(f"[{ticker}] Sell order failed: {e}", exc_info=True)
+
+        # Double-check if this is a "no position" error (race condition)
+        if "cannot be sold short" in error_str or "42210000" in error_str:
+            logger.warning(f"[{ticker}] Broker confirmed no position exists - cleaning up")
+            if cleanup_db:
+                trade_store = get_active_trade_store()
+                if trade_id:
+                    trade_store.delete_trade(trade_id)
+                elif strategy_id:
+                    trade_store.delete_trade(ticker, strategy_id)
+
+            return SafeSellResult(
+                success=False,
+                ticker=ticker,
+                shares_sold=0,
+                error=error_str,
+                was_ghost=True,
+            )
+
+        return SafeSellResult(
+            success=False,
+            ticker=ticker,
+            shares_sold=0,
+            error=error_str,
+        )
 
 
 class TradingEngine:
@@ -345,10 +489,10 @@ class TradingEngine:
         else:
             self._orphaned_tickers = set()
 
-    def _cleanup_orphaned_positions(self, broker_positions: Dict[str, any]):
+    def _cleanup_orphaned_positions(self, broker_positions: Dict[str, Any]):
         """Check for and clean up orphaned positions in both directions.
 
-        1. At broker but not in DB: Liquidate (sell) them
+        1. At broker but not in DB: Liquidate using safe_sell()
         2. In DB but not at broker: Remove from DB (ghost positions)
         """
         from src.active_trade_store import get_active_trade_store
@@ -367,16 +511,26 @@ class TradingEngine:
         if broker_orphans:
             logger.warning(f"Found {len(broker_orphans)} orphaned position(s) at broker - liquidating...")
             for ticker, shares, entry_price in broker_orphans:
-                try:
-                    current_price = self._fetch_current_price(ticker)
-                    if current_price is None:
-                        current_price = entry_price
-                        logger.warning(f"[{ticker}] Could not fetch current price, using entry: ${entry_price:.4f}")
+                current_price = self._fetch_current_price(ticker)
+                if current_price is None:
+                    current_price = entry_price
+                    logger.warning(f"[{ticker}] Could not fetch current price, using entry: ${entry_price:.4f}")
 
-                    order = self.trader.sell(ticker, shares, limit_price=current_price)
-                    logger.warning(f"[{ticker}] Orphan liquidated: {shares} shares @ ${current_price:.4f} ({order.status})")
-                except Exception as e:
-                    logger.error(f"[{ticker}] Failed to liquidate orphaned position: {e}", exc_info=True)
+                # Use safe_sell to verify position still exists (handles race conditions)
+                result = safe_sell(
+                    trader=self.trader,
+                    ticker=ticker,
+                    expected_shares=shares,
+                    limit_price=current_price,
+                    cleanup_db=False,  # Not in DB by definition (orphan)
+                )
+
+                if result.success:
+                    logger.warning(f"[{ticker}] Orphan liquidated: {result.shares_sold} shares @ ${current_price:.4f} ({result.order_status})")
+                elif result.was_ghost:
+                    logger.info(f"[{ticker}] Orphan position no longer exists at broker (already closed)")
+                else:
+                    logger.error(f"[{ticker}] Failed to liquidate orphaned position: {result.error}")
 
         # 2. Find positions in DB that aren't at broker - DELETE from DB
         db_ghosts = []
@@ -1625,28 +1779,31 @@ def enable_strategy(strategy_id: str) -> bool:
 
 
 def _exit_strategy_positions(trades, trader, context="log"):
-    """Helper to exit positions for trades. Context can be 'log' or 'ui'.
+    """Helper to exit positions for trades using unified safe_sell().
 
-    Submits sell orders and cleans up database records if position doesn't exist.
+    Verifies positions exist at broker before selling and cleans up ghost positions.
     """
-    from .active_trade_store import get_active_trade_store
-    trade_store = get_active_trade_store()
-
     results = []
     for trade in trades:
-        try:
-            order = trader.sell(trade.ticker, trade.shares)
-            msg = f"Sold {trade.ticker}: {order.status}"
-            results.append((trade.ticker, msg, None))
-        except Exception as e:
-            error_str = str(e)
-            msg = f"Failed to sell {trade.ticker}: {e}"
-            results.append((trade.ticker, None, msg))
+        result = safe_sell(
+            trader=trader,
+            ticker=trade.ticker,
+            expected_shares=trade.shares,
+            strategy_id=trade.strategy_id,
+            trade_id=trade.trade_id,
+            cleanup_db=True,
+        )
 
-            # If error is "cannot be sold short", position doesn't exist - clean up DB
-            if "cannot be sold short" in error_str or "42210000" in error_str:
-                logger.warning(f"[{trade.ticker}] Position doesn't exist at broker - cleaning up database record")
-                trade_store.delete_trade(trade.ticker, trade.strategy_id)
+        if result.success:
+            msg = f"Sold {trade.ticker}: {result.order_status}"
+            results.append((trade.ticker, msg, None))
+        elif result.was_ghost:
+            # Ghost position cleaned up - report as handled (not a failure)
+            msg = f"{trade.ticker} was ghost position (cleaned up)"
+            results.append((trade.ticker, msg, None))
+        else:
+            msg = f"Failed to sell {trade.ticker}: {result.error}"
+            results.append((trade.ticker, None, msg))
 
     return results
 
@@ -1709,7 +1866,7 @@ def disable_strategy(strategy_id: str) -> bool:
 
 def exit_all_positions(paper: bool = True) -> Dict[str, str]:
     """
-    Exit all open positions at the broker.
+    Exit all open positions at the broker using unified safe_sell().
 
     Args:
         paper: Use paper trading (default True)
@@ -1737,22 +1894,32 @@ def exit_all_positions(paper: bool = True) -> Dict[str, str]:
     except Exception as e:
         logger.error(f"Failed to cancel orders: {e}")
 
-    # Submit sell orders for each position
+    # Submit sell orders for each position using safe_sell
+    # (re-verifies position in case cancel_all_orders triggered fills)
     for pos in positions:
         ticker = pos.ticker
         shares = pos.shares
-        try:
-            # Calculate current price from market_value, fall back to entry price
-            if pos.market_value > 0 and shares > 0:
-                price = pos.market_value / shares
-            else:
-                price = pos.avg_entry_price
-            order = trader.sell(ticker, shares, limit_price=price)
-            results[ticker] = f"sell order submitted ({order.status})"
-            logger.info(f"[{ticker}] Submitted sell for {shares} shares @ ${price:.2f}")
-        except Exception as e:
-            results[ticker] = f"failed: {e}"
-            logger.error(f"[{ticker}] Failed to sell: {e}")
+
+        # Calculate current price from market_value, fall back to entry price
+        if pos.market_value > 0 and shares > 0:
+            price = pos.market_value / shares
+        else:
+            price = pos.avg_entry_price
+
+        result = safe_sell(
+            trader=trader,
+            ticker=ticker,
+            expected_shares=shares,
+            limit_price=price,
+            cleanup_db=True,  # Clean up any DB records too
+        )
+
+        if result.success:
+            results[ticker] = f"sell order submitted ({result.order_status})"
+        elif result.was_ghost:
+            results[ticker] = "position no longer exists (filled during cancel?)"
+        else:
+            results[ticker] = f"failed: {result.error}"
 
     return results
 
@@ -1795,6 +1962,8 @@ def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
     These are "orphaned" positions - they exist at the broker but aren't being
     tracked by any strategy, so stop losses won't be enforced.
 
+    Uses unified safe_sell() to verify position still exists before selling.
+
     Args:
         paper: Use paper trading (default True)
 
@@ -1818,22 +1987,31 @@ def exit_orphaned_positions(paper: bool = True) -> Dict[str, str]:
     quote_provider = InsightSentryQuoteProvider()
 
     for ticker, shares, entry_price in orphaned:
+        # Fetch current price from InsightSentry REST API
+        current_price = entry_price  # fallback
         try:
-            # Fetch current price from InsightSentry REST API
-            current_price = entry_price  # fallback
-            try:
-                candle = quote_provider.fetch_current_minute_candle(ticker)
-                if candle and "close" in candle:
-                    current_price = candle["close"]
-                    logger.info(f"[{ticker}] Fetched current price: ${current_price:.4f}")
-            except Exception as e:
-                logger.warning(f"[{ticker}] Could not fetch current price, using entry: {e}")
-
-            order = trader.sell(ticker, shares, limit_price=current_price)
-            results[ticker] = f"sell order submitted ({order.status}) - {shares} shares @ ${current_price:.4f}"
-            logger.info(f"[{ticker}] Submitted sell for {shares} orphaned shares @ ${current_price:.4f}")
+            candle = quote_provider.fetch_current_minute_candle(ticker)
+            if candle and "close" in candle:
+                current_price = candle["close"]
+                logger.info(f"[{ticker}] Fetched current price: ${current_price:.4f}")
         except Exception as e:
-            results[ticker] = f"failed: {e}"
-            logger.error(f"[{ticker}] Failed to sell orphaned position: {e}", exc_info=True)
+            logger.warning(f"[{ticker}] Could not fetch current price, using entry: {e}")
+
+        # Use safe_sell to verify position still exists (handles race conditions)
+        # cleanup_db=False since orphaned positions aren't in DB by definition
+        result = safe_sell(
+            trader=trader,
+            ticker=ticker,
+            expected_shares=shares,
+            limit_price=current_price,
+            cleanup_db=False,  # Not in DB by definition
+        )
+
+        if result.success:
+            results[ticker] = f"sell order submitted ({result.order_status}) - {result.shares_sold} shares @ ${current_price:.4f}"
+        elif result.was_ghost:
+            results[ticker] = "position no longer exists at broker"
+        else:
+            results[ticker] = f"failed: {result.error}"
 
     return results

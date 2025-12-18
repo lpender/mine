@@ -1856,14 +1856,21 @@ class StrategyEngine:
                 if not self._has_pending_or_trade(ticker) and self.on_unsubscribe:
                     self.on_unsubscribe(ticker)
                 return
-            elif broker_position.shares != trade.shares:
+            elif broker_position.shares < trade.shares:
+                # Broker has fewer than expected - adjust down to avoid over-selling
                 logger.warning(
                     f"[{self.strategy_name}] [{ticker}] Share mismatch: broker has {broker_position.shares}, "
-                    f"we think we have {trade.shares}. Using broker share count."
+                    f"we think we have {trade.shares}. Selling available shares only."
                 )
                 trade.shares = broker_position.shares
                 # Update database with correct share count
                 self._active_trade_store.save_trade(trade)
+            elif broker_position.shares > trade.shares:
+                # Broker has more (likely combined from multiple strategies) - sell only our portion
+                logger.debug(
+                    f"[{self.strategy_name}] [{ticker}] Broker has {broker_position.shares} total, "
+                    f"selling our {trade.shares}."
+                )
         except Exception as e:
             logger.warning(f"[{self.strategy_name}] [{ticker}] Could not verify broker position: {e}")
             # Continue with sell attempt anyway - broker will reject if no position

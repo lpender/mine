@@ -87,9 +87,22 @@ def get_traces_with_events(
 
         traces = query.order_by(TraceDB.created_at.desc()).limit(limit).all()
 
-        # Detach from session
-        for t in traces:
-            db.expunge(t)
+        # For each trace, get the strategy name from the first event that has one
+        for trace in traces:
+            # Query for the strategy name from trace events
+            event_query = db.query(TraceEventDB.strategy_name).filter(
+                TraceEventDB.trace_id == trace.trace_id,
+                TraceEventDB.strategy_name.isnot(None)
+            ).order_by(TraceEventDB.event_timestamp.asc()).limit(1)
+
+            event = event_query.first()
+            if event and event.strategy_name:
+                trace.strategy_name = event.strategy_name
+            else:
+                trace.strategy_name = "-"
+
+            # Detach from session
+            db.expunge(trace)
 
         return traces
     finally:
@@ -317,6 +330,7 @@ else:
             "Ticker": t.ticker,
             "Time (EST)": to_est_display(t.alert_timestamp)[:-3],  # Remove seconds
             "Channel": t.channel or "-",
+            "Strategy": getattr(t, 'strategy_name', "-"),
             "Status": format_status(t.status),
             "Exit Reason": t.exit_reason or "-",
             "P&L": format_pnl(t.pnl, t.return_pct) if t.pnl is not None else "-",
