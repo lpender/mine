@@ -363,7 +363,7 @@ else:
                 # Load in Backtest - direct navigation with strategy params
                 cfg = strategy.config
                 params = {
-                    "_load": "1",  # Signals to app.py to clear session state and apply URL params
+                    "_load": str(int(time.time())),  # Unique ID signals fresh load to app.py
                     "channel": ",".join(cfg.channels),
                     "direction": ",".join(cfg.directions),
                     "sess": ",".join(cfg.sessions),
