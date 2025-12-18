@@ -6,9 +6,8 @@ from datetime import datetime
 from typing import List, Optional
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session
-
-from .database import SessionLocal, TradeDB
+from .base_store import BaseStore
+from .database import TradeDB
 
 logger = logging.getLogger(__name__)
 
@@ -34,11 +33,8 @@ class CompletedTrade:
     created_at: Optional[datetime] = None
 
 
-class TradeStore:
+class TradeStore(BaseStore):
     """Store for saving/loading completed trades."""
-
-    def _get_db(self) -> Session:
-        return SessionLocal()
 
     def save_trade(
         self,
@@ -61,8 +57,7 @@ class TradeStore:
         Returns:
             ID of the saved trade
         """
-        db = self._get_db()
-        try:
+        with self._db_session() as session:
             # Parse times if they're strings
             entry_time = trade["entry_time"]
             if isinstance(entry_time, str):
@@ -88,13 +83,11 @@ class TradeStore:
                 strategy_name=strategy_name,
                 strategy_params=json.dumps(trade.get("strategy_params", {})),
             )
-            db.add(db_trade)
-            db.commit()
-            db.refresh(db_trade)
-            logger.info(f"Saved trade {db_trade.id}: {trade['ticker']} {trade['return_pct']:+.2f}%")
-            return db_trade.id
-        finally:
-            db.close()
+            session.add(db_trade)
+            session.flush()
+            trade_db_id = db_trade.id
+            logger.info(f"Saved trade {trade_db_id}: {trade['ticker']} {trade['return_pct']:+.2f}%")
+            return trade_db_id
 
     def get_trades(
         self,
@@ -114,9 +107,8 @@ class TradeStore:
             end: Filter by entry time <= end
             limit: Max number of trades to return
         """
-        db = self._get_db()
-        try:
-            query = db.query(TradeDB)
+        with self._db_session() as session:
+            query = session.query(TradeDB)
 
             if paper is not None:
                 query = query.filter(TradeDB.paper == paper)
@@ -130,14 +122,11 @@ class TradeStore:
             rows = query.order_by(TradeDB.entry_time.desc()).limit(limit).all()
 
             return [self._db_to_trade(row) for row in rows]
-        finally:
-            db.close()
 
     def get_trade_stats(self, paper: Optional[bool] = None) -> dict:
         """Get aggregate statistics for trades."""
-        db = self._get_db()
-        try:
-            query = db.query(TradeDB)
+        with self._db_session() as session:
+            query = session.query(TradeDB)
             if paper is not None:
                 query = query.filter(TradeDB.paper == paper)
 
@@ -170,8 +159,6 @@ class TradeStore:
                 "best_trade_pct": max(returns) if returns else 0,
                 "worst_trade_pct": min(returns) if returns else 0,
             }
-        finally:
-            db.close()
 
     def _db_to_trade(self, row: TradeDB) -> CompletedTrade:
         """Convert database row to CompletedTrade."""

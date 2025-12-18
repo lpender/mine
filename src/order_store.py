@@ -5,12 +5,13 @@ import logging
 from datetime import datetime
 from typing import List, Optional, Dict, Any
 
-from .database import SessionLocal, OrderDB, OrderEventDB
+from .base_store import BaseStore
+from .database import OrderDB, OrderEventDB
 
 logger = logging.getLogger(__name__)
 
 
-class OrderStore:
+class OrderStore(BaseStore):
     """CRUD operations for orders and order events."""
 
     def create_order(
@@ -33,50 +34,44 @@ class OrderStore:
         Returns:
             Order ID if successful, None otherwise.
         """
-        session = SessionLocal()
         try:
-            order = OrderDB(
-                ticker=ticker,
-                side=side,
-                order_type=order_type,
-                requested_shares=requested_shares,
-                limit_price=limit_price,
-                broker_order_id=broker_order_id,
-                strategy_id=strategy_id,
-                strategy_name=strategy_name,
-                active_trade_id=active_trade_id,
-                trade_id=trade_id,
-                paper=paper,
-                status='pending',
-            )
-            session.add(order)
-            session.commit()
-            logger.info(f"[{ticker}] Created order {order.id}: {side} {requested_shares} shares")
-            return order.id
+            with self._db_session() as session:
+                order = OrderDB(
+                    ticker=ticker,
+                    side=side,
+                    order_type=order_type,
+                    requested_shares=requested_shares,
+                    limit_price=limit_price,
+                    broker_order_id=broker_order_id,
+                    strategy_id=strategy_id,
+                    strategy_name=strategy_name,
+                    active_trade_id=active_trade_id,
+                    trade_id=trade_id,
+                    paper=paper,
+                    status='pending',
+                )
+                session.add(order)
+                session.flush()  # Get the ID before commit
+                order_id = order.id
+                logger.info(f"[{ticker}] Created order {order_id}: {side} {requested_shares} shares")
+                return order_id
         except Exception as e:
-            session.rollback()
             logger.error(f"Failed to create order: {e}")
             return None
-        finally:
-            session.close()
 
     def update_broker_order_id(self, order_id: int, broker_order_id: str) -> bool:
         """Update the broker order ID after order submission."""
-        session = SessionLocal()
         try:
-            order = session.query(OrderDB).filter(OrderDB.id == order_id).first()
-            if order:
-                order.broker_order_id = broker_order_id
-                order.updated_at = datetime.utcnow()
-                session.commit()
-                return True
-            return False
+            with self._db_session() as session:
+                order = session.query(OrderDB).filter(OrderDB.id == order_id).first()
+                if order:
+                    order.broker_order_id = broker_order_id
+                    order.updated_at = datetime.utcnow()
+                    return True
+                return False
         except Exception as e:
-            session.rollback()
             logger.error(f"Failed to update broker order ID: {e}")
             return False
-        finally:
-            session.close()
 
     def update_order_status(
         self,
@@ -87,35 +82,31 @@ class OrderStore:
         avg_fill_price: Optional[float] = None,
     ) -> bool:
         """Update order status and fill info."""
-        session = SessionLocal()
         try:
-            if order_id:
-                order = session.query(OrderDB).filter(OrderDB.id == order_id).first()
-            elif broker_order_id:
-                order = session.query(OrderDB).filter(OrderDB.broker_order_id == broker_order_id).first()
-            else:
-                return False
+            with self._db_session() as session:
+                if order_id:
+                    order = session.query(OrderDB).filter(OrderDB.id == order_id).first()
+                elif broker_order_id:
+                    order = session.query(OrderDB).filter(OrderDB.broker_order_id == broker_order_id).first()
+                else:
+                    return False
 
-            if not order:
-                return False
+                if not order:
+                    return False
 
-            if status:
-                order.status = status
-            if filled_shares is not None:
-                order.filled_shares = filled_shares
-            if avg_fill_price is not None:
-                order.avg_fill_price = avg_fill_price
-            order.updated_at = datetime.utcnow()
+                if status:
+                    order.status = status
+                if filled_shares is not None:
+                    order.filled_shares = filled_shares
+                if avg_fill_price is not None:
+                    order.avg_fill_price = avg_fill_price
+                order.updated_at = datetime.utcnow()
 
-            session.commit()
-            logger.info(f"[{order.ticker}] Updated order {order.id}: status={status}, filled={filled_shares}")
-            return True
+                logger.info(f"[{order.ticker}] Updated order {order.id}: status={status}, filled={filled_shares}")
+                return True
         except Exception as e:
-            session.rollback()
             logger.error(f"Failed to update order status: {e}")
             return False
-        finally:
-            session.close()
 
     def record_event(
         self,
@@ -134,41 +125,38 @@ class OrderStore:
         Returns:
             Event ID if successful, None otherwise.
         """
-        session = SessionLocal()
         try:
-            # If we only have broker_order_id, try to find our order_id
-            if order_id is None and broker_order_id:
-                order = session.query(OrderDB).filter(
-                    OrderDB.broker_order_id == broker_order_id
-                ).first()
-                if order:
-                    order_id = order.id
+            with self._db_session() as session:
+                # If we only have broker_order_id, try to find our order_id
+                if order_id is None and broker_order_id:
+                    order = session.query(OrderDB).filter(
+                        OrderDB.broker_order_id == broker_order_id
+                    ).first()
+                    if order:
+                        order_id = order.id
 
-            event = OrderEventDB(
-                order_id=order_id,
-                broker_order_id=broker_order_id,
-                event_type=event_type,
-                filled_shares=filled_shares,
-                fill_price=fill_price,
-                cumulative_filled=cumulative_filled,
-                raw_data=json.dumps(raw_data) if raw_data else None,
-                event_timestamp=event_timestamp,
-            )
-            session.add(event)
-            session.commit()
-            logger.debug(f"Recorded order event: {event_type} for order {order_id or broker_order_id}")
-            return event.id
+                event = OrderEventDB(
+                    order_id=order_id,
+                    broker_order_id=broker_order_id,
+                    event_type=event_type,
+                    filled_shares=filled_shares,
+                    fill_price=fill_price,
+                    cumulative_filled=cumulative_filled,
+                    raw_data=json.dumps(raw_data) if raw_data else None,
+                    event_timestamp=event_timestamp,
+                )
+                session.add(event)
+                session.flush()
+                event_id = event.id
+                logger.debug(f"Recorded order event: {event_type} for order {order_id or broker_order_id}")
+                return event_id
         except Exception as e:
-            session.rollback()
             logger.error(f"Failed to record order event: {e}")
             return None
-        finally:
-            session.close()
 
     def get_order(self, order_id: Optional[int] = None, broker_order_id: Optional[str] = None) -> Optional[OrderDB]:
         """Get an order by ID or broker order ID."""
-        session = SessionLocal()
-        try:
+        with self._db_session() as session:
             if order_id:
                 order = session.query(OrderDB).filter(OrderDB.id == order_id).first()
             elif broker_order_id:
@@ -179,13 +167,10 @@ class OrderStore:
             if order:
                 session.expunge(order)
             return order
-        finally:
-            session.close()
 
     def get_pending_orders(self, ticker: Optional[str] = None, strategy_id: Optional[str] = None) -> List[OrderDB]:
         """Get all pending orders, optionally filtered by ticker or strategy."""
-        session = SessionLocal()
-        try:
+        with self._db_session() as session:
             query = session.query(OrderDB).filter(OrderDB.status.in_(['pending', 'partial']))
 
             if ticker:
@@ -197,34 +182,26 @@ class OrderStore:
             for o in orders:
                 session.expunge(o)
             return orders
-        finally:
-            session.close()
 
     def get_orders_for_strategy(self, strategy_id: str, limit: int = 100) -> List[OrderDB]:
         """Get recent orders for a strategy."""
-        session = SessionLocal()
-        try:
+        with self._db_session() as session:
             orders = session.query(OrderDB).filter(
                 OrderDB.strategy_id == strategy_id
             ).order_by(OrderDB.created_at.desc()).limit(limit).all()
             for o in orders:
                 session.expunge(o)
             return orders
-        finally:
-            session.close()
 
     def get_events_for_order(self, order_id: int) -> List[OrderEventDB]:
         """Get all events for an order."""
-        session = SessionLocal()
-        try:
+        with self._db_session() as session:
             events = session.query(OrderEventDB).filter(
                 OrderEventDB.order_id == order_id
             ).order_by(OrderEventDB.event_timestamp.asc()).all()
             for e in events:
                 session.expunge(e)
             return events
-        finally:
-            session.close()
 
 
 # Global instance
