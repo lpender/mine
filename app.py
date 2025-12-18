@@ -186,19 +186,61 @@ def set_param(key: str, value):
 # Load Data
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_announcements():
     """Load announcements from PostgreSQL."""
     client = get_postgres_client()
     return client.load_announcements()
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_filter_options():
     """Load distinct filter options from PostgreSQL (fast; avoids loading all announcements)."""
     client = get_postgres_client()
     return client.get_announcement_filter_options(source="backfill")
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
+def load_sample_ids(sample_pct: int, sample_seed: int):
+    """Get a stable sampled set of announcement IDs from Postgres (sampling only)."""
+    client = get_postgres_client()
+    return client.get_sampled_announcement_ids(source="backfill", sample_pct=sample_pct, sample_seed=sample_seed)
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_announcements_by_ids(sample_ids: tuple):
+    """Load announcements for a fixed ID set (no sampling/filtering beyond the ID list)."""
+    client = get_postgres_client()
+    # Use the stable sample IDs as the dataset; all other filters happen in Python.
+    _, anns = client.load_announcements_sampled_and_filtered(
+        source="backfill",
+        sample_ids=list(sample_ids),
+        # no DB-side filters; keep everything in the base dataset
+        sessions=None,
+        countries=None,
+        country_blacklist=None,
+        authors=None,
+        channels=None,
+        directions=None,
+        scanner_test=False,
+        scanner_after_lull=False,
+        max_mentions=None,
+        exclude_financing_headlines=False,
+        require_headline=False,
+        exclude_headline=False,
+        float_min_m=0.0,
+        float_max_m=1e9,
+        mc_min_m=0.0,
+        mc_max_m=1e9,
+        prior_move_min=0.0,
+        prior_move_max=0.0,
+        nhod_filter="Any",
+        nsh_filter="Any",
+        rvol_min=0.0,
+        rvol_max=0.0,
+        exclude_financing_types=None,
+        exclude_biotech=False,
+    )
+    return anns
+
+@st.cache_data(ttl=300, show_spinner=False)
 def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
@@ -260,7 +302,7 @@ def load_sampled_filtered_announcements(
     )
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=300, show_spinner=False)
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
@@ -301,6 +343,18 @@ all_channels = opts.get("channels", [])
 all_sessions = ["premarket", "market", "postmarket", "closed"]
 all_directions = opts.get("directions", [])
 
+
+def _active_sample_seed(user_seed: int) -> int:
+    """
+    Make sample_seed=0 mean: random ONCE per dashboard session (sticky),
+    instead of random on every rerun.
+    """
+    if user_seed and int(user_seed) > 0:
+        return int(user_seed)
+    if "_sticky_sample_seed" not in st.session_state:
+        st.session_state["_sticky_sample_seed"] = random.randint(1, 2**31 - 1)
+    return int(st.session_state["_sticky_sample_seed"])
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Sidebar Controls
 # ─────────────────────────────────────────────────────────────────────────────
@@ -309,68 +363,91 @@ all_directions = opts.get("directions", [])
 # This ensures URL params are used on first load, but widget changes aren't overwritten
 # Widget keys are prefixed with underscore to avoid conflict with URL param names
 def init_session_state():
-    """Initialize session state from URL params only for missing keys."""
-    # Helper to set if missing
+    """Initialize session state from URL params, allowing URL to override existing values."""
+    # Helper to set from URL param or use default
+    # If URL param is present, always use it (to support "Load in Backtest" links)
+    # Otherwise, keep existing session state value or use default
+    def set_from_url_or_default(key, url_param, default, param_type=str):
+        if url_param in st.query_params:
+            # URL param present - use it
+            st.session_state[key] = get_param(url_param, default, param_type)
+        elif key not in st.session_state:
+            # No URL param and no session state - use default
+            st.session_state[key] = default
+        # Otherwise: keep existing session state value
+
+    # Legacy helper for backwards compatibility
     def set_if_missing(key, value):
         if key not in st.session_state:
             st.session_state[key] = value
 
-    # Validate slider values against their min/max ranges
-    sl_val = get_param("sl", 5.0, float)
-    set_if_missing("_sl", max(1.0, min(30.0, sl_val)) if sl_val > 0 else 5.0)
-    tp_val = get_param("tp", 10.0, float)
-    set_if_missing("_tp", max(1.0, min(1000.0, tp_val)) if tp_val > 0 else 10.0)
-    hold_val = get_param("hold", 60, int)
-    set_if_missing("_hold", max(5, min(120, hold_val)) if hold_val > 0 else 60)
-    # Parse session list, filtering to valid values
-    sess_list = get_param("sess", "premarket,market", list)
-    set_if_missing("_sess", [s for s in sess_list if s in all_sessions] or ["premarket", "market"])
-    country_list = get_param("country", "", list)
-    set_if_missing("_country", [c for c in country_list if c in all_countries])
-    author_list = get_param("author", "", list)
-    set_if_missing("_author", [a for a in author_list if a in all_authors])
-    channel_list = get_param("channel", "", list)
-    set_if_missing("_channel", [c for c in channel_list if c in all_channels])
-    set_if_missing("_no_fin", get_param("no_fin", False, bool))
-    set_if_missing("_has_hl", get_param("has_hl", False, bool))
-    set_if_missing("_no_hl", get_param("no_hl", False, bool))
-    set_if_missing("_float_min", get_param("float_min", 0.0, float))
-    # float_max=0 is invalid, use default
-    float_max_val = get_param("float_max", 1000.0, float)
-    set_if_missing("_float_max", float_max_val if float_max_val > 0 else 1000.0)
-    set_if_missing("_mc_min", get_param("mc_min", 0.0, float))
-    # mc_max=0 is invalid, use default
-    mc_max_val = get_param("mc_max", 10000.0, float)
-    set_if_missing("_mc_max", mc_max_val if mc_max_val > 0 else 10000.0)
-    set_if_missing("_sl_from_open", get_param("sl_open", False, bool))
-    set_if_missing("_consec_candles", get_param("consec", 0, int))
-    set_if_missing("_min_candle_vol", get_param("min_vol", 0, int))
-    entry_window_val = get_param("entry_window", 5, int)
-    set_if_missing("_entry_window", max(1, min(30, entry_window_val)) if entry_window_val > 0 else 5)
-    set_if_missing("_price_min", get_param("price_min", 0.0, float))
-    # price_max=0 is invalid (would filter everything), use default
-    price_max_val = get_param("price_max", 100.0, float)
-    set_if_missing("_price_max", price_max_val if price_max_val > 0 else 100.0)
-    set_if_missing("_trailing_stop", get_param("trail", 0.0, float))
-    direction_list = get_param("direction", "", list)
-    set_if_missing("_direction", [d for d in direction_list if d in all_directions])
-    set_if_missing("_scanner_test", get_param("scanner_test", False, bool))
-    set_if_missing("_scanner_after_lull", get_param("scanner_lull", False, bool))
+    # Helper to set value, checking URL param first
+    def set_with_url_override(key, url_param, default, param_type=str, validator=None):
+        if url_param in st.query_params:
+            val = get_param(url_param, default, param_type)
+            st.session_state[key] = validator(val) if validator else val
+        elif key not in st.session_state:
+            st.session_state[key] = default
+
+    # Slider value validators
+    def validate_sl(v): return max(1.0, min(30.0, v)) if v > 0 else 5.0
+    def validate_tp(v): return max(1.0, min(1000.0, v)) if v > 0 else 10.0
+    def validate_hold(v): return max(5, min(120, v)) if v > 0 else 60
+    def validate_entry_window(v): return max(1, min(30, v)) if v > 0 else 5
+    def validate_sessions(v): return [s for s in v if s in all_sessions] or ["premarket", "market"]
+    def validate_countries(v): return [c for c in v if c in all_countries]
+    def validate_authors(v): return [a for a in v if a in all_authors]
+    def validate_channels(v): return [c for c in v if c in all_channels]
+    def validate_directions(v): return [d for d in v if d in all_directions]
+    def validate_positive_or_default(default): return lambda v: v if v > 0 else default
+    def validate_positive_or_zero(v): return v if v > 0 else 0.0
+
+    # Trigger config sliders
+    set_with_url_override("_sl", "sl", 5.0, float, validate_sl)
+    set_with_url_override("_tp", "tp", 10.0, float, validate_tp)
+    set_with_url_override("_hold", "hold", 60, int, validate_hold)
+    set_with_url_override("_trailing_stop", "trail", 0.0, float)
+    set_with_url_override("_sl_from_open", "sl_open", False, bool)
+    set_with_url_override("_consec_candles", "consec", 0, int)
+    set_with_url_override("_min_candle_vol", "min_vol", 0, int)
+    set_with_url_override("_entry_window", "entry_window", 5, int, validate_entry_window)
+
+    # Filter multiselects
+    set_with_url_override("_sess", "sess", ["premarket", "market"], list, validate_sessions)
+    set_with_url_override("_country", "country", [], list, validate_countries)
+    set_with_url_override("_author", "author", [], list, validate_authors)
+    set_with_url_override("_channel", "channel", [], list, validate_channels)
+    set_with_url_override("_direction", "direction", [], list, validate_directions)
+
+    # Boolean filters
+    set_with_url_override("_no_fin", "no_fin", False, bool)
+    set_with_url_override("_has_hl", "has_hl", False, bool)
+    set_with_url_override("_no_hl", "no_hl", False, bool)
+    set_with_url_override("_scanner_test", "scanner_test", False, bool)
+    set_with_url_override("_scanner_after_lull", "scanner_lull", False, bool)
+    set_with_url_override("_exclude_biotech", "exclude_biotech", False, bool)
+
+    # Numeric filters
+    set_with_url_override("_float_min", "float_min", 0.0, float)
+    set_with_url_override("_float_max", "float_max", 1000.0, float, validate_positive_or_default(1000.0))
+    set_with_url_override("_mc_min", "mc_min", 0.0, float)
+    set_with_url_override("_mc_max", "mc_max", 10000.0, float, validate_positive_or_default(10000.0))
+    set_with_url_override("_price_min", "price_min", 0.0, float)
+    set_with_url_override("_price_max", "price_max", 100.0, float, validate_positive_or_default(100.0))
+    set_with_url_override("_max_mentions", "max_mentions", 0, int)
+    set_with_url_override("_prior_move_max", "max_prior_move", 0.0, float, validate_positive_or_zero)
+
     # Position sizing
-    set_if_missing("_stake_mode", get_param("stake_mode", "fixed"))
-    set_if_missing("_stake_amount", get_param("stake", 1000.0, float))
-    set_if_missing("_volume_pct", get_param("vol_pct", 1.0, float))
-    set_if_missing("_max_stake", get_param("max_stake", 10000.0, float))
-    # New filters from strategy
-    set_if_missing("_max_mentions", get_param("max_mentions", 0, int))
-    set_if_missing("_exclude_biotech", get_param("exclude_biotech", False, bool))
-    # Prior move filter
-    prior_move_val = get_param("max_prior_move", 0.0, float)
-    set_if_missing("_prior_move_max", prior_move_val if prior_move_val > 0 else 0.0)
-    # Market cap filter from URL (convert to the mc_max widget if provided)
-    max_mcap_val = get_param("max_mcap", 0.0, float)
-    if max_mcap_val > 0:
-        set_if_missing("_mc_max", max_mcap_val)
+    set_with_url_override("_stake_mode", "stake_mode", "fixed", str)
+    set_with_url_override("_stake_amount", "stake", 1000.0, float)
+    set_with_url_override("_volume_pct", "vol_pct", 1.0, float)
+    set_with_url_override("_max_stake", "max_stake", 10000.0, float)
+
+    # Market cap filter from URL (max_mcap is an alias for mc_max from strategy page)
+    if "max_mcap" in st.query_params:
+        max_mcap_val = get_param("max_mcap", 0.0, float)
+        if max_mcap_val > 0:
+            st.session_state["_mc_max"] = max_mcap_val
 
 init_session_state()
 
@@ -404,6 +481,10 @@ with st.sidebar:
     set_param("sample_pct", sample_pct if sample_pct < 100 else "")
     set_param("sample_seed", sample_seed if sample_seed > 0 else "")
 
+    active_seed = _active_sample_seed(int(sample_seed or 0))
+    if sample_seed == 0 and sample_pct < 100:
+        st.caption(f"Using sticky random seed for this session: **{active_seed}** (set a non-zero seed to persist in URL)")
+
     st.divider()
     st.header("Filters")
 
@@ -431,14 +512,11 @@ with st.sidebar:
     )
 
     # Max intraday mentions filter
-    _max_mentions_key = "_max_mentions"
-    if _max_mentions_key not in st.session_state or st.query_params.get("max_mentions"):
-        st.session_state[_max_mentions_key] = int(get_param("max_mentions", 0) or 0)
     max_mentions = st.number_input(
         "Max Intraday Mentions",
         min_value=0,
         max_value=100,
-        key=_max_mentions_key,
+        key="_max_mentions",
         help="Only alerts with mentions <= this value (0 = no filter)"
     )
 
@@ -533,21 +611,14 @@ with st.sidebar:
     st.subheader("Market Cap (millions)")
     col1, col2 = st.columns(2)
     mc_min = col1.number_input("Min", min_value=0.0, step=1.0, key="_mc_min")
-    _mc_max_key = "_mc_max"
-    if _mc_max_key not in st.session_state or st.query_params.get("max_mcap"):
-        _mc_max_val = get_param("max_mcap", 0.0, float)
-        st.session_state[_mc_max_key] = _mc_max_val if _mc_max_val > 0 else 0.0
-    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key=_mc_max_key)
+    mc_max = col2.number_input("Max", min_value=0.0, step=100.0, key="_mc_max")
 
     # Prior move filter (scanner_gain_pct)
     st.subheader("Prior Move Filter")
     col1, col2 = st.columns(2)
     prior_move_min = col1.number_input("Min %", min_value=0.0, step=5.0, key="_prior_move_min",
                                         help="Only include if stock already moved at least this % before alert")
-    _prior_move_max_key = "_prior_move_max"
-    if _prior_move_max_key not in st.session_state or st.query_params.get("max_prior_move"):
-        st.session_state[_prior_move_max_key] = get_param("max_prior_move", 0.0, float)
-    prior_move_max = col2.number_input("Max %", min_value=0.0, step=10.0, key=_prior_move_max_key,
+    prior_move_max = col2.number_input("Max %", min_value=0.0, step=10.0, key="_prior_move_max",
                                         help="Exclude if stock already moved more than this % before alert (0 = no limit)")
 
     # Headline type filter (financing)
@@ -559,12 +630,9 @@ with st.sidebar:
         key="_exclude_financing",
         help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
     )
-    _exclude_biotech_key = "_exclude_biotech"
-    if _exclude_biotech_key not in st.session_state or st.query_params.get("exclude_biotech"):
-        st.session_state[_exclude_biotech_key] = get_param("exclude_biotech", False, bool)
     exclude_biotech = st.checkbox(
         "Exclude biotech/pharma (clinical trials)",
-        key=_exclude_biotech_key,
+        key="_exclude_biotech",
         help="Exclude announcements mentioning 'therapeutics', 'clinical', 'trial', 'phase' (tend to underperform)"
     )
 
@@ -812,36 +880,137 @@ with st.sidebar:
 # Filter Announcements
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Load sampled + filtered announcements from SQL (huge speedup vs loading all + filtering in Python)
-with log_time("load_sampled_filtered_announcements"):
-    total_before_sampling, filtered = load_sampled_filtered_announcements(
-        sample_pct=int(sample_pct),
-        sample_seed=int(sample_seed),
-        sessions=tuple(sessions) if sessions else tuple(),
-        countries=tuple(countries) if countries else tuple(),
-        country_blacklist=tuple(country_blacklist) if country_blacklist else tuple(),
-        authors=tuple(authors) if authors else tuple(),
-        channels=tuple(channels) if channels else tuple(),
-        directions=tuple(directions) if directions else tuple(),
-        scanner_test=bool(scanner_test),
-        scanner_after_lull=bool(scanner_after_lull),
-        max_mentions=int(max_mentions or 0),
-        exclude_financing_headlines=bool(exclude_financing_headlines),
-        require_headline=bool(require_headline),
-        exclude_headline=bool(exclude_headline),
-        float_min=float(float_min or 0.0),
-        float_max=float(float_max or 0.0),
-        mc_min=float(mc_min or 0.0),
-        mc_max=float(mc_max or 0.0),
-        prior_move_min=float(prior_move_min or 0.0),
-        prior_move_max=float(prior_move_max or 0.0),
-        nhod_filter=str(nhod_filter),
-        nsh_filter=str(nsh_filter),
-        rvol_min=float(rvol_min or 0.0),
-        rvol_max=float(rvol_max or 0.0),
-        exclude_financing_types=tuple(exclude_financing_types) if exclude_financing_types else tuple(),
-        exclude_biotech=bool(exclude_biotech),
-    )
+# Build/keep a base dataset in-memory: sampled announcement IDs + OHLCV for max window.
+# Changing TP/SL/etc will NOT reload announcements or OHLCV; only sample params will.
+PREFETCH_WINDOW_MINUTES = int(os.getenv("DASHBOARD_PREFETCH_WINDOW_MINUTES", "120") or 120)
+PREFETCH_WINDOW_MINUTES = 5 if PREFETCH_WINDOW_MINUTES < 5 else PREFETCH_WINDOW_MINUTES
+
+active_seed = _active_sample_seed(int(sample_seed or 0))
+
+base_needs_reload = (
+    ("_base_sample_pct" not in st.session_state) or
+    (st.session_state.get("_base_sample_pct") != int(sample_pct)) or
+    (st.session_state.get("_base_sample_seed") != int(active_seed)) or
+    (st.session_state.get("_base_prefetch_window") != int(PREFETCH_WINDOW_MINUTES)) or
+    ("_base_announcements" not in st.session_state) or
+    ("_base_bars_dict" not in st.session_state)
+)
+
+if st.sidebar.button("🔄 Reload base dataset", help="Reload announcements sample + OHLCV cache (expensive)"):
+    base_needs_reload = True
+
+if base_needs_reload:
+    with log_time("build_base_dataset", sample_pct=sample_pct, seed=active_seed, window=PREFETCH_WINDOW_MINUTES):
+        total_before_sampling, sample_ids = load_sample_ids(int(sample_pct), int(active_seed))
+        st.session_state["_base_total_before_sampling"] = int(total_before_sampling)
+        st.session_state["_base_sample_pct"] = int(sample_pct)
+        st.session_state["_base_sample_seed"] = int(active_seed)
+        st.session_state["_base_prefetch_window"] = int(PREFETCH_WINDOW_MINUTES)
+        st.session_state["_base_sample_ids"] = list(sample_ids)
+
+        with log_time("load_base_announcements", ids=len(sample_ids)):
+            base_anns = load_announcements_by_ids(tuple(sample_ids))
+        st.session_state["_base_announcements"] = base_anns
+
+        base_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in base_anns)
+        with log_time("prefetch_base_ohlcv", keys=len(base_keys), window_minutes=PREFETCH_WINDOW_MINUTES):
+            st.session_state["_base_bars_dict"] = load_ohlcv_for_announcements(base_keys, PREFETCH_WINDOW_MINUTES)
+
+total_before_sampling = int(st.session_state.get("_base_total_before_sampling", 0))
+base_announcements = st.session_state.get("_base_announcements", [])
+bars_dict = st.session_state.get("_base_bars_dict", {})
+
+# Apply UI filters as subsets of the base dataset (fast, no DB calls)
+filtered = base_announcements
+
+# Session filter
+if sessions:
+    filtered = [a for a in filtered if a.market_session in sessions]
+
+# Country filter
+if countries:
+    filtered = [a for a in filtered if a.country in countries]
+
+# Country blacklist filter
+if country_blacklist:
+    filtered = [a for a in filtered if a.country not in country_blacklist]
+
+# Author filter
+if authors:
+    filtered = [a for a in filtered if a.author in authors]
+
+# Channel filter
+if channels:
+    filtered = [a for a in filtered if a.channel in channels]
+
+# Financing headline boolean
+if exclude_financing_headlines:
+    filtered = [a for a in filtered if not a.headline_is_financing]
+
+# Headline presence filters
+if require_headline:
+    filtered = [a for a in filtered if a.headline and a.headline.strip()]
+if exclude_headline:
+    filtered = [a for a in filtered if not a.headline or not a.headline.strip()]
+
+# Direction filter
+if directions:
+    filtered = [a for a in filtered if a.direction in directions]
+
+# Scanner filters
+if scanner_test:
+    filtered = [a for a in filtered if a.scanner_test]
+if scanner_after_lull:
+    filtered = [a for a in filtered if a.scanner_after_lull]
+
+# Max intraday mentions
+if max_mentions and int(max_mentions) > 0:
+    mm = int(max_mentions)
+    filtered = [a for a in filtered if a.mention_count is not None and a.mention_count <= mm]
+
+# Float filter (shares stored, UI uses millions)
+filtered = [a for a in filtered if a.float_shares is None or (float_min * 1e6 <= a.float_shares <= float_max * 1e6)]
+
+# Market cap filter (dollars stored, UI uses millions)
+filtered = [a for a in filtered if a.market_cap is None or (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
+
+# Prior move filter
+if prior_move_min and float(prior_move_min) > 0:
+    filtered = [a for a in filtered if a.scanner_gain_pct is not None and a.scanner_gain_pct >= float(prior_move_min)]
+if prior_move_max and float(prior_move_max) > 0:
+    filtered = [a for a in filtered if a.scanner_gain_pct is None or a.scanner_gain_pct <= float(prior_move_max)]
+
+# NHOD / NSH filters
+if nhod_filter == "Yes":
+    filtered = [a for a in filtered if a.is_nhod is True]
+elif nhod_filter == "No":
+    filtered = [a for a in filtered if a.is_nhod is False]
+
+if nsh_filter == "Yes":
+    filtered = [a for a in filtered if a.is_nsh is True]
+elif nsh_filter == "No":
+    filtered = [a for a in filtered if a.is_nsh is False]
+
+# RVol filter
+if rvol_min and float(rvol_min) > 0:
+    filtered = [a for a in filtered if a.rvol is not None and a.rvol >= float(rvol_min)]
+if rvol_max and float(rvol_max) > 0:
+    filtered = [a for a in filtered if a.rvol is None or a.rvol <= float(rvol_max)]
+
+# Financing type exclusions
+if exclude_financing_types:
+    excl = set(exclude_financing_types)
+    filtered = [a for a in filtered if (a.headline_financing_type is None) or (a.headline_financing_type not in excl)]
+
+# Biotech/pharma filter
+if exclude_biotech:
+    biotech_keywords = ['therapeutics', 'clinical', 'trial', 'phase', 'fda', 'drug', 'treatment']
+    def _is_biotech(headline: str) -> bool:
+        if not headline:
+            return False
+        h = headline.lower()
+        return any(kw in h for kw in biotech_keywords)
+    filtered = [a for a in filtered if not _is_biotech(a.headline)]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 
@@ -854,12 +1023,8 @@ if not filtered:
     st.warning("No announcements match the current filters.")
     st.stop()
 
-# Create cache key from announcement identifiers
-announcement_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in filtered)
-
-# Load OHLCV data (bulk query - returns dict with (ticker, datetime) keys)
-with log_time("load_ohlcv_for_announcements", keys=len(announcement_keys), window_minutes=hold_time):
-    bars_dict = load_ohlcv_for_announcements(announcement_keys, hold_time)
+# NOTE: bars_dict is preloaded once for the base dataset (PREFETCH_WINDOW_MINUTES)
+# and reused across backtest parameter changes.
 
 # Run backtest
 config = BacktestConfig(
