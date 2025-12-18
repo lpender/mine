@@ -367,10 +367,24 @@ def init_session_state():
     # Prior move filter
     prior_move_val = get_param("max_prior_move", 0.0, float)
     set_if_missing("_prior_move_max", prior_move_val if prior_move_val > 0 else 0.0)
+    set_if_missing("_prior_move_min", get_param("prior_move_min", 0.0, float))
     # Market cap filter from URL (convert to the mc_max widget if provided)
     max_mcap_val = get_param("max_mcap", 0.0, float)
     if max_mcap_val > 0:
         set_if_missing("_mc_max", max_mcap_val)
+    # Country blacklist
+    country_bl_list = get_param("country_blacklist", "", list)
+    set_if_missing("_country_blacklist", [c for c in country_bl_list if c in all_countries])
+    # NHOD/NSH filters
+    set_if_missing("_nhod_filter", get_param("nhod", "Any"))
+    set_if_missing("_nsh_filter", get_param("nsh", "Any"))
+    # RVol filter
+    set_if_missing("_rvol_min", get_param("rvol_min", 0.0, float))
+    set_if_missing("_rvol_max", get_param("rvol_max", 0.0, float))
+    # Headline type filter
+    fin_types_list = get_param("exclude_financing", "", list)
+    valid_types = ["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"]
+    set_if_missing("_exclude_financing", [t for t in fin_types_list if t in valid_types] or ["offering", "warrants", "convertible"])
 
 init_session_state()
 
@@ -543,7 +557,6 @@ with st.sidebar:
     exclude_financing_types = st.multiselect(
         "Exclude financing types",
         options=["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"],
-        default=["offering", "warrants", "convertible"],
         key="_exclude_financing",
         help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
     )
@@ -704,6 +717,16 @@ with st.sidebar:
     set_param("direction", directions)
     set_param("scanner_test", scanner_test)
     set_param("scanner_lull", scanner_after_lull)
+    set_param("max_mentions", max_mentions if max_mentions > 0 else "")
+    set_param("country_blacklist", country_blacklist)
+    set_param("nhod", nhod_filter if nhod_filter != "Any" else "")
+    set_param("nsh", nsh_filter if nsh_filter != "Any" else "")
+    set_param("rvol_min", rvol_min if rvol_min > 0 else "")
+    set_param("rvol_max", rvol_max if rvol_max > 0 else "")
+    set_param("prior_move_min", prior_move_min if prior_move_min > 0 else "")
+    set_param("max_prior_move", prior_move_max if prior_move_max > 0 else "")
+    set_param("exclude_financing", exclude_financing_types)
+    set_param("exclude_biotech", exclude_biotech)
     # Position sizing params
     set_param("stake_mode", stake_mode)
     set_param("stake", stake_amount)
