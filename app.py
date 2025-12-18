@@ -756,6 +756,18 @@ with st.sidebar:
             if store.get_strategy_by_name(strategy_name):
                 st.error(f"Strategy '{strategy_name}' already exists")
             else:
+                # Debug: Log what values we're about to save
+                LOGGER.info(f"Saving strategy '{strategy_name}' with values:")
+                LOGGER.info(f"  stop_loss={stop_loss}, take_profit={take_profit}, hold_time={hold_time}")
+                LOGGER.info(f"  consec_candles={consec_candles}, min_candle_vol={min_candle_vol}")
+                LOGGER.info(f"  entry_window={entry_window}, sl_from_open={sl_from_open}")
+                LOGGER.info(f"  price_min={price_min}, price_max={price_max}")
+                LOGGER.info(f"  stake_mode={stake_mode}, stake_amount={stake_amount}, vol_pct={volume_pct}, max_stake={max_stake}")
+                LOGGER.info(f"  channels={channels}, directions={directions}, sessions={sessions}")
+                LOGGER.info(f"  country_blacklist={country_blacklist}, max_mentions={max_mentions}")
+                LOGGER.info(f"  exclude_financing_headlines={exclude_financing_headlines}, exclude_biotech={exclude_biotech}")
+                LOGGER.info(f"  prior_move_max={prior_move_max}")
+
                 strategy_config = StrategyConfig(
                     channels=channels if channels else [],
                     directions=directions if directions else [],
@@ -764,6 +776,9 @@ with st.sidebar:
                     sessions=sessions if sessions else ["premarket", "market"],
                     country_blacklist=country_blacklist if country_blacklist else [],
                     max_intraday_mentions=max_mentions if max_mentions > 0 else None,
+                    exclude_financing_headlines=exclude_financing_headlines,
+                    exclude_biotech=exclude_biotech,
+                    max_prior_move_pct=prior_move_max if prior_move_max > 0 else None,
                     consec_green_candles=consec_candles,
                     min_candle_volume=int(min_candle_vol),
                     entry_window_minutes=entry_window,
@@ -778,7 +793,7 @@ with st.sidebar:
                     max_stake=max_stake,
                 )
                 store.save_strategy(strategy_name, strategy_config)
-                st.success(f"Saved strategy '{strategy_name}'")
+                st.success(f"Saved strategy '{strategy_name}' - check logs/dashboard.log for saved values")
 
     st.divider()
 
@@ -1012,7 +1027,7 @@ if sort_column in df.columns:
 
 # Configure column display
 column_config = {
-    "Time": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm"),
+    "Time": st.column_config.DatetimeColumn("Time", format="YYYY-MM-DD HH:mm:ss.S"),
     "Mentions": st.column_config.NumberColumn("Mentions", format="%d"),
     "Float (M)": st.column_config.NumberColumn("Float (M)", format="%.1f"),
     "MC (M)": st.column_config.NumberColumn("MC (M)", format="%.1f"),
