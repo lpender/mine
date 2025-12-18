@@ -151,7 +151,7 @@ try:
             "Side": order.side.upper() if order and order.side else "-",
             "Order Type": order.order_type if order else "-",
             "Requested": order.requested_shares if order else "-",
-            "Filled": event.filled_shares if event.filled_shares else "-",
+            "Filled": str(event.filled_shares) if event.filled_shares else "-",
             "Cumulative": f"{event.cumulative_filled}/{order.requested_shares}" if event.cumulative_filled is not None and order else "-",
             "Fill Price": format_price(event.fill_price) if event.fill_price else "-",
             "Limit Price": format_price(order.limit_price) if order and order.limit_price else "-",
