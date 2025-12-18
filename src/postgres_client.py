@@ -8,7 +8,10 @@ from typing import List, Optional
 from dotenv import load_dotenv
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import aliased
 from sqlalchemy import and_, or_, tuple_
+from sqlalchemy import String, cast, func, literal
+from sqlalchemy import select
 
 from .database import SessionLocal, AnnouncementDB, OHLCVBarDB, RawMessageDB
 from .models import Announcement, OHLCVBar, get_market_session
@@ -111,6 +114,194 @@ class PostgresClient:
                 query = query.filter(AnnouncementDB.source == source)
             rows = query.order_by(AnnouncementDB.timestamp.desc()).all()
             return [self._db_to_announcement(row) for row in rows]
+        finally:
+            db.close()
+
+    def get_announcement_filter_options(self, source: str = "backfill") -> dict:
+        """
+        Get distinct values for dashboard filter widgets without loading all announcements.
+        Returns dict with keys: countries, authors, channels, directions.
+        """
+        db = self._get_db()
+        try:
+            def distinct_nonempty(col):
+                rows = (
+                    db.query(col)
+                    .filter(AnnouncementDB.source == source)
+                    .filter(col.isnot(None))
+                    .filter(func.trim(col) != "")
+                    .distinct()
+                    .order_by(col)
+                    .all()
+                )
+                return [r[0] for r in rows if r and r[0]]
+
+            return {
+                "countries": distinct_nonempty(AnnouncementDB.country),
+                "authors": distinct_nonempty(AnnouncementDB.author),
+                "channels": distinct_nonempty(AnnouncementDB.channel),
+                "directions": distinct_nonempty(AnnouncementDB.direction),
+            }
+        finally:
+            db.close()
+
+    def load_announcements_sampled_and_filtered(
+        self,
+        *,
+        source: str = "backfill",
+        sample_pct: int = 100,
+        sample_seed: int = 0,
+        # Column filters (all optional)
+        countries: Optional[List[str]] = None,
+        country_blacklist: Optional[List[str]] = None,
+        authors: Optional[List[str]] = None,
+        channels: Optional[List[str]] = None,
+        directions: Optional[List[str]] = None,
+        scanner_test: bool = False,
+        scanner_after_lull: bool = False,
+        max_mentions: Optional[int] = None,
+        exclude_financing_headlines: bool = False,
+        require_headline: bool = False,
+        exclude_headline: bool = False,
+        float_min_m: float = 0.0,
+        float_max_m: float = 1000.0,
+        mc_min_m: float = 0.0,
+        mc_max_m: float = 10000.0,
+        prior_move_min: float = 0.0,
+        prior_move_max: float = 0.0,
+        nhod_filter: str = "Any",  # Any|Yes|No
+        nsh_filter: str = "Any",   # Any|Yes|No
+        rvol_min: float = 0.0,
+        rvol_max: float = 0.0,
+        exclude_financing_types: Optional[List[str]] = None,
+        exclude_biotech: bool = False,
+    ) -> tuple[int, List[Announcement]]:
+        """
+        Load announcements using SQL for speed.
+
+        Preserves the dashboard's semantics: sampling is applied FIRST, then filters.
+
+        Returns:
+            (total_before_sampling, announcements)
+        """
+        db = self._get_db()
+        try:
+            base = db.query(AnnouncementDB).filter(AnnouncementDB.source == source)
+
+            # Count before sampling (matches previous behavior)
+            total_before_sampling = base.count()
+
+            # Sampling (subquery)
+            pct = int(sample_pct or 100)
+            pct = 1 if pct < 1 else 100 if pct > 100 else pct
+            if total_before_sampling <= 0:
+                return 0, []
+
+            sample_size = max(1, int(total_before_sampling * pct / 100))
+            if pct < 100:
+                if sample_seed and int(sample_seed) > 0:
+                    # Deterministic pseudo-random ordering based on (ticker, timestamp, seed)
+                    seed_str = str(int(sample_seed))
+                    order_expr = func.md5(
+                        func.concat(
+                            AnnouncementDB.ticker,
+                            cast(AnnouncementDB.timestamp, String),
+                            literal(seed_str),
+                        )
+                    )
+                else:
+                    order_expr = func.random()
+
+                sampled_subq = base.order_by(order_expr).limit(sample_size).subquery()
+                A = aliased(AnnouncementDB, sampled_subq)
+                q = db.query(A)
+            else:
+                A = AnnouncementDB
+                q = base
+
+            # Apply filters to sampled rows
+            if countries:
+                q = q.filter(A.country.in_(countries))
+            if country_blacklist:
+                q = q.filter(or_(A.country.is_(None), ~A.country.in_(country_blacklist)))
+            if authors:
+                q = q.filter(A.author.in_(authors))
+            if channels:
+                q = q.filter(A.channel.in_(channels))
+            if directions:
+                q = q.filter(A.direction.in_(directions))
+
+            if scanner_test:
+                q = q.filter(A.scanner_test.is_(True))
+            if scanner_after_lull:
+                q = q.filter(A.scanner_after_lull.is_(True))
+
+            if max_mentions is not None and int(max_mentions) > 0:
+                q = q.filter(A.mention_count.isnot(None)).filter(A.mention_count <= int(max_mentions))
+
+            # Financing/headline filters
+            if exclude_financing_headlines:
+                q = q.filter(or_(A.headline_is_financing.is_(None), A.headline_is_financing.is_(False)))
+
+            if require_headline:
+                q = q.filter(A.headline.isnot(None)).filter(func.trim(A.headline) != "")
+            if exclude_headline:
+                q = q.filter(or_(A.headline.is_(None), func.trim(A.headline) == ""))
+
+            # Float (shares) / Market cap (dollars)
+            float_min = float(float_min_m or 0.0) * 1e6
+            float_max = float(float_max_m or 0.0) * 1e6
+            q = q.filter(or_(A.float_shares.is_(None), and_(A.float_shares >= float_min, A.float_shares <= float_max)))
+
+            mc_min = float(mc_min_m or 0.0) * 1e6
+            mc_max = float(mc_max_m or 0.0) * 1e6
+            q = q.filter(or_(A.market_cap.is_(None), and_(A.market_cap >= mc_min, A.market_cap <= mc_max)))
+
+            # Prior move (scanner_gain_pct)
+            if prior_move_min and float(prior_move_min) > 0:
+                q = q.filter(A.scanner_gain_pct.isnot(None)).filter(A.scanner_gain_pct >= float(prior_move_min))
+            if prior_move_max and float(prior_move_max) > 0:
+                q = q.filter(or_(A.scanner_gain_pct.is_(None), A.scanner_gain_pct <= float(prior_move_max)))
+
+            # NHOD / NSH
+            if nhod_filter == "Yes":
+                q = q.filter(A.is_nhod.is_(True))
+            elif nhod_filter == "No":
+                q = q.filter(or_(A.is_nhod.is_(False), A.is_nhod.is_(None)))
+
+            if nsh_filter == "Yes":
+                q = q.filter(A.is_nsh.is_(True))
+            elif nsh_filter == "No":
+                q = q.filter(or_(A.is_nsh.is_(False), A.is_nsh.is_(None)))
+
+            # RVol
+            if rvol_min and float(rvol_min) > 0:
+                q = q.filter(A.rvol.isnot(None)).filter(A.rvol >= float(rvol_min))
+            if rvol_max and float(rvol_max) > 0:
+                q = q.filter(or_(A.rvol.is_(None), A.rvol <= float(rvol_max)))
+
+            # Headline financing type exclusions (list)
+            if exclude_financing_types:
+                q = q.filter(or_(A.headline_financing_type.is_(None), ~A.headline_financing_type.in_(exclude_financing_types)))
+
+            # Biotech/pharma keyword exclusions
+            if exclude_biotech:
+                kws = [
+                    "therapeutics", "clinical", "trial", "phase", "fda", "drug", "treatment",
+                ]
+                # Keep rows with no headline, otherwise require that none of the keywords match
+                q = q.filter(
+                    or_(
+                        A.headline.is_(None),
+                        ~or_(*[A.headline.ilike(f"%{kw}%") for kw in kws]),
+                    )
+                )
+
+            # Keep a stable sort for UI
+            q = q.order_by(A.timestamp.desc())
+
+            rows = q.all()
+            return total_before_sampling, [self._db_to_announcement(r) for r in rows]
         finally:
             db.close()
 
@@ -231,30 +422,42 @@ class PostgresClient:
             for start_idx in range(0, len(announcement_keys), chunk_size):
                 batch = announcement_keys[start_idx:start_idx + chunk_size]
 
-                rows = (
-                    db.query(OHLCVBarDB)
-                    .filter(key_col.in_(batch))
+                # Use a Core select returning raw tuples to avoid ORM object materialization overhead.
+                stmt = (
+                    select(
+                        OHLCVBarDB.announcement_ticker,
+                        OHLCVBarDB.announcement_timestamp,
+                        OHLCVBarDB.timestamp,
+                        OHLCVBarDB.open,
+                        OHLCVBarDB.high,
+                        OHLCVBarDB.low,
+                        OHLCVBarDB.close,
+                        OHLCVBarDB.volume,
+                        OHLCVBarDB.vwap,
+                    )
+                    .where(key_col.in_(batch))
                     .order_by(
                         OHLCVBarDB.announcement_ticker,
                         OHLCVBarDB.announcement_timestamp,
                         OHLCVBarDB.timestamp,
                     )
-                    .all()
                 )
+                rows = db.execute(stmt).all()
 
                 total_rows += len(rows)
-                for row in rows:
-                    key = (row.announcement_ticker, row.announcement_timestamp)
-                    if key in result:
-                        result[key].append(
+                for ann_ticker, ann_ts, ts, o, h, l, c, vol, vwap in rows:
+                    key = (ann_ticker, ann_ts)
+                    bucket = result.get(key)
+                    if bucket is not None:
+                        bucket.append(
                             OHLCVBar(
-                                timestamp=row.timestamp,
-                                open=row.open,
-                                high=row.high,
-                                low=row.low,
-                                close=row.close,
-                                volume=row.volume,
-                                vwap=row.vwap,
+                                timestamp=ts,
+                                open=o,
+                                high=h,
+                                low=l,
+                                close=c,
+                                volume=vol,
+                                vwap=vwap,
                             )
                         )
 

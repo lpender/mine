@@ -365,7 +365,7 @@ class OrphanedOrderDB(Base):
     __tablename__ = "orphaned_orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    
+
     # Order details
     broker_order_id = Column(String(50), nullable=False, index=True)
     ticker = Column(String(10), nullable=False, index=True)
@@ -374,17 +374,17 @@ class OrphanedOrderDB(Base):
     order_type = Column(String(20), nullable=False)  # "limit", "market", etc.
     status = Column(String(20), nullable=False)  # "new", "partially_filled", etc.
     limit_price = Column(Float, nullable=True)
-    
+
     # Timestamps
     order_created_at = Column(DateTime, nullable=True)  # When order was created at broker
     discovered_at = Column(DateTime, default=datetime.utcnow)  # When we discovered it
     cancelled_at = Column(DateTime, nullable=True)  # When we cancelled it (if auto-cancelled)
-    
+
     # Context
     strategy_name = Column(String(100), nullable=True)
     reason = Column(String(200), nullable=True)  # Why it was orphaned/cancelled
     paper = Column(Boolean, default=True)
-    
+
     __table_args__ = (
         Index('ix_orphaned_orders_discovered', 'discovered_at'),
         Index('ix_orphaned_orders_ticker_side', 'ticker', 'side'),
@@ -556,6 +556,32 @@ def init_db():
                 conn.execute(text("ALTER TABLE orders ADD COLUMN trade_id VARCHAR(36)"))
                 conn.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_trade_id ON orders (trade_id)"))
                 conn.commit()
+
+    # Performance: indexes for dashboard bulk loads (safe to run multiple times)
+    if 'ohlcv_bars' in inspector.get_table_names():
+        with engine.connect() as conn:
+            # Helps get_ohlcv_bars_bulk() (filter by announcement key, ordered by bar timestamp)
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_ohlcv_announcement_ts "
+                "ON ohlcv_bars (announcement_ticker, announcement_timestamp, timestamp)"
+            ))
+            # Covering index for index-only scans (saves heap fetches during large dashboard loads)
+            # Note: this increases index size; worth it for fast bulk reads.
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_ohlcv_announcement_ts_cover "
+                "ON ohlcv_bars (announcement_ticker, announcement_timestamp, timestamp) "
+                "INCLUDE (\"open\", high, low, \"close\", volume, vwap)"
+            ))
+            conn.commit()
+
+    if 'announcements' in inspector.get_table_names():
+        with engine.connect() as conn:
+            # Helps dashboard load_announcements() when filtering by source and ordering by time
+            conn.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_announcements_source_timestamp "
+                "ON announcements (source, timestamp DESC)"
+            ))
+            conn.commit()
 
 
 def get_db():

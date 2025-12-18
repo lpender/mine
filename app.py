@@ -192,6 +192,71 @@ def load_announcements():
     client = get_postgres_client()
     return client.load_announcements()
 
+@st.cache_data(ttl=300)
+def load_filter_options():
+    """Load distinct filter options from PostgreSQL (fast; avoids loading all announcements)."""
+    client = get_postgres_client()
+    return client.get_announcement_filter_options(source="backfill")
+
+@st.cache_data(ttl=300)
+def load_sampled_filtered_announcements(
+    *,
+    sample_pct: int,
+    sample_seed: int,
+    countries: tuple,
+    country_blacklist: tuple,
+    authors: tuple,
+    channels: tuple,
+    directions: tuple,
+    scanner_test: bool,
+    scanner_after_lull: bool,
+    max_mentions: int,
+    exclude_financing_headlines: bool,
+    require_headline: bool,
+    exclude_headline: bool,
+    float_min: float,
+    float_max: float,
+    mc_min: float,
+    mc_max: float,
+    prior_move_min: float,
+    prior_move_max: float,
+    nhod_filter: str,
+    nsh_filter: str,
+    rvol_min: float,
+    rvol_max: float,
+    exclude_financing_types: tuple,
+    exclude_biotech: bool,
+):
+    client = get_postgres_client()
+    return client.load_announcements_sampled_and_filtered(
+        source="backfill",
+        sample_pct=sample_pct,
+        sample_seed=sample_seed,
+        countries=list(countries) if countries else None,
+        country_blacklist=list(country_blacklist) if country_blacklist else None,
+        authors=list(authors) if authors else None,
+        channels=list(channels) if channels else None,
+        directions=list(directions) if directions else None,
+        scanner_test=scanner_test,
+        scanner_after_lull=scanner_after_lull,
+        max_mentions=max_mentions if max_mentions and max_mentions > 0 else None,
+        exclude_financing_headlines=exclude_financing_headlines,
+        require_headline=require_headline,
+        exclude_headline=exclude_headline,
+        float_min_m=float_min,
+        float_max_m=float_max,
+        mc_min_m=mc_min,
+        mc_max_m=mc_max,
+        prior_move_min=prior_move_min,
+        prior_move_max=prior_move_max,
+        nhod_filter=nhod_filter,
+        nsh_filter=nsh_filter,
+        rvol_min=rvol_min,
+        rvol_max=rvol_max,
+        exclude_financing_types=list(exclude_financing_types) if exclude_financing_types else None,
+        exclude_biotech=exclude_biotech,
+    )
+
 
 @st.cache_data(ttl=300)
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
@@ -224,20 +289,15 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
 
 st.title("PR Backtest Dashboard")
 
-# Load all announcements
-with log_time("load_announcements"):
-    all_announcements = load_announcements()
+# Load distinct filter values (fast)
+with log_time("load_filter_options"):
+    opts = load_filter_options()
 
-if not all_announcements:
-    st.warning("No announcements found in database.")
-    st.stop()
-
-# Extract unique values for filters
-all_countries = sorted(set(a.country for a in all_announcements if a.country))
-all_authors = sorted(set(a.author for a in all_announcements if a.author))
-all_channels = sorted(set(a.channel for a in all_announcements if a.channel))
+all_countries = opts.get("countries", [])
+all_authors = opts.get("authors", [])
+all_channels = opts.get("channels", [])
 all_sessions = ["premarket", "market", "postmarket", "closed"]
-all_directions = sorted(set(a.direction for a in all_announcements if a.direction))
+all_directions = opts.get("directions", [])
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Sidebar Controls
@@ -382,8 +442,8 @@ with st.sidebar:
         help="Leave empty for all channels"
     )
 
-    # Financing filter
-    exclude_financing = st.checkbox(
+    # Financing filter (boolean)
+    exclude_financing_headlines = st.checkbox(
         "Exclude financing headlines",
         key="_no_fin",
         help="Filter out offerings, ATMs, warrants, etc."
@@ -466,6 +526,21 @@ with st.sidebar:
                                         help="Only include if stock already moved at least this % before alert")
     prior_move_max = col2.number_input("Max %", min_value=0.0, value=0.0, step=10.0, key="_prior_move_max",
                                         help="Exclude if stock already moved more than this % before alert (0 = no limit)")
+
+    # Headline type filter (financing)
+    st.subheader("Headline Type Filter")
+    exclude_financing_types = st.multiselect(
+        "Exclude financing types",
+        options=["offering", "warrants", "convertible", "atm", "shelf", "reverse_split", "compliance", "sec_filing"],
+        default=["offering", "warrants", "convertible"],
+        key="_exclude_financing",
+        help="Exclude announcements with these financing types in headline. Offerings/warrants/convertible tend to underperform."
+    )
+    exclude_biotech = st.checkbox(
+        "Exclude biotech/pharma (clinical trials)",
+        key="_exclude_biotech",
+        help="Exclude announcements mentioning 'therapeutics', 'clinical', 'trial', 'phase' (tend to underperform)"
+    )
 
     # Price range (filters by actual entry price from OHLCV, not announcement price)
     st.subheader("Entry Price ($)")
@@ -605,7 +680,7 @@ with st.sidebar:
     set_param("country", countries)
     set_param("author", authors)
     set_param("channel", channels)
-    set_param("no_fin", exclude_financing)
+    set_param("no_fin", exclude_financing_headlines)
     set_param("has_hl", require_headline)
     set_param("no_hl", exclude_headline)
     set_param("float_min", float_min)
@@ -711,93 +786,39 @@ with st.sidebar:
 # Filter Announcements
 # ─────────────────────────────────────────────────────────────────────────────
 
-filtered = all_announcements
+# Load sampled + filtered announcements from SQL (huge speedup vs loading all + filtering in Python)
+with log_time("load_sampled_filtered_announcements"):
+    total_before_sampling, filtered = load_sampled_filtered_announcements(
+        sample_pct=int(sample_pct),
+        sample_seed=int(sample_seed),
+        countries=tuple(countries) if countries else tuple(),
+        country_blacklist=tuple(country_blacklist) if country_blacklist else tuple(),
+        authors=tuple(authors) if authors else tuple(),
+        channels=tuple(channels) if channels else tuple(),
+        directions=tuple(directions) if directions else tuple(),
+        scanner_test=bool(scanner_test),
+        scanner_after_lull=bool(scanner_after_lull),
+        max_mentions=int(max_mentions or 0),
+        exclude_financing_headlines=bool(exclude_financing_headlines),
+        require_headline=bool(require_headline),
+        exclude_headline=bool(exclude_headline),
+        float_min=float(float_min or 0.0),
+        float_max=float(float_max or 0.0),
+        mc_min=float(mc_min or 0.0),
+        mc_max=float(mc_max or 0.0),
+        prior_move_min=float(prior_move_min or 0.0),
+        prior_move_max=float(prior_move_max or 0.0),
+        nhod_filter=str(nhod_filter),
+        nsh_filter=str(nsh_filter),
+        rvol_min=float(rvol_min or 0.0),
+        rvol_max=float(rvol_max or 0.0),
+        exclude_financing_types=tuple(exclude_financing_types) if exclude_financing_types else tuple(),
+        exclude_biotech=bool(exclude_biotech),
+    )
 
-# Apply sampling FIRST (for faster iteration) - sample before filtering
-total_before_sampling = len(filtered)
-if sample_pct < 100 and filtered:
-    if sample_seed > 0:
-        random.seed(sample_seed)
-    sample_size = max(1, int(len(filtered) * sample_pct / 100))
-    filtered = random.sample(filtered, sample_size)
-
-# Session filter
+# Session filter stays in Python (market_session is computed)
 if sessions:
     filtered = [a for a in filtered if a.market_session in sessions]
-
-# Country filter
-if countries:
-    filtered = [a for a in filtered if a.country in countries]
-
-# Country blacklist filter
-if country_blacklist:
-    filtered = [a for a in filtered if a.country not in country_blacklist]
-
-# Author filter
-if authors:
-    filtered = [a for a in filtered if a.author in authors]
-
-# Channel filter
-if channels:
-    filtered = [a for a in filtered if a.channel in channels]
-
-# Financing filter
-if exclude_financing:
-    filtered = [a for a in filtered if not a.headline_is_financing]
-
-# Headline filter
-if require_headline:
-    filtered = [a for a in filtered if a.headline and a.headline.strip()]
-if exclude_headline:
-    filtered = [a for a in filtered if not a.headline or not a.headline.strip()]
-
-# Direction filter
-if directions:
-    filtered = [a for a in filtered if a.direction in directions]
-
-# Scanner test filter
-if scanner_test:
-    filtered = [a for a in filtered if a.scanner_test]
-
-# Scanner after-lull filter
-if scanner_after_lull:
-    filtered = [a for a in filtered if a.scanner_after_lull]
-
-# Max intraday mentions filter
-if max_mentions > 0:
-    filtered = [a for a in filtered if a.mention_count is not None and a.mention_count <= max_mentions]
-
-# Float filter (convert from shares to millions)
-filtered = [a for a in filtered if a.float_shares is None or
-            (float_min * 1e6 <= a.float_shares <= float_max * 1e6)]
-
-# Market cap filter (stored in dollars, filter in millions)
-filtered = [a for a in filtered if a.market_cap is None or
-            (mc_min * 1e6 <= a.market_cap <= mc_max * 1e6)]
-
-# Prior move filter (scanner_gain_pct = how much stock moved before alert)
-if prior_move_min > 0:
-    filtered = [a for a in filtered if a.scanner_gain_pct is not None and a.scanner_gain_pct >= prior_move_min]
-if prior_move_max > 0:
-    filtered = [a for a in filtered if a.scanner_gain_pct is None or a.scanner_gain_pct <= prior_move_max]
-
-# NHOD filter
-if nhod_filter == "Yes":
-    filtered = [a for a in filtered if a.is_nhod == True]
-elif nhod_filter == "No":
-    filtered = [a for a in filtered if a.is_nhod == False]
-
-# NSH filter
-if nsh_filter == "Yes":
-    filtered = [a for a in filtered if a.is_nsh == True]
-elif nsh_filter == "No":
-    filtered = [a for a in filtered if a.is_nsh == False]
-
-# RVol filter
-if rvol_min > 0:
-    filtered = [a for a in filtered if a.rvol is not None and a.rvol >= rvol_min]
-if rvol_max > 0:
-    filtered = [a for a in filtered if a.rvol is None or a.rvol <= rvol_max]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 
