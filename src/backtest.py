@@ -46,14 +46,11 @@ def run_single_backtest(
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
 
-    # Handle "entry at open" mode - enter at open of bar after announcement bar completes (realistic timing)
+    # Handle "entry at open" mode - most optimistic, enter at first bar's open
     if config.entry_at_open:
-        if len(bars) < 2:
-            result.trigger_type = "insufficient_data"
-            return result
-        entry_price = bars[1].open  # Enter at open of NEXT bar after announcement bar
-        entry_time = bars[1].timestamp
-        entry_bar_idx = 1
+        entry_price = bars[0].open
+        entry_time = bars[0].timestamp
+        entry_bar_idx = 0
 
         if entry_price <= 0:
             result.trigger_type = "invalid_price"
@@ -148,7 +145,6 @@ def run_single_backtest(
         trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
 
         # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
-        # We can detect triggers on the announcement bar, but can't enter until it completes
         for i, bar in enumerate(bars):
             # Stop looking for entry after entry window expires
             if bar.timestamp >= entry_window_end:
@@ -163,34 +159,24 @@ def run_single_backtest(
 
             # Enter when BOTH conditions are satisfied on this bar
             if price_triggered and volume_met:
-                # If trigger met on announcement bar (bars[0]) and there are more bars,
-                # delay entry to next bar (can't enter during announcement bar)
-                if i == 0 and len(bars) > 1:
-                    # Trigger met on announcement bar, but we can't enter until it completes
-                    # Enter at open of next bar
-                    entry_time = bars[1].timestamp
-                    entry_bar_idx = 1
-                    entry_price = bars[1].open
+                entry_time = bar.timestamp
+                entry_bar_idx = i
+
+                # Calculate entry price: the LATER of the two trigger points
+                if config.volume_threshold > 0 and bar.volume > 0:
+                    # Interpolate: entry when volume threshold is reached within the bar
+                    volume_fraction = config.volume_threshold / bar.volume
+                    volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
                 else:
-                    # Normal case: enter on the bar where trigger was met
-                    entry_time = bar.timestamp
-                    entry_bar_idx = i
+                    volume_entry_price = bar.low
 
-                    # Calculate entry price: the LATER of the two trigger points
-                    if config.volume_threshold > 0 and bar.volume > 0:
-                        # Interpolate: entry when volume threshold is reached within the bar
-                        volume_fraction = config.volume_threshold / bar.volume
-                        volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
-                    else:
-                        volume_entry_price = bar.low
+                if config.entry_trigger_pct > 0:
+                    price_entry_price = trigger_price
+                else:
+                    price_entry_price = bar.low
 
-                    if config.entry_trigger_pct > 0:
-                        price_entry_price = trigger_price
-                    else:
-                        price_entry_price = bar.low
-
-                    # Entry price is the LATER of the two trigger points (higher price)
-                    entry_price = max(volume_entry_price, price_entry_price)
+                # Entry price is the LATER of the two trigger points (higher price)
+                entry_price = max(volume_entry_price, price_entry_price)
                 break
 
         # No entry triggered

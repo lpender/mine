@@ -1119,14 +1119,9 @@ else:
         if ann.source_message:
             st.markdown(f"**Full Message:** {ann.source_message}")
 
-        # Get the bars for this announcement - fetch extended timeframe for trade detail
-        # Show 5 minutes before announcement + 120 minutes after (125 minutes total)
-        announcement_time = ann.timestamp
-        start_time = announcement_time - timedelta(minutes=5)
-        end_time = announcement_time + timedelta(minutes=120)
-
-        client = get_postgres_client()
-        bars = client.get_ohlcv_bars(ann.ticker, start_time, end_time)
+        # Get the bars for this announcement
+        key = (ann.ticker, ann.timestamp)
+        bars = bars_dict.get(key, [])
 
         if bars:
             # Build candlestick data (convert to EST, shift +1 min for end-time display like WeBull)
@@ -1183,19 +1178,6 @@ else:
                     mode="markers",
                     marker=dict(symbol="x", size=6, color=exit_color, line=dict(width=2)),
                     name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
-                ))
-
-            # Add announcement arrow (pointing down to show when announcement was made)
-            ann_time_est = to_est(announcement_time)
-            # Find the price at announcement time or use the first bar's open as reference
-            ann_price = bars[0].open if bars else None
-            if ann_price:
-                fig.add_trace(go.Scatter(
-                    x=[ann_time_est],
-                    y=[ann_price],
-                    mode="markers",
-                    marker=dict(symbol="arrow-down", size=8, color="purple", line=dict(width=1, color="white")),
-                    name=f"📢 Announcement @ {ann_time_est.strftime('%H:%M:%S')} EST",
                 ))
 
             # Add horizontal lines for entry, TP, SL
