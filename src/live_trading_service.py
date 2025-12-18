@@ -651,7 +651,7 @@ class TradingEngine:
             # Find all pending entries for this ticker and abandon them
             pending_for_ticker = engine._get_pending_for_ticker(ticker)
             for pending in pending_for_ticker:
-                engine._abandon_pending(pending.trade_id)
+                engine._abandon_pending_entry(pending.trade_id)
                 logger.info(f"[{ticker}] Removed pending entry (trade_id={pending.trade_id[:8]}) for strategy {self.strategy_names.get(strategy_id, strategy_id)}")
 
         # Also unsubscribe from this ticker
