@@ -39,6 +39,9 @@ class StrategyConfig:
     country_blacklist: List[str] = field(default_factory=list)  # e.g., ["CN", "IL"]
     max_intraday_mentions: Optional[int] = None  # Max intraday mentions (e.g., 2 = only if < 2 mentions)
     exclude_financing_headlines: bool = False  # Exclude offerings, reverse splits, etc.
+    exclude_biotech: bool = False  # Exclude therapeutics, clinical, trial, phase, fda, drug, treatment
+    max_prior_move_pct: Optional[float] = None  # Skip if scanner_gain_pct > this (e.g., 40 = skip if already moved 40%+)
+    max_market_cap_millions: Optional[float] = None  # Skip if market cap > this (e.g., 50 = skip if > $50M)
 
     # Entry rules
     consec_green_candles: int = 1
@@ -138,6 +141,9 @@ class StrategyConfig:
                 "country_blacklist": self.country_blacklist,
                 "max_intraday_mentions": self.max_intraday_mentions,
                 "exclude_financing_headlines": self.exclude_financing_headlines,
+                "exclude_biotech": self.exclude_biotech,
+                "max_prior_move_pct": self.max_prior_move_pct,
+                "max_market_cap_millions": self.max_market_cap_millions,
             },
             "entry": {
                 "consec_green_candles": self.consec_green_candles,
@@ -766,6 +772,27 @@ class StrategyEngine:
             logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: financing headline ({ann.headline_financing_type})")
             return False
 
+        # Biotech/pharma filter
+        if cfg.exclude_biotech and ann.headline:
+            biotech_keywords = ['therapeutics', 'clinical', 'trial', 'phase', 'fda', 'drug', 'treatment']
+            headline_lower = ann.headline.lower()
+            if any(kw in headline_lower for kw in biotech_keywords):
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: biotech headline")
+                return False
+
+        # Prior move filter (skip if already moved too much)
+        if cfg.max_prior_move_pct is not None and ann.scanner_gain_pct is not None:
+            if ann.scanner_gain_pct > cfg.max_prior_move_pct:
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: prior move {ann.scanner_gain_pct:.1f}% > max {cfg.max_prior_move_pct}%")
+                return False
+
+        # Market cap filter
+        if cfg.max_market_cap_millions is not None and ann.market_cap is not None:
+            max_cap = cfg.max_market_cap_millions * 1e6
+            if ann.market_cap > max_cap:
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: market cap ${ann.market_cap/1e6:.1f}M > max ${cfg.max_market_cap_millions}M")
+                return False
+
         return True
 
     def _passes_filters_with_reason(self, ann: Announcement) -> tuple:
@@ -806,6 +833,24 @@ class StrategyEngine:
         # Financing headline filter (offerings, reverse splits, etc.)
         if cfg.exclude_financing_headlines and ann.headline_is_financing:
             return False, f"financing headline ({ann.headline_financing_type})"
+
+        # Biotech/pharma filter
+        if cfg.exclude_biotech and ann.headline:
+            biotech_keywords = ['therapeutics', 'clinical', 'trial', 'phase', 'fda', 'drug', 'treatment']
+            headline_lower = ann.headline.lower()
+            if any(kw in headline_lower for kw in biotech_keywords):
+                return False, "biotech/pharma headline"
+
+        # Prior move filter (skip if already moved too much)
+        if cfg.max_prior_move_pct is not None and ann.scanner_gain_pct is not None:
+            if ann.scanner_gain_pct > cfg.max_prior_move_pct:
+                return False, f"prior move {ann.scanner_gain_pct:.1f}% > max {cfg.max_prior_move_pct}%"
+
+        # Market cap filter
+        if cfg.max_market_cap_millions is not None and ann.market_cap is not None:
+            max_cap = cfg.max_market_cap_millions * 1e6
+            if ann.market_cap > max_cap:
+                return False, f"market cap ${ann.market_cap/1e6:.1f}M > max ${cfg.max_market_cap_millions}M"
 
         return True, None
 

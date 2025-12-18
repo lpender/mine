@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import aliased
 from sqlalchemy import and_, or_, tuple_
-from sqlalchemy import String, cast, func, literal
+from sqlalchemy import String, Time, cast, case, func, literal
 from sqlalchemy import select
 
 from .database import SessionLocal, AnnouncementDB, OHLCVBarDB, RawMessageDB
@@ -151,6 +151,7 @@ class PostgresClient:
         source: str = "backfill",
         sample_pct: int = 100,
         sample_seed: int = 0,
+        sessions: Optional[List[str]] = None,  # premarket|market|postmarket|closed (computed from timestamp)
         # Column filters (all optional)
         countries: Optional[List[str]] = None,
         country_blacklist: Optional[List[str]] = None,
@@ -220,6 +221,28 @@ class PostgresClient:
                 q = base
 
             # Apply filters to sampled rows
+            # Session filter: compute ET time-of-day from UTC timestamp (matches src.models.get_market_session).
+            if sessions:
+                # timestamp column is stored as naive UTC
+                et_ts = func.timezone("America/New_York", func.timezone("UTC", A.timestamp))
+                et_time = cast(et_ts, Time)
+                session_case = case(
+                    (
+                        and_(et_time >= literal("04:00:00"), et_time < literal("09:30:00")),
+                        literal("premarket"),
+                    ),
+                    (
+                        and_(et_time >= literal("09:30:00"), et_time < literal("16:00:00")),
+                        literal("market"),
+                    ),
+                    (
+                        and_(et_time >= literal("16:00:00"), et_time < literal("20:00:00")),
+                        literal("postmarket"),
+                    ),
+                    else_=literal("closed"),
+                )
+                q = q.filter(session_case.in_(sessions))
+
             if countries:
                 q = q.filter(A.country.in_(countries))
             if country_blacklist:

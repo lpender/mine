@@ -203,6 +203,7 @@ def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
     sample_seed: int,
+    sessions: tuple,
     countries: tuple,
     country_blacklist: tuple,
     authors: tuple,
@@ -232,6 +233,7 @@ def load_sampled_filtered_announcements(
         source="backfill",
         sample_pct=sample_pct,
         sample_seed=sample_seed,
+        sessions=list(sessions) if sessions else None,
         countries=list(countries) if countries else None,
         country_blacklist=list(country_blacklist) if country_blacklist else None,
         authors=list(authors) if authors else None,
@@ -791,6 +793,7 @@ with log_time("load_sampled_filtered_announcements"):
     total_before_sampling, filtered = load_sampled_filtered_announcements(
         sample_pct=int(sample_pct),
         sample_seed=int(sample_seed),
+        sessions=tuple(sessions) if sessions else tuple(),
         countries=tuple(countries) if countries else tuple(),
         country_blacklist=tuple(country_blacklist) if country_blacklist else tuple(),
         authors=tuple(authors) if authors else tuple(),
@@ -815,10 +818,6 @@ with log_time("load_sampled_filtered_announcements"):
         exclude_financing_types=tuple(exclude_financing_types) if exclude_financing_types else tuple(),
         exclude_biotech=bool(exclude_biotech),
     )
-
-# Session filter stays in Python (market_session is computed)
-if sessions:
-    filtered = [a for a in filtered if a.market_session in sessions]
 
 # Note: Price filter is applied after backtest based on actual entry price (see below)
 

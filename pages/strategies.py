@@ -481,6 +481,12 @@ else:
                     st.write(f"Max Mentions: {cfg.max_intraday_mentions}")
                 if cfg.exclude_financing_headlines:
                     st.write("Exclude Financing: Yes")
+                if cfg.exclude_biotech:
+                    st.write("Exclude Biotech: Yes")
+                if cfg.max_prior_move_pct:
+                    st.write(f"Max Prior Move: {cfg.max_prior_move_pct}%")
+                if cfg.max_market_cap_millions:
+                    st.write(f"Max Market Cap: ${cfg.max_market_cap_millions}M")
 
             with col2:
                 st.markdown("**Entry**")
@@ -559,6 +565,10 @@ else:
                             price_max=cfg.price_max,
                             country_blacklist=cfg.country_blacklist,
                             max_intraday_mentions=cfg.max_intraday_mentions,
+                            exclude_financing_headlines=cfg.exclude_financing_headlines,
+                            exclude_biotech=cfg.exclude_biotech,
+                            max_prior_move_pct=cfg.max_prior_move_pct,
+                            max_market_cap_millions=cfg.max_market_cap_millions,
                             consec_green_candles=cfg.consec_green_candles,
                             min_candle_volume=cfg.min_candle_volume,
                             take_profit_pct=cfg.take_profit_pct,
