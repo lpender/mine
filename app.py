@@ -189,24 +189,24 @@ def set_param(key: str, value):
 # Load Data
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_resource
+@st.cache_data(persist="disk")
 def load_announcements():
-    """Load announcements from PostgreSQL. Shared across all sessions."""
+    """Load announcements from PostgreSQL. Persists to disk across restarts."""
     client = get_postgres_client()
     return client.load_announcements()
 
-@st.cache_resource
+@st.cache_data(persist="disk")
 def load_filter_options():
-    """Load distinct filter options. Shared across all sessions."""
+    """Load distinct filter options. Persists to disk across restarts."""
     if USE_DUCKDB:
         client = get_duckdb_client()
     else:
         client = get_postgres_client()
     return client.get_announcement_filter_options(source="backfill")
 
-@st.cache_resource
+@st.cache_data(persist="disk")
 def load_sampled_announcements(sample_pct: int, sample_seed: int):
-    """Load sampled announcements WITHOUT filters. Shared across all sessions."""
+    """Load sampled announcements WITHOUT filters. Persists to disk across restarts."""
     if USE_DUCKDB:
         client = get_duckdb_client()
     else:
@@ -218,7 +218,7 @@ def load_sampled_announcements(sample_pct: int, sample_seed: int):
     )
 
 
-@st.cache_resource
+@st.cache_data(persist="disk")
 def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
@@ -283,7 +283,7 @@ def load_sampled_filtered_announcements(
     )
 
 
-@st.cache_resource
+@st.cache_data(persist="disk")
 def load_ohlcv_for_announcements(announcement_keys: tuple, _window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
@@ -291,7 +291,7 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, _window_minutes: int)
     Uses bulk query via announcement_ticker/announcement_timestamp columns
     for much faster loading (single query instead of N queries).
 
-    Uses cache_resource to share across all browser sessions (server-side singleton).
+    Persists to disk across server restarts.
     _window_minutes is used as cache key differentiator (prefixed with _ to indicate unused).
     """
     # Convert string timestamps to datetime for bulk query.
