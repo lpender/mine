@@ -477,6 +477,106 @@ class TestExitLogic:
         assert result.exit_price == 1.07  # Last bar's close
 
 
+class TestExitAfterRedCandles:
+    """Tests for exit_after_red_candles exit condition."""
+
+    def test_exit_after_two_red_candles(self):
+        """Exit after 2 consecutive red candles."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
+
+        bars = [
+            # Entry bar - green
+            make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
+            # Red candle 1
+            make_bar(base_time + timedelta(minutes=1), open_=1.08, high=1.09, low=1.03, close=1.04, volume=50_000),
+            # Red candle 2 - should trigger exit
+            make_bar(base_time + timedelta(minutes=2), open_=1.04, high=1.06, low=1.00, close=1.01, volume=50_000),
+            # Won't reach this bar
+            make_bar(base_time + timedelta(minutes=3), open_=1.01, high=1.15, low=1.00, close=1.12, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=5.0,
+            volume_threshold=0,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=30,
+            exit_after_red_candles=2,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "red_candles"
+        assert result.exit_price == 1.01  # Close of 2nd red candle
+
+    def test_green_candle_resets_red_count(self):
+        """A green candle resets the consecutive red candle count."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
+
+        bars = [
+            # Entry bar
+            make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
+            # Red candle 1
+            make_bar(base_time + timedelta(minutes=1), open_=1.08, high=1.09, low=1.03, close=1.04, volume=50_000),
+            # Green candle - resets count
+            make_bar(base_time + timedelta(minutes=2), open_=1.04, high=1.10, low=1.03, close=1.08, volume=50_000),
+            # Red candle 1 again
+            make_bar(base_time + timedelta(minutes=3), open_=1.08, high=1.09, low=1.03, close=1.04, volume=50_000),
+            # Red candle 2 - NOW triggers exit
+            make_bar(base_time + timedelta(minutes=4), open_=1.04, high=1.06, low=1.00, close=1.01, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=5.0,
+            volume_threshold=0,
+            take_profit_pct=20.0,
+            stop_loss_pct=10.0,
+            window_minutes=30,
+            exit_after_red_candles=2,
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "red_candles"
+        # Exit on 5th bar (minute 4), not 3rd bar (minute 2)
+        assert result.exit_time == base_time + timedelta(minutes=4)
+        assert result.exit_price == 1.01
+
+    def test_exit_after_red_candles_disabled_by_default(self):
+        """When exit_after_red_candles=0, don't exit on red candles."""
+        base_time = datetime(2025, 1, 15, 9, 30)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
+
+        bars = [
+            # Entry bar
+            make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
+            # 5 consecutive red candles
+            make_bar(base_time + timedelta(minutes=1), open_=1.08, high=1.09, low=1.03, close=1.04, volume=50_000),
+            make_bar(base_time + timedelta(minutes=2), open_=1.04, high=1.05, low=1.00, close=1.01, volume=50_000),
+            make_bar(base_time + timedelta(minutes=3), open_=1.01, high=1.02, low=0.97, close=0.98, volume=50_000),
+            make_bar(base_time + timedelta(minutes=4), open_=0.98, high=0.99, low=0.95, close=0.96, volume=50_000),
+            make_bar(base_time + timedelta(minutes=5), open_=0.96, high=0.97, low=0.93, close=0.94, volume=50_000),
+        ]
+
+        config = BacktestConfig(
+            entry_trigger_pct=5.0,
+            volume_threshold=0,
+            take_profit_pct=20.0,
+            stop_loss_pct=20.0,  # High enough not to trigger
+            window_minutes=30,
+            exit_after_red_candles=0,  # Disabled
+        )
+
+        result = run_single_backtest(announcement, bars, config)
+
+        assert result.entered
+        assert result.trigger_type == "timeout"  # Exit by timeout, not red_candles
+
+
 class TestFourStageIntraCandleModel:
     """
     Tests for the 4-stage intra-candle price path model.

@@ -60,6 +60,7 @@ class StrategyConfig:
     stop_loss_pct: float = 11.0
     stop_loss_from_open: bool = True
     trailing_stop_pct: float = 7.0
+    exit_after_red_candles: int = 0  # Exit after X consecutive red candles (0 = disabled)
     timeout_minutes: int = 15  # How long to hold position before timeout exit
 
     # Position sizing
@@ -244,6 +245,7 @@ class StrategyConfig:
                 "stop_loss_pct": self.stop_loss_pct,
                 "stop_loss_from_open": self.stop_loss_from_open,
                 "trailing_stop_pct": self.trailing_stop_pct,
+                "exit_after_red_candles": self.exit_after_red_candles,
                 "timeout_minutes": self.timeout_minutes,
             },
             "position": {
@@ -301,6 +303,7 @@ class ActiveTrade:
     sell_attempts: int = 0  # Track failed sell attempts
     needs_manual_exit: bool = False  # True after 3 failed sell attempts
     trace_id: Optional[str] = None  # Link to trace for event logging
+    consecutive_red_candles: int = 0  # Tracks red candles for exit_after_red_candles
 
 
 @dataclass
@@ -1046,6 +1049,30 @@ class StrategyEngine:
                 quotes_logger.info(f"[{self.strategy_name}] [{ticker}] Volume: {candle.volume:,} {'>=✓' if meets_vol else '<✗'} {cfg.min_candle_volume:,} threshold")
                 quotes_logger.info(f"[{self.strategy_name}] [{ticker}] Qualifies for entry: {'YES ✓' if qualifies else 'NO ✗'}")
                 quotes_logger.info(f"")
+
+                # Check for exit after red candles (for active trades on this ticker)
+                if cfg.exit_after_red_candles > 0:
+                    for trade in list(self.active_trades.values()):
+                        if trade.ticker == ticker:
+                            if candle.close < candle.open:  # Red candle
+                                trade.consecutive_red_candles += 1
+                                quotes_logger.info(
+                                    f"[{self.strategy_name}] [{ticker}] RED candle #{trade.consecutive_red_candles}/{cfg.exit_after_red_candles} "
+                                    f"(trade_id={trade.trade_id[:8]})"
+                                )
+                                if trade.consecutive_red_candles >= cfg.exit_after_red_candles:
+                                    logger.info(
+                                        f"[{self.strategy_name}] [{ticker}] EXIT: {cfg.exit_after_red_candles} consecutive red candles "
+                                        f"(trade_id={trade.trade_id[:8]})"
+                                    )
+                                    self._execute_exit(trade.trade_id, candle.close, "red_candles", timestamp)
+                            else:  # Green candle
+                                if trade.consecutive_red_candles > 0:
+                                    quotes_logger.info(
+                                        f"[{self.strategy_name}] [{ticker}] GREEN candle - reset red candle count "
+                                        f"(was {trade.consecutive_red_candles}, trade_id={trade.trade_id[:8]})"
+                                    )
+                                trade.consecutive_red_candles = 0
 
             # Start new candle
             self._ticker_candle_start[ticker] = candle_start

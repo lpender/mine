@@ -252,6 +252,9 @@ def run_single_backtest(
     # Track highest price since entry for trailing stop
     highest_since_entry = entry_price
 
+    # Track consecutive red candles for exit_after_red_candles
+    consecutive_red_candles = 0
+
     # 4-stage intra-candle model: open -> low (if < open) -> high (if > close) -> close
     # Stage 1: Price at open (entry happens here)
     # Stage 2: Price drops to low - only if low < open
@@ -324,6 +327,18 @@ def run_single_backtest(
             exit_time = bar.timestamp
             trigger_type = "stop_loss"
             break
+
+        # Check consecutive red candles exit
+        if config.exit_after_red_candles > 0:
+            if bar.close < bar.open:  # Red candle
+                consecutive_red_candles += 1
+                if consecutive_red_candles >= config.exit_after_red_candles:
+                    exit_price = bar.close
+                    exit_time = bar.timestamp
+                    trigger_type = "red_candles"
+                    break
+            else:  # Green or doji candle resets the count
+                consecutive_red_candles = 0
 
         # Check timeout: hold time is from ENTRY, not announcement
         timeout_time = entry_time + timedelta(minutes=hold_minutes)

@@ -280,6 +280,7 @@ def _config_from_dict(data: dict) -> StrategyConfig:
         stop_loss_pct=exit_rules.get("stop_loss_pct", 11.0),
         stop_loss_from_open=exit_rules.get("stop_loss_from_open", True),
         trailing_stop_pct=exit_rules.get("trailing_stop_pct", 7.0),
+        exit_after_red_candles=exit_rules.get("exit_after_red_candles", 0),
         timeout_minutes=exit_rules.get("timeout_minutes", 15),
         stake_mode=position.get("stake_mode", "fixed"),
         stake_amount=position.get("stake_amount", 50.0),
