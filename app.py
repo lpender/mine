@@ -1041,7 +1041,13 @@ col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 # Display Results Table
 # ─────────────────────────────────────────────────────────────────────────────
 
+st.divider()  # Visual separator before Trade Results
 st.header("Trade Results")
+
+# Debug: Unique run ID to detect duplicate execution
+import uuid
+_run_id = str(uuid.uuid4())[:8]
+LOGGER.info(f"Trade Results section rendering, run_id={_run_id}")
 
 # Build dataframe from results
 rows = []
@@ -1129,23 +1135,26 @@ for df_idx, row in df.iterrows():
             df_to_result_idx[df_idx] = r_idx
             break
 
-# Use dataframe with single-row selection
+# Render the dataframe
 if df.empty:
     st.warning("No trade results to display")
     event = None
 else:
+    LOGGER.info(f"Rendering dataframe with {len(df)} rows, run_id={_run_id}")
     try:
-        event = st.dataframe(
+        # Simplified dataframe call - removed selection features that may cause issues
+        st.dataframe(
             df,
             column_config=column_config,
             height=600,
             use_container_width=True,
             hide_index=True,
-            selection_mode="single-row",
-            key="trade_table",
         )
+        event = None  # Selection disabled for now
+        LOGGER.info(f"Dataframe rendered successfully, run_id={_run_id}")
     except Exception as e:
         st.error(f"Failed to render table: {e}")
+        LOGGER.exception(f"Dataframe render failed: {e}")
         event = None
 
 # Show filter summary at bottom
