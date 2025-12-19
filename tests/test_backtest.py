@@ -7,7 +7,9 @@ from src.backtest import run_single_backtest
 def make_announcement(ticker: str = "TEST", timestamp: datetime = None) -> Announcement:
     """Helper to create test announcements."""
     if timestamp is None:
-        timestamp = datetime(2025, 1, 15, 9, 30)
+        # Use 09:29:30 so that ann_minute_end = 09:30:00 and bars at 09:30:00 are valid
+        # (The backtest only considers bars starting AFTER the announcement minute)
+        timestamp = datetime(2025, 1, 15, 9, 29, 30)
     return Announcement(
         ticker=ticker,
         timestamp=timestamp,
@@ -42,7 +44,7 @@ class TestIntraCandleVolumeEntry:
     def test_entry_when_single_bar_meets_volume(self):
         """Entry triggers when a single bar meets volume threshold."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
@@ -68,7 +70,7 @@ class TestIntraCandleVolumeEntry:
     def test_no_entry_when_bar_volume_insufficient(self):
         """No entry when individual bar volume doesn't meet threshold (not cumulative)."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # Each bar has 50k volume, but we need 75k per bar (not cumulative)
         bars = [
@@ -92,7 +94,7 @@ class TestIntraCandleVolumeEntry:
     def test_entry_on_second_bar_when_it_meets_volume(self):
         """Entry happens on second bar when it individually meets volume."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # First bar: 50k volume (not enough)
         # Second bar: 100k volume (enough)
@@ -124,7 +126,7 @@ class TestIntraCandleVolumeEntry:
         - Entry price should be 1.5 (halfway between low and high)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=2.0, low=1.0, close=1.8, volume=100_000),
@@ -155,7 +157,7 @@ class TestIntraCandleVolumeEntry:
         - Entry price should be 1.75 (75% between low and high)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=2.0, low=1.0, close=1.8, volume=100_000),
@@ -186,7 +188,7 @@ class TestIntraCandleVolumeEntry:
         - Entry price should be 1.25 (25% between low and high)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=2.0, low=1.0, close=1.8, volume=100_000),
@@ -211,7 +213,7 @@ class TestIntraCandleVolumeEntry:
     def test_entry_requires_both_price_and_volume(self):
         """Entry requires both price trigger AND volume threshold on same bar."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # First bar: price triggers (+10%) but volume insufficient
         # Second bar: volume sufficient AND price still above trigger
@@ -245,7 +247,7 @@ class TestIntraCandleVolumeEntry:
         - Entry should be at 1.5 (interpolated), not 1.05 (trigger price)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=2.0, low=1.0, close=1.8, volume=100_000),
@@ -269,7 +271,7 @@ class TestIntraCandleVolumeEntry:
     def test_zero_volume_threshold_enters_on_price_trigger_only(self):
         """With zero volume threshold, entry is based purely on price trigger."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100),
@@ -299,7 +301,7 @@ class TestIntraCandleVolumeEntry:
         - Since trigger price (1.05) > volume price (1.01), entry at 1.05
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.10, low=1.0, close=1.08, volume=100_000),
@@ -324,7 +326,7 @@ class TestIntraCandleVolumeEntry:
     def test_no_entry_when_price_never_triggers(self):
         """No entry when price never reaches trigger level, even with high volume."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.03, low=0.99, close=1.02, volume=1_000_000),
@@ -348,8 +350,8 @@ class TestEntryByMessageSecond:
     """Tests for entering within first candle based on announcement second."""
 
     def test_entry_1st_second_is_1_over_60th_through_candle(self):
-        base_time = datetime(2025, 1, 15, 9, 30, 1)  # second=1
-        announcement = make_announcement(timestamp=base_time)
+        # Announcement at 09:29:01 (second=1) so ann_minute_end=09:30:00 and bars at 09:30:00 are valid
+        announcement = make_announcement(timestamp=datetime(2025, 1, 15, 9, 29, 1))
 
         bars = [
             make_bar(datetime(2025, 1, 15, 9, 30), open_=1.5, high=2.0, low=1.0, close=1.6, volume=100_000),
@@ -372,8 +374,8 @@ class TestEntryByMessageSecond:
         assert result.entry_price == pytest.approx(1.0 + 1.0 * (1 / 60.0), rel=1e-6)
 
     def test_entry_30th_second_is_halfway_through_candle(self):
-        base_time = datetime(2025, 1, 15, 9, 30, 30)  # second=30
-        announcement = make_announcement(timestamp=base_time)
+        # Announcement at 09:29:30 (second=30) so ann_minute_end=09:30:00 and bars at 09:30:00 are valid
+        announcement = make_announcement(timestamp=datetime(2025, 1, 15, 9, 29, 30))
 
         bars = [
             make_bar(datetime(2025, 1, 15, 9, 30), open_=1.2, high=2.0, low=1.0, close=1.8, volume=100_000),
@@ -401,7 +403,7 @@ class TestExitLogic:
     def test_exit_can_happen_on_entry_bar_with_price_trigger(self):
         """With price trigger entry (not candle close), exit CAN happen on entry bar."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # Entry bar has low that breaches stop loss
         bars = [
@@ -429,7 +431,7 @@ class TestExitLogic:
     def test_stop_loss_exit(self):
         """Stop loss triggers correctly."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
@@ -453,7 +455,7 @@ class TestExitLogic:
     def test_timeout_exit(self):
         """Timeout exit uses last bar's close."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=1.0, high=1.10, low=0.99, close=1.08, volume=100_000),
@@ -499,7 +501,7 @@ class TestFourStageIntraCandleModel:
         Should exit at $9.70 (stop price), not $9.80 (close)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Entry bar - enter at close of $10
@@ -532,7 +534,7 @@ class TestFourStageIntraCandleModel:
         Trailing stop is hit first because it's closer to the current price.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -563,7 +565,7 @@ class TestFourStageIntraCandleModel:
         Bar low is $9.40 (breaches trailing), stop loss at 10% = $9.00 (not breached)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -591,7 +593,7 @@ class TestFourStageIntraCandleModel:
         For a green candle where price only went up, no stop checks at low.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -621,7 +623,7 @@ class TestFourStageIntraCandleModel:
     def test_take_profit_triggers_at_high(self):
         """Take profit triggers when high reaches target."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -654,7 +656,7 @@ class TestFourStageIntraCandleModel:
         Close of $10.40 < $10.45, so trailing triggers
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -685,7 +687,7 @@ class TestFourStageIntraCandleModel:
         Close of $10.50 < $10.80, triggers.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -714,7 +716,7 @@ class TestFourStageIntraCandleModel:
         If bar closes at its high, price didn't "come back down", so no trailing check.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -749,7 +751,7 @@ class TestFourStageIntraCandleModel:
         Since low >= open (stage 2 skipped), stop checked at close.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -786,7 +788,7 @@ class TestFourStageIntraCandleModel:
         so exits are only checked starting from bar 1.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Bar 0: Entry at close ($10). Low would hit 5% trailing but we're not in yet.
@@ -813,7 +815,7 @@ class TestFourStageIntraCandleModel:
     def test_consecutive_green_candles_entry(self):
         """Entry after X consecutive green candles enters at OPEN of next bar."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Green candle 1
@@ -841,7 +843,7 @@ class TestFourStageIntraCandleModel:
     def test_consecutive_candles_resets_on_red(self):
         """Consecutive green candle count resets on a red candle."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Green candle 1
@@ -877,7 +879,7 @@ class TestTrailingStopEdgeCases:
     def test_trailing_stop_tracks_across_multiple_bars(self):
         """Trailing stop tracks highest across multiple bars."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -914,7 +916,7 @@ class TestTrailingStopEdgeCases:
         Low $9.80 < $9.90, triggers at stage 2
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -941,7 +943,7 @@ class TestTrailingStopEdgeCases:
     def test_no_trailing_stop_when_disabled(self):
         """With trailing_stop_pct=0, no trailing stop triggers."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -975,7 +977,7 @@ class TestRealWorldScenarios:
         Should exit at $2.25 (stop loss), not $2.22 (close)
         """
         base_time = datetime(2025, 11, 19, 7, 30)
-        announcement = make_announcement(ticker="RIME", timestamp=base_time)
+        announcement = make_announcement(ticker="RIME", timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Entry bar - close at $2.32
@@ -1007,7 +1009,7 @@ class TestRealWorldScenarios:
         we don't care because we enter at the END of that bar.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Bar 0: Huge wick down to $5, but we enter at close of $10
@@ -1047,7 +1049,7 @@ class TestStopLossEdgeCases:
         entry-based stop: $0.976 * 0.99 = $0.9662
         """
         base_time = datetime(2025, 12, 3, 13, 5)
-        announcement = make_announcement(ticker="MCRP", timestamp=base_time)
+        announcement = make_announcement(ticker="MCRP", timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             # Entry bar: big drop from open to close
@@ -1083,7 +1085,7 @@ class TestStopLossEdgeCases:
         Should fill at $9.00 (bar.open), not $9.50 (stop price never traded)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=9.90, high=10.10, low=9.85, close=10.00, volume=100_000),
@@ -1115,7 +1117,7 @@ class TestStopLossEdgeCases:
         Should fill at $10.00 (bar.open), not $10.80 (trailing stop price)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -1150,7 +1152,7 @@ class TestStopLossEdgeCases:
         Should fill at $9.50 (stop price)
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -1187,7 +1189,7 @@ class TestStopLossEdgeCases:
         the stop level. The stop price was never actually traded on the way down.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -1224,7 +1226,7 @@ class TestStopLossEdgeCases:
         The trailing stop price was never actually traded - it gapped through.
         """
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         bars = [
             make_bar(base_time, open_=10.00, high=10.10, low=9.95, close=10.00, volume=100_000),
@@ -1256,7 +1258,7 @@ class TestEntryWindowMinutes:
     def test_entry_window_limits_search_for_consecutive_candles(self):
         """Entry window limits how long we search for consecutive green candles."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # 3 red candles, then 2 green candles at minute 4 and 5
         # But entry window is 3 minutes, so we never see the green candles
@@ -1290,7 +1292,7 @@ class TestEntryWindowMinutes:
     def test_entry_window_allows_entry_within_window(self):
         """Entry succeeds when conditions are met within entry window."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # 2 green candles in first 2 minutes
         bars = [
@@ -1318,7 +1320,7 @@ class TestEntryWindowMinutes:
     def test_entry_window_limits_volume_trigger_mode(self):
         """Entry window limits search in volume/price trigger mode."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # First 3 bars have low volume, 4th bar has enough volume
         bars = [
@@ -1347,7 +1349,7 @@ class TestEntryWindowMinutes:
     def test_entry_window_zero_uses_full_window(self):
         """Entry window of 0 should use full window_minutes."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # Green candles appear at minute 10
         bars = [make_bar(base_time + timedelta(minutes=i),
@@ -1377,7 +1379,7 @@ class TestEntryWindowMinutes:
     def test_entry_window_separate_from_hold_window(self):
         """Entry window and hold window (window_minutes) are independent."""
         base_time = datetime(2025, 1, 15, 9, 30)
-        announcement = make_announcement(timestamp=base_time)
+        announcement = make_announcement(timestamp=base_time - timedelta(seconds=30))
 
         # Entry within first 2 minutes, but hold for 60 minutes
         bars = [

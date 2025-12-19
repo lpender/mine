@@ -877,8 +877,10 @@ if not filtered:
 announcement_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in filtered)
 
 # Load OHLCV data (bulk query - returns dict with (ticker, datetime) keys)
-with log_time("load_ohlcv_for_announcements", keys=len(announcement_keys), window_minutes=hold_time):
-    bars_dict = load_ohlcv_for_announcements(announcement_keys, hold_time)
+# Fetch enough data for: entry_window (time to find entry) + hold_time (time to hold after entry)
+ohlcv_window = entry_window + hold_time
+with log_time("load_ohlcv_for_announcements", keys=len(announcement_keys), window_minutes=ohlcv_window):
+    bars_dict = load_ohlcv_for_announcements(announcement_keys, ohlcv_window)
 
 # Run backtest
 config = BacktestConfig(

@@ -47,12 +47,9 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
-    # Filter bars to only include those within the window (from first post-announcement bar)
+    # Filter bars to only include those starting from first post-announcement bar
     first_bar_time = bars[first_entry_idx].timestamp
-    window_end = first_bar_time + timedelta(minutes=config.window_minutes)
-
-    # Keep pre-announcement bars for context but track where entries can start
-    entry_bars = [b for b in bars if b.timestamp >= first_bar_time and b.timestamp <= window_end]
+    entry_bars = [b for b in bars if b.timestamp >= first_bar_time]
 
     if not entry_bars:
         result.trigger_type = "no_data"
@@ -64,6 +61,9 @@ def run_single_backtest(
     # Calculate entry window end time (how long to look for entry)
     entry_window = config.entry_window_minutes if config.entry_window_minutes > 0 else config.window_minutes
     entry_window_end = first_bar_time + timedelta(minutes=entry_window)
+
+    # Hold time is calculated from entry, not announcement (set after entry is determined)
+    hold_minutes = config.window_minutes
 
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
@@ -298,9 +298,17 @@ def run_single_backtest(
             trigger_type = "stop_loss"
             break
 
+        # Check timeout: hold time is from ENTRY, not announcement
+        timeout_time = entry_time + timedelta(minutes=hold_minutes)
+        if bar.timestamp >= timeout_time:
+            exit_price = bar.close
+            exit_time = bar.timestamp
+            trigger_type = "timeout"
+            break
+
         is_first_bar = False
 
-    # If no exit triggered, use last bar's close
+    # If no exit triggered (ran out of bars), use last bar's close
     if exit_price is None:
         exit_price = bars[-1].close
         exit_time = bars[-1].timestamp

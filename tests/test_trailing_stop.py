@@ -13,9 +13,10 @@ class TestTrailingStop:
         """Trailing stop should update as price increases, then trigger on pullback."""
         base_time = datetime(2025, 1, 1, 10, 0)
 
+        # Announcement at 09:59:30 so ann_minute_end=10:00:00 and bars at 10:00 are valid
         announcement = Announcement(
             ticker="TEST",
-            timestamp=base_time,
+            timestamp=base_time - timedelta(seconds=30),
             price_threshold=0.50,
             headline="Test announcement",
             country="US",
@@ -71,9 +72,11 @@ class TestTrailingStop:
         # Use datetime with second=0 for entry_by_message_second mode
         base_time = datetime(2025, 1, 1, 10, 0, 0)
 
+        # Announcement at 09:59:00 (second=0) so ann_minute_end=10:00:00 and bars at 10:00 are valid
+        # The second=0 is used by entry_by_message_second to determine entry price
         announcement = Announcement(
             ticker="TEST",
-            timestamp=base_time,
+            timestamp=datetime(2025, 1, 1, 9, 59, 0),
             price_threshold=0.50,
             headline="Test announcement",
             country="US",
