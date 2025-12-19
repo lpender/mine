@@ -550,3 +550,216 @@ class TestEntryWindowMinutes:
 
         # Now it should be abandoned (5.016... > 5 is True)
         assert not engine._has_pending_or_trade("TEST"), "Past boundary, entry should be abandoned"
+
+
+class TestEntryTiming:
+    """Tests for entry_timing modes: bar_close, early, eager."""
+
+    def create_engine(self, entry_timing="bar_close", consec_green_candles=1, min_candle_volume=5000):
+        """Create a strategy engine for testing."""
+        config = StrategyConfig(
+            channels=["test-channel"],
+            directions=["up", "up_right"],
+            sessions=["market"],
+            consec_green_candles=consec_green_candles,
+            min_candle_volume=min_candle_volume,
+            entry_timing=entry_timing,
+            take_profit_pct=10.0,
+            stop_loss_pct=5.0,
+            timeout_minutes=60,
+            buy_order_timeout_seconds=300,
+            sell_order_timeout_seconds=300,
+        )
+        trader = Mock()
+        trader.get_positions.return_value = []
+        trader.get_open_orders.return_value = []
+        trader.is_tradeable.return_value = (True, "tradeable")
+
+        engine = StrategyEngine(
+            strategy_id="test-strategy",
+            config=config,
+            trader=trader,
+        )
+        engine.on_subscribe = Mock(return_value=True)
+        engine.on_unsubscribe = Mock()
+        return engine
+
+    def create_announcement(self, ticker="TEST"):
+        """Create a test announcement."""
+        return Announcement(
+            ticker=ticker,
+            timestamp=datetime(2025, 12, 12, 15, 0, 0),
+            price_threshold=5.0,
+            headline="Test announcement",
+            country="US",
+            channel="test-channel",
+            direction="up",
+        )
+
+    def test_bar_close_waits_for_completed_candle(self):
+        """bar_close mode should NOT enter on building candle, only on completed candles."""
+        engine = self.create_engine(entry_timing="bar_close", min_candle_volume=5000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build a green candle with sufficient volume mid-candle
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=3000, timestamp=base_time)
+        engine.on_quote("TEST", price=5.10, volume=3000, timestamp=base_time.replace(second=30))
+        # Building candle: green (5.10 > 5.00), 6000 volume >= 5000 threshold
+
+        # Should NOT have entered yet (bar_close waits for candle to complete)
+        assert len(buy_calls) == 0, "bar_close should NOT enter on building candle"
+
+        # Complete the candle by moving to next minute
+        next_minute = base_time + timedelta(minutes=1)
+        engine.on_quote("TEST", price=5.15, volume=1000, timestamp=next_minute)
+
+        # NOW it should have entered (candle completed)
+        assert len(buy_calls) == 1, "bar_close should enter after candle completes"
+
+    def test_early_enters_when_actual_volume_met(self):
+        """early mode should enter as soon as actual volume meets threshold."""
+        engine = self.create_engine(entry_timing="early", min_candle_volume=5000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build a green candle - first quote below threshold
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=2000, timestamp=base_time)
+        
+        # Still below 5000 threshold
+        assert len(buy_calls) == 0, "Should not enter yet - volume below threshold"
+
+        # Add more volume to exceed threshold
+        engine.on_quote("TEST", price=5.10, volume=3500, timestamp=base_time.replace(second=30))
+        # Now: green candle (5.10 > 5.00), 5500 actual volume >= 5000 threshold
+
+        # Should have entered immediately when actual volume hit threshold
+        assert len(buy_calls) == 1, "early mode should enter when actual volume meets threshold"
+
+    def test_early_does_not_enter_on_extrapolated_volume(self):
+        """early mode should NOT enter based on extrapolated volume."""
+        engine = self.create_engine(entry_timing="early", min_candle_volume=10000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build candle with 5000 volume in 30 seconds
+        # Extrapolated: 5000 * (60/30) = 10000 (meets threshold)
+        # Actual: 5000 (does NOT meet 10000 threshold)
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=2500, timestamp=base_time)
+        engine.on_quote("TEST", price=5.10, volume=2500, timestamp=base_time.replace(second=30))
+
+        # Should NOT have entered (early uses actual volume, not extrapolated)
+        assert len(buy_calls) == 0, "early mode should NOT enter on extrapolated volume"
+
+    def test_eager_enters_when_extrapolated_volume_met(self):
+        """eager mode should enter when extrapolated volume meets threshold."""
+        engine = self.create_engine(entry_timing="eager", min_candle_volume=10000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build candle with 5000 volume in 30 seconds
+        # Extrapolated: 5000 * (60/30) = 10000 (meets threshold)
+        # Actual: 5000 (does NOT meet 10000 threshold)
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=2500, timestamp=base_time)
+        engine.on_quote("TEST", price=5.10, volume=2500, timestamp=base_time.replace(second=30))
+
+        # Should have entered (eager uses extrapolated volume)
+        assert len(buy_calls) == 1, "eager mode should enter when extrapolated volume meets threshold"
+
+    def test_eager_does_not_enter_when_extrapolated_volume_insufficient(self):
+        """eager mode should NOT enter when extrapolated volume is below threshold."""
+        engine = self.create_engine(entry_timing="eager", min_candle_volume=20000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build candle with 5000 volume in 30 seconds
+        # Extrapolated: 5000 * (60/30) = 10000 (below 20000 threshold)
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=2500, timestamp=base_time)
+        engine.on_quote("TEST", price=5.10, volume=2500, timestamp=base_time.replace(second=30))
+
+        # Should NOT have entered (extrapolated 10000 < 20000 threshold)
+        assert len(buy_calls) == 0, "eager should NOT enter when extrapolated volume below threshold"
+
+    def test_eager_extrapolation_early_in_candle(self):
+        """eager mode should extrapolate correctly early in the candle."""
+        engine = self.create_engine(entry_timing="eager", min_candle_volume=12000)
+
+        buy_calls = []
+        def mock_buy(ticker, shares, limit_price=None):
+            buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+            return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+        engine.trader.buy = mock_buy
+
+        ann = self.create_announcement()
+        engine.on_alert(ann)
+
+        # Build candle with 2000 volume in 10 seconds
+        # Extrapolated: 2000 * (60/10) = 12000 (exactly meets threshold)
+        base_time = datetime(2025, 12, 12, 15, 30, 0)
+        engine.on_quote("TEST", price=5.00, volume=1000, timestamp=base_time)
+        engine.on_quote("TEST", price=5.10, volume=1000, timestamp=base_time.replace(second=10))
+
+        # Should have entered (extrapolated 12000 >= 12000 threshold)
+        assert len(buy_calls) == 1, "eager should enter when extrapolated volume meets threshold early in candle"
+
+    def test_all_modes_require_green_candle(self):
+        """All entry_timing modes should require a green candle."""
+        for mode in ["bar_close", "early", "eager"]:
+            engine = self.create_engine(entry_timing=mode, min_candle_volume=1000)
+
+            buy_calls = []
+            def mock_buy(ticker, shares, limit_price=None):
+                buy_calls.append({"ticker": ticker, "shares": shares, "price": limit_price})
+                return Mock(order_id="test-order", ticker=ticker, side="buy", shares=shares, order_type="limit", status="new")
+            engine.trader.buy = mock_buy
+
+            ann = self.create_announcement()
+            engine.on_alert(ann)
+
+            # Build a RED candle with sufficient volume
+            base_time = datetime(2025, 12, 12, 15, 30, 0)
+            engine.on_quote("TEST", price=5.10, volume=5000, timestamp=base_time)  # Open at 5.10
+            engine.on_quote("TEST", price=4.90, volume=5000, timestamp=base_time.replace(second=30))  # Close below open = RED
+
+            # Should NOT enter (red candle)
+            assert len(buy_calls) == 0, f"{mode} mode should NOT enter on RED candle"

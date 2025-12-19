@@ -1131,8 +1131,9 @@ class StrategyEngine:
                 # Calculate volume to check based on mode
                 if cfg.entry_timing == "eager":
                     # Extrapolate volume to full minute
-                    candle_start = building_candle["timestamp"]
-                    elapsed_seconds = max(1, (timestamp - candle_start).total_seconds())
+                    # Use current candle start time from storage (building_start may be stale)
+                    current_candle_start = self._ticker_candle_start.get(ticker, candle_start)
+                    elapsed_seconds = max(1, (timestamp - current_candle_start).total_seconds())
                     extrapolated_vol = int(curr_vol * (60 / elapsed_seconds))
                     curr_meets_vol = extrapolated_vol >= cfg.min_candle_volume
                     vol_display = f"{curr_vol:,} actual ({extrapolated_vol:,} extrapolated)"
