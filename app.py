@@ -19,7 +19,7 @@ from src.duckdb_client import get_duckdb_client
 USE_DUCKDB = os.getenv("USE_POSTGRES", "0") != "1"
 
 # Cache configuration: set CACHE_PERSIST_DISK=1 in .env for disk persistence
-CACHE_PERSIST_DISK = os.getenv("CACHE_PERSIST_DISK", "1") == "1"
+CACHE_PERSIST_DISK = os.getenv("CACHE_PERSIST_DISK", "0") == "1"
 
 # Ensure custom cache directory exists if configured
 _cache_dir = os.getenv("STREAMLIT_CACHE_DIR")
