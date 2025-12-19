@@ -1123,16 +1123,19 @@ for df_idx, row in df.iterrows():
             break
 
 # Use dataframe with single-row selection
-event = st.dataframe(
-    df,
-    column_config=column_config,
-    height=600,
-    use_container_width=True,
-    hide_index=True,
-    selection_mode="single-row",
-    on_select="rerun",
-    key="trade_table",
-)
+if df.empty:
+    st.warning("No trade results to display")
+    event = None
+else:
+    event = st.dataframe(
+        df,
+        column_config=column_config,
+        height=600,
+        use_container_width=True,
+        hide_index=True,
+        selection_mode="single-row",
+        key="trade_table",
+    )
 
 # Show filter summary at bottom
 st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing_headlines}")
@@ -1144,7 +1147,7 @@ st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions
 st.header("Trade Detail")
 
 # Get selected row from the dataframe selection event
-selected_rows = event.selection.rows if hasattr(event, 'selection') else []
+selected_rows = event.selection.rows if event and hasattr(event, 'selection') else []
 
 if not selected_rows:
     st.info("Click a row in the table above to view trade details and chart.")
