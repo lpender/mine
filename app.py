@@ -892,9 +892,15 @@ with st.spinner("Loading announcements..."):
 # Create stable cache key for OHLCV (based on sample, not filters)
 sample_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in sampled)
 
+import time as _time
+_ohlcv_start = _time.time()
 with st.spinner(f"Loading OHLCV bars for {len(sample_keys):,} announcements..."):
     with log_time("load_ohlcv_for_announcements", keys=len(sample_keys), window_minutes=ohlcv_window):
         bars_dict = load_ohlcv_for_announcements(sample_keys, ohlcv_window)
+_ohlcv_elapsed = _time.time() - _ohlcv_start
+_total_bars = sum(len(bars) for bars in bars_dict.values())
+if _ohlcv_elapsed > 0.5:  # Only show if it took noticeable time (not cached)
+    st.caption(f"Loaded {_total_bars:,} bars in {_ohlcv_elapsed:.1f}s")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
