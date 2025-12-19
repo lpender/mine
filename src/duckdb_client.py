@@ -297,7 +297,8 @@ class DuckDBClient:
             SELECT COUNT(*) FROM read_parquet('{path}')
             WHERE {where_clause}
         """
-        total_count = conn.execute(count_query).fetchone()[0]
+        result = conn.execute(count_query).fetchone()
+        total_count = result[0] if result else 0
 
         # Build main query with sampling
         if sample_pct < 100 and sample_ids is None:
