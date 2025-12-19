@@ -748,6 +748,52 @@ with st.sidebar:
         )
         stake_amount = st.session_state.get("_stake_amount", 1000.0)
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Hotness Coefficient (Adaptive Position Sizing)
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Hotness Coefficient")
+    st.caption("Adjust position size based on recent trade performance")
+
+    hotness_enabled = st.checkbox(
+        "Enable Hotness",
+        key="_hotness_enabled",
+        help="Scale position size up when winning, down when losing"
+    )
+
+    if hotness_enabled:
+        col1, col2 = st.columns(2)
+        hotness_window = col1.slider(
+            "Lookback Trades",
+            min_value=2, max_value=20,
+            value=5,
+            key="_hotness_window",
+            help="Number of recent trades to calculate win rate from"
+        )
+        col2.empty()  # Placeholder for layout
+
+        col1, col2 = st.columns(2)
+        hotness_min_mult = col1.number_input(
+            "Min Multiplier",
+            min_value=0.1, max_value=1.0,
+            value=0.5,
+            step=0.1,
+            key="_hotness_min",
+            help="Position size multiplier when all recent trades lost (0% win rate)"
+        )
+        hotness_max_mult = col2.number_input(
+            "Max Multiplier",
+            min_value=1.0, max_value=3.0,
+            value=1.5,
+            step=0.1,
+            key="_hotness_max",
+            help="Position size multiplier when all recent trades won (100% win rate)"
+        )
+    else:
+        hotness_window = 5
+        hotness_min_mult = 0.5
+        hotness_max_mult = 1.5
+
     # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
@@ -789,6 +835,11 @@ with st.sidebar:
     set_param("stake", stake_amount)
     set_param("vol_pct", volume_pct)
     set_param("max_stake", max_stake)
+    # Hotness params
+    set_param("hotness", hotness_enabled)
+    set_param("hotness_window", hotness_window if hotness_enabled else "")
+    set_param("hotness_min", hotness_min_mult if hotness_enabled else "")
+    set_param("hotness_max", hotness_max_mult if hotness_enabled else "")
 
     # ─────────────────────────────────────────────────────────────────────────
     # Save Strategy / Live Trading
@@ -977,6 +1028,11 @@ config = BacktestConfig(
     min_candle_volume=int(min_candle_vol),
     trailing_stop_pct=trailing_stop,
     exit_after_red_candles=exit_red_candles,
+    # Hotness coefficient
+    hotness_enabled=hotness_enabled,
+    hotness_window=hotness_window,
+    hotness_min_mult=hotness_min_mult,
+    hotness_max_mult=hotness_max_mult,
 )
 
 with st.spinner(f"Running backtest on {len(filtered):,} announcements..."):
@@ -1050,6 +1106,40 @@ col4.metric("Best/Worst", f"{stats['best_trade']:+.1f}% / {stats['worst_trade']:
 col5.metric("Avg Win", f"{stats['avg_win']:+.2f}%")
 col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 
+# Hotness comparison row (if enabled)
+if hotness_enabled and "hotness_pnl" in stats:
+    st.divider()
+    st.subheader("Hotness Comparison")
+    col1, col2, col3, col4 = st.columns(4)
+
+    fixed_pnl = stats["fixed_pnl"]
+    hotness_pnl = stats["hotness_pnl"]
+    improvement = stats["hotness_improvement_pct"]
+    avg_mult = stats["avg_hotness_mult"]
+
+    col1.metric(
+        "Fixed P&L",
+        f"${fixed_pnl:+,.0f}",
+        help="P&L with constant $100 position size"
+    )
+    col2.metric(
+        "Hotness P&L",
+        f"${hotness_pnl:+,.0f}",
+        delta=f"{improvement:+.1f}%",
+        delta_color="normal",
+        help=f"P&L with hotness-adjusted sizing ({hotness_min_mult}x-{hotness_max_mult}x)"
+    )
+    col3.metric(
+        "Avg Multiplier",
+        f"{avg_mult:.2f}x",
+        help="Average position size multiplier used"
+    )
+    col4.metric(
+        "Window",
+        f"{hotness_window} trades",
+        help="Number of recent trades used for hotness calculation"
+    )
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Display Results Table
@@ -1092,9 +1182,14 @@ for r in display_results:
         "Exit": r.exit_price,
         "Return %": r.return_pct,
         "Exit Type": r.trigger_type,
+        "Hotness": r.hotness_multiplier if hotness_enabled else None,
     })
 
 df = pd.DataFrame(rows)
+
+# Drop Hotness column if not enabled (avoid column of None values)
+if not hotness_enabled and "Hotness" in df.columns:
+    df = df.drop(columns=["Hotness"])
 
 # Pagination - limit rows for performance
 MAX_DISPLAY_ROWS = 1000
@@ -1103,6 +1198,8 @@ total_results = len(summary.results)
 
 # Sort controls (persisted to URL)
 sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Mentions", "Float (M)", "MC (M)", "Return %", "Exit Type"]
+if hotness_enabled:
+    sortable_columns.append("Hotness")
 default_sort_col = get_param("sort", "Time")
 default_sort_asc = get_param("asc", "0") == "1"
 
@@ -1143,6 +1240,11 @@ column_config = {
         "Return %",
         format="%.2f%%",
         help="Percent return on trade"
+    ),
+    "Hotness": st.column_config.NumberColumn(
+        "Hotness",
+        format="%.2fx",
+        help="Position size multiplier from hotness coefficient"
     ),
 }
 
