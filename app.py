@@ -1067,6 +1067,9 @@ for r in summary.results:
 
 df = pd.DataFrame(rows)
 
+# Debug: show dataframe size
+st.caption(f"Showing {len(df):,} results ({summary.total_trades:,} trades)")
+
 # Sort controls (persisted to URL)
 sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Mentions", "Float (M)", "MC (M)", "Return %", "Exit Type"]
 default_sort_col = get_param("sort", "Time")
@@ -1120,7 +1123,8 @@ for df_idx, row in df.iterrows():
 event = st.dataframe(
     df,
     column_config=column_config,
-    width="stretch",
+    height=600,
+    use_container_width=True,
     hide_index=True,
     selection_mode="single-row",
     on_select="rerun",
