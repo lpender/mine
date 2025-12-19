@@ -458,6 +458,9 @@ class StrategyEngine:
         """
         Calculate position size multiplier based on recent trade performance.
 
+        Loads trades from the database filtered by this strategy's ID.
+        Falls back to in-memory completed_trades if no strategy_id is set.
+
         Returns:
             Multiplier between hotness_min_mult and hotness_max_mult.
             Returns 1.0 if hotness is disabled or not enough history.
@@ -465,30 +468,57 @@ class StrategyEngine:
         if not self.config.hotness_enabled:
             return 1.0
 
-        with self._state_lock:
-            if len(self.completed_trades) < 1:
-                return 1.0  # Not enough history, use neutral
+        window = self.config.hotness_window
+        recent_trades = []
 
-            # Get the last N trades
-            window = min(self.config.hotness_window, len(self.completed_trades))
-            recent_trades = self.completed_trades[-window:]
+        # Try to load from database first (persists across restarts)
+        if self.strategy_id:
+            try:
+                db_trades = self._trade_store.get_trades(
+                    strategy_id=self.strategy_id,
+                    paper=self.paper,
+                    limit=window,
+                )
+                # Convert to format compatible with in-memory trades
+                recent_trades = [
+                    {"return_pct": t.return_pct}
+                    for t in db_trades
+                ]
+                # Note: get_trades returns DESC order, but for hotness we just need count
+            except Exception as e:
+                logger.warning(f"[{self.strategy_name}] Failed to load trades for hotness: {e}")
+                recent_trades = []
 
-            # Calculate win rate
-            wins = sum(1 for t in recent_trades if t.get("return_pct", 0) > 0)
-            win_rate = wins / len(recent_trades)  # 0.0 to 1.0
+        # Fall back to in-memory if no DB trades (or no strategy_id)
+        if not recent_trades:
+            with self._state_lock:
+                if not self.completed_trades:
+                    logger.debug(f"[{self.strategy_name}] Hotness: no trade history, using 1.0x")
+                    return 1.0
+                recent_trades = self.completed_trades[-window:]
 
-            # Linear interpolation: 0% wins -> min_mult, 100% wins -> max_mult
-            multiplier = (
-                self.config.hotness_min_mult +
-                win_rate * (self.config.hotness_max_mult - self.config.hotness_min_mult)
-            )
+        # Handle case where we have fewer trades than window
+        if not recent_trades:
+            logger.debug(f"[{self.strategy_name}] Hotness: no trades found, using 1.0x")
+            return 1.0
 
-            logger.debug(
-                f"[{self.strategy_name}] Hotness: {wins}/{len(recent_trades)} wins "
-                f"({win_rate*100:.0f}%) -> {multiplier:.2f}x"
-            )
+        # Calculate win rate
+        wins = sum(1 for t in recent_trades if (t.get("return_pct") or 0) > 0)
+        total = len(recent_trades)
+        win_rate = wins / total  # 0.0 to 1.0
 
-            return multiplier
+        # Linear interpolation: 0% wins -> min_mult, 100% wins -> max_mult
+        multiplier = (
+            self.config.hotness_min_mult +
+            win_rate * (self.config.hotness_max_mult - self.config.hotness_min_mult)
+        )
+
+        logger.info(
+            f"[{self.strategy_name}] Hotness: {wins}/{total} wins in last {window} trades "
+            f"({win_rate*100:.0f}%) -> {multiplier:.2f}x"
+        )
+
+        return multiplier
 
     def _recover_positions(self):
         """Recover open positions from database and broker on startup."""

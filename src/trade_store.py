@@ -95,6 +95,7 @@ class TradeStore(BaseStore):
         ticker: Optional[str] = None,
         start: Optional[datetime] = None,
         end: Optional[datetime] = None,
+        strategy_id: Optional[str] = None,
         limit: int = 100,
     ) -> List[CompletedTrade]:
         """
@@ -105,6 +106,7 @@ class TradeStore(BaseStore):
             ticker: Filter by ticker symbol
             start: Filter by entry time >= start
             end: Filter by entry time <= end
+            strategy_id: Filter by strategy ID
             limit: Max number of trades to return
         """
         with self._db_session() as session:
@@ -118,6 +120,8 @@ class TradeStore(BaseStore):
                 query = query.filter(TradeDB.entry_time >= start)
             if end:
                 query = query.filter(TradeDB.entry_time <= end)
+            if strategy_id:
+                query = query.filter(TradeDB.strategy_id == strategy_id)
 
             rows = query.order_by(TradeDB.entry_time.desc()).limit(limit).all()
 

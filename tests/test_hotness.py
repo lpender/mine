@@ -281,8 +281,69 @@ class TestStrategyEngineHotness:
         )
         assert engine.get_hotness_multiplier() == 1.0
 
-    def test_get_hotness_multiplier_with_trades(self):
-        """Hotness should be calculated from completed trades."""
+    def test_get_hotness_multiplier_with_in_memory_trades(self):
+        """Hotness should be calculated from in-memory completed trades (no strategy_id)."""
+        config = StrategyConfig(
+            hotness_enabled=True,
+            hotness_window=5,
+            hotness_min_mult=0.5,
+            hotness_max_mult=1.5,
+        )
+
+        class MockTrader:
+            pass
+
+        engine = StrategyEngine(
+            config=config,
+            trader=MockTrader(),
+            paper=True,
+            strategy_id=None,  # No strategy_id, will use in-memory
+        )
+
+        # Add some completed trades (3 wins, 2 losses = 60% win rate)
+        engine.completed_trades = [
+            {"return_pct": 5.0},   # Win
+            {"return_pct": -3.0},  # Loss
+            {"return_pct": 5.0},   # Win
+            {"return_pct": -3.0},  # Loss
+            {"return_pct": 5.0},   # Win
+        ]
+
+        # 60% win rate: 0.5 + 0.6 * (1.5 - 0.5) = 0.5 + 0.6 = 1.1
+        mult = engine.get_hotness_multiplier()
+        assert abs(mult - 1.1) < 0.01
+
+    def test_get_hotness_multiplier_fewer_trades_than_window(self):
+        """Should work correctly with fewer trades than the window size."""
+        config = StrategyConfig(
+            hotness_enabled=True,
+            hotness_window=10,  # Window of 10
+            hotness_min_mult=0.5,
+            hotness_max_mult=1.5,
+        )
+
+        class MockTrader:
+            pass
+
+        engine = StrategyEngine(
+            config=config,
+            trader=MockTrader(),
+            paper=True,
+        )
+
+        # Only 3 trades (less than window of 10)
+        engine.completed_trades = [
+            {"return_pct": 5.0},   # Win
+            {"return_pct": 5.0},   # Win
+            {"return_pct": -3.0},  # Loss
+        ]
+
+        # 2/3 = 66.7% win rate: 0.5 + 0.667 * 1.0 = 1.167
+        mult = engine.get_hotness_multiplier()
+        assert abs(mult - 1.167) < 0.01
+
+    def test_get_hotness_multiplier_handles_none_return_pct(self):
+        """Should handle trades with None return_pct."""
         config = StrategyConfig(
             hotness_enabled=True,
             hotness_window=5,
@@ -299,18 +360,16 @@ class TestStrategyEngineHotness:
             paper=True,
         )
 
-        # Add some completed trades (3 wins, 2 losses = 60% win rate)
+        # Some trades with None return_pct (treated as losses)
         engine.completed_trades = [
             {"return_pct": 5.0},   # Win
-            {"return_pct": -3.0},  # Loss
-            {"return_pct": 5.0},   # Win
-            {"return_pct": -3.0},  # Loss
+            {"return_pct": None},  # Treated as loss
             {"return_pct": 5.0},   # Win
         ]
 
-        # 60% win rate: 0.5 + 0.6 * (1.5 - 0.5) = 0.5 + 0.6 = 1.1
+        # 2/3 = 66.7% win rate
         mult = engine.get_hotness_multiplier()
-        assert abs(mult - 1.1) < 0.01
+        assert abs(mult - 1.167) < 0.01
 
 
 class TestConfigValidation:
