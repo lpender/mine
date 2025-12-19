@@ -204,6 +204,17 @@ def load_filter_options():
     return client.get_announcement_filter_options(source="backfill")
 
 @st.cache_data(ttl=300)
+def load_sampled_announcements(sample_pct: int, sample_seed: int):
+    """Load sampled announcements WITHOUT filters - stable cache key for OHLCV loading."""
+    client = get_postgres_client()
+    return client.load_announcements_sampled_and_filtered(
+        source="backfill",
+        sample_pct=sample_pct,
+        sample_seed=sample_seed,
+    )
+
+
+@st.cache_data(ttl=300)
 def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
@@ -858,12 +869,32 @@ with st.sidebar:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Filter Announcements
+# Load Sample and OHLCV (stable cache - doesn't change with filters)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Load sampled + filtered announcements from SQL (huge speedup vs loading all + filtering in Python)
+# Load OHLCV for the SAMPLE first (stable cache key based only on sample_pct/seed)
+# This prevents OHLCV reload when filters change - major performance win!
+ohlcv_window = entry_window + hold_time
+
+with log_time("load_sampled_announcements"):
+    total_before_sampling, sampled = load_sampled_announcements(
+        sample_pct=int(sample_pct),
+        sample_seed=int(sample_seed),
+    )
+
+# Create stable cache key for OHLCV (based on sample, not filters)
+sample_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in sampled)
+
+with log_time("load_ohlcv_for_announcements", keys=len(sample_keys), window_minutes=ohlcv_window):
+    bars_dict = load_ohlcv_for_announcements(sample_keys, ohlcv_window)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Apply Filters (fast - no OHLCV reload needed)
+# ─────────────────────────────────────────────────────────────────────────────
+
 with log_time("load_sampled_filtered_announcements"):
-    total_before_sampling, filtered = load_sampled_filtered_announcements(
+    _, filtered = load_sampled_filtered_announcements(
         sample_pct=int(sample_pct),
         sample_seed=int(sample_seed),
         sessions=tuple(sessions) if sessions else tuple(),
@@ -902,15 +933,6 @@ with log_time("load_sampled_filtered_announcements"):
 if not filtered:
     st.warning("No announcements match the current filters.")
     st.stop()
-
-# Create cache key from announcement identifiers
-announcement_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in filtered)
-
-# Load OHLCV data (bulk query - returns dict with (ticker, datetime) keys)
-# Fetch enough data for: entry_window (time to find entry) + hold_time (time to hold after entry)
-ohlcv_window = entry_window + hold_time
-with log_time("load_ohlcv_for_announcements", keys=len(announcement_keys), window_minutes=ohlcv_window):
-    bars_dict = load_ohlcv_for_announcements(announcement_keys, ohlcv_window)
 
 # Run backtest
 config = BacktestConfig(
