@@ -121,6 +121,7 @@ class TradeResult:
     return_pct: Optional[float] = None
     trigger_type: str = "no_entry"  # "take_profit", "stop_loss", "timeout", "no_entry"
     pre_entry_volume: Optional[int] = None  # Volume of the candle before entry (for position sizing)
+    hotness_multiplier: float = 1.0  # Position size multiplier from hotness coefficient (1.0 = neutral)
 
     @property
     def is_winner(self) -> bool:
@@ -151,6 +152,7 @@ class TradeResult:
         stake_amount: float = 1000.0,
         volume_pct: float = 1.0,
         max_stake: float = 10000.0,
+        use_hotness: bool = False,
     ) -> Optional[float]:
         """
         Calculate P&L based on position sizing settings.
@@ -160,6 +162,7 @@ class TradeResult:
             stake_amount: Dollar amount for fixed stake mode
             volume_pct: Percentage of pre-entry candle volume to buy
             max_stake: Maximum position cost (for volume_pct mode)
+            use_hotness: If True, apply the hotness_multiplier to position size
 
         Returns:
             Dollar P&L for the trade, or None if not entered
@@ -182,6 +185,10 @@ class TradeResult:
             # Fixed stake mode (default)
             shares = max(1, int(stake_amount / self.entry_price))
 
+        # Apply hotness multiplier if enabled
+        if use_hotness:
+            shares = max(1, int(shares * self.hotness_multiplier))
+
         position_value = shares * self.entry_price
         return position_value * (self.return_pct / 100)
 
@@ -201,6 +208,11 @@ class BacktestConfig:
     # Lookback filter - skip stocks that have already moved too much
     max_prior_move_pct: float = 0.0  # Skip if stock moved more than X% in lookback period (0 = disabled)
     lookback_minutes: int = 30  # How far back to look for prior move calculation
+    # Hotness coefficient - adaptive position sizing based on recent performance
+    hotness_enabled: bool = False  # Enable hotness-based position sizing
+    hotness_window: int = 5  # Number of recent trades to consider
+    hotness_min_mult: float = 0.5  # Minimum position size multiplier (when cold)
+    hotness_max_mult: float = 1.5  # Maximum position size multiplier (when hot)
 
 
 @dataclass

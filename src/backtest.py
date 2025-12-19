@@ -287,6 +287,30 @@ def run_single_backtest(
     return result
 
 
+def calculate_hotness(recent_results: List[TradeResult], config: BacktestConfig) -> float:
+    """
+    Calculate hotness multiplier based on recent trade performance.
+
+    Args:
+        recent_results: List of recent TradeResults (most recent last)
+        config: BacktestConfig with hotness parameters
+
+    Returns:
+        Position size multiplier between hotness_min_mult and hotness_max_mult
+    """
+    if not recent_results:
+        return 1.0  # Neutral if no history
+
+    # Count wins in the window
+    wins = sum(1 for r in recent_results if r.return_pct is not None and r.return_pct > 0)
+    win_rate = wins / len(recent_results)  # 0.0 to 1.0
+
+    # Linear interpolation: 0% wins -> min_mult, 100% wins -> max_mult
+    multiplier = config.hotness_min_mult + win_rate * (config.hotness_max_mult - config.hotness_min_mult)
+
+    return multiplier
+
+
 def run_backtest(
     announcements: List[Announcement],
     bars_by_announcement: dict,  # (ticker, timestamp) -> List[OHLCVBar]
@@ -309,14 +333,27 @@ def run_backtest(
 
     returns = []
 
+    # Track recent results for hotness calculation
+    recent_entered_results: List[TradeResult] = []
+
     for announcement in announcements:
         key = (announcement.ticker, announcement.timestamp)
         bars = bars_by_announcement.get(key, [])
         result = run_single_backtest(announcement, bars, config)
+
+        # Calculate and apply hotness multiplier if enabled
+        if config.hotness_enabled and result.entered:
+            # Use up to hotness_window most recent entered trades
+            window = recent_entered_results[-config.hotness_window:] if recent_entered_results else []
+            result.hotness_multiplier = calculate_hotness(window, config)
+
         summary.results.append(result)
 
         if result.entered:
             summary.total_trades += 1
+            # Add to recent results for future hotness calculations
+            recent_entered_results.append(result)
+
             if result.return_pct is not None:
                 returns.append(result.return_pct)
                 if result.return_pct > 0:
@@ -339,7 +376,7 @@ def run_backtest(
     return summary
 
 
-def calculate_summary_stats(results: List[TradeResult]) -> dict:
+def calculate_summary_stats(results: List[TradeResult], config: Optional[BacktestConfig] = None) -> dict:
     """Calculate summary statistics from trade results."""
     total = len(results)
     entered = [r for r in results if r.entered]
@@ -367,7 +404,7 @@ def calculate_summary_stats(results: List[TradeResult]) -> dict:
     total_losses = abs(sum(losing_returns)) if losing_returns else 0
     profit_factor = total_gains / total_losses if total_losses > 0 else float('inf') if total_gains > 0 else 0
 
-    return {
+    stats = {
         "total_announcements": total,
         "total_trades": len(entered),
         "no_entry": total - len(entered),
@@ -383,3 +420,26 @@ def calculate_summary_stats(results: List[TradeResult]) -> dict:
         "expectancy": expectancy,
         "profit_factor": profit_factor,
     }
+
+    # Calculate hotness comparison if we have results with hotness multipliers
+    if entered and any(r.hotness_multiplier != 1.0 for r in entered):
+        base_stake = 100.0  # $100 base for comparison
+        fixed_pnl = sum(
+            base_stake * (r.return_pct / 100)
+            for r in entered if r.return_pct is not None
+        )
+        hotness_pnl = sum(
+            (base_stake * r.hotness_multiplier) * (r.return_pct / 100)
+            for r in entered if r.return_pct is not None
+        )
+        stats["fixed_pnl"] = fixed_pnl
+        stats["hotness_pnl"] = hotness_pnl
+        stats["hotness_improvement_pct"] = (
+            ((hotness_pnl - fixed_pnl) / abs(fixed_pnl) * 100)
+            if fixed_pnl != 0 else 0
+        )
+        stats["avg_hotness_mult"] = (
+            sum(r.hotness_multiplier for r in entered) / len(entered)
+        )
+
+    return stats
