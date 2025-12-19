@@ -98,6 +98,7 @@ def explain_trigger_type(trigger_type: str, config) -> str:
         "stop_loss": f"🛑 **Stop Loss Hit** - Price dropped to the {config.stop_loss_pct}% stop loss level" +
                      (f" (calculated from first candle open)" if config.stop_loss_from_open else " (calculated from entry price)"),
         "trailing_stop": f"📉 **Trailing Stop Hit** - Price dropped {config.trailing_stop_pct}% from the highest point reached during the trade",
+        "red_candles": f"🔴 **Red Candles Exit** - {config.exit_after_red_candles} consecutive red candles triggered exit",
         "timeout": f"⏰ **Timeout** - Trade held for maximum duration of {config.window_minutes} minutes without hitting TP/SL",
         "no_entry": "❌ **No Entry** - Entry conditions were not met within the entry window",
     }
@@ -353,6 +354,7 @@ def init_session_state():
     price_max_val = get_param("price_max", 100.0, float)
     set_if_missing("_price_max", price_max_val if price_max_val > 0 else 100.0)
     set_if_missing("_trailing_stop", get_param("trail", 0.0, float))
+    set_if_missing("_exit_red_candles", get_param("red_candles", 0, int))
     direction_list = get_param("direction", "", list)
     set_if_missing("_direction", [d for d in direction_list if d in all_directions])
     set_if_missing("_scanner_test", get_param("scanner_test", False, bool))
@@ -641,6 +643,14 @@ with st.sidebar:
         help="Exit if price drops this % from highest point since entry (0 = disabled)"
     )
 
+    exit_red_candles = st.slider(
+        "Exit After Red Candles",
+        min_value=0, max_value=10,
+        step=1,
+        key="_exit_red_candles",
+        help="Exit after X consecutive red candles (0 = disabled)"
+    )
+
     # ─────────────────────────────────────────────────────────────────────────
     # Position Sizing
     # ─────────────────────────────────────────────────────────────────────────
@@ -709,6 +719,7 @@ with st.sidebar:
     set_param("price_min", price_min)
     set_param("price_max", price_max)
     set_param("trail", trailing_stop)
+    set_param("red_candles", exit_red_candles)
     set_param("direction", directions)
     set_param("scanner_test", scanner_test)
     set_param("scanner_lull", scanner_after_lull)
@@ -736,7 +747,10 @@ with st.sidebar:
 
     # Show current strategy summary
     st.caption(f"Entry: {consec_candles} green candles, {min_candle_vol}+ vol")
-    st.caption(f"Exit: TP {take_profit}%, SL {stop_loss}%, Trail {trailing_stop}%")
+    exit_summary = f"Exit: TP {take_profit}%, SL {stop_loss}%, Trail {trailing_stop}%"
+    if exit_red_candles > 0:
+        exit_summary += f", {exit_red_candles} red candles"
+    st.caption(exit_summary)
 
     # Save as Strategy button
     strategy_name = st.text_input("Strategy Name", placeholder="e.g., My Scalper", key="save_strategy_name")
@@ -894,6 +908,7 @@ config = BacktestConfig(
     entry_after_consecutive_candles=consec_candles,
     min_candle_volume=int(min_candle_vol),
     trailing_stop_pct=trailing_stop,
+    exit_after_red_candles=exit_red_candles,
 )
 
 with log_time("run_backtest", announcements=len(filtered)):
