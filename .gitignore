@@ -18,6 +18,8 @@ data/messages.txt
 data/.trading.lock
 data/.trading_status.json
 data/.ws_key_cache.json
+data/parquet/
+data/raw_messages/
 
 # Logs
 logs/

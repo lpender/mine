@@ -15,6 +15,10 @@ import plotly.graph_objects as go
 from zoneinfo import ZoneInfo
 
 from src.postgres_client import get_postgres_client
+from src.duckdb_client import get_duckdb_client
+
+# Data backend toggle: set USE_DUCKDB=1 for fast Parquet-based queries
+USE_DUCKDB = os.getenv("USE_DUCKDB", "0") == "1"
 
 # Timezone for display
 EST = ZoneInfo("America/New_York")
@@ -268,9 +272,9 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     Note: Both announcements and OHLCV bars are stored in UTC (naive).
     Uses bulk query via announcement_ticker/announcement_timestamp columns
     for much faster loading (single query instead of N queries).
-    """
-    client = get_postgres_client()
 
+    Set USE_DUCKDB=1 for ~6x faster Parquet-based queries.
+    """
     # Convert string timestamps to datetime for bulk query.
     # Avoid pandas here: this runs on every cache miss and can get expensive for 10k+ keys.
     keys_with_dt = []
@@ -279,6 +283,12 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
         if getattr(ts, "tzinfo", None) is not None:
             ts = ts.replace(tzinfo=None)
         keys_with_dt.append((ticker, ts))
+
+    # Use DuckDB for faster Parquet-based queries if enabled
+    if USE_DUCKDB:
+        client = get_duckdb_client()
+    else:
+        client = get_postgres_client()
 
     # Single bulk query for all announcements
     bars_by_announcement = client.get_ohlcv_bars_bulk(keys_with_dt)
@@ -392,6 +402,12 @@ def init_session_state():
 init_session_state()
 
 with st.sidebar:
+    # Show data backend
+    if USE_DUCKDB:
+        st.success("Data: DuckDB (Parquet)")
+    else:
+        st.info("Data: Postgres")
+
     # ─────────────────────────────────────────────────────────────────────────
     # Sampling (for faster iteration) - FIRST in execution order
     # ─────────────────────────────────────────────────────────────────────────
