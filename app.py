@@ -1134,15 +1134,19 @@ if df.empty:
     st.warning("No trade results to display")
     event = None
 else:
-    event = st.dataframe(
-        df,
-        column_config=column_config,
-        height=600,
-        use_container_width=True,
-        hide_index=True,
-        selection_mode="single-row",
-        key="trade_table",
-    )
+    try:
+        event = st.dataframe(
+            df,
+            column_config=column_config,
+            height=600,
+            use_container_width=True,
+            hide_index=True,
+            selection_mode="single-row",
+            key="trade_table",
+        )
+    except Exception as e:
+        st.error(f"Failed to render table: {e}")
+        event = None
 
 # Show filter summary at bottom
 st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing_headlines}")
