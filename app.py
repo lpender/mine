@@ -18,6 +18,11 @@ from src.duckdb_client import get_duckdb_client
 # Data backend toggle: set USE_POSTGRES=1 to use Postgres instead of DuckDB
 USE_DUCKDB = os.getenv("USE_POSTGRES", "0") != "1"
 
+# Ensure custom cache directory exists if configured
+_cache_dir = os.getenv("STREAMLIT_CACHE_DIR")
+if _cache_dir:
+    Path(_cache_dir).mkdir(parents=True, exist_ok=True)
+
 # Timezone for display
 EST = ZoneInfo("America/New_York")
 UTC = ZoneInfo("UTC")
