@@ -1069,8 +1069,9 @@ for r in summary.results:
 
 df = pd.DataFrame(rows)
 
-# Debug: show dataframe size
-st.caption(f"Showing {len(df):,} results ({summary.total_trades:,} trades)")
+# Pagination - limit rows for performance
+MAX_DISPLAY_ROWS = 1000
+total_rows = len(df)
 
 # Sort controls (persisted to URL)
 sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Mentions", "Float (M)", "MC (M)", "Return %", "Exit Type"]
@@ -1094,6 +1095,13 @@ set_param("asc", sort_ascending)
 # Apply sorting
 if sort_column in df.columns:
     df = df.sort_values(by=sort_column, ascending=sort_ascending, na_position="last")
+
+# Apply pagination AFTER sorting
+if total_rows > MAX_DISPLAY_ROWS:
+    st.caption(f"Showing first {MAX_DISPLAY_ROWS:,} of {total_rows:,} results ({summary.total_trades:,} trades). Adjust filters to see more.")
+    df = df.head(MAX_DISPLAY_ROWS)
+else:
+    st.caption(f"Showing {total_rows:,} results ({summary.total_trades:,} trades)")
 
 # Configure column display
 column_config = {
