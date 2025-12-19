@@ -18,10 +18,21 @@ from src.duckdb_client import get_duckdb_client
 # Data backend toggle: set USE_POSTGRES=1 to use Postgres instead of DuckDB
 USE_DUCKDB = os.getenv("USE_POSTGRES", "0") != "1"
 
+# Cache configuration: set CACHE_PERSIST_DISK=1 in .env for disk persistence
+CACHE_PERSIST_DISK = os.getenv("CACHE_PERSIST_DISK", "1") == "1"
+
 # Ensure custom cache directory exists if configured
 _cache_dir = os.getenv("STREAMLIT_CACHE_DIR")
 if _cache_dir:
     Path(_cache_dir).mkdir(parents=True, exist_ok=True)
+
+# Cache decorator based on config
+def _cached(func):
+    """Apply appropriate cache decorator based on CACHE_PERSIST_DISK setting."""
+    if CACHE_PERSIST_DISK:
+        return st.cache_data(persist="disk")(func)
+    else:
+        return st.cache_resource(func)
 
 # Timezone for display
 EST = ZoneInfo("America/New_York")
@@ -194,13 +205,13 @@ def set_param(key: str, value):
 # Load Data
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(persist="disk")
+@_cached
 def load_announcements():
     """Load announcements from PostgreSQL. Persists to disk across restarts."""
     client = get_postgres_client()
     return client.load_announcements()
 
-@st.cache_data(persist="disk")
+@_cached
 def load_filter_options():
     """Load distinct filter options. Persists to disk across restarts."""
     if USE_DUCKDB:
@@ -209,7 +220,7 @@ def load_filter_options():
         client = get_postgres_client()
     return client.get_announcement_filter_options(source="backfill")
 
-@st.cache_data(persist="disk")
+@_cached
 def load_sampled_announcements(sample_pct: int, sample_seed: int):
     """Load sampled announcements WITHOUT filters. Persists to disk across restarts."""
     if USE_DUCKDB:
@@ -223,7 +234,7 @@ def load_sampled_announcements(sample_pct: int, sample_seed: int):
     )
 
 
-@st.cache_data(persist="disk")
+@_cached
 def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
@@ -288,7 +299,7 @@ def load_sampled_filtered_announcements(
     )
 
 
-@st.cache_data(persist="disk")
+@_cached
 def load_ohlcv_for_announcements(announcement_keys: tuple, _window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
