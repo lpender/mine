@@ -30,14 +30,36 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
-    # Filter bars to only include those within the window
-    first_bar_time = bars[0].timestamp
-    window_end = first_bar_time + timedelta(minutes=config.window_minutes)
-    bars = [b for b in bars if b.timestamp <= window_end]
+    # Find the first bar that starts AFTER the announcement time
+    # For a 7:13:24 announcement, the first valid bar is 7:14:00 (next complete minute)
+    # Round announcement time up to next minute for comparison
+    ann_time = announcement.timestamp
+    ann_minute_end = ann_time.replace(second=0, microsecond=0) + timedelta(minutes=1)
 
-    if not bars:
+    # Find index of first post-announcement bar
+    first_entry_idx = 0
+    for i, bar in enumerate(bars):
+        if bar.timestamp >= ann_minute_end:
+            first_entry_idx = i
+            break
+    else:
+        # No bars after announcement
         result.trigger_type = "no_data"
         return result
+
+    # Filter bars to only include those within the window (from first post-announcement bar)
+    first_bar_time = bars[first_entry_idx].timestamp
+    window_end = first_bar_time + timedelta(minutes=config.window_minutes)
+
+    # Keep pre-announcement bars for context but track where entries can start
+    entry_bars = [b for b in bars if b.timestamp >= first_bar_time and b.timestamp <= window_end]
+
+    if not entry_bars:
+        result.trigger_type = "no_data"
+        return result
+
+    # Use entry_bars for all entry/exit logic
+    bars = entry_bars
 
     # Calculate entry window end time (how long to look for entry)
     entry_window = config.entry_window_minutes if config.entry_window_minutes > 0 else config.window_minutes
