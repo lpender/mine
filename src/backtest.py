@@ -55,6 +55,9 @@ def run_single_backtest(
         result.trigger_type = "no_data"
         return result
 
+    # Keep reference to all bars (including announcement bar) for counting consecutive candles
+    all_bars = bars
+
     # Use entry_bars for all entry/exit logic
     bars = entry_bars
 
@@ -71,33 +74,57 @@ def run_single_backtest(
     # Handle "entry after consecutive candles" mode
     # Wait for X consecutive GREEN candles (close > open) with volume threshold
     # Then enter at the OPEN of the next bar (realistic: can't act until candle closes)
+    # NOTE: The announcement bar (the bar containing the announcement) counts toward
+    # the green candle requirement, but we can't enter until after it closes.
     if config.entry_after_consecutive_candles > 0:
         required = config.entry_after_consecutive_candles
         consecutive_count = 0
         signal_bar_idx = None
         min_vol = config.min_candle_volume
 
-        for i, bar in enumerate(bars):
-            # Stop looking for entry after entry window expires
-            if bar.timestamp >= entry_window_end:
+        # Get the announcement bar (bar containing the announcement timestamp)
+        ann_minute = ann_time.replace(second=0, microsecond=0)
+        announcement_bar = None
+        for bar in all_bars:
+            if bar.timestamp == ann_minute:
+                announcement_bar = bar
                 break
 
-            # Check: green candle (close > open) AND volume meets minimum
-            if bar.close > bar.open and bar.volume >= min_vol:
-                consecutive_count += 1
-                if consecutive_count >= required:
-                    # Signal triggered after this candle closes
-                    signal_bar_idx = i
+        # Start with announcement bar if it exists and qualifies
+        if announcement_bar and announcement_bar.close > announcement_bar.open and announcement_bar.volume >= min_vol:
+            consecutive_count = 1
+            if consecutive_count >= required:
+                # Signal triggered, entry at first post-announcement bar
+                signal_bar_idx = -1  # Special marker: announcement bar triggered signal
+
+        # Continue counting from the first post-announcement bar (if not already triggered)
+        if signal_bar_idx is None:
+            for i, bar in enumerate(bars):
+                # Stop looking for entry after entry window expires
+                if bar.timestamp >= entry_window_end:
                     break
-            else:
-                consecutive_count = 0  # Reset on failure
+
+                # Check: green candle (close > open) AND volume meets minimum
+                if bar.close > bar.open and bar.volume >= min_vol:
+                    consecutive_count += 1
+                    if consecutive_count >= required:
+                        # Signal triggered after this candle closes
+                        signal_bar_idx = i
+                        break
+                else:
+                    consecutive_count = 0  # Reset on failure
 
         if signal_bar_idx is None:
             result.trigger_type = "no_entry"
             return result
 
         # Enter at OPEN of the next bar after signal
-        entry_bar_idx = signal_bar_idx + 1
+        if signal_bar_idx == -1:
+            # Announcement bar triggered signal, enter at first post-announcement bar
+            entry_bar_idx = 0
+        else:
+            entry_bar_idx = signal_bar_idx + 1
+
         if entry_bar_idx >= len(bars):
             result.trigger_type = "no_entry"  # No next bar available
             return result

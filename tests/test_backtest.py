@@ -1409,3 +1409,150 @@ class TestEntryWindowMinutes:
         assert result.trigger_type == "timeout"
         # Exit should be at the end of window_minutes (60 min), not entry_window_minutes
         assert result.exit_time == base_time + timedelta(minutes=59)
+
+
+class TestAnnouncementBarCounting:
+    """Tests for counting the announcement bar toward consecutive green candles."""
+
+    def test_announcement_bar_counts_toward_consecutive_candles(self):
+        """
+        The announcement bar (bar containing the announcement) should count
+        toward the consecutive green candle requirement, even though we can't
+        enter during it.
+
+        Example: Announcement at 13:00:03, 3 green candles required
+        - 13:00 bar (contains announcement): GREEN = counts as #1
+        - 13:01 bar: GREEN = counts as #2
+        - 13:02 bar: GREEN = counts as #3 (signal triggered)
+        - Entry at 13:03 OPEN (bar after 3rd green closes)
+        """
+        from src.backtest import run_single_backtest
+        from src.models import Announcement, OHLCVBar, BacktestConfig
+
+        ann = Announcement(
+            ticker='TEST',
+            timestamp=datetime(2025, 9, 19, 13, 0, 3),  # 3 seconds into the 13:00 bar
+            price_threshold=2.40,
+            headline='Test',
+            country='US',
+            channel='select-news',
+            direction='up',
+        )
+
+        # All green bars
+        bars = [
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 0, 0), open=2.40, high=3.00, low=2.38, close=2.99, volume=100000),
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 1, 0), open=2.98, high=3.55, low=2.95, close=3.52, volume=100000),
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 2, 0), open=3.51, high=4.45, low=3.50, close=4.38, volume=100000),
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 3, 0), open=4.40, high=5.00, low=4.35, close=4.80, volume=100000),
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 4, 0), open=4.80, high=5.20, low=4.70, close=5.00, volume=100000),
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=3,
+            min_candle_volume=0,
+            window_minutes=30,
+            take_profit_pct=50.0,
+            stop_loss_pct=10.0,
+        )
+
+        result = run_single_backtest(ann, bars, config)
+
+        # With announcement bar counting:
+        # - 13:00 = green #1 (announcement bar)
+        # - 13:01 = green #2
+        # - 13:02 = green #3 (signal)
+        # - Entry at 13:03 OPEN
+        assert result.entry_time == datetime(2025, 9, 19, 13, 3, 0), (
+            f"Expected entry at 13:03:00, got {result.entry_time}"
+        )
+        assert result.entry_price == 4.40  # Open of 13:03 bar
+
+    def test_announcement_bar_not_counted_if_red(self):
+        """
+        If the announcement bar is red, it should reset the count.
+        """
+        from src.backtest import run_single_backtest
+        from src.models import Announcement, OHLCVBar, BacktestConfig
+
+        ann = Announcement(
+            ticker='TEST',
+            timestamp=datetime(2025, 9, 19, 13, 0, 3),
+            price_threshold=2.40,
+            headline='Test',
+            country='US',
+            channel='select-news',
+            direction='up',
+        )
+
+        # Announcement bar is RED, subsequent bars are green
+        bars = [
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 0, 0), open=3.00, high=3.00, low=2.38, close=2.40, volume=100000),  # RED
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 1, 0), open=2.40, high=3.00, low=2.35, close=2.90, volume=100000),  # GREEN
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 2, 0), open=2.90, high=3.50, low=2.85, close=3.40, volume=100000),  # GREEN
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 3, 0), open=3.40, high=4.00, low=3.35, close=3.90, volume=100000),  # GREEN
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 4, 0), open=3.90, high=4.50, low=3.85, close=4.40, volume=100000),  # GREEN
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=3,
+            min_candle_volume=0,
+            window_minutes=30,
+            take_profit_pct=50.0,
+            stop_loss_pct=10.0,
+        )
+
+        result = run_single_backtest(ann, bars, config)
+
+        # Red announcement bar doesn't count, so:
+        # - 13:00 = RED (doesn't count)
+        # - 13:01 = green #1
+        # - 13:02 = green #2
+        # - 13:03 = green #3 (signal)
+        # - Entry at 13:04 OPEN
+        assert result.entry_time == datetime(2025, 9, 19, 13, 4, 0), (
+            f"Expected entry at 13:04:00 (red announcement bar), got {result.entry_time}"
+        )
+        assert result.entry_price == 3.90  # Open of 13:04 bar
+
+    def test_single_green_candle_enters_after_announcement_bar(self):
+        """
+        With only 1 green candle required, if the announcement bar is green,
+        entry should be at the OPEN of the next bar (first post-announcement bar).
+        """
+        from src.backtest import run_single_backtest
+        from src.models import Announcement, OHLCVBar, BacktestConfig
+
+        ann = Announcement(
+            ticker='TEST',
+            timestamp=datetime(2025, 9, 19, 13, 0, 3),
+            price_threshold=2.40,
+            headline='Test',
+            country='US',
+            channel='select-news',
+            direction='up',
+        )
+
+        bars = [
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 0, 0), open=2.40, high=3.00, low=2.38, close=2.99, volume=100000),  # GREEN
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 1, 0), open=2.98, high=3.55, low=2.95, close=3.52, volume=100000),  # GREEN
+            OHLCVBar(timestamp=datetime(2025, 9, 19, 13, 2, 0), open=3.51, high=4.45, low=3.50, close=4.38, volume=100000),  # GREEN
+        ]
+
+        config = BacktestConfig(
+            entry_after_consecutive_candles=1,
+            min_candle_volume=0,
+            window_minutes=30,
+            take_profit_pct=50.0,
+            stop_loss_pct=10.0,
+        )
+
+        result = run_single_backtest(ann, bars, config)
+
+        # With 1 green candle required and announcement bar is green:
+        # - 13:00 = green #1 (signal triggered by announcement bar)
+        # - Entry at 13:01 OPEN (first post-announcement bar)
+        assert result.entry_time == datetime(2025, 9, 19, 13, 1, 0), (
+            f"Expected entry at 13:01:00, got {result.entry_time}"
+        )
+        assert result.entry_price == 2.98  # Open of 13:01 bar
