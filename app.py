@@ -1192,6 +1192,11 @@ else:
                     name=f"Exit @ ${selected_result.exit_price:.2f} ({selected_result.trigger_type})",
                 ), row=1, col=1)
 
+            # Add vertical line for announcement time
+            ann_time_est = to_est(ann.timestamp)
+            fig.add_vline(x=ann_time_est, line_dash="dot", line_color="yellow", opacity=0.7,
+                          annotation_text="Alert", annotation_position="top left")
+
             # Add horizontal lines for entry, TP, SL
             if selected_result.entry_price:
                 entry = selected_result.entry_price
