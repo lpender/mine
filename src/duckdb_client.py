@@ -343,12 +343,124 @@ class DuckDBClient:
 
             logger.debug(f"DuckDB loaded {len(rows)} OHLCV bars for {len(announcement_keys)} keys")
 
+            # Fallback for missing keys (duplicate announcements sharing bars with another)
+            missing_keys = [k for k, bars in result.items() if not bars]
+            if missing_keys:
+                fallback_rows = self._fallback_ohlcv_lookup(conn, ohlcv_glob, missing_keys, result)
+                if fallback_rows > 0:
+                    logger.debug(f"DuckDB fallback found {fallback_rows} bars for {len(missing_keys)} missing keys")
+
         except Exception as e:
             logger.error(f"DuckDB query failed: {e}")
             # Return empty result on error
             pass
 
         return result
+
+    def _fallback_ohlcv_lookup(
+        self, conn, ohlcv_glob: str, missing_keys: List[tuple], result: dict
+    ) -> int:
+        """
+        Fallback lookup for announcements without direct OHLCV links.
+
+        For duplicate announcements (same ticker, different timestamp/channel),
+        finds bars within a time window around the announcement.
+        Uses a single bulk query for efficiency.
+        """
+        from collections import defaultdict
+        from datetime import timedelta
+
+        if not missing_keys:
+            return 0
+
+        fallback_rows = 0
+
+        # Group missing keys by ticker
+        ticker_to_keys = defaultdict(list)
+        for ticker, ann_ts in missing_keys:
+            ticker_to_keys[ticker].append(ann_ts)
+
+        # Build a single query for all tickers with their time ranges
+        # Using UNION ALL to combine time-range conditions per ticker
+        union_queries = []
+        for ticker, timestamps in ticker_to_keys.items():
+            min_ts = min(timestamps)
+            max_ts = max(timestamps)
+
+            if isinstance(min_ts, datetime):
+                pre_start_str = (min_ts - timedelta(minutes=5)).strftime("%Y-%m-%d %H:%M:%S")
+                end_time_str = (max_ts + timedelta(minutes=125)).strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                continue
+
+            union_queries.append(f"""
+                SELECT
+                    ticker,
+                    timestamp,
+                    open,
+                    high,
+                    low,
+                    close,
+                    volume,
+                    vwap
+                FROM read_parquet('{ohlcv_glob}')
+                WHERE ticker = '{ticker}'
+                  AND timestamp >= '{pre_start_str}'::TIMESTAMP
+                  AND timestamp <= '{end_time_str}'::TIMESTAMP
+            """)
+
+        if not union_queries:
+            return 0
+
+        # Process in chunks to avoid DuckDB expression depth limit
+        chunk_size = 500  # Max UNION ALL clauses per query
+        ticker_bars = defaultdict(list)
+
+        for i in range(0, len(union_queries), chunk_size):
+            chunk = union_queries[i:i + chunk_size]
+            full_query = " UNION ALL ".join(chunk)
+
+            try:
+                rows = conn.execute(full_query).fetchall()
+
+                for ticker, ts, o, h, l, c, vol, vwap in rows:
+                    ticker_bars[ticker].append(
+                        OHLCVBar(
+                            timestamp=ts,
+                            open=o,
+                            high=h,
+                            low=l,
+                            close=c,
+                            volume=int(vol) if vol else 0,
+                            vwap=vwap,
+                        )
+                    )
+
+            except Exception as e:
+                logger.warning(f"DuckDB fallback chunk query failed: {e}")
+
+        # Assign bars to each announcement based on its time window
+        for ticker, timestamps in ticker_to_keys.items():
+            all_bars = ticker_bars.get(ticker, [])
+            if not all_bars:
+                continue
+
+            for ann_ts in timestamps:
+                if not isinstance(ann_ts, datetime):
+                    continue
+
+                ann_start = ann_ts - timedelta(minutes=5)
+                ann_end = ann_ts + timedelta(minutes=125)
+
+                announcement_bars = [
+                    bar for bar in all_bars
+                    if ann_start <= bar.timestamp <= ann_end
+                ]
+                if announcement_bars:
+                    fallback_rows += len(announcement_bars)
+                    result[(ticker, ann_ts)] = announcement_bars
+
+        return fallback_rows
 
     def _df_to_announcements(self, df: pd.DataFrame) -> List[Announcement]:
         """Convert DataFrame to list of Announcement dataclass."""
