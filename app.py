@@ -1132,30 +1132,31 @@ column_config = {
     ),
 }
 
-# Map dataframe row index to result index (since df may be sorted differently)
+# Map dataframe row index to display_results index (since df may be sorted differently)
 df = df.reset_index(drop=True)
 df_to_result_idx = {}
 for df_idx, row in df.iterrows():
     # Find matching result by time and ticker
-    for r_idx, r in enumerate(summary.results):
+    for r_idx, r in enumerate(display_results):
         # Compare EST-converted times
         if to_est(r.announcement.timestamp) == row["Time"] and r.announcement.ticker == row["Ticker"]:
             df_to_result_idx[df_idx] = r_idx
             break
 
-# Render the dataframe
+# Render the dataframe with row selection
 if df.empty:
     st.warning("No trade results to display")
     event = None
 else:
-    st.dataframe(
+    event = st.dataframe(
         df,
         column_config=column_config,
         height=600,
         use_container_width=True,
         hide_index=True,
+        selection_mode="single-row",
+        key="trade_table",
     )
-    event = None  # Selection disabled for now
 
 # Show filter summary at bottom
 st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing_headlines}")
@@ -1182,7 +1183,7 @@ else:
     # Map to result index
     if selected_df_idx in df_to_result_idx:
         result_idx = df_to_result_idx[selected_df_idx]
-        selected_result = summary.results[result_idx]
+        selected_result = display_results[result_idx]
         ann = selected_result.announcement
 
         # Show full headline and message
