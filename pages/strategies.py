@@ -509,6 +509,8 @@ else:
                 st.markdown("**Entry**")
                 st.write(f"Green Candles: {cfg.consec_green_candles}")
                 st.write(f"Min Volume: {cfg.min_candle_volume:,}")
+                st.write(f"Entry Window: {cfg.entry_window_minutes} min")
+                st.write(f"Entry Timing: {cfg.entry_timing}")
 
             with col3:
                 st.markdown("**Exit**")
@@ -577,6 +579,7 @@ else:
                         new_config = StrategyConfig(
                             channels=cfg.channels,
                             directions=cfg.directions,
+                            authors=cfg.authors,
                             sessions=cfg.sessions,
                             price_min=cfg.price_min,
                             price_max=cfg.price_max,
@@ -588,6 +591,8 @@ else:
                             max_market_cap_millions=cfg.max_market_cap_millions,
                             consec_green_candles=cfg.consec_green_candles,
                             min_candle_volume=cfg.min_candle_volume,
+                            entry_window_minutes=cfg.entry_window_minutes,
+                            entry_timing=cfg.entry_timing,
                             take_profit_pct=cfg.take_profit_pct,
                             stop_loss_pct=cfg.stop_loss_pct,
                             trailing_stop_pct=cfg.trailing_stop_pct,
