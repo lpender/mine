@@ -18,6 +18,41 @@ from .models import Announcement, OHLCVBar
 
 logger = logging.getLogger(__name__)
 
+
+class LazyBarList:
+    """A list wrapper that converts raw tuples to OHLCVBar objects on demand.
+
+    This avoids creating millions of OHLCVBar objects upfront when most won't be used.
+    """
+    __slots__ = ('_raw_data', '_converted')
+
+    def __init__(self, raw_tuples: list):
+        self._raw_data = raw_tuples
+        self._converted = None
+
+    def _convert(self):
+        if self._converted is None:
+            self._converted = [
+                OHLCVBar(
+                    timestamp=t[0], open=t[1], high=t[2], low=t[3],
+                    close=t[4], volume=t[5], vwap=t[6]
+                )
+                for t in self._raw_data
+            ]
+        return self._converted
+
+    def __len__(self):
+        return len(self._raw_data)
+
+    def __getitem__(self, idx):
+        return self._convert()[idx]
+
+    def __iter__(self):
+        return iter(self._convert())
+
+    def __bool__(self):
+        return bool(self._raw_data)
+
 PARQUET_DIR = Path(__file__).parent.parent / "data" / "parquet"
 
 
@@ -27,6 +62,7 @@ class DuckDBClient:
     def __init__(self, parquet_dir: Optional[Path] = None):
         self.parquet_dir = parquet_dir or PARQUET_DIR
         self._conn = None
+        self._ohlcv_loaded = False
 
     def _get_conn(self) -> duckdb.DuckDBPyConnection:
         """Get or create DuckDB connection."""
@@ -36,6 +72,43 @@ class DuckDBClient:
             # Enable parallel execution
             self._conn.execute("SET threads TO 4")
         return self._conn
+
+    def _ensure_ohlcv_table(self) -> None:
+        """Load OHLCV parquet files into a persistent in-memory table once."""
+        if self._ohlcv_loaded:
+            return
+
+        conn = self._get_conn()
+        ohlcv_glob = self._ohlcv_glob()
+
+        # Check if files exist
+        ohlcv_dir = self.parquet_dir / "ohlcv_1min"
+        if not ohlcv_dir.exists() or not list(ohlcv_dir.glob("*.parquet")):
+            logger.warning(f"No OHLCV parquet files found in {ohlcv_dir}")
+            self._ohlcv_loaded = True
+            return
+
+        logger.info("Loading OHLCV parquet files into memory table...")
+        import time
+        start = time.time()
+
+        # Create persistent table from parquet files
+        conn.execute(f"""
+            CREATE TABLE IF NOT EXISTS ohlcv AS
+            SELECT * FROM read_parquet('{ohlcv_glob}')
+        """)
+
+        # Create index for fast lookups by announcement key
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_ohlcv_announcement
+            ON ohlcv (announcement_ticker, announcement_timestamp)
+        """)
+
+        row_count = conn.execute("SELECT COUNT(*) FROM ohlcv").fetchone()[0]
+        elapsed = time.time() - start
+        logger.info(f"Loaded {row_count:,} OHLCV bars into memory in {elapsed:.1f}s")
+
+        self._ohlcv_loaded = True
 
     def _announcements_path(self) -> Path:
         return self.parquet_dir / "announcements.parquet"
@@ -228,11 +301,12 @@ class DuckDBClient:
 
         # Build main query with sampling
         if sample_pct < 100 and sample_ids is None:
-            # Use TABLESAMPLE for random sampling
+            # Use deterministic sampling based on hash of id and seed
+            # This ensures repeatable results with the same seed
             query = f"""
                 SELECT * FROM read_parquet('{path}')
                 WHERE {where_clause}
-                USING SAMPLE {sample_pct}% (BERNOULLI, SEED {sample_seed})
+                  AND hash(id + {sample_seed}) % 100 < {sample_pct}
                 ORDER BY timestamp DESC
             """
         elif sample_ids:
@@ -267,41 +341,35 @@ class DuckDBClient:
         """
         Get OHLCV bars for multiple announcements.
 
-        This is the main performance bottleneck - DuckDB should be much faster
-        than Postgres for this bulk read.
+        Uses a pre-loaded in-memory table with index for fast lookups.
+        Returns LazyBarList wrappers that convert to OHLCVBar objects on demand.
 
         Args:
             announcement_keys: List of (ticker, timestamp) tuples
 
         Returns:
-            Dict mapping (ticker, timestamp) to list of OHLCVBar
+            Dict mapping (ticker, timestamp) to LazyBarList (acts like list of OHLCVBar)
         """
         if not announcement_keys:
             return {}
 
-        # Pre-create result map
-        result = {key: [] for key in announcement_keys}
+        # Ensure OHLCV data is loaded into memory table
+        self._ensure_ohlcv_table()
 
-        ohlcv_glob = self._ohlcv_glob()
         conn = self._get_conn()
 
-        # Build VALUES clause for the keys
-        # DuckDB can handle this efficiently with a semi-join
-        values_list = []
-        for ticker, ts in announcement_keys:
-            # Handle both datetime and string timestamps
-            if isinstance(ts, datetime):
-                ts_str = ts.strftime("%Y-%m-%d %H:%M:%S.%f")
-            else:
-                ts_str = str(ts)
-            values_list.append(f"('{ticker}', '{ts_str}'::TIMESTAMP)")
+        import time
+        start = time.time()
 
-        values_clause = ", ".join(values_list)
+        # Convert keys to DataFrame and register as temp table
+        keys_data = [
+            (ticker, ts if isinstance(ts, datetime) else datetime.fromisoformat(str(ts)))
+            for ticker, ts in announcement_keys
+        ]
+        keys_df = pd.DataFrame(keys_data, columns=['ann_ticker', 'ann_timestamp'])
+        conn.register('keys_temp', keys_df)
 
-        query = f"""
-            WITH keys AS (
-                SELECT * FROM (VALUES {values_clause}) AS t(ann_ticker, ann_timestamp)
-            )
+        query = """
             SELECT
                 o.announcement_ticker,
                 o.announcement_timestamp,
@@ -312,8 +380,8 @@ class DuckDBClient:
                 o.close,
                 o.volume,
                 o.vwap
-            FROM read_parquet('{ohlcv_glob}') o
-            INNER JOIN keys k
+            FROM ohlcv o
+            INNER JOIN keys_temp k
                 ON o.announcement_ticker = k.ann_ticker
                 AND o.announcement_timestamp = k.ann_timestamp
             ORDER BY
@@ -322,30 +390,35 @@ class DuckDBClient:
                 o.timestamp
         """
 
+        # Pre-create result map with empty lists
+        from collections import defaultdict
+        raw_result = defaultdict(list)
+
         try:
             rows = conn.execute(query).fetchall()
 
-            for ann_ticker, ann_ts, ts, o, h, l, c, vol, vwap in rows:
-                key = (ann_ticker, ann_ts)
-                bucket = result.get(key)
-                if bucket is not None:
-                    bucket.append(
-                        OHLCVBar(
-                            timestamp=ts,
-                            open=o,
-                            high=h,
-                            low=l,
-                            close=c,
-                            volume=int(vol) if vol else 0,
-                            vwap=vwap,
-                        )
-                    )
+            # Group raw tuples by announcement key (fast - no object creation)
+            for row in rows:
+                key = (row[0], row[1])
+                # Store as (timestamp, open, high, low, close, volume, vwap)
+                raw_result[key].append((
+                    row[2], row[3], row[4], row[5], row[6],
+                    int(row[7]) if row[7] else 0, row[8]
+                ))
 
-            logger.debug(f"DuckDB loaded {len(rows)} OHLCV bars for {len(announcement_keys)} keys")
+            elapsed = time.time() - start
+            logger.info(f"DuckDB loaded {len(rows):,} OHLCV bars for {len(announcement_keys):,} keys in {elapsed:.1f}s")
 
         except Exception as e:
             logger.error(f"DuckDB query failed: {e}")
+        finally:
+            try:
+                conn.unregister('keys_temp')
+            except Exception:
+                pass
 
+        # Wrap each list in LazyBarList for on-demand conversion
+        result = {key: LazyBarList(raw_result.get(key, [])) for key in announcement_keys}
         return result
 
     def _df_to_announcements(self, df: pd.DataFrame) -> List[Announcement]:
