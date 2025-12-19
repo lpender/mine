@@ -49,7 +49,9 @@ class StrategyConfig:
     consec_green_candles: int = 1
     min_candle_volume: int = 5000
     entry_window_minutes: int = 5  # How long to wait for entry conditions after alert
-    early_entry: bool = False  # If True, enter as soon as volume threshold met; if False, wait for candle close
+    # Entry timing: 'bar_close' (wait for candle close), 'early' (enter when volume met),
+    # 'eager' (enter when extrapolated volume meets threshold)
+    entry_timing: str = "bar_close"
     buy_order_timeout_seconds: int = int(os.getenv("BUY_ORDER_TIMEOUT_SECONDS", "5"))  # Cancel unfilled buy orders (includes orphaned orders)
 
     # Exit rules
@@ -235,7 +237,7 @@ class StrategyConfig:
                 "consec_green_candles": self.consec_green_candles,
                 "min_candle_volume": self.min_candle_volume,
                 "entry_window_minutes": self.entry_window_minutes,
-                "early_entry": self.early_entry,
+                "entry_timing": self.entry_timing,
             },
             "exit": {
                 "take_profit_pct": self.take_profit_pct,
@@ -1115,26 +1117,41 @@ class StrategyEngine:
                 self._execute_entry(pending.trade_id, price, timestamp, trigger="no_candle_req")
                 continue
 
-            # EARLY ENTRY: If enabled and current building candle is green and hits volume threshold,
-            # count it toward the green candle requirement and enter immediately
+            # EARLY/EAGER ENTRY: Check building candle based on entry_timing mode
+            # - 'bar_close': skip this block, only enter on completed candles
+            # - 'early': enter when actual volume meets threshold
+            # - 'eager': enter when extrapolated volume meets threshold
             green_count = completed_green_count
-            if cfg.early_entry and building_candle:
+            if cfg.entry_timing in ("early", "eager") and building_candle:
                 curr_vol = building_candle["volume"]
                 curr_open = building_candle["open"]
                 curr_close = building_candle["close"]
                 curr_is_green = curr_close > curr_open
-                curr_meets_vol = curr_vol >= cfg.min_candle_volume
+
+                # Calculate volume to check based on mode
+                if cfg.entry_timing == "eager":
+                    # Extrapolate volume to full minute
+                    candle_start = building_candle["timestamp"]
+                    elapsed_seconds = max(1, (timestamp - candle_start).total_seconds())
+                    extrapolated_vol = int(curr_vol * (60 / elapsed_seconds))
+                    curr_meets_vol = extrapolated_vol >= cfg.min_candle_volume
+                    vol_display = f"{curr_vol:,} actual ({extrapolated_vol:,} extrapolated)"
+                else:
+                    # 'early' mode: use actual volume
+                    curr_meets_vol = curr_vol >= cfg.min_candle_volume
+                    vol_display = f"{curr_vol:,}"
 
                 if curr_is_green and curr_meets_vol:
                     green_count += 1  # Count building candle toward requirement
                     if green_count >= cfg.consec_green_candles:
+                        mode_label = "EAGER" if cfg.entry_timing == "eager" else "EARLY"
                         logger.info(f"")
                         logger.info(f"{'='*60}")
-                        logger.info(f"[{self.strategy_name}] [{ticker}] 🚀🚀🚀 EARLY ENTRY! Building candle hit {curr_vol:,} volume while GREEN! (trade_id={pending.trade_id[:8]})")
+                        logger.info(f"[{self.strategy_name}] [{ticker}] 🚀🚀🚀 {mode_label} ENTRY! Building candle hit {vol_display} volume while GREEN! (trade_id={pending.trade_id[:8]})")
                         logger.info(f"[{self.strategy_name}] [{ticker}] {completed_green_count} completed + 1 building = {green_count} green candles")
                         logger.info(f"{'='*60}")
                         logger.info(f"")
-                        self._execute_entry(pending.trade_id, price, timestamp, trigger=f"early_entry_{green_count}_green")
+                        self._execute_entry(pending.trade_id, price, timestamp, trigger=f"{cfg.entry_timing}_entry_{green_count}_green")
                         continue
 
             if completed_green_count >= cfg.consec_green_candles:

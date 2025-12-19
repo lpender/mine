@@ -274,7 +274,8 @@ def _config_from_dict(data: dict) -> StrategyConfig:
         consec_green_candles=entry.get("consec_green_candles", 1),
         min_candle_volume=entry.get("min_candle_volume", 5000),
         entry_window_minutes=entry.get("entry_window_minutes", 5),
-        early_entry=entry.get("early_entry", False),
+        # Support both old 'early_entry' bool and new 'entry_timing' string
+        entry_timing=entry.get("entry_timing") or ("early" if entry.get("early_entry") else "bar_close"),
         take_profit_pct=exit_rules.get("take_profit_pct", 10.0),
         stop_loss_pct=exit_rules.get("stop_loss_pct", 11.0),
         stop_loss_from_open=exit_rules.get("stop_loss_from_open", True),

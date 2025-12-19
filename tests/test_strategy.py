@@ -245,7 +245,7 @@ class TestVolumeExtrapolation:
         # Set up for early entry: need 1 green candle with min 1000 volume
         engine.config.consec_green_candles = 1
         engine.config.min_candle_volume = 1000
-        engine.config.early_entry = True  # Enable early entry for this test
+        engine.config.entry_timing = "early"  # Enable early entry for this test
 
         buy_calls = []
         def mock_buy(ticker, shares, limit_price=None):
@@ -296,7 +296,7 @@ class TestVolumeExtrapolation:
         # Set up for early entry
         engine.config.consec_green_candles = 1
         engine.config.min_candle_volume = 2000
-        engine.config.early_entry = True  # Enable early entry for this test
+        engine.config.entry_timing = "early"  # Enable early entry for this test
 
         buy_calls = []
         def mock_buy(ticker, shares, limit_price=None):
@@ -333,7 +333,7 @@ class TestVolumeExtrapolation:
         )
         engine.config.consec_green_candles = 1
         engine.config.min_candle_volume = 5000
-        engine.config.early_entry = True  # Enable early entry for this test
+        engine.config.entry_timing = "early"  # Enable early entry for this test
 
         buy_calls = []
         def mock_buy(ticker, shares, limit_price=None):
@@ -371,7 +371,7 @@ class TestVolumeExtrapolation:
         # Set up for early entry with high volume
         engine.config.consec_green_candles = 1
         engine.config.min_candle_volume = 50000
-        engine.config.early_entry = True  # Enable early entry for this test
+        engine.config.entry_timing = "early"  # Enable early entry for this test
 
         buy_calls = []
         def mock_buy(ticker, shares, limit_price=None):
