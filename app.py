@@ -1072,15 +1072,15 @@ if filtered:
 else:
     weeks = 1
 
-# Calculate P/L using position sizing settings
+# Calculate P/L using position sizing settings (with hotness if enabled)
 total_pnl = sum(
-    r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake)
+    r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled)
     for r in summary.results
-    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake) is not None
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled) is not None
 )
 trades_with_pnl = sum(
     1 for r in summary.results
-    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake) is not None
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled) is not None
 )
 weekly_pnl = total_pnl / weeks if weeks > 0 else 0
 
@@ -1089,6 +1089,8 @@ if stake_mode == "volume_pct":
     sizing_desc = f"{volume_pct}% vol (max ${max_stake:,.0f})"
 else:
     sizing_desc = f"${stake_amount:,.0f} fixed"
+if hotness_enabled:
+    sizing_desc += f" × hotness ({hotness_min_mult}-{hotness_max_mult}x)"
 
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
@@ -1107,25 +1109,38 @@ col5.metric("Avg Win", f"{stats['avg_win']:+.2f}%")
 col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 
 # Hotness comparison row (if enabled)
-if hotness_enabled and "hotness_pnl" in stats:
+if hotness_enabled:
+    # Calculate P&L with and without hotness using actual position sizing
+    pnl_without_hotness = sum(
+        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False)
+        for r in summary.results
+        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False) is not None
+    )
+    pnl_with_hotness = sum(
+        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True)
+        for r in summary.results
+        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True) is not None
+    )
+    hotness_improvement = (
+        ((pnl_with_hotness - pnl_without_hotness) / abs(pnl_without_hotness) * 100)
+        if pnl_without_hotness != 0 else 0
+    )
+    entered_results = [r for r in summary.results if r.entered]
+    avg_mult = sum(r.hotness_multiplier for r in entered_results) / len(entered_results) if entered_results else 1.0
+
     st.divider()
     st.subheader("Hotness Comparison")
     col1, col2, col3, col4 = st.columns(4)
 
-    fixed_pnl = stats["fixed_pnl"]
-    hotness_pnl = stats["hotness_pnl"]
-    improvement = stats["hotness_improvement_pct"]
-    avg_mult = stats["avg_hotness_mult"]
-
     col1.metric(
-        "Fixed P&L",
-        f"${fixed_pnl:+,.0f}",
-        help="P&L with constant $100 position size"
+        "Without Hotness",
+        f"${pnl_without_hotness:+,.0f}",
+        help=f"P&L with {sizing_desc.split(' ×')[0]}"
     )
     col2.metric(
-        "Hotness P&L",
-        f"${hotness_pnl:+,.0f}",
-        delta=f"{improvement:+.1f}%",
+        "With Hotness",
+        f"${pnl_with_hotness:+,.0f}",
+        delta=f"{hotness_improvement:+.1f}%",
         delta_color="normal",
         help=f"P&L with hotness-adjusted sizing ({hotness_min_mult}x-{hotness_max_mult}x)"
     )
