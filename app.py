@@ -1044,14 +1044,21 @@ col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 st.divider()  # Visual separator before Trade Results
 st.header("Trade Results")
 
-# Debug: Unique run ID to detect duplicate execution
-import uuid
-_run_id = str(uuid.uuid4())[:8]
-LOGGER.info(f"Trade Results section rendering, run_id={_run_id}")
+# Result filters
+filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 6])
+hide_no_data = filter_col1.checkbox("Hide no data", value=True, help="Hide announcements with no OHLCV data")
+hide_no_entry = filter_col2.checkbox("Hide no entry", value=True, help="Hide trades that didn't trigger an entry")
 
-# Build dataframe from results
+# Filter results based on checkboxes
+display_results = summary.results
+if hide_no_data:
+    display_results = [r for r in display_results if r.announcement.ohlcv_status != 'no_data']
+if hide_no_entry:
+    display_results = [r for r in display_results if r.entry_price is not None]
+
+# Build dataframe from filtered results
 rows = []
-for r in summary.results:
+for r in display_results:
     a = r.announcement
     msg = a.source_message or ""
     headline = a.headline or ""
@@ -1078,6 +1085,7 @@ df = pd.DataFrame(rows)
 # Pagination - limit rows for performance
 MAX_DISPLAY_ROWS = 1000
 total_rows = len(df)
+total_results = len(summary.results)
 
 # Sort controls (persisted to URL)
 sortable_columns = ["Time", "Ticker", "Session", "Country", "Channel", "Author", "Mentions", "Float (M)", "MC (M)", "Return %", "Exit Type"]
@@ -1104,10 +1112,10 @@ if sort_column in df.columns:
 
 # Apply pagination AFTER sorting
 if total_rows > MAX_DISPLAY_ROWS:
-    st.caption(f"Showing first {MAX_DISPLAY_ROWS:,} of {total_rows:,} results ({summary.total_trades:,} trades). Adjust filters to see more.")
+    st.caption(f"Showing first {MAX_DISPLAY_ROWS:,} of {total_rows:,} results (filtered from {total_results:,} total)")
     df = df.head(MAX_DISPLAY_ROWS)
 else:
-    st.caption(f"Showing {total_rows:,} results ({summary.total_trades:,} trades)")
+    st.caption(f"Showing {total_rows:,} results (filtered from {total_results:,} total)")
 
 # Configure column display
 column_config = {
@@ -1140,22 +1148,14 @@ if df.empty:
     st.warning("No trade results to display")
     event = None
 else:
-    LOGGER.info(f"Rendering dataframe with {len(df)} rows, run_id={_run_id}")
-    try:
-        # Simplified dataframe call - removed selection features that may cause issues
-        st.dataframe(
-            df,
-            column_config=column_config,
-            height=600,
-            use_container_width=True,
-            hide_index=True,
-        )
-        event = None  # Selection disabled for now
-        LOGGER.info(f"Dataframe rendered successfully, run_id={_run_id}")
-    except Exception as e:
-        st.error(f"Failed to render table: {e}")
-        LOGGER.exception(f"Dataframe render failed: {e}")
-        event = None
+    st.dataframe(
+        df,
+        column_config=column_config,
+        height=600,
+        use_container_width=True,
+        hide_index=True,
+    )
+    event = None  # Selection disabled for now
 
 # Show filter summary at bottom
 st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions}, countries={countries or 'all'}, channels={channels or 'all'}, authors={authors or 'all'}, exclude_financing={exclude_financing_headlines}")
