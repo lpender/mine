@@ -191,21 +191,24 @@ def set_param(key: str, value):
 # Load Data
 # ─────────────────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=300)
+@st.cache_resource
 def load_announcements():
-    """Load announcements from PostgreSQL."""
+    """Load announcements from PostgreSQL. Shared across all sessions."""
     client = get_postgres_client()
     return client.load_announcements()
 
-@st.cache_data(ttl=300)
+@st.cache_resource
 def load_filter_options():
-    """Load distinct filter options from PostgreSQL (fast; avoids loading all announcements)."""
-    client = get_postgres_client()
+    """Load distinct filter options. Shared across all sessions."""
+    if USE_DUCKDB:
+        client = get_duckdb_client()
+    else:
+        client = get_postgres_client()
     return client.get_announcement_filter_options(source="backfill")
 
-@st.cache_data(ttl=300)
+@st.cache_resource
 def load_sampled_announcements(sample_pct: int, sample_seed: int):
-    """Load sampled announcements WITHOUT filters - stable cache key for OHLCV loading."""
+    """Load sampled announcements WITHOUT filters. Shared across all sessions."""
     if USE_DUCKDB:
         client = get_duckdb_client()
     else:
@@ -217,7 +220,7 @@ def load_sampled_announcements(sample_pct: int, sample_seed: int):
     )
 
 
-@st.cache_data(ttl=300)
+@st.cache_resource
 def load_sampled_filtered_announcements(
     *,
     sample_pct: int,
@@ -282,7 +285,7 @@ def load_sampled_filtered_announcements(
     )
 
 
-@st.cache_data(ttl=300)
+@st.cache_resource
 def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
@@ -290,7 +293,7 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     Uses bulk query via announcement_ticker/announcement_timestamp columns
     for much faster loading (single query instead of N queries).
 
-    Set USE_DUCKDB=1 for ~6x faster Parquet-based queries.
+    Uses cache_resource to share across all browser sessions (server-side singleton).
     """
     # Convert string timestamps to datetime for bulk query.
     # Avoid pandas here: this runs on every cache miss and can get expensive for 10k+ keys.
