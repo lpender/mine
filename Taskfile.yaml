@@ -64,6 +64,17 @@ tasks:
     cmds:
       - diff discord-monitor/StockAlertMonitor.plugin.js "{{.BETTERDISCORD_PLUGINS}}/StockAlertMonitor.plugin.js" || true
 
+  plugin-ms:install:
+    desc: Copy MillisecondTimestamps plugin to BetterDiscord plugins directory
+    cmds:
+      - cp discord-monitor/MillisecondTimestamps.plugin.js "{{.BETTERDISCORD_PLUGINS}}/"
+      - echo "MillisecondTimestamps plugin installed. Reload Discord or use Ctrl+R to reload plugins."
+
+  plugin-ms:diff:
+    desc: Show diff between repo MillisecondTimestamps plugin and installed plugin
+    cmds:
+      - diff discord-monitor/MillisecondTimestamps.plugin.js "{{.BETTERDISCORD_PLUGINS}}/MillisecondTimestamps.plugin.js" || true
+
   # ─────────────────────────────────────────────────────────────────────────────
   # Trading Engine
   # ─────────────────────────────────────────────────────────────────────────────
