@@ -11,10 +11,17 @@ def run_single_backtest(
     """
     Run a backtest for a single announcement.
 
-    Strategy:
-    1. Wait for price to move up by entry_trigger_pct from first bar's open
-    2. If volume is above threshold, enter the trade
-    3. Exit when: take_profit_pct reached, stop_loss_pct reached, or timeout
+    Entry Logic:
+    - Wait for N consecutive green candles (entry_after_consecutive_candles)
+    - N=0 means enter immediately at the open of the first post-announcement bar
+    - The announcement bar counts toward the green candle requirement
+    - Entry is always at the OPEN of the bar after the signal
+
+    Exit Logic:
+    - Take profit when price reaches take_profit_pct above entry
+    - Stop loss when price drops stop_loss_pct below entry (or first candle open)
+    - Trailing stop tracks highest price and exits on pullback
+    - Timeout after window_minutes
 
     Args:
         announcement: The announcement to backtest
@@ -71,157 +78,73 @@ def run_single_backtest(
     # Store first candle's open for potential stop loss calculation
     first_candle_open = bars[0].open
 
-    # Handle "entry after consecutive candles" mode
-    # Wait for X consecutive GREEN candles (close > open) with volume threshold
+    # Entry logic: Wait for X consecutive GREEN candles (close > open) with volume threshold
     # Then enter at the OPEN of the next bar (realistic: can't act until candle closes)
     # NOTE: The announcement bar (the bar containing the announcement) counts toward
     # the green candle requirement, but we can't enter until after it closes.
-    if config.entry_after_consecutive_candles > 0:
-        required = config.entry_after_consecutive_candles
-        consecutive_count = 0
-        signal_bar_idx = None
-        min_vol = config.min_candle_volume
+    # Special case: X=0 means "enter at open of first post-announcement bar" (no waiting)
+    required = config.entry_after_consecutive_candles
+    consecutive_count = 0
+    signal_bar_idx = None
+    min_vol = config.min_candle_volume
 
-        # Get the announcement bar (bar containing the announcement timestamp)
-        ann_minute = ann_time.replace(second=0, microsecond=0)
-        announcement_bar = None
-        for bar in all_bars:
-            if bar.timestamp == ann_minute:
-                announcement_bar = bar
-                break
+    # Special case: 0 green candles required = enter immediately at first bar open
+    if required == 0:
+        signal_bar_idx = -1  # Enter at first post-announcement bar
 
-        # Start with announcement bar if it exists and qualifies
-        if announcement_bar and announcement_bar.close > announcement_bar.open and announcement_bar.volume >= min_vol:
-            consecutive_count = 1
-            if consecutive_count >= required:
-                # Signal triggered, entry at first post-announcement bar
-                signal_bar_idx = -1  # Special marker: announcement bar triggered signal
+    # Get the announcement bar (bar containing the announcement timestamp)
+    ann_minute = ann_time.replace(second=0, microsecond=0)
+    announcement_bar = None
+    for bar in all_bars:
+        if bar.timestamp == ann_minute:
+            announcement_bar = bar
+            break
 
-        # Continue counting from the first post-announcement bar (if not already triggered)
-        if signal_bar_idx is None:
-            for i, bar in enumerate(bars):
-                # Stop looking for entry after entry window expires
-                if bar.timestamp >= entry_window_end:
-                    break
+    # Start with announcement bar if it exists and qualifies (only if required > 0)
+    if signal_bar_idx is None and announcement_bar and announcement_bar.close > announcement_bar.open and announcement_bar.volume >= min_vol:
+        consecutive_count = 1
+        if consecutive_count >= required:
+            # Signal triggered, entry at first post-announcement bar
+            signal_bar_idx = -1  # Special marker: announcement bar triggered signal
 
-                # Check: green candle (close > open) AND volume meets minimum
-                if bar.close > bar.open and bar.volume >= min_vol:
-                    consecutive_count += 1
-                    if consecutive_count >= required:
-                        # Signal triggered after this candle closes
-                        signal_bar_idx = i
-                        break
-                else:
-                    consecutive_count = 0  # Reset on failure
-
-        if signal_bar_idx is None:
-            result.trigger_type = "no_entry"
-            return result
-
-        # Enter at OPEN of the next bar after signal
-        if signal_bar_idx == -1:
-            # Announcement bar triggered signal, enter at first post-announcement bar
-            entry_bar_idx = 0
-        else:
-            entry_bar_idx = signal_bar_idx + 1
-
-        if entry_bar_idx >= len(bars):
-            result.trigger_type = "no_entry"  # No next bar available
-            return result
-
-        entry_price = bars[entry_bar_idx].open
-        entry_time = bars[entry_bar_idx].timestamp
-
-        if entry_price <= 0:
-            result.trigger_type = "invalid_price"
-            return result
-
-    # Handle "entry at candle close" mode - assume we get in at end of first candle
-    elif config.entry_at_candle_close:
-        # Enter at first candle's close (more realistic - takes time to see alert and execute)
-        entry_price = bars[0].close
-        entry_time = bars[0].timestamp
-        entry_bar_idx = 1  # Start exits from NEXT bar (we entered at end of bar 0)
-
-        if len(bars) < 2:
-            result.trigger_type = "no_entry"  # No next bar to check exits
-            return result
-
-        if entry_price <= 0:
-            result.trigger_type = "invalid_price"
-            return result
-    # Handle "entry within first candle by message second" mode.
-    # This is intended for the common case where you enter immediately (no trigger/volume gate),
-    # but the fill price is somewhere between the first candle's low/high based on how many
-    # seconds into the minute the alert was received.
-    elif config.entry_by_message_second and config.entry_trigger_pct == 0 and config.volume_threshold == 0:
-        first = bars[0]
-
-        if first.low <= 0 or first.high <= 0:
-            result.trigger_type = "invalid_price"
-            return result
-
-        sec = getattr(announcement.timestamp, "second", 0) or 0
-        # Clamp to [0, 59]
-        sec = 0 if sec < 0 else 59 if sec > 59 else sec
-        frac = sec / 60.0
-
-        entry_price = first.low + (first.high - first.low) * frac
-        entry_time = first.timestamp + timedelta(seconds=sec)
-        entry_bar_idx = 0
-    else:
-        # Original logic: reference price is the first bar's open
-        reference_price = bars[0].open
-        if reference_price <= 0:
-            result.trigger_type = "invalid_price"
-            return result
-
-        entry_price = None
-        entry_time = None
-        entry_bar_idx = None
-
-        # Calculate trigger price (price must reach this level)
-        trigger_price = reference_price * (1 + config.entry_trigger_pct / 100)
-
-        # Phase 1: Look for entry - both price AND volume conditions must be met on the same bar
+    # Continue counting from the first post-announcement bar (if not already triggered)
+    if signal_bar_idx is None:
         for i, bar in enumerate(bars):
             # Stop looking for entry after entry window expires
             if bar.timestamp >= entry_window_end:
                 break
 
-            # Check if price moved up enough to trigger entry (bar.high reaches trigger level)
-            price_change_pct = ((bar.high - reference_price) / reference_price) * 100
-            price_triggered = price_change_pct >= config.entry_trigger_pct
+            # Check: green candle (close > open) AND volume meets minimum
+            if bar.close > bar.open and bar.volume >= min_vol:
+                consecutive_count += 1
+                if consecutive_count >= required:
+                    # Signal triggered after this candle closes
+                    signal_bar_idx = i
+                    break
+            else:
+                consecutive_count = 0  # Reset on failure
 
-            # Check if this bar's volume meets the threshold (intra-candle, not cumulative)
-            volume_met = bar.volume >= config.volume_threshold
+    if signal_bar_idx is None:
+        result.trigger_type = "no_entry"
+        return result
 
-            # Enter when BOTH conditions are satisfied on this bar
-            if price_triggered and volume_met:
-                entry_time = bar.timestamp
-                entry_bar_idx = i
+    # Enter at OPEN of the next bar after signal
+    if signal_bar_idx == -1:
+        # Announcement bar triggered signal (or required=0), enter at first post-announcement bar
+        entry_bar_idx = 0
+    else:
+        entry_bar_idx = signal_bar_idx + 1
 
-                # Calculate entry price: the LATER of the two trigger points
-                if config.volume_threshold > 0 and bar.volume > 0:
-                    # Interpolate: entry when volume threshold is reached within the bar
-                    volume_fraction = config.volume_threshold / bar.volume
-                    volume_entry_price = bar.low + (bar.high - bar.low) * volume_fraction
-                else:
-                    volume_entry_price = bar.low
+    if entry_bar_idx >= len(bars):
+        result.trigger_type = "no_entry"  # No next bar available
+        return result
 
-                if config.entry_trigger_pct > 0:
-                    price_entry_price = trigger_price
-                else:
-                    price_entry_price = bar.low
+    entry_price = bars[entry_bar_idx].open
+    entry_time = bars[entry_bar_idx].timestamp
 
-                # Entry price is the LATER of the two trigger points (higher price)
-                entry_price = max(volume_entry_price, price_entry_price)
-                break
-
-        # No entry triggered
-        if entry_price is None:
-            result.trigger_type = "no_entry"
-            return result
+    if entry_price <= 0:
+        result.trigger_type = "invalid_price"
+        return result
 
     result.entry_price = entry_price
     result.entry_time = entry_time
@@ -266,10 +189,10 @@ def run_single_backtest(
         # IMPORTANT: Use highest_since_entry from PREVIOUS bars, not current bar's high
         # because in the 4-stage model, low happens BEFORE high
         if bar.low < bar.open:
-            # For gap detection: on entry bar with intra-bar entry, don't use gap logic.
-            # The "gap" concept only applies to SUBSEQUENT bars, not the entry bar itself.
-            # On the entry bar, we entered somewhere in the middle, not at the open.
-            skip_gap_detection = is_first_bar and not config.entry_at_candle_close
+            # On the entry bar, we entered at the open, so bar.open = entry_price.
+            # There can't be a "gap through stop" on the entry bar since we just entered.
+            # Gap detection only applies to subsequent bars.
+            skip_gap_detection = is_first_bar
 
             # Check trailing stop FIRST (it's typically hit before fixed SL when falling from a high)
             if config.trailing_stop_pct > 0:

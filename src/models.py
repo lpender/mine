@@ -189,16 +189,12 @@ class TradeResult:
 @dataclass
 class BacktestConfig:
     """Configuration for backtesting parameters."""
-    entry_trigger_pct: float = 5.0  # Buy when price moves +X%
     take_profit_pct: float = 10.0  # Sell when +X% from entry
     stop_loss_pct: float = 3.0  # Sell when -X% from entry
     stop_loss_from_open: bool = False  # If True, calculate SL from first candle's open instead of entry price
-    volume_threshold: int = 0  # Minimum volume to trigger entry
     window_minutes: int = 120  # How long to hold position before timeout exit
     entry_window_minutes: int = 0  # How long to look for entry (0 = same as window_minutes)
-    entry_at_candle_close: bool = False  # If True, enter at end of first candle (more realistic)
-    entry_by_message_second: bool = False  # If True, enter within first candle based on announcement second (more realistic)
-    entry_after_consecutive_candles: int = 0  # Wait for X consecutive candles with low > first candle open
+    entry_after_consecutive_candles: int = 0  # Wait for X consecutive green candles (0 = enter immediately at first bar open)
     min_candle_volume: int = 0  # Minimum volume per candle for consecutive candles entry
     trailing_stop_pct: float = 0.0  # Exit if price drops X% from highest point since entry (0 = disabled)
     exit_after_red_candles: int = 0  # Exit after X consecutive red candles (0 = disabled)
