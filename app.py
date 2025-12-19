@@ -206,7 +206,10 @@ def load_filter_options():
 @st.cache_data(ttl=300)
 def load_sampled_announcements(sample_pct: int, sample_seed: int):
     """Load sampled announcements WITHOUT filters - stable cache key for OHLCV loading."""
-    client = get_postgres_client()
+    if USE_DUCKDB:
+        client = get_duckdb_client()
+    else:
+        client = get_postgres_client()
     return client.load_announcements_sampled_and_filtered(
         source="backfill",
         sample_pct=sample_pct,
@@ -244,7 +247,10 @@ def load_sampled_filtered_announcements(
     exclude_financing_types: tuple,
     exclude_biotech: bool,
 ):
-    client = get_postgres_client()
+    if USE_DUCKDB:
+        client = get_duckdb_client()
+    else:
+        client = get_postgres_client()
     return client.load_announcements_sampled_and_filtered(
         source="backfill",
         sample_pct=sample_pct,
