@@ -876,17 +876,19 @@ with st.sidebar:
 # This prevents OHLCV reload when filters change - major performance win!
 ohlcv_window = entry_window + hold_time
 
-with log_time("load_sampled_announcements"):
-    total_before_sampling, sampled = load_sampled_announcements(
-        sample_pct=int(sample_pct),
-        sample_seed=int(sample_seed),
-    )
+with st.spinner("Loading announcements..."):
+    with log_time("load_sampled_announcements"):
+        total_before_sampling, sampled = load_sampled_announcements(
+            sample_pct=int(sample_pct),
+            sample_seed=int(sample_seed),
+        )
 
 # Create stable cache key for OHLCV (based on sample, not filters)
 sample_keys = tuple((a.ticker, a.timestamp.isoformat()) for a in sampled)
 
-with log_time("load_ohlcv_for_announcements", keys=len(sample_keys), window_minutes=ohlcv_window):
-    bars_dict = load_ohlcv_for_announcements(sample_keys, ohlcv_window)
+with st.spinner(f"Loading OHLCV bars for {len(sample_keys):,} announcements..."):
+    with log_time("load_ohlcv_for_announcements", keys=len(sample_keys), window_minutes=ohlcv_window):
+        bars_dict = load_ohlcv_for_announcements(sample_keys, ohlcv_window)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -949,8 +951,9 @@ config = BacktestConfig(
     exit_after_red_candles=exit_red_candles,
 )
 
-with log_time("run_backtest", announcements=len(filtered)):
-    summary = run_backtest(filtered, bars_dict, config)
+with st.spinner(f"Running backtest on {len(filtered):,} announcements..."):
+    with log_time("run_backtest", announcements=len(filtered)):
+        summary = run_backtest(filtered, bars_dict, config)
 
 # Price filter (applied after backtest based on actual entry price)
 # Filter out results where entry price is outside the min/max range
