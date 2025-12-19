@@ -1196,8 +1196,14 @@ else:
 
             # Add vertical line for announcement time
             ann_time_est = to_est(ann.timestamp)
-            fig.add_vline(x=ann_time_est, line_dash="dot", line_color="yellow", opacity=0.7,
-                          annotation_text="Alert", annotation_position="top left")
+            fig.add_vline(x=ann_time_est, line_dash="dot", line_color="yellow", opacity=0.7)
+            # Add annotation separately (vline annotation doesn't work well with datetime x-axis)
+            fig.add_annotation(
+                x=ann_time_est, y=1, yref="paper",
+                text="Alert", showarrow=False,
+                font=dict(color="yellow", size=10),
+                xanchor="left", yanchor="top"
+            )
 
             # Add horizontal lines for entry, TP, SL
             if selected_result.entry_price:
