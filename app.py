@@ -2,8 +2,6 @@
 
 import logging
 import os
-import random
-import sys
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -286,7 +284,7 @@ def load_sampled_filtered_announcements(
 
 
 @st.cache_resource
-def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
+def load_ohlcv_for_announcements(announcement_keys: tuple, _window_minutes: int):
     """Load OHLCV bars for a set of announcements.
 
     Note: Both announcements and OHLCV bars are stored in UTC (naive).
@@ -294,6 +292,7 @@ def load_ohlcv_for_announcements(announcement_keys: tuple, window_minutes: int):
     for much faster loading (single query instead of N queries).
 
     Uses cache_resource to share across all browser sessions (server-side singleton).
+    _window_minutes is used as cache key differentiator (prefixed with _ to indicate unused).
     """
     # Convert string timestamps to datetime for bulk query.
     # Avoid pandas here: this runs on every cache miss and can get expensive for 10k+ keys.
