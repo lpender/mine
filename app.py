@@ -1171,6 +1171,7 @@ else:
         use_container_width=True,
         hide_index=True,
         selection_mode="single-row",
+        on_select="rerun",
         key="trade_table",
     )
 
@@ -1184,7 +1185,13 @@ st.caption(f"Showing {len(filtered)} announcements | Filters: sessions={sessions
 st.header("Trade Detail")
 
 # Get selected row from the dataframe selection event
-selected_rows = event.selection.rows if event and hasattr(event, 'selection') else []
+selected_rows = []
+if event is not None:
+    try:
+        # Streamlit 1.52+ returns selection as dict with 'rows' key
+        selected_rows = event.selection.rows if hasattr(event, 'selection') and hasattr(event.selection, 'rows') else []
+    except Exception:
+        selected_rows = []
 
 if not selected_rows:
     st.info("Click a row in the table above to view trade details and chart.")
