@@ -69,6 +69,12 @@ class StrategyConfig:
     volume_pct: float = 1.0  # Percentage of prev candle volume (e.g., 1.0 = 1%)
     max_stake: float = 10000.0  # Max dollar amount for volume-based sizing
 
+    # Hotness coefficient (adaptive position sizing)
+    hotness_enabled: bool = False  # Enable hotness-based position sizing
+    hotness_window: int = 5  # Number of recent trades to consider
+    hotness_min_mult: float = 0.5  # Min multiplier (when cold)
+    hotness_max_mult: float = 1.5  # Max multiplier (when hot)
+
     def __post_init__(self):
         """Validate and clamp config parameters to reasonable ranges."""
         # Price range validation
@@ -151,16 +157,31 @@ class StrategyConfig:
         if self.consec_green_candles < 0:
             self.consec_green_candles = 0
 
-    def get_shares(self, price: float, prev_candle_volume: Optional[int] = None) -> int:
+        # Hotness validation
+        if self.hotness_window < 1:
+            logger.warning(f"hotness_window={self.hotness_window} must be >= 1, setting to 5")
+            self.hotness_window = 5
+        if self.hotness_min_mult <= 0:
+            logger.warning(f"hotness_min_mult={self.hotness_min_mult} must be positive, setting to 0.5")
+            self.hotness_min_mult = 0.5
+        if self.hotness_max_mult < self.hotness_min_mult:
+            logger.warning(f"hotness_max_mult={self.hotness_max_mult} < hotness_min_mult, swapping")
+            self.hotness_min_mult, self.hotness_max_mult = self.hotness_max_mult, self.hotness_min_mult
+        if self.hotness_max_mult > 10.0:
+            logger.warning(f"hotness_max_mult={self.hotness_max_mult} > 10, capping at 10")
+            self.hotness_max_mult = 10.0
+
+    def get_shares(self, price: float, prev_candle_volume: Optional[int] = None, hotness_multiplier: float = 1.0) -> int:
         """
-        Calculate number of shares based on stake mode and price.
+        Calculate number of shares based on stake mode, price, and hotness.
 
         Args:
             price: Entry price per share
             prev_candle_volume: Volume of the previous candle (for volume_pct mode)
+            hotness_multiplier: Position size multiplier from hotness coefficient (1.0 = neutral)
 
         Returns:
-            Number of shares to buy
+            Number of shares to buy (capped by max_stake)
         """
         if price <= 0:
             return 0
@@ -168,13 +189,22 @@ class StrategyConfig:
         if self.stake_mode == "volume_pct" and prev_candle_volume is not None:
             # Volume-based sizing: buy volume_pct% of prev candle volume
             shares_from_volume = int(prev_candle_volume * self.volume_pct / 100)
-            # Cap by max_stake
-            max_shares = int(self.max_stake / price)
-            shares = min(shares_from_volume, max_shares)
-            return max(1, shares) if shares > 0 else 0
+            base_shares = shares_from_volume
         else:
             # Fixed stake mode (default)
-            return max(1, int(self.stake_amount / price))
+            base_shares = int(self.stake_amount / price)
+
+        # Apply hotness multiplier if enabled
+        if self.hotness_enabled and hotness_multiplier != 1.0:
+            adjusted_shares = int(base_shares * hotness_multiplier)
+        else:
+            adjusted_shares = base_shares
+
+        # ALWAYS enforce max_stake cap (after hotness adjustment)
+        max_shares = int(self.max_stake / price)
+        shares = min(adjusted_shares, max_shares)
+
+        return max(1, shares) if shares > 0 else 0
 
     @classmethod
     def from_url_params(cls, url_or_params) -> "StrategyConfig":
@@ -423,6 +453,42 @@ class StrategyEngine:
                 "active_tickers": list({t.ticker for t in self.active_trades.values()}),
                 "pending_tickers": list({e.ticker for e in self.pending_entries.values()}),
             }
+
+    def get_hotness_multiplier(self) -> float:
+        """
+        Calculate position size multiplier based on recent trade performance.
+
+        Returns:
+            Multiplier between hotness_min_mult and hotness_max_mult.
+            Returns 1.0 if hotness is disabled or not enough history.
+        """
+        if not self.config.hotness_enabled:
+            return 1.0
+
+        with self._state_lock:
+            if len(self.completed_trades) < 1:
+                return 1.0  # Not enough history, use neutral
+
+            # Get the last N trades
+            window = min(self.config.hotness_window, len(self.completed_trades))
+            recent_trades = self.completed_trades[-window:]
+
+            # Calculate win rate
+            wins = sum(1 for t in recent_trades if t.get("return_pct", 0) > 0)
+            win_rate = wins / len(recent_trades)  # 0.0 to 1.0
+
+            # Linear interpolation: 0% wins -> min_mult, 100% wins -> max_mult
+            multiplier = (
+                self.config.hotness_min_mult +
+                win_rate * (self.config.hotness_max_mult - self.config.hotness_min_mult)
+            )
+
+            logger.debug(
+                f"[{self.strategy_name}] Hotness: {wins}/{len(recent_trades)} wins "
+                f"({win_rate*100:.0f}%) -> {multiplier:.2f}x"
+            )
+
+            return multiplier
 
     def _recover_positions(self):
         """Recover open positions from database and broker on startup."""
@@ -1264,8 +1330,11 @@ class StrategyEngine:
             else:
                 candle_volume = actual_vol
 
-        # Calculate shares based on position sizing mode
-        shares = cfg.get_shares(price, candle_volume)
+        # Calculate shares based on position sizing mode (with hotness adjustment)
+        hotness_mult = self.get_hotness_multiplier()
+        shares = cfg.get_shares(price, candle_volume, hotness_multiplier=hotness_mult)
+        if hotness_mult != 1.0:
+            logger.info(f"[{self.strategy_name}] [{ticker}] Hotness multiplier: {hotness_mult:.2f}x -> {shares} shares")
         if shares <= 0:
             logger.error(f"[{self.strategy_name}] [{ticker}] Cannot calculate shares for price ${price:.2f} (trade_id={trade_id[:8]})")
             # Only unsubscribe if no more pending entries or active trades for this ticker

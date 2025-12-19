@@ -783,7 +783,7 @@ with st.sidebar:
         )
         hotness_max_mult = col2.number_input(
             "Max Multiplier",
-            min_value=1.0, max_value=3.0,
+            min_value=1.0, max_value=10.0,
             value=1.5,
             step=0.1,
             key="_hotness_max",
@@ -903,6 +903,11 @@ with st.sidebar:
                     stake_amount=stake_amount,
                     volume_pct=volume_pct,
                     max_stake=max_stake,
+                    # Hotness coefficient
+                    hotness_enabled=hotness_enabled,
+                    hotness_window=hotness_window,
+                    hotness_min_mult=hotness_min_mult,
+                    hotness_max_mult=hotness_max_mult,
                 )
                 store.save_strategy(strategy_name, strategy_config)
                 st.success(f"Saved strategy '{strategy_name}' - check logs/dashboard.log for saved values")
