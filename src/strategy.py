@@ -871,10 +871,12 @@ class StrategyEngine:
             logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: direction '{ann.direction}' not in {cfg.directions}")
             return False
 
-        # Author filter
-        if cfg.authors and ann.author not in cfg.authors:
-            logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: author '{ann.author}' not in {cfg.authors}")
-            return False
+        # Author filter (case-insensitive)
+        if cfg.authors:
+            authors_lower = {a.lower() for a in cfg.authors}
+            if not ann.author or ann.author.lower() not in authors_lower:
+                logger.info(f"[{self.strategy_name}] [{ann.ticker}] Filtered: author '{ann.author}' not in {cfg.authors}")
+                return False
 
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
@@ -944,9 +946,11 @@ class StrategyEngine:
         if cfg.directions and ann.direction not in cfg.directions:
             return False, f"direction '{ann.direction}' not in {cfg.directions}"
 
-        # Author filter
-        if cfg.authors and ann.author not in cfg.authors:
-            return False, f"author '{ann.author}' not in {cfg.authors}"
+        # Author filter (case-insensitive)
+        if cfg.authors:
+            authors_lower = {a.lower() for a in cfg.authors}
+            if not ann.author or ann.author.lower() not in authors_lower:
+                return False, f"author '{ann.author}' not in {cfg.authors}"
 
         # Session filter
         if cfg.sessions and ann.market_session not in cfg.sessions:
