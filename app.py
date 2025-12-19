@@ -17,8 +17,8 @@ from zoneinfo import ZoneInfo
 from src.postgres_client import get_postgres_client
 from src.duckdb_client import get_duckdb_client
 
-# Data backend toggle: set USE_DUCKDB=1 for fast Parquet-based queries
-USE_DUCKDB = os.getenv("USE_DUCKDB", "0") == "1"
+# Data backend toggle: set USE_POSTGRES=1 to use Postgres instead of DuckDB
+USE_DUCKDB = os.getenv("USE_POSTGRES", "0") != "1"
 
 # Timezone for display
 EST = ZoneInfo("America/New_York")
@@ -415,9 +415,9 @@ init_session_state()
 with st.sidebar:
     # Show data backend
     if USE_DUCKDB:
-        st.success("Data: DuckDB (Parquet)")
+        st.success("DuckDB (fast)")
     else:
-        st.info("Data: Postgres")
+        st.warning("Postgres (slow) - set USE_POSTGRES=0 for DuckDB")
 
     # ─────────────────────────────────────────────────────────────────────────
     # Sampling (for faster iteration) - FIRST in execution order
