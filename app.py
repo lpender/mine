@@ -794,6 +794,31 @@ with st.sidebar:
         hotness_min_mult = 0.5
         hotness_max_mult = 1.5
 
+    # ─────────────────────────────────────────────────────────────────────────
+    # Slippage Model (Square Root Market Impact)
+    # ─────────────────────────────────────────────────────────────────────────
+    st.divider()
+    st.header("Slippage Model")
+    st.caption("Almgren-Chriss square root market impact model")
+
+    slippage_enabled = st.checkbox(
+        "Enable Slippage",
+        key="_slippage_enabled",
+        help="Model market impact based on volume participation and price movement"
+    )
+
+    if slippage_enabled:
+        slippage_max_pct = st.slider(
+            "Max Slippage %",
+            min_value=1.0, max_value=10.0,
+            value=5.0,
+            step=0.5,
+            key="_slippage_max",
+            help="Cap slippage at this % per side (entry/exit)"
+        )
+    else:
+        slippage_max_pct = 5.0
+
     # Update URL with current settings (for sharing/bookmarking)
     set_param("sl", stop_loss)
     set_param("tp", take_profit)
@@ -1077,15 +1102,15 @@ if filtered:
 else:
     weeks = 1
 
-# Calculate P/L using position sizing settings (with hotness if enabled)
+# Calculate P/L using position sizing settings (with hotness and slippage if enabled)
 total_pnl = sum(
-    r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled)
+    r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct)
     for r in summary.results
-    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled) is not None
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct) is not None
 )
 trades_with_pnl = sum(
     1 for r in summary.results
-    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled) is not None
+    if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=hotness_enabled, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct) is not None
 )
 weekly_pnl = total_pnl / weeks if weeks > 0 else 0
 
@@ -1096,6 +1121,8 @@ else:
     sizing_desc = f"${stake_amount:,.0f} fixed"
 if hotness_enabled:
     sizing_desc += f" × hotness ({hotness_min_mult}-{hotness_max_mult}x)"
+if slippage_enabled:
+    sizing_desc += f" | slippage on"
 
 col1.metric("Announcements", stats["total_announcements"])
 col2.metric("Trades", stats["total_trades"])
@@ -1115,16 +1142,16 @@ col6.metric("Avg Loss", f"{stats['avg_loss']:.2f}%")
 
 # Hotness comparison row (if enabled)
 if hotness_enabled:
-    # Calculate P&L with and without hotness using actual position sizing
+    # Calculate P&L with and without hotness using actual position sizing (slippage applies to both)
     pnl_without_hotness = sum(
-        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False)
+        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct)
         for r in summary.results
-        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False) is not None
+        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=False, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct) is not None
     )
     pnl_with_hotness = sum(
-        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True)
+        r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct)
         for r in summary.results
-        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True) is not None
+        if r.pnl_with_sizing(stake_mode, stake_amount, volume_pct, max_stake, use_hotness=True, slippage_enabled=slippage_enabled, slippage_max_pct=slippage_max_pct) is not None
     )
     hotness_improvement = (
         ((pnl_with_hotness - pnl_without_hotness) / abs(pnl_without_hotness) * 100)

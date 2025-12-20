@@ -155,13 +155,15 @@ def run_single_backtest(
     else:
         result.pre_entry_volume = None  # No previous bar available
 
-    # Capture entry bar data for slippage model
+    # Capture entry bar data for slippage model (directional: positive=adverse for buyer)
     entry_bar = bars[entry_bar_idx]
     result.entry_bar_volume = entry_bar.volume
     if entry_bar.open > 0:
-        result.entry_bar_range_pct = ((entry_bar.high - entry_bar.low) / entry_bar.open) * 100
+        # Green candle (close > open) = positive = adverse for buyer (chasing)
+        # Red candle (close < open) = negative = favorable for buyer (price improvement)
+        result.entry_bar_move_pct = ((entry_bar.close - entry_bar.open) / entry_bar.open) * 100
     else:
-        result.entry_bar_range_pct = None
+        result.entry_bar_move_pct = None
 
     # Phase 2: Look for exit after entry
     take_profit_price = entry_price * (1 + config.take_profit_pct / 100)
@@ -301,13 +303,15 @@ def run_single_backtest(
     result.trigger_type = trigger_type
     result.return_pct = ((exit_price - entry_price) / entry_price) * 100
 
-    # Capture exit bar data for slippage model
+    # Capture exit bar data for slippage model (directional: positive=adverse for seller)
     if exit_bar is not None:
         result.exit_bar_volume = exit_bar.volume
         if exit_bar.open > 0:
-            result.exit_bar_range_pct = ((exit_bar.high - exit_bar.low) / exit_bar.open) * 100
+            # Red candle (close < open) = positive = adverse for seller (chasing exit)
+            # Green candle (close > open) = negative = favorable for seller (price improvement)
+            result.exit_bar_move_pct = ((exit_bar.open - exit_bar.close) / exit_bar.open) * 100
         else:
-            result.exit_bar_range_pct = None
+            result.exit_bar_move_pct = None
 
     return result
 

@@ -123,11 +123,11 @@ class TradeResult:
     trigger_type: str = "no_entry"  # "take_profit", "stop_loss", "timeout", "no_entry"
     pre_entry_volume: Optional[int] = None  # Volume of the candle before entry (for position sizing)
     hotness_multiplier: float = 1.0  # Position size multiplier from hotness coefficient (1.0 = neutral)
-    # Slippage model fields
+    # Slippage model fields (directional movement for realistic price improvement)
     entry_bar_volume: Optional[int] = None  # Volume of the entry bar
-    entry_bar_range_pct: Optional[float] = None  # (high - low) / open * 100 of entry bar
+    entry_bar_move_pct: Optional[float] = None  # (close - open) / open * 100: positive=adverse, negative=favorable
     exit_bar_volume: Optional[int] = None  # Volume of the exit bar
-    exit_bar_range_pct: Optional[float] = None  # (high - low) / open * 100 of exit bar
+    exit_bar_move_pct: Optional[float] = None  # (open - close) / open * 100: positive=adverse, negative=favorable
 
     @property
     def is_winner(self) -> bool:
@@ -200,27 +200,31 @@ class TradeResult:
             shares = max(1, int(shares * self.hotness_multiplier))
 
         # Calculate slippage using square root market impact model (Almgren-Chriss)
-        # Impact = volatility × sqrt(shares / volume)
-        # Applied on both entry (adverse: pay more) and exit (adverse: receive less)
+        # Impact = directional_move × sqrt(shares / volume)
+        # Uses directional movement: positive = adverse, negative = price improvement
+        # Entry: (close - open) / open - green candle hurts buyer, red helps
+        # Exit: (open - close) / open - red candle hurts seller, green helps
         total_slippage_pct = 0.0
         if slippage_enabled:
             # Entry slippage
             if (self.entry_bar_volume is not None and self.entry_bar_volume > 0
-                    and self.entry_bar_range_pct is not None):
+                    and self.entry_bar_move_pct is not None):
                 participation = shares / self.entry_bar_volume
-                entry_slip = self.entry_bar_range_pct * math.sqrt(participation)
-                entry_slip = min(entry_slip, slippage_max_pct)
+                # Slippage scales with sqrt of participation, keeps sign of move
+                entry_slip = self.entry_bar_move_pct * math.sqrt(participation)
+                # Cap magnitude (both adverse and favorable)
+                entry_slip = max(-slippage_max_pct, min(entry_slip, slippage_max_pct))
                 total_slippage_pct += entry_slip
 
             # Exit slippage
             if (self.exit_bar_volume is not None and self.exit_bar_volume > 0
-                    and self.exit_bar_range_pct is not None):
+                    and self.exit_bar_move_pct is not None):
                 participation = shares / self.exit_bar_volume
-                exit_slip = self.exit_bar_range_pct * math.sqrt(participation)
-                exit_slip = min(exit_slip, slippage_max_pct)
+                exit_slip = self.exit_bar_move_pct * math.sqrt(participation)
+                exit_slip = max(-slippage_max_pct, min(exit_slip, slippage_max_pct))
                 total_slippage_pct += exit_slip
 
-        # Apply slippage: reduces return by total slippage percentage
+        # Apply slippage: positive reduces return, negative improves it
         adjusted_return_pct = self.return_pct - total_slippage_pct
 
         position_value = shares * self.entry_price
