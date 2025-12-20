@@ -1,3 +1,4 @@
+import math
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from typing import Optional, List
@@ -122,6 +123,11 @@ class TradeResult:
     trigger_type: str = "no_entry"  # "take_profit", "stop_loss", "timeout", "no_entry"
     pre_entry_volume: Optional[int] = None  # Volume of the candle before entry (for position sizing)
     hotness_multiplier: float = 1.0  # Position size multiplier from hotness coefficient (1.0 = neutral)
+    # Slippage model fields
+    entry_bar_volume: Optional[int] = None  # Volume of the entry bar
+    entry_bar_range_pct: Optional[float] = None  # (high - low) / open * 100 of entry bar
+    exit_bar_volume: Optional[int] = None  # Volume of the exit bar
+    exit_bar_range_pct: Optional[float] = None  # (high - low) / open * 100 of exit bar
 
     @property
     def is_winner(self) -> bool:
@@ -153,6 +159,8 @@ class TradeResult:
         volume_pct: float = 1.0,
         max_stake: float = 10000.0,
         use_hotness: bool = False,
+        slippage_enabled: bool = False,
+        slippage_max_pct: float = 5.0,
     ) -> Optional[float]:
         """
         Calculate P&L based on position sizing settings.
@@ -163,6 +171,8 @@ class TradeResult:
             volume_pct: Percentage of pre-entry candle volume to buy
             max_stake: Maximum position cost (for volume_pct mode)
             use_hotness: If True, apply the hotness_multiplier to position size
+            slippage_enabled: If True, apply square root market impact model
+            slippage_max_pct: Maximum slippage per side (entry/exit)
 
         Returns:
             Dollar P&L for the trade, or None if not entered
@@ -189,8 +199,32 @@ class TradeResult:
         if use_hotness:
             shares = max(1, int(shares * self.hotness_multiplier))
 
+        # Calculate slippage using square root market impact model (Almgren-Chriss)
+        # Impact = volatility × sqrt(shares / volume)
+        # Applied on both entry (adverse: pay more) and exit (adverse: receive less)
+        total_slippage_pct = 0.0
+        if slippage_enabled:
+            # Entry slippage
+            if (self.entry_bar_volume is not None and self.entry_bar_volume > 0
+                    and self.entry_bar_range_pct is not None):
+                participation = shares / self.entry_bar_volume
+                entry_slip = self.entry_bar_range_pct * math.sqrt(participation)
+                entry_slip = min(entry_slip, slippage_max_pct)
+                total_slippage_pct += entry_slip
+
+            # Exit slippage
+            if (self.exit_bar_volume is not None and self.exit_bar_volume > 0
+                    and self.exit_bar_range_pct is not None):
+                participation = shares / self.exit_bar_volume
+                exit_slip = self.exit_bar_range_pct * math.sqrt(participation)
+                exit_slip = min(exit_slip, slippage_max_pct)
+                total_slippage_pct += exit_slip
+
+        # Apply slippage: reduces return by total slippage percentage
+        adjusted_return_pct = self.return_pct - total_slippage_pct
+
         position_value = shares * self.entry_price
-        return position_value * (self.return_pct / 100)
+        return position_value * (adjusted_return_pct / 100)
 
 
 @dataclass
@@ -213,6 +247,10 @@ class BacktestConfig:
     hotness_window: int = 5  # Number of recent trades to consider
     hotness_min_mult: float = 0.5  # Minimum position size multiplier (when cold)
     hotness_max_mult: float = 1.5  # Maximum position size multiplier (when hot)
+    # Slippage model - square root market impact (Almgren-Chriss)
+    # Impact = volatility × sqrt(shares / volume)
+    slippage_enabled: bool = False  # Enable slippage modeling
+    slippage_max_pct: float = 5.0  # Cap slippage at this % per side (entry/exit)
 
 
 @dataclass

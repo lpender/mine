@@ -155,6 +155,14 @@ def run_single_backtest(
     else:
         result.pre_entry_volume = None  # No previous bar available
 
+    # Capture entry bar data for slippage model
+    entry_bar = bars[entry_bar_idx]
+    result.entry_bar_volume = entry_bar.volume
+    if entry_bar.open > 0:
+        result.entry_bar_range_pct = ((entry_bar.high - entry_bar.low) / entry_bar.open) * 100
+    else:
+        result.entry_bar_range_pct = None
+
     # Phase 2: Look for exit after entry
     take_profit_price = entry_price * (1 + config.take_profit_pct / 100)
 
@@ -170,6 +178,7 @@ def run_single_backtest(
 
     exit_price = None
     exit_time = None
+    exit_bar = None  # Track which bar the exit occurred on for slippage
     trigger_type = "timeout"
 
     # Track highest price since entry for trailing stop
@@ -205,6 +214,7 @@ def run_single_backtest(
                     else:
                         exit_price = trailing_stop_price
                     exit_time = bar.timestamp
+                    exit_bar = bar
                     trigger_type = "trailing_stop"
                     break
 
@@ -217,6 +227,7 @@ def run_single_backtest(
                 else:
                     exit_price = stop_loss_price
                 exit_time = bar.timestamp
+                exit_bar = bar
                 trigger_type = "stop_loss"
                 break
 
@@ -228,6 +239,7 @@ def run_single_backtest(
         if bar.high >= take_profit_price:
             exit_price = take_profit_price
             exit_time = bar.timestamp
+            exit_bar = bar
             trigger_type = "take_profit"
             break
 
@@ -237,6 +249,7 @@ def run_single_backtest(
             if bar.close <= trailing_stop_price:
                 exit_price = trailing_stop_price
                 exit_time = bar.timestamp
+                exit_bar = bar
                 trigger_type = "trailing_stop"
                 break
 
@@ -248,6 +261,7 @@ def run_single_backtest(
             else:
                 exit_price = stop_loss_price
             exit_time = bar.timestamp
+            exit_bar = bar
             trigger_type = "stop_loss"
             break
 
@@ -258,6 +272,7 @@ def run_single_backtest(
                 if consecutive_red_candles >= config.exit_after_red_candles:
                     exit_price = bar.close
                     exit_time = bar.timestamp
+                    exit_bar = bar
                     trigger_type = "red_candles"
                     break
             else:  # Green or doji candle resets the count
@@ -268,6 +283,7 @@ def run_single_backtest(
         if bar.timestamp >= timeout_time:
             exit_price = bar.close
             exit_time = bar.timestamp
+            exit_bar = bar
             trigger_type = "timeout"
             break
 
@@ -277,12 +293,21 @@ def run_single_backtest(
     if exit_price is None:
         exit_price = bars[-1].close
         exit_time = bars[-1].timestamp
+        exit_bar = bars[-1]
         trigger_type = "timeout"
 
     result.exit_price = exit_price
     result.exit_time = exit_time
     result.trigger_type = trigger_type
     result.return_pct = ((exit_price - entry_price) / entry_price) * 100
+
+    # Capture exit bar data for slippage model
+    if exit_bar is not None:
+        result.exit_bar_volume = exit_bar.volume
+        if exit_bar.open > 0:
+            result.exit_bar_range_pct = ((exit_bar.high - exit_bar.low) / exit_bar.open) * 100
+        else:
+            result.exit_bar_range_pct = None
 
     return result
 
