@@ -392,6 +392,14 @@ else:
                     "stake": str(cfg.stake_amount),
                     "vol_pct": str(cfg.volume_pct),
                     "max_stake": str(cfg.max_stake),
+                    # Hotness coefficient
+                    "hotness": "1" if cfg.hotness_enabled else "0",
+                    "hotness_window": str(cfg.hotness_window),
+                    "hotness_min": str(cfg.hotness_min_mult),
+                    "hotness_max": str(cfg.hotness_max_mult),
+                    # Slippage model
+                    "slippage": "1" if cfg.slippage_enabled else "0",
+                    "slippage_max": str(cfg.slippage_max_pct),
                 }
                 # Note: The following dashboard filters are NOT saved in strategy:
                 # - country (whitelist), has_hl, no_hl
@@ -602,6 +610,14 @@ else:
                             stake_amount=edit_stake,
                             volume_pct=edit_vol_pct,
                             max_stake=edit_max_stake,
+                            # Preserve hotness settings
+                            hotness_enabled=cfg.hotness_enabled,
+                            hotness_window=cfg.hotness_window,
+                            hotness_min_mult=cfg.hotness_min_mult,
+                            hotness_max_mult=cfg.hotness_max_mult,
+                            # Preserve slippage settings
+                            slippage_enabled=cfg.slippage_enabled,
+                            slippage_max_pct=cfg.slippage_max_pct,
                         )
                         store.update_strategy(strategy_id, config=new_config)
                         st.session_state[f"edit_sizing_{strategy_id}"] = False

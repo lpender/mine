@@ -75,6 +75,10 @@ class StrategyConfig:
     hotness_min_mult: float = 0.5  # Min multiplier (when cold)
     hotness_max_mult: float = 1.5  # Max multiplier (when hot)
 
+    # Slippage model (square root market impact)
+    slippage_enabled: bool = False  # Enable slippage modeling
+    slippage_max_pct: float = 5.0  # Cap slippage at this % per side
+
     def __post_init__(self):
         """Validate and clamp config parameters to reasonable ranges."""
         # Price range validation

@@ -409,6 +409,14 @@ def init_session_state():
     set_if_missing("_stake_amount", get_param("stake", 1000.0, float))
     set_if_missing("_volume_pct", get_param("vol_pct", 1.0, float))
     set_if_missing("_max_stake", get_param("max_stake", 10000.0, float))
+    # Hotness coefficient
+    set_if_missing("_hotness_enabled", get_param("hotness", False, bool))
+    set_if_missing("_hotness_window", get_param("hotness_window", 5, int))
+    set_if_missing("_hotness_min", get_param("hotness_min", 0.5, float))
+    set_if_missing("_hotness_max", get_param("hotness_max", 1.5, float))
+    # Slippage model
+    set_if_missing("_slippage_enabled", get_param("slippage", False, bool))
+    set_if_missing("_slippage_max", get_param("slippage_max", 5.0, float))
     # New filters from strategy
     set_if_missing("_max_mentions", get_param("max_mentions", 0, int))
     set_if_missing("_exclude_biotech", get_param("exclude_biotech", False, bool))
@@ -933,6 +941,9 @@ with st.sidebar:
                     hotness_window=hotness_window,
                     hotness_min_mult=hotness_min_mult,
                     hotness_max_mult=hotness_max_mult,
+                    # Slippage model
+                    slippage_enabled=slippage_enabled,
+                    slippage_max_pct=slippage_max_pct,
                 )
                 store.save_strategy(strategy_name, strategy_config)
                 st.success(f"Saved strategy '{strategy_name}' - check logs/dashboard.log for saved values")
